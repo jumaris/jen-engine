@@ -52,21 +52,20 @@
 			<DelphiCompile Include="Test.dpr">
 				<MainSource>MainSource</MainSource>
 			</DelphiCompile>
-			<DCCReference Include="JEN_Main.pas"/>
-			<DCCReference Include="Utils\JEN_SystemInfo.pas"/>
-			<DCCReference Include="Utils\JEN_Utils.pas"/>
-			<DCCReference Include="Windows\JEN_Window.pas"/>
-			<DCCReference Include="Utils\XSystem.pas"/>
-			<DCCReference Include="JEN_Game.pas"/>
+			<DCCReference Include="Jen Engine\JEN_Main.pas"/>
+			<DCCReference Include="Jen Engine\Utils\JEN_SystemInfo.pas"/>
+			<DCCReference Include="Jen Engine\Utils\JEN_Utils.pas"/>
+			<DCCReference Include="Jen Engine\Windows\JEN_Window.pas"/>
+			<DCCReference Include="Jen Engine\Utils\XSystem.pas"/>
+			<DCCReference Include="Jen Engine\JEN_Game.pas"/>
 			<DCCReference Include="SomeGame.pas"/>
-			<DCCReference Include="Log\JEN_Log.pas"/>
-			<DCCReference Include="Log\JEN_DefConsoleLog.pas"/>
-			<DCCReference Include="Utils\JEN_OpenGLHeader.pas"/>
-			<DCCReference Include="Render\JEN_OpenGL.pas"/>
-			<DCCReference Include="Render\JEN_Render.pas"/>
-			<DCCReference Include="Utils\JEN_Math.pas"/>
-			<DCCReference Include="Engine.pas"/>
-			<None Include="Jen_config.inc"/>
+			<DCCReference Include="Jen Engine\Log\JEN_Log.pas"/>
+			<DCCReference Include="Jen Engine\Log\JEN_DefConsoleLog.pas"/>
+			<DCCReference Include="Jen Engine\Utils\JEN_OpenGLHeader.pas"/>
+			<DCCReference Include="Jen Engine\Render\JEN_OpenGL.pas"/>
+			<DCCReference Include="Jen Engine\Render\JEN_Render.pas"/>
+			<DCCReference Include="Jen Engine\Utils\JEN_Math.pas"/>
+			<None Include="Jen Engine\Jen_config.inc"/>
 			<BuildConfiguration Include="Base">
 				<Key>Base</Key>
 			</BuildConfiguration>
