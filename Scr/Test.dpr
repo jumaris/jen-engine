@@ -27,7 +27,9 @@ begin
   Game := TSameGame.Create;
   Game.Run;
   Game.Free;
+  {$IFDEF DEBUG}
   readln(x);
+  {$EndIf}
 end.
 
 
