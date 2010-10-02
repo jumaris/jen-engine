@@ -25,7 +25,9 @@ begin
   TUtils.Create;
   TSystem.Create;
   TLog.Create;
+{$IFDEF DEBUG}
   TDefConsoleLog.Create;
+{$EndIf}
   Log.Init;
 end;
 
