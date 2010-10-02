@@ -1,4 +1,4 @@
-unit SameGame;
+unit SomeGame;
 {$I Jen_config.INC}
 
 interface

@@ -58,13 +58,14 @@
 			<DCCReference Include="Windows\JEN_Window.pas"/>
 			<DCCReference Include="Utils\XSystem.pas"/>
 			<DCCReference Include="JEN_Game.pas"/>
-			<DCCReference Include="SameGame.pas"/>
+			<DCCReference Include="SomeGame.pas"/>
 			<DCCReference Include="Log\JEN_Log.pas"/>
 			<DCCReference Include="Log\JEN_DefConsoleLog.pas"/>
 			<DCCReference Include="Utils\JEN_OpenGLHeader.pas"/>
 			<DCCReference Include="Render\JEN_OpenGL.pas"/>
 			<DCCReference Include="Render\JEN_Render.pas"/>
 			<DCCReference Include="Utils\JEN_Math.pas"/>
+			<DCCReference Include="Engine.pas"/>
 			<None Include="Jen_config.inc"/>
 			<BuildConfiguration Include="Base">
 				<Key>Base</Key>
@@ -98,7 +99,7 @@
 						<VersionInfo Name="MajorVer">1</VersionInfo>
 						<VersionInfo Name="MinorVer">0</VersionInfo>
 						<VersionInfo Name="Release">0</VersionInfo>
-						<VersionInfo Name="Build">453</VersionInfo>
+						<VersionInfo Name="Build">454</VersionInfo>
 						<VersionInfo Name="Debug">True</VersionInfo>
 						<VersionInfo Name="PreRelease">False</VersionInfo>
 						<VersionInfo Name="Special">False</VersionInfo>
@@ -110,7 +111,7 @@
 					<VersionInfoKeys>
 						<VersionInfoKeys Name="CompanyName"/>
 						<VersionInfoKeys Name="FileDescription"/>
-						<VersionInfoKeys Name="FileVersion">1.0.0.453</VersionInfoKeys>
+						<VersionInfoKeys Name="FileVersion">1.0.0.454</VersionInfoKeys>
 						<VersionInfoKeys Name="InternalName"/>
 						<VersionInfoKeys Name="LegalCopyright"/>
 						<VersionInfoKeys Name="LegalTrademarks"/>
