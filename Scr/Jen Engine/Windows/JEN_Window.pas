@@ -33,6 +33,7 @@ end;
 implementation
 
 uses
+  JEN_Main,
   JEN_OpenGLHeader,
   JEN_Utils,
   JEN_SystemInfo,
@@ -111,7 +112,7 @@ begin
   inherited Create();
 
   FCaption := 'JEN Engine application';
-  WindowRect := Recti((SystemInfo.ScreenWidth - Width) div 2, (SystemInfo.ScreenHeight - Height) div 2, Width, Height);
+  WindowRect := Recti((SystemParams.Screen.Width - Width) div 2, (SystemParams.Screen.Height - Height) div 2, Width, Height);
 
   FillChar(WinClass, SizeOf(TWndClassEx), 0);
   with WinClass do
@@ -131,7 +132,7 @@ begin
   end else
     LogOut( 'Register window class.', LM_NOTIFY );
 
-  if (Width = SystemInfo.ScreenWidth) and (Height = SystemInfo.ScreenHeight) then
+  if (Width = SystemParams.Screen.Width) and (Height = SystemParams.Screen.Height) then
     isFullScreen := true;
 
   if isFullScreen Then

@@ -3,7 +3,6 @@ unit JEN_Log;
 
 interface
 
-{$IFDEF LOG}
 uses
   JEN_Utils,
   JEN_SystemInfo;
@@ -23,24 +22,20 @@ type
   constructor Create;
   destructor Destroy; Override;
   protected
-    fLogOutputs : TList;
+    {$IFDEF LOG}fLogOutputs : TList;{$ENDIF}
   public
     property LogOutputs : TList read fLogOutputs; 
     procedure Init;
     procedure AddMsg( const Text : String; MType : TLogMsg );
   end;
 
-  procedure LogOut( const Text : String; MType : TLogMsg ); inline;
-
-var
-  Log : TLog;
-{$ENDIF}
-
 implementation
 
 {$IFDEF LOG}
 uses
-  JEN_DefConsoleLog, JEN_OpenGlHeader;
+  JEN_Main,
+  JEN_DefConsoleLog,
+  JEN_OpenGlHeader;
 
 constructor TLogOutput.Create;
 begin
@@ -51,7 +46,6 @@ end;
 constructor TLog.Create;
 begin
   inherited;
-  Log := self;
   fLogOutputs := TList.Create;
 end;
 
@@ -72,16 +66,16 @@ var
   Minor     : LongInt;
   Build     : LongInt;
 begin
-  SystemInfo.WindowsVersion(Major, Minor, Build);
+  SystemParams.WindowsVersion(Major, Minor, Build);
   for i := 0 to fLogOutputs.Count - 1 do
   with TLogOutput(fLogOutputs[i]) do
     begin
       BeginHeader;
       AddMsg( 'JEngine', LM_HEADER_MSG );
       AddMsg( 'Windows version: '+Utils.IntToStr(Major)+'.'+Utils.IntToStr(Minor)+' (Buid '+Utils.IntToStr(Build)+')', LM_HEADER_MSG);
-      AddMsg( 'CPU            : '+SystemInfo.CPUName+'(~'+Utils.IntToStr(SystemInfo.CPUSpeed)+')x'+Utils.IntToStr(SystemInfo.CPUCount), LM_HEADER_MSG);
-      AddMsg( 'RAM Available  : '+Utils.IntToStr(SystemInfo.RAMFree)+'Mb', LM_HEADER_MSG);
-      AddMsg( 'RAM Total      : '+Utils.IntToStr(SystemInfo.RAMTotal)+'Mb', LM_HEADER_MSG);
+      AddMsg( 'CPU            : '+SystemParams.CPUName+'(~'+Utils.IntToStr(SystemParams.CPUSpeed)+')x'+Utils.IntToStr(SystemParams.CPUCount), LM_HEADER_MSG);
+      AddMsg( 'RAM Available  : '+Utils.IntToStr(SystemParams.RAMFree)+'Mb', LM_HEADER_MSG);
+      AddMsg( 'RAM Total      : '+Utils.IntToStr(SystemParams.RAMTotal)+'Mb', LM_HEADER_MSG);
       EndHeader;
     end;       {
 
@@ -99,11 +93,8 @@ begin
   for i := 0 to fLogOutputs.Count - 1 do
     TLogOutput(fLogOutputs[i]).AddMsg( Text, MType );
 end;
+{$ELSE}
 
-procedure LogOut( const Text : String; MType : TLogMsg );
-begin
-  Log.AddMsg( Text, MType );
-end;
 {$ENDIF}
 
 end.

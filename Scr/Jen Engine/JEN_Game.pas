@@ -34,7 +34,8 @@ type
 implementation
 
 uses
-  XSystem, JEN_Log;
+  XSystem,
+  JEN_Main;
 
 constructor TGame.Create;
 begin

@@ -4,7 +4,9 @@ unit JEN_OpenGL;
 interface
 
 uses
-  XSystem, JEN_Render, JEN_Window;
+  XSystem,
+  JEN_Render,
+  JEN_Window;
 
 type
   TGLRender = class( TRender )
@@ -19,7 +21,7 @@ implementation
 
 uses
   JEN_OpenGLHeader,
-  JEN_Log;
+  JEN_Main;
 
 constructor TGLRender.Create(Window: TWindow; DepthBits : Byte; StencilBits : Byte );
 var
