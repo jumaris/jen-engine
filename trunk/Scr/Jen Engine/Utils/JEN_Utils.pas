@@ -84,9 +84,6 @@ type
     property Items[Idx: Integer]: TManagedObj read GetItem; default;
   end;
 
-var
-  Utils : TUtils;
-
 implementation
 
 { TUtils }
@@ -95,7 +92,6 @@ var
   Count : Int64;
 begin
   inherited;
-  Utils := Self;
   QueryPerformanceFrequency(FTimeFreq);
   QueryPerformanceCounter(Count);
   FTimeStart := Trunc(1000 * (Count / FTimeFreq));

@@ -3,7 +3,7 @@
 			<ProjectGuid>{C1894D3D-47FB-448E-8601-231258A2BC1E}</ProjectGuid>
 			<ProjectVersion>12.0</ProjectVersion>
 			<MainSource>Test.dpr</MainSource>
-			<Config Condition="'$(Config)'==''">Release</Config>
+			<Config Condition="'$(Config)'==''">Debug</Config>
 			<DCC_DCCCompiler>DCC32</DCC_DCCCompiler>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Config)'=='Base' or '$(Base)'!=''">
@@ -52,20 +52,21 @@
 			<DelphiCompile Include="Test.dpr">
 				<MainSource>MainSource</MainSource>
 			</DelphiCompile>
-			<DCCReference Include="Jen Engine\JEN_Main.pas"/>
+			<DCCReference Include="Jen Engine\JEN_Main.pas">
+				<Form>$IFDEF DEBUG</Form>
+			</DCCReference>
 			<DCCReference Include="Jen Engine\Utils\JEN_SystemInfo.pas"/>
 			<DCCReference Include="Jen Engine\Utils\JEN_Utils.pas"/>
 			<DCCReference Include="Jen Engine\Windows\JEN_Window.pas"/>
 			<DCCReference Include="Jen Engine\Utils\XSystem.pas"/>
 			<DCCReference Include="Jen Engine\JEN_Game.pas"/>
-			<DCCReference Include="SomeGame.pas"/>
 			<DCCReference Include="Jen Engine\Log\JEN_Log.pas"/>
 			<DCCReference Include="Jen Engine\Log\JEN_DefConsoleLog.pas"/>
 			<DCCReference Include="Jen Engine\Utils\JEN_OpenGLHeader.pas"/>
 			<DCCReference Include="Jen Engine\Render\JEN_OpenGL.pas"/>
 			<DCCReference Include="Jen Engine\Render\JEN_Render.pas"/>
 			<DCCReference Include="Jen Engine\Utils\JEN_Math.pas"/>
-			<None Include="Jen Engine\Jen_config.inc"/>
+			<DCCReference Include="SomeGame.pas"/>
 			<BuildConfiguration Include="Base">
 				<Key>Base</Key>
 			</BuildConfiguration>
@@ -98,7 +99,7 @@
 						<VersionInfo Name="MajorVer">0</VersionInfo>
 						<VersionInfo Name="MinorVer">0</VersionInfo>
 						<VersionInfo Name="Release">1</VersionInfo>
-						<VersionInfo Name="Build">457</VersionInfo>
+						<VersionInfo Name="Build">474</VersionInfo>
 						<VersionInfo Name="Debug">True</VersionInfo>
 						<VersionInfo Name="PreRelease">False</VersionInfo>
 						<VersionInfo Name="Special">False</VersionInfo>
@@ -110,7 +111,7 @@
 					<VersionInfoKeys>
 						<VersionInfoKeys Name="CompanyName"/>
 						<VersionInfoKeys Name="FileDescription"/>
-						<VersionInfoKeys Name="FileVersion">0.0.1.457</VersionInfoKeys>
+						<VersionInfoKeys Name="FileVersion">0.0.1.474</VersionInfoKeys>
 						<VersionInfoKeys Name="InternalName"/>
 						<VersionInfoKeys Name="LegalCopyright"/>
 						<VersionInfoKeys Name="LegalTrademarks"/>

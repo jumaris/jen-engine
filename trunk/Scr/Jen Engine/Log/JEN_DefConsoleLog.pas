@@ -19,7 +19,7 @@ implementation
 
 {$IFDEF LOG}
 uses
-  JEN_Utils;
+  JEN_MAIN;
 
 procedure TDefConsoleLog.BeginHeader;
 begin
