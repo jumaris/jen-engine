@@ -33,6 +33,11 @@ const
   REG_FULL_RESOURCE_DESCRIPTOR = 9;
   REG_RESOURCE_REQUIREMENTS_LIST = 10;
 
+    { Return values for ChangeDisplaySettings }
+  DISP_CHANGE_SUCCESSFUL          = 0;
+  DISP_CHANGE_FAILED              = -1;
+  DISP_CHANGE_BADMODE             = -2;
+
   KEY_READ            = $20019;
   KEY_WRITE           = $20006;
 
@@ -219,17 +224,17 @@ type
   end;
 
   TDeviceMode = packed record
-    blabla1 : array [0..67] of Byte;
+    SomeData1 : array [0..67] of Byte;
     dmSize             : Word;
     dmDriverExtra      : Word;
     dmFields           : LongWord;
-    blabla2 : array [0..91] of Byte;
+    SomeData2 : array [0..91] of Byte;
     dmBitsPerPel       : LongWord;
     dmPelsWidth        : LongWord;
     dmPelsHeight       : LongWord;
     dmDisplayFlags     : LongWord;
     dmDisplayFrequency : LongWord;
-    blabla3 : array [0..31] of Byte;
+    SomeData3  : array [0..31] of Byte;
   end;
 
   TJoyCaps = record

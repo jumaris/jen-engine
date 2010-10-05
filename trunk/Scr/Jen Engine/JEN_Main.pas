@@ -20,6 +20,11 @@ const
   LM_WARNING    = TLogMsg.LM_WARNING;
   LM_ERROR      = TLogMsg.LM_ERROR;
 
+type
+  TGame     = JEN_GAME.TGame;
+  TWindow   = JEN_Window.TWindow;
+  TGLRender = JEN_OpenGL.TGLRender;
+
 var
   Utils        : TUtils;
   SystemParams : TSystem;

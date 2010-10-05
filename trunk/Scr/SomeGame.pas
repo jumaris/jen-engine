@@ -4,10 +4,7 @@ unit SomeGame;
 interface
 
 uses
-  JEN_Game,
-  JEN_Window,
-  JEN_Render,
-  JEN_OpenGL;
+  windows, JEN_MAIN;
 
 type
   TSameGame = class ( TGame )
@@ -17,13 +14,15 @@ type
     constructor Create;
   end;
 
-var Game : TSameGame;
+var
+  Game : TSameGame;
 
 implementation
 
 constructor TSameGame.Create;
 begin
   inherited;
+  SystemParams.Screen.SetMode( 1024, 768, 60 );
   Window  := TWindow.Create( True, 10, 90, 0 );
   Render  := TGLRender.Create( Window );
 end;

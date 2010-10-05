@@ -77,11 +77,12 @@ begin
       AddMsg( 'RAM Available  : '+Utils.IntToStr(SystemParams.RAMFree)+'Mb', LM_HEADER_MSG);
       AddMsg( 'RAM Total      : '+Utils.IntToStr(SystemParams.RAMTotal)+'Mb', LM_HEADER_MSG);
       EndHeader;
-    end;       {
-
-  for I := 0 to SystemInfo.ModesCount-1 do
-    for J := 0 to SystemInfo.Modes[i].RefreshRates.Count-1 do
-      LogOut( Utils.IntToStr(SystemInfo.Modes[i].Width) + 'x' + Utils.IntToStr(SystemInfo.Modes[i].Height) + 'x' + Utils.IntToStr(SystemInfo.Modes[i].RefreshRates.Refresh[j]), LM_INFO);
+    end;
+                         {
+  with SystemParams.Screen do
+  for I := 0 to GetModesCount -1 do
+    for J := 0 to Modes[i].RefreshRates.Count-1 do
+      LogOut( Utils.IntToStr(Modes[i].Width) + 'x' + Utils.IntToStr(Modes[i].Height) + 'x' + Utils.IntToStr(Modes[i].RefreshRates.Refresh[j]), LM_INFO);
               }
 end;
 
