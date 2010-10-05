@@ -27,8 +27,8 @@ type
     procedure   Run;
 
     class property    Quit  : Boolean read FQuit;
-    property    Window: TWindow read GetWindow write SetWindow;
-    property    Render: TRender read FRender write SetRender;
+    property          Window: TWindow read GetWindow write SetWindow;
+    property          Render: TRender read FRender write SetRender;
   end;
 
 implementation

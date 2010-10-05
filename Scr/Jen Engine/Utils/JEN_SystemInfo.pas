@@ -97,10 +97,7 @@ begin
   result := -1;
   for I := 0 to High(FArray) do
     if (FArray[i] = R) then
-    begin
-    result := i;
-    exit;
-    end;
+      Exit(i);
 end;
 
 procedure TRefreshRateArray.AddRefresh( R : Byte );
@@ -184,10 +181,8 @@ var
   DevMode      : TDeviceMode;
   RefreshRates : PRefreshRateArray;
   Mode         : PDisplayMode;
+  i  : integer;
 begin
-  FillChar(DevMode, SizeOf(DevMode), 0);
-  DevMode.dmSize := SizeOf(DevMode);
-
   Mode := Modes[ Idx ];
   if Mode <> nil then
     begin
@@ -196,17 +191,34 @@ begin
     end else
       LogOut('Error set mode ' + Utils.IntToStr(Mode.Width) + 'x' + Utils.IntToStr(Mode.Height), LM_WARNING);
 
-  EnumDisplaySettingsW(nil, 0, DevMode);
+  //if R = 0 then
+
+  FillChar(DevMode, SizeOf(TDeviceMode), 0);
+  DevMode.dmSize := SizeOf(TDeviceMode);
+
+  R := 60;
+ EnumDisplaySettingsW(nil, 0, DevMode);
   with DevMode do
     begin
-      dmPelsWidth        := Mode.Width;
-      dmPelsHeight       := Mode.Height;
+      dmPelsWidth        := 1024;
+      dmPelsHeight       := 768;
       dmBitsPerPel       := 32;
-      if R <> 0 then
+   ///   if R <> 0 then
       dmDisplayFrequency := R;
-      dmFields           := $1C0000; // DM_BITSPERPEL or DM_PELSWIDTH  or DM_PELSHEIGHT;
+      dmFields           := $5C0000; // DM_BITSPERPEL or DM_PELSWIDTH or DM_PELSHEIGHT or DM_DISPLAYFREQUENCY ;
     end;
-  ChangeDisplaySettingsW(DevMode, $04); // CDS_FULLSCREEN
+
+  case ChangeDisplaySettingsW(DevMode, $04) of
+    DISP_CHANGE_SUCCESSFUL :
+      LogOut('Successful set mode ' + Utils.IntToStr(Mode.Width) + 'x' + Utils.IntToStr(Mode.Height), LM_NOTIFY);
+    DISP_CHANGE_FAILED :
+      LogOut('Failed set mode ' + Utils.IntToStr(Mode.Width) + 'x' + Utils.IntToStr(Mode.Height), LM_ERROR);
+    DISP_CHANGE_BADMODE :
+      LogOut('Failed set mode ' + Utils.IntToStr(Mode.Width) + 'x' + Utils.IntToStr(Mode.Height) + ' bad mode', LM_ERROR);
+    else
+      LogOut('Failed set mode ' + Utils.IntToStr(Mode.Width) + 'x' + Utils.IntToStr(Mode.Height) + ' uncnown error', LM_ERROR);
+  end;
+     // CDS_FULLSCREEN
 end;
 
 function TSystem.TScreen.GetModesCount : integer;
@@ -298,7 +310,6 @@ begin
 	DataSize  := SizeOf( LongWord );
 	Res := RegQueryValueExW(Handle,	'~MHz', nil, @DataType, @FCPUSpeed,	@DataSize);
   RegCloseKey(Handle);
-
 end;
 
 destructor TSystem.Destroy;
