@@ -65,8 +65,8 @@ type
     property CPUSpeed  : LongWord read fCPUSpeed;
     property Screen    : TScreen read fScreen;
 
-    function RAMTotal : Cardinal;
-    function RAMFree : Cardinal;
+    function RAMTotal  : Cardinal;
+    function RAMFree   : Cardinal;
   end;
 
 implementation
@@ -172,53 +172,70 @@ begin
 end;
 
 procedure TSystem.TScreen.SetMode( W, H, R : integer );
-begin
-  SetMode( GetIdx(W, H), R);
-end;
-
-procedure TSystem.TScreen.SetMode( Idx, R : integer );
 var
   DevMode      : TDeviceMode;
   RefreshRates : PRefreshRateArray;
   Mode         : PDisplayMode;
   i  : integer;
 begin
-  Mode := Modes[ Idx ];
+
+  Mode := Modes[GetIdx(W, H)];
   if Mode <> nil then
     begin
       if not Mode^.RefreshRates.IsExist( R ) then
         R := 0;
     end else
-      LogOut('Error set mode ' + Utils.IntToStr(Mode.Width) + 'x' + Utils.IntToStr(Mode.Height), LM_WARNING);
+    begin
+      LogOut('Error set display mode ' + Utils.IntToStr(W) + 'x' + Utils.IntToStr(H) + 'x' + Utils.IntToStr(R), LM_WARNING);
+      LogOut('Change display mode to default 1024x768x60', LM_NOTIFY);
+      if IsModeExist(1024, 768, 60) then
+        SetMode(1024, 768, 60)
+      else
+        LogOut('Display mode critical error', LM_ERROR);
+      Exit;
+    end;
 
-  //if R = 0 then
+  if R = 0 then
+    with Mode^.RefreshRates do
+      R := GetRefresh(Count-1);
 
   FillChar(DevMode, SizeOf(TDeviceMode), 0);
   DevMode.dmSize := SizeOf(TDeviceMode);
 
-  R := 60;
- EnumDisplaySettingsW(nil, 0, DevMode);
+  EnumDisplaySettingsW(nil, 0, DevMode);
   with DevMode do
     begin
-      dmPelsWidth        := 1024;
-      dmPelsHeight       := 768;
+      dmPelsWidth        := Mode.Width;
+      dmPelsHeight       := Mode.Height;
       dmBitsPerPel       := 32;
-   ///   if R <> 0 then
+      if R <> 0 then
       dmDisplayFrequency := R;
       dmFields           := $5C0000; // DM_BITSPERPEL or DM_PELSWIDTH or DM_PELSHEIGHT or DM_DISPLAYFREQUENCY ;
     end;
 
   case ChangeDisplaySettingsW(DevMode, $04) of
     DISP_CHANGE_SUCCESSFUL :
-      LogOut('Successful set mode ' + Utils.IntToStr(Mode.Width) + 'x' + Utils.IntToStr(Mode.Height), LM_NOTIFY);
+      LogOut('Successful set display mode ' + Utils.IntToStr(Mode.Width) + 'x' + Utils.IntToStr(Mode.Height) + 'x' + Utils.IntToStr(R), LM_NOTIFY);
     DISP_CHANGE_FAILED :
-      LogOut('Failed set mode ' + Utils.IntToStr(Mode.Width) + 'x' + Utils.IntToStr(Mode.Height), LM_ERROR);
+      LogOut('Failed set display mode ' + Utils.IntToStr(Mode.Width) + 'x' + Utils.IntToStr(Mode.Height) + 'x' + Utils.IntToStr(R), LM_ERROR);
     DISP_CHANGE_BADMODE :
-      LogOut('Failed set mode ' + Utils.IntToStr(Mode.Width) + 'x' + Utils.IntToStr(Mode.Height) + ' bad mode', LM_ERROR);
+      LogOut('Failed set display mode ' + Utils.IntToStr(Mode.Width) + 'x' + Utils.IntToStr(Mode.Height) + 'x' + Utils.IntToStr(R) + ' bad mode', LM_ERROR);
     else
-      LogOut('Failed set mode ' + Utils.IntToStr(Mode.Width) + 'x' + Utils.IntToStr(Mode.Height) + ' uncnown error', LM_ERROR);
+      LogOut('Failed set display mode ' + Utils.IntToStr(Mode.Width) + 'x' + Utils.IntToStr(Mode.Height) + 'x' + Utils.IntToStr(R) + ' uncnown error', LM_ERROR);
   end;
-     // CDS_FULLSCREEN
+
+end;
+
+
+procedure TSystem.TScreen.SetMode( Idx, R : integer );
+var
+  Mode : PDisplayMode;
+begin
+  Mode := Modes[Idx];
+  if Assigned(Mode) then
+    SetMode( Mode.Width, Mode.Height, R)
+  else
+    SetMode( -1, -1, R);
 end;
 
 function TSystem.TScreen.GetModesCount : integer;
@@ -266,7 +283,7 @@ begin
   result := false;
   RRA := GetRefresh(GetIdx(W, H));
   if Assigned(RRA) then
-    RRA^.IsExist(R);
+    result := RRA^.IsExist(R);
 end;
 
 function TSystem.TScreen.Width : Integer;
@@ -289,13 +306,13 @@ begin
   inherited;
   fScreen := TScreen.Create;
 
-  Res := RegOpenKeyExW(HKEY_LOCAL_MACHINE, 'HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0', 0, KEY_READ, &Handle);
-  if Res <> ERROR_SUCCESS then
-    Exit;
-
   FCPUSpeed := 0;
   FCPUName  :='Couldn''t get CPU name!';
   DataSize  := 0;
+
+  Res := RegOpenKeyExW(HKEY_LOCAL_MACHINE, 'HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0', 0, KEY_READ, &Handle);
+  if Res <> ERROR_SUCCESS then
+    Exit;
 
 	Res := RegQueryValueExW(Handle,	'ProcessorNameString', nil, @DataType, nil,	@DataSize);
   if (Res <> ERROR_SUCCESS) or (DataType <> REG_SZ) or (DataSize = 0)  then

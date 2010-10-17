@@ -22,7 +22,7 @@ implementation
 constructor TSameGame.Create;
 begin
   inherited;
-  SystemParams.Screen.SetMode( 1024, 768, 60 );
+  SystemParams.Screen.SetMode( 1028, 768, 60 );
   Window  := TWindow.Create( True, 10, 90, 0 );
   Render  := TGLRender.Create( Window );
 end;

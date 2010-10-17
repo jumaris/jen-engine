@@ -223,7 +223,7 @@ type
     pt      : TPoint;
   end;
 
-  TDeviceMode = packed record
+  TDeviceMode = record
     SomeData1 : array [0..67] of Byte;
     dmSize             : Word;
     dmDriverExtra      : Word;

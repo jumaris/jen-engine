@@ -3,7 +3,7 @@
 			<ProjectGuid>{C1894D3D-47FB-448E-8601-231258A2BC1E}</ProjectGuid>
 			<ProjectVersion>12.0</ProjectVersion>
 			<MainSource>Test.dpr</MainSource>
-			<Config Condition="'$(Config)'==''">Release</Config>
+			<Config Condition="'$(Config)'==''">Debug</Config>
 			<DCC_DCCCompiler>DCC32</DCC_DCCCompiler>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Config)'=='Base' or '$(Base)'!=''">
@@ -22,10 +22,10 @@
 		<PropertyGroup Condition="'$(Base)'!=''">
 			<DCC_UsePackage>vcl;rtl;vclx;vclimg;vclactnband;dbrtl;vcldb;vcldbx;bdertl;vcltouch;xmlrtl;dsnap;dsnapcon;TeeUI;TeeDB;Tee;adortl;IndyCore;IndySystem;IndyProtocols;inet;intrawebdb_100_140;Intraweb_100_140;VclSmp;vclie;websnap;webdsnap;inetdb;inetdbbde;inetdbxpress;soaprtl;dbexpress;DbxCommonDriver;DataSnapIndy10ServerTransport;DataSnapProviderClient;DbxClientDriver;DataSnapServer;DBXInterBaseDriver;DBXMySQLDriver;dbxcds;DBXFirebirdDriver;DBXSybaseASEDriver;DBXSybaseASADriver;DBXOracleDriver;DBXMSSQLDriver;DBXInformixDriver;DBXDb2Driver;ztv10rt</DCC_UsePackage>
 			<DCC_DcuOutput>temp\</DCC_DcuOutput>
-			<DCC_ExeOutput>..\bin\</DCC_ExeOutput>
+			<DCC_ExeOutput>..\..\..\bin\</DCC_ExeOutput>
 			<DCC_BplOutput>temp\</DCC_BplOutput>
 			<DCC_DcpOutput>temp\</DCC_DcpOutput>
-			<DCC_DependencyCheckOutputName>..\bin\Test.exe</DCC_DependencyCheckOutputName>
+			<DCC_DependencyCheckOutputName>..\..\..\bin\Test.exe</DCC_DependencyCheckOutputName>
 			<DCC_ImageBase>00400000</DCC_ImageBase>
 			<DCC_UnitAlias>WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;$(DCC_UnitAlias)</DCC_UnitAlias>
 			<DCC_Platform>x86</DCC_Platform>
@@ -48,20 +48,36 @@
 			<DelphiCompile Include="Test.dpr">
 				<MainSource>MainSource</MainSource>
 			</DelphiCompile>
-			<DCCReference Include="Jen Engine\JEN_Main.pas">
-				<Form>$IFDEF DEBUG</Form>
+			<DCCReference Include="..\..\Jen Engine\JEN_Main.pas">
+				<Form>,
+  JEN_SystemInfo in &apos;..\..\Jen Engine\Utils\JEN_SystemInfo.pas&apos;,
+  JEN_Utils in &apos;..\..\Jen Engine\Utils\JEN_Utils.pas&apos;,
+  JEN_Window in &apos;..\..\Jen Engine\Windows\JEN_Window.pas&apos;,
+  XSystem in &apos;..\..\Jen Engine\Utils\XSystem.pas&apos;,
+  JEN_Game in &apos;..\..\Jen Engine\JEN_Game.pas&apos;,
+  JEN_Log in &apos;..\..\Jen Engine\Log\JEN_Log.pas&apos;,
+  JEN_DefConsoleLog in &apos;..\..\Jen Engine\Log\JEN_DefConsoleLog.pas&apos;,
+  JEN_OpenGLHeader in &apos;..\..\Jen Engine\Utils\JEN_OpenGLHeader.pas&apos;,
+  JEN_OpenGL in &apos;..\..\Jen Engine\Render\JEN_OpenGL.pas&apos;,
+  JEN_Render in &apos;..\..\Jen Engine\Render\JEN_Render.pas&apos;,
+  JEN_Math in &apos;..\..\Jen Engine\Utils\JEN_Math.pas&apos;,
+  JEN_Display in &apos;..\..\Jen Engine\Core\JEN_Display.pas&apos;,
+  SomeGame in &apos;SomeGame.pas&apos;;
+
+{$IFDEF DEBUG</Form>
 			</DCCReference>
-			<DCCReference Include="Jen Engine\Utils\JEN_SystemInfo.pas"/>
-			<DCCReference Include="Jen Engine\Utils\JEN_Utils.pas"/>
-			<DCCReference Include="Jen Engine\Windows\JEN_Window.pas"/>
-			<DCCReference Include="Jen Engine\Utils\XSystem.pas"/>
-			<DCCReference Include="Jen Engine\JEN_Game.pas"/>
-			<DCCReference Include="Jen Engine\Log\JEN_Log.pas"/>
-			<DCCReference Include="Jen Engine\Log\JEN_DefConsoleLog.pas"/>
-			<DCCReference Include="Jen Engine\Utils\JEN_OpenGLHeader.pas"/>
-			<DCCReference Include="Jen Engine\Render\JEN_OpenGL.pas"/>
-			<DCCReference Include="Jen Engine\Render\JEN_Render.pas"/>
-			<DCCReference Include="Jen Engine\Utils\JEN_Math.pas"/>
+			<DCCReference Include="..\..\Jen Engine\Utils\JEN_SystemInfo.pas"/>
+			<DCCReference Include="..\..\Jen Engine\Utils\JEN_Utils.pas"/>
+			<DCCReference Include="..\..\Jen Engine\Windows\JEN_Window.pas"/>
+			<DCCReference Include="..\..\Jen Engine\Utils\XSystem.pas"/>
+			<DCCReference Include="..\..\Jen Engine\JEN_Game.pas"/>
+			<DCCReference Include="..\..\Jen Engine\Log\JEN_Log.pas"/>
+			<DCCReference Include="..\..\Jen Engine\Log\JEN_DefConsoleLog.pas"/>
+			<DCCReference Include="..\..\Jen Engine\Utils\JEN_OpenGLHeader.pas"/>
+			<DCCReference Include="..\..\Jen Engine\Render\JEN_OpenGL.pas"/>
+			<DCCReference Include="..\..\Jen Engine\Render\JEN_Render.pas"/>
+			<DCCReference Include="..\..\Jen Engine\Utils\JEN_Math.pas"/>
+			<DCCReference Include="..\..\Jen Engine\Core\JEN_Display.pas"/>
 			<DCCReference Include="SomeGame.pas"/>
 			<BuildConfiguration Include="Base">
 				<Key>Base</Key>
@@ -95,7 +111,7 @@
 						<VersionInfo Name="MajorVer">0</VersionInfo>
 						<VersionInfo Name="MinorVer">0</VersionInfo>
 						<VersionInfo Name="Release">1</VersionInfo>
-						<VersionInfo Name="Build">561</VersionInfo>
+						<VersionInfo Name="Build">581</VersionInfo>
 						<VersionInfo Name="Debug">True</VersionInfo>
 						<VersionInfo Name="PreRelease">False</VersionInfo>
 						<VersionInfo Name="Special">False</VersionInfo>
@@ -107,7 +123,7 @@
 					<VersionInfoKeys>
 						<VersionInfoKeys Name="CompanyName"/>
 						<VersionInfoKeys Name="FileDescription"/>
-						<VersionInfoKeys Name="FileVersion">0.0.1.561</VersionInfoKeys>
+						<VersionInfoKeys Name="FileVersion">0.0.1.581</VersionInfoKeys>
 						<VersionInfoKeys Name="InternalName"/>
 						<VersionInfoKeys Name="LegalCopyright"/>
 						<VersionInfoKeys Name="LegalTrademarks"/>

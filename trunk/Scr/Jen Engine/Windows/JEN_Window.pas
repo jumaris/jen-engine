@@ -50,8 +50,15 @@ begin
     WM_CLOSE:
       TGame.Exit;
 
-  //  WM_ACTIVATEAPP :;
-   {  with CDisplay do
+    WM_ACTIVATEAPP :
+      begin
+         if Word(wParam) = WA_ACTIVE then
+          ShowWindow(hWnd, SW_SHOW)
+         else
+          ShowWindow(hWnd, SW_MINIMIZE);
+      end;
+      {
+     with CDisplay do
       begin
         FActive := Word(wParam) = WA_ACTIVE;
         if FullScreen then
@@ -66,7 +73,7 @@ begin
 //        ShowCursor(not FActive);
         if CInput <> nil then
           CInput.Reset;
-      end;  }
+      end;}
 
   //  WM_MOVE, WM_SIZE :;
      { GetWindowRect(hWnd, CDisplay.FRect);
@@ -138,6 +145,8 @@ begin
   if isFullScreen Then
     begin
       WindowRect.Location := PointZero;
+      WindowRect.Width    := SystemParams.Screen.Width;
+      WindowRect.Height   := SystemParams.Screen.Height;
       Window_Style        := WS_POPUP or WS_VISIBLE or WS_SYSMENU;
     end else
     begin
