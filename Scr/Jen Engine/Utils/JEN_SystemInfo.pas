@@ -42,8 +42,9 @@ type
         function Width  : Integer;
         function Height : Integer;
 
-        procedure SetMode( W, H, R : integer ); overload; inline;
-        procedure SetMode( Idx, R  : integer ); overload; inline;
+        procedure SetMode  (W, H, R : integer); overload;
+        procedure SetMode  (Idx, R  : integer); overload;
+        procedure ResetMode;
 
         function GetModesCount : Integer;
         property Modes[Idx: Integer]           : PDisplayMode read GetMode; default;
@@ -213,7 +214,7 @@ begin
       dmFields           := $5C0000; // DM_BITSPERPEL or DM_PELSWIDTH or DM_PELSHEIGHT or DM_DISPLAYFREQUENCY ;
     end;
 
-  case ChangeDisplaySettingsW(DevMode, $04) of
+  case ChangeDisplaySettingsW(@DevMode, $04) of
     DISP_CHANGE_SUCCESSFUL :
       LogOut('Successful set display mode ' + Utils.IntToStr(Mode.Width) + 'x' + Utils.IntToStr(Mode.Height) + 'x' + Utils.IntToStr(R), LM_NOTIFY);
     DISP_CHANGE_FAILED :
@@ -236,6 +237,12 @@ begin
     SetMode( Mode.Width, Mode.Height, R)
   else
     SetMode( -1, -1, R);
+end;
+
+procedure TSystem.TScreen.ResetMode;
+begin
+  ChangeDisplaySettingsW(nil, 0);
+  LogOut('Reset display mode to delfault', LM_NOTIFY);
 end;
 
 function TSystem.TScreen.GetModesCount : integer;

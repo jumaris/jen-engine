@@ -4,31 +4,31 @@ unit JEN_Game;
 interface
 
 uses
-  JEN_Window, JEN_Render;
+  JEN_Display,
+  JEN_Render;
 
 type
   TGame = class
+    constructor Create;
+    destructor  Destroy; override;
   private
-    class var   FisRunnig : Boolean;
-    class var   FQuit     : Boolean;
-    class var   FWindow   : TWindow;
-    var FRender           : TRender;
-    procedure   SetWindow( Window : TWindow );
-    function    GetWindow : TWindow; inline;
-    procedure   SetRender( Render : TRender );
+    var FRender         : TRender;
+    procedure SetRender(Render : TRender);
+
+    class var FisRunnig : Boolean;
+    class var FQuit     : Boolean;
+    class var FDisplay  : TDisplay;
+    class procedure SetDisplay(Display : TDisplay); static;
   protected
     procedure   LoadContent; virtual; abstract;
   public
-    constructor Create;
-    destructor  Destroy; override;
-
     class procedure Exit;
 
-    procedure   Run;
+    procedure Run;
 
-    class property    Quit  : Boolean read FQuit;
-    property          Window: TWindow read GetWindow write SetWindow;
-    property          Render: TRender read FRender write SetRender;
+    class property Quit   : Boolean read FQuit;
+    class property Display: TDisplay read FDisplay write SetDisplay;
+    property       Render : TRender read FRender write SetRender;
   end;
 
 implementation
@@ -43,10 +43,10 @@ begin
   if( FisRunnig ) then
     LogOut( 'Engine alredy running', LM_WARNING );
 
-  if Assigned( FWindow ) then
-    FWindow.Free;
+  if Assigned( FDisplay ) then
+    FDisplay.Free;
 
-  FWindow := nil;
+  FDisplay:= nil;
   FRender := nil;
   FQuit   := False;
 end;
@@ -60,10 +60,10 @@ begin
       FRender := nil;
     end;
 
-  if Assigned( FWindow ) then
+  if Assigned( FDisplay ) then
     begin
-      FWindow.Free;
-      FWindow := nil;
+      FDisplay.Free;
+      FDisplay := nil;
     end;
 
   FisRunnig := False;
@@ -73,23 +73,18 @@ end;
 class procedure TGame.Exit;
 begin
   FQuit := True;
-  FWindow.HandleFree;
+ // FDisplay.HandleFree;
 end;
 
-procedure TGame.SetWindow( Window : TWindow );
+class procedure TGame.SetDisplay(Display : TDisplay);
 begin
-  if Assigned( FWindow ) then
+  if Assigned( FDisplay ) then
     begin
-      FWindow.Free;
-      LogOut( 'Window alrady exist', LM_WARNING );
+      FDisplay.Free;
+      LogOut( 'Display alrady exist', LM_WARNING );
     end;
 
-  FWindow := Window;
-end;
-
-function TGame.GetWindow;
-begin
-  result := FWindow;
+  FDisplay := Display;
 end;
 
 procedure TGame.SetRender( Render : TRender );
@@ -105,14 +100,14 @@ end;
 
 procedure TGame.Run;
 begin
-  if FisRunnig or (not Assigned( FWindow )) then Exit;
+  if FisRunnig or (not Assigned(FDisplay)) then Exit;
   FisRunnig := true;
 
   LoadContent;
 
   while not FQuit do
     begin
-      Window.Update;
+      Display.Update;
     end;
 end;
 

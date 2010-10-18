@@ -29,6 +29,7 @@ var
   Utils        : TUtils;
   SystemParams : TSystem;
   Log          : TLog;
+  Game         : TGame;
 
 procedure LogOut( const Text : String; MType : TLogMsg );
 

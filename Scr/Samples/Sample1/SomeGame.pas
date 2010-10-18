@@ -4,27 +4,25 @@ unit SomeGame;
 interface
 
 uses
-  windows, JEN_MAIN;
+  JEN_MAIN,
+  JEN_Display_Window;
 
 type
-  TSameGame = class ( TGame )
+  TSameGame = class(TGame)
   private
     procedure LoadContent; override;
   public
     constructor Create;
   end;
 
-var
-  Game : TSameGame;
-
 implementation
 
 constructor TSameGame.Create;
 begin
   inherited;
-  SystemParams.Screen.SetMode( 1028, 768, 60 );
-  Window  := TWindow.Create( True, 10, 90, 0 );
-  Render  := TGLRender.Create( Window );
+ // SystemParams.Screen.SetMode( 1028, 768, 60 );
+  Display := TDisplayWindow.Create(1028, 768, 60, false);
+  Render  := TGLRender.Create;
 end;
 
 procedure TSameGame.LoadContent;

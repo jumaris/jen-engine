@@ -4,6 +4,7 @@ unit JEN_Window;
 interface
 
 uses
+  JEN_Display,
   XSystem;
 
 const
@@ -12,6 +13,8 @@ const
 type
   PWindow = ^TWindow;
   TWindow = class
+    constructor Create(FullScreen : Boolean; Width: Integer; Height: Integer; FSSA : Byte);
+    destructor  Destroy; override;
   private
     FCaption      : String;
     FHandle       : HWND;
@@ -19,16 +22,13 @@ type
     class function WndProc(hWnd: HWND; Msg: Cardinal; wParam: Integer; lParam: Integer): Integer; stdcall; static;
     procedure      SetCaption(const Value: String);
   public
-    constructor Create(isFullScreen : Boolean; Width: Integer; Height: Integer; FSSA : Byte);
-    destructor  Destroy; override;
-
     procedure   HandleFree;
     procedure   Update;
 
     property    Caption : String read FCaption write SetCaption;
     property    Handle  : HWND read FHandle;
     property    DC      : HDC read FDC;
-end;
+  end;
 
 implementation
 
@@ -41,7 +41,7 @@ uses
   JEN_Math,
   JEN_Game;
 
-class function TWindow.WndProc(hWnd: HWND; Msg: Cardinal; wParam: Integer; lParam: Integer): Integer; stdcall;
+class function TWindow.WndProc(hWnd: HWND; Msg: Cardinal; wParam: Integer; lParam: Integer) : Integer; stdcall;
 begin
 // Assert(expr : Boolean [; const msg: string]
 //  LogOut('message');
@@ -52,10 +52,13 @@ begin
 
     WM_ACTIVATEAPP :
       begin
+        if Game.Display.FullScreen then
          if Word(wParam) = WA_ACTIVE then
           ShowWindow(hWnd, SW_SHOW)
          else
           ShowWindow(hWnd, SW_MINIMIZE);
+         Game.Display.Active := Word(wParam) = WA_ACTIVE;
+
       end;
       {
      with CDisplay do
@@ -110,7 +113,7 @@ begin
   end;
 end;
 
-constructor TWindow.Create(isFullScreen: Boolean; Width: Integer; Height: Integer; FSSA: Byte);
+constructor TWindow.Create(FullScreen: Boolean; Width: Integer; Height: Integer; FSSA: Byte);
 var
   WinClass      : TWndClassEx;
   Window_Style  : LongWord;
@@ -140,9 +143,9 @@ begin
     LogOut( 'Register window class.', LM_NOTIFY );
 
   if (Width = SystemParams.Screen.Width) and (Height = SystemParams.Screen.Height) then
-    isFullScreen := true;
+    FullScreen := true;
 
-  if isFullScreen Then
+  if FullScreen Then
     begin
       WindowRect.Location := PointZero;
       WindowRect.Width    := SystemParams.Screen.Width;
@@ -169,7 +172,7 @@ begin
                                    wnd_Width  + ( wnd_BrdSizeX * 2 ) * Byte( not wnd_FullScreen ),
                                    wnd_Height + ( wnd_BrdSizeY * 2 + wnd_CpnSize ) * Byte( not isFullScreen ), 0, 0, HInstance, nil );
                           }
-  FHandle := CreateWindowExW( WS_EX_APPWINDOW or WS_EX_TOPMOST * Byte( isFullScreen ), WINDOW_CLASS_NAME,  @FCaption[1], Window_Style, WindowRect.X, WindowRect.Y,
+  FHandle := CreateWindowExW( WS_EX_APPWINDOW or WS_EX_TOPMOST * Byte( FullScreen ), WINDOW_CLASS_NAME,  @FCaption[1], Window_Style, WindowRect.X, WindowRect.Y,
                               WindowRect.Width, WindowRect.Height, 0, 0, HInstance, nil );
                          {
   FHandle := CreateWindowExW(0, WINDOW_CLASS_NAME, @FCaption[1], WS_CAPTION or WS_MINIMIZEBOX or WS_SYSMENU or WS_VISIBLE,
