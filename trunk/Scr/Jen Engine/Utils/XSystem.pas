@@ -223,6 +223,7 @@ type
     pt      : TPoint;
   end;
 
+  PDeviceMode = ^TDeviceMode;
   TDeviceMode = record
     SomeData1 : array [0..67] of Byte;
     dmSize             : Word;
@@ -300,7 +301,7 @@ type
   function ShowCursor(bShow: Boolean): LongInt; stdcall; external user32;
 
   function EnumDisplaySettingsW(lpszDeviceName: PWideChar; iModeNum: LongWord; var lpDevMode: TDeviceMode): Boolean; stdcall; external user32;
-  function ChangeDisplaySettingsW(var lpDevMode: TDeviceMode; dwFlags: LongWord): LongInt; stdcall; external user32;
+  function ChangeDisplaySettingsW(lpDevMode: PDeviceMode; dwFlags: LongWord): LongInt; stdcall; external user32;
 
   function SwapBuffers(DC: HDC): Boolean; stdcall; external gdi32;
   function SetPixelFormat(DC: HDC; PixFormat: LongInt; FormatDef: Pointer): Boolean; stdcall; external gdi32;

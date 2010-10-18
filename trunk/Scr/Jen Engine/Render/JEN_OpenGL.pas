@@ -5,15 +5,14 @@ interface
 
 uses
   XSystem,
-  JEN_Render,
-  JEN_Window;
+  JEN_Render;
 
 type
   TGLRender = class( TRender )
     private
       FOGL_Context  : HGLRC;
     public
-      constructor Create( Window : TWindow; DepthBits : Byte = 24; StencilBits : Byte = 8 );
+      constructor Create(DepthBits : Byte = 24; StencilBits : Byte = 8 );
       destructor  Destroy;  override;
   end;
 
@@ -23,7 +22,7 @@ uses
   JEN_OpenGLHeader,
   JEN_Main;
 
-constructor TGLRender.Create(Window: TWindow; DepthBits : Byte; StencilBits : Byte );
+constructor TGLRender.Create(DepthBits : Byte; StencilBits : Byte );
 var
   PFD      : TPixelFormatDescriptor;
 begin
@@ -40,9 +39,9 @@ begin
     cStencilBits := StencilBits;
   end;
 
-  SetPixelFormat( Window.DC, ChoosePixelFormat( Window.DC, @PFD), @PFD);
+  SetPixelFormat( Game.Display.DC, ChoosePixelFormat( Game.Display.DC, @PFD), @PFD);
 
-  FOGL_Context := wglCreateContext( Window.DC );
+  FOGL_Context := wglCreateContext( Game.Display.DC );
   if ( FOGL_Context = 0 ) Then
     begin
       LogOut( 'Cannot create OpenGL context.', LM_ERROR );
@@ -50,7 +49,7 @@ begin
     end else
       LogOut( 'Create OpenGL context.', LM_NOTIFY );
 
-  if not wglMakeCurrent( Window.DC, FOGL_Context ) Then
+  if not wglMakeCurrent( Game.Display.DC, FOGL_Context ) Then
     begin
       LogOut( 'Cannot set current OpenGL context.', LM_ERROR );
       exit;
