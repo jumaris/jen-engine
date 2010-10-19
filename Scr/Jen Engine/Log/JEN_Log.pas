@@ -15,7 +15,7 @@ type
   public
     procedure BeginHeader; virtual; abstract;
     procedure EndHeader; virtual; abstract;
-    procedure AddMsg( const Text : String; MType : TLogMsg ); virtual; abstract;
+    procedure AddMsg(const Text : String; MType : TLogMsg); virtual; abstract;
   end;
 
   TLog = class
@@ -26,7 +26,7 @@ type
   public
     property LogOutputs : TList read fLogOutputs; 
     procedure Init;
-    procedure AddMsg( const Text : String; MType : TLogMsg );
+    procedure AddMsg(const Text : String; MType : TLogMsg);
   end;
 
 implementation

@@ -19,6 +19,8 @@ type
     FRefresh    : Byte;
     FFullScreen : Boolean;
     FActive     : Boolean;
+    FValid      : Boolean;
+    function  GetValid : Boolean; override;
     function  GetFullScreen : Boolean; override;
     procedure SetActive(Value : Boolean); override;
     function  GetActive : Boolean; override;
@@ -43,14 +45,21 @@ begin
 
   FActive     := True;
   if FullScreen then
-    SystemParams.Screen.SetMode(Width, Height, Refresh);
-  FWindow  := TWindow.Create(FullScreen, Width, Height, 0);
+    FValid := SystemParams.Screen.SetMode(Width, Height, Refresh) <> SM_Error;
+  FWindow  := TWindow.Create(Self, FullScreen, Width, Height, 0);
+
+  FValid   := FValid and FWindow.isValid;
 end;
 
 destructor TDisplayWindow.Destroy;
 begin
   FWindow.Free;
   inherited;
+end;
+
+function TDisplayWindow.GetValid : Boolean;
+begin
+  result := FValid;
 end;
 
 function TDisplayWindow.GetFullScreen : Boolean;
@@ -62,6 +71,7 @@ procedure TDisplayWindow.SetActive(Value : Boolean);
 begin
   if FFullScreen then
   begin
+
     if Value then
       SystemParams.Screen.SetMode(FWidth, FHeight, FRefresh)
     else

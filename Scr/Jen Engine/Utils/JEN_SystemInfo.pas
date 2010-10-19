@@ -36,14 +36,16 @@ type
         constructor Create;
         destructor Destroy; override;
       private
-        fModes  : array of TDisplayMode;
-        function GetMode(Idx: Integer) : PDisplayMode;
+        type TSetModeResult = (SM_Successful, SM_SetDefault, SM_Error );
+        var
+          fModes  : array of TDisplayMode;
+          function GetMode(Idx: Integer) : PDisplayMode;
       public
         function Width  : Integer;
         function Height : Integer;
 
-        procedure SetMode  (W, H, R : integer); overload;
-        procedure SetMode  (Idx, R  : integer); overload;
+        function SetMode(W, H, R : integer) : TSetModeResult; overload;
+        function SetMode(Idx, R  : integer) : TSetModeResult; overload;
         procedure ResetMode;
 
         function GetModesCount : Integer;
@@ -172,12 +174,12 @@ begin
   inherited;
 end;
 
-procedure TSystem.TScreen.SetMode( W, H, R : integer );
+function TSystem.TScreen.SetMode( W, H, R : integer ) : TSetModeResult;
 var
   DevMode      : TDeviceMode;
   RefreshRates : PRefreshRateArray;
   Mode         : PDisplayMode;
-  i  : integer;
+  i            : integer;
 begin
 
   Mode := Modes[GetIdx(W, H)];
@@ -189,11 +191,17 @@ begin
     begin
       LogOut('Error set display mode ' + Utils.IntToStr(W) + 'x' + Utils.IntToStr(H) + 'x' + Utils.IntToStr(R), LM_WARNING);
       LogOut('Change display mode to default 1024x768x60', LM_NOTIFY);
+
       if IsModeExist(1024, 768, 60) then
-        SetMode(1024, 768, 60)
-      else
+      begin
+        if SetMode(1024, 768, 60) = SM_Successful then
+          Exit(SM_SetDefault) else
+        Exit(SM_Error);
+      end else
+      begin
         LogOut('Display mode critical error', LM_ERROR);
-      Exit;
+        Exit(SM_Error);
+      end;
     end;
 
   if R = 0 then
@@ -214,9 +222,12 @@ begin
       dmFields           := $5C0000; // DM_BITSPERPEL or DM_PELSWIDTH or DM_PELSHEIGHT or DM_DISPLAYFREQUENCY ;
     end;
 
-  case ChangeDisplaySettingsW(@DevMode, $04) of
+  case ChangeDisplaySettingsExW( nil, @DevMode, 0, $04, nil ) of
     DISP_CHANGE_SUCCESSFUL :
+    begin
       LogOut('Successful set display mode ' + Utils.IntToStr(Mode.Width) + 'x' + Utils.IntToStr(Mode.Height) + 'x' + Utils.IntToStr(R), LM_NOTIFY);
+      Exit(SM_Successful);
+    end;
     DISP_CHANGE_FAILED :
       LogOut('Failed set display mode ' + Utils.IntToStr(Mode.Width) + 'x' + Utils.IntToStr(Mode.Height) + 'x' + Utils.IntToStr(R), LM_ERROR);
     DISP_CHANGE_BADMODE :
@@ -225,23 +236,23 @@ begin
       LogOut('Failed set display mode ' + Utils.IntToStr(Mode.Width) + 'x' + Utils.IntToStr(Mode.Height) + 'x' + Utils.IntToStr(R) + ' uncnown error', LM_ERROR);
   end;
 
+  Result := SM_Error;
 end;
 
-
-procedure TSystem.TScreen.SetMode( Idx, R : integer );
+function TSystem.TScreen.SetMode( Idx, R : integer ) : TSetModeResult;
 var
   Mode : PDisplayMode;
 begin
   Mode := Modes[Idx];
   if Assigned(Mode) then
-    SetMode( Mode.Width, Mode.Height, R)
+    Result := SetMode( Mode.Width, Mode.Height, R)
   else
-    SetMode( -1, -1, R);
+    Result := SetMode( -1, -1, R);
 end;
 
 procedure TSystem.TScreen.ResetMode;
 begin
-  ChangeDisplaySettingsW(nil, 0);
+  ChangeDisplaySettingsExW( nil, nil, 0, 0, nil );
   LogOut('Reset display mode to delfault', LM_NOTIFY);
 end;
 
@@ -331,7 +342,7 @@ begin
   SetLength(FCPUName,DataSize div 2);
   RegQueryValueExW(Handle, 'ProcessorNameString', nil, @DataType, PByte(@FCPUName[1]), @DataSize);
 
-	DataSize  := SizeOf( LongWord );
+	DataSize  := SizeOf(LongWord);
 	Res := RegQueryValueExW(Handle,	'~MHz', nil, @DataType, @FCPUSpeed,	@DataSize);
   RegCloseKey(Handle);
 end;

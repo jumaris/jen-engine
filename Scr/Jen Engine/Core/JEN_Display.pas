@@ -8,16 +8,19 @@ uses
 type
   TDisplay = class
   protected
+    function  GetValid : Boolean; virtual; abstract;
     function  GetFullScreen : Boolean; virtual; abstract;
     procedure SetActive(Value : Boolean); virtual; abstract;
     function  GetActive : Boolean; virtual; abstract;
     function  GetHandle : HWND; virtual; abstract;
     function  GetDC : HDC; virtual; abstract;
   public
+    property IsValid  : Boolean read GetValid;
     property FullScreen : Boolean read GetFullScreen;
     property Active : Boolean read GetActive write SetActive;
     property Handle : HWND  read GetHandle;
     property DC : HDC read GetDC;
+
     procedure Update; virtual; abstract;
   end;
 
