@@ -8,6 +8,8 @@ uses
   JEN_Log;
 
 type TDefConsoleLog = class(TLogOutput)
+  private
+    LastUpdate : LongInt;
   public
     procedure BeginHeader; override;
     procedure EndHeader; override;
@@ -24,6 +26,7 @@ uses
 procedure TDefConsoleLog.BeginHeader;
 begin
   Writeln('*******************************************************************************');
+  LastUpdate := Utils.Time;
 end;
 
 procedure TDefConsoleLog.EndHeader;
@@ -33,30 +36,36 @@ end;
 
 procedure TDefConsoleLog.AddMsg( const Text : String; MType : TLogMsg );
 var
-  i   : Byte;
-  str : String;
+  i    : Byte;
+  str  : String;
+  tstr : String;
 begin
   case MType of
     LM_HEADER_MSG :
-      Writeln( Text );
+      Writeln(Text);
 
     LM_NOTIFY :
       begin
-        str  := Utils.IntToStr( Utils.Time );
-        for i := 0 to 6 - Length(str) do
-          str := '0' + str;
-        Writeln(  '[' + str + 'ms] ' + Text );
+        Str := '00000';
+        tstr := Utils.IntToStr(Round(Utils.Time/1000));
+        Move(tstr[1], str[6-length(tstr)], length(tstr)*2);
+
+        Str := Str + 's:0000000';
+        tstr := Utils.IntToStr(Utils.Time - LastUpdate);
+        Move(tstr[1], str[15-length(tstr)], length(tstr)*2);
+        Writeln('[' + str + 'ms] ' + Text);
       end;
 
     LM_INFO :
-      Writeln( Text );
+      Writeln(Text);
 
     LM_WARNING :
-      Writeln( 'WARNING: ' + Text );
+      Writeln('WARNING: ' + Text);
 
     LM_ERROR :
-      Writeln( 'ERROR: ' + Text );
+      Writeln('ERROR: ' + Text);
   end;
+  LastUpdate := Utils.Time;
 end;
 {$ENDIF}
 

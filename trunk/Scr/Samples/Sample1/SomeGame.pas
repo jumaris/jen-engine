@@ -5,12 +5,14 @@ interface
 
 uses
   JEN_MAIN,
-  JEN_Display_Window;
+  JEN_OPENGLHEADER;
 
 type
   TSameGame = class(TGame)
   private
     procedure LoadContent; override;
+    procedure OnUpdate( Dt : Double ); override;
+    procedure OnRender; override;
   public
     constructor Create;
   end;
@@ -21,13 +23,29 @@ constructor TSameGame.Create;
 begin
   inherited;
  // SystemParams.Screen.SetMode( 1028, 768, 60 );
-  Display := TDisplayWindow.Create(1028, 768, 60, false);
-  Render  := TGLRender.Create;
+  Display := TDisplayWindow.Create(1024, 768, 60, false);
+  Render := TGLRender.Create(Display);
+
+  if not (Display.isValid and Render.isValid) then
+    Exit;
+  glClearColor(1.0,0,0,1.0);
+
+  Run;
 end;
 
 procedure TSameGame.LoadContent;
 begin
 
+end;
+
+procedure TSameGame.OnUpdate( Dt : Double );
+begin
+
+end;
+
+procedure TSameGame.OnRender;
+begin
+glClear( GL_COLOR_BUFFER_BIT);
 end;
 
 end.

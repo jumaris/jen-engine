@@ -5,7 +5,10 @@ interface
 
 type
   TRender = class
-
+  protected
+    function GetValid : Boolean; virtual; abstract;
+  public
+    property IsValid  : Boolean read GetValid;
   end;
 
 implementation

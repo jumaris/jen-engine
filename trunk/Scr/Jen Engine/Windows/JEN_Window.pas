@@ -13,21 +13,27 @@ const
 type
   PWindow = ^TWindow;
   TWindow = class
-    constructor Create(FullScreen : Boolean; Width: Integer; Height: Integer; FSSA : Byte);
+    constructor Create(Display : TDisplay; FullScreen : Boolean; Width: Integer; Height: Integer; FSSA : Byte);
     destructor  Destroy; override;
   private
+    FDisplay      : TDisplay;
     FCaption      : String;
     FHandle       : HWND;
     FDC           : HDC;
+    FValid        : Boolean;
+    class var FCurrentWindow : TWindow;
     class function WndProc(hWnd: HWND; Msg: Cardinal; wParam: Integer; lParam: Integer): Integer; stdcall; static;
     procedure      SetCaption(const Value: String);
   public
-    procedure   HandleFree;
-    procedure   Update;
+    property Caption : String read FCaption write SetCaption;
+    property Handle  : HWND read FHandle;
+    property DC      : HDC read FDC;
+    property Display : TDisplay read FDisplay;
+    property IsValid : Boolean read FValid;
+    class property CurrentWindow : TWindow read FCurrentWindow;
 
-    property    Caption : String read FCaption write SetCaption;
-    property    Handle  : HWND read FHandle;
-    property    DC      : HDC read FDC;
+    procedure HandleFree;
+    procedure Update;
   end;
 
 implementation
@@ -48,16 +54,16 @@ begin
   Result := 0;
   case Msg of
     WM_CLOSE:
-      TGame.Exit;
+      TGame.Finish;
 
     WM_ACTIVATEAPP :
       begin
-        if Game.Display.FullScreen then
+        if FCurrentWindow.Display.FullScreen then
          if Word(wParam) = WA_ACTIVE then
           ShowWindow(hWnd, SW_SHOW)
          else
           ShowWindow(hWnd, SW_MINIMIZE);
-         Game.Display.Active := Word(wParam) = WA_ACTIVE;
+         FCurrentWindow.Display.Active := Word(wParam) = WA_ACTIVE;
 
       end;
       {
@@ -113,15 +119,23 @@ begin
   end;
 end;
 
-constructor TWindow.Create(FullScreen: Boolean; Width: Integer; Height: Integer; FSSA: Byte);
+constructor TWindow.Create(Display : TDisplay; FullScreen: Boolean; Width: Integer; Height: Integer; FSSA: Byte);
 var
   WinClass      : TWndClassEx;
   Window_Style  : LongWord;
   WindowRect    : TRecti;
 begin
-  inherited Create();
-
+  inherited Create;
+  FValid   := False;
+  FDisplay := Display;
   FCaption := 'JEN Engine application';
+
+  if not Assigned(Display) then
+  begin
+    LogOut('Cannot create window, display is not correct', LM_ERROR);
+    Exit;
+  end;
+
   WindowRect := Recti((SystemParams.Screen.Width - Width) div 2, (SystemParams.Screen.Height - Height) div 2, Width, Height);
 
   FillChar(WinClass, SizeOf(TWndClassEx), 0);
@@ -186,6 +200,8 @@ begin
 
   SendMessageW(Handle, WM_SETICON, 1, LoadIconW(HInstance, 'MAINICON'));
   FDC:= GetDC( FHandle );
+
+  FValid   := true;
 end;
 
 destructor TWindow.Destroy();
@@ -226,6 +242,7 @@ var
   Msg : TMsg;
 begin
 
+  FCurrentWindow := self;
   while PeekMessageW(Msg, 0, 0, 0, PM_REMOVE) do
   begin
     TranslateMessage(Msg);

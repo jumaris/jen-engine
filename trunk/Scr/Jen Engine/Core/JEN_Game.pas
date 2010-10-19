@@ -4,6 +4,7 @@ unit JEN_Game;
 interface
 
 uses
+  JEN_OpenGlHeader,
   JEN_Display,
   JEN_Render;
 
@@ -12,23 +13,22 @@ type
     constructor Create;
     destructor  Destroy; override;
   private
-    var FRender         : TRender;
-    procedure SetRender(Render : TRender);
-
+    var FRender  : TRender;
+    var FDisplay : TDisplay;
     class var FisRunnig : Boolean;
     class var FQuit     : Boolean;
-    class var FDisplay  : TDisplay;
-    class procedure SetDisplay(Display : TDisplay); static;
   protected
-    procedure   LoadContent; virtual; abstract;
+    procedure  LoadContent; virtual; abstract;
   public
-    class procedure Exit;
+    class property Quit   : Boolean read FQuit;
+    class procedure Finish;
+
+    property Display : TDisplay read FDisplay write FDisplay;
+    property Render  : TRender read FRender write FRender;
 
     procedure Run;
-
-    class property Quit   : Boolean read FQuit;
-    class property Display: TDisplay read FDisplay write SetDisplay;
-    property       Render : TRender read FRender write SetRender;
+    procedure OnUpdate(dt : double); virtual; abstract;
+    procedure OnRender; virtual; abstract;
   end;
 
 implementation
@@ -70,32 +70,10 @@ begin
   inherited;
 end;
 
-class procedure TGame.Exit;
+class procedure TGame.Finish;
 begin
   FQuit := True;
  // FDisplay.HandleFree;
-end;
-
-class procedure TGame.SetDisplay(Display : TDisplay);
-begin
-  if Assigned( FDisplay ) then
-    begin
-      FDisplay.Free;
-      LogOut( 'Display alrady exist', LM_WARNING );
-    end;
-
-  FDisplay := Display;
-end;
-
-procedure TGame.SetRender( Render : TRender );
-begin
-  if Assigned( FRender ) then
-    begin
-      FRender.Free;
-      LogOut( 'Render alrady exist', LM_WARNING );
-    end;
-
-  FRender := Render;
 end;
 
 procedure TGame.Run;
@@ -108,6 +86,10 @@ begin
   while not FQuit do
     begin
       Display.Update;
+      OnUpdate(0);
+      OnRender;
+      glFlush;
+      SwapBuffers(Display.DC);
     end;
 end;
 

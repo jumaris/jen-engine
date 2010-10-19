@@ -9,6 +9,7 @@ uses
   JEN_Game,
   JEN_Log,
   JEN_DefConsoleLog,
+  JEN_Display_Window,
   JEN_OpenGLHeader,
   JEN_OpenGL,
   JEN_Render,
@@ -22,7 +23,8 @@ const
 
 type
   TGame     = JEN_GAME.TGame;
-  TWindow   = JEN_Window.TWindow;
+
+  TDisplayWindow = JEN_Display_Window.TDisplayWindow;
   TGLRender = JEN_OpenGL.TGLRender;
 
 var

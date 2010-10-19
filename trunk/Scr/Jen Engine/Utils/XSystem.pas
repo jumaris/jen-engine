@@ -301,7 +301,8 @@ type
   function ShowCursor(bShow: Boolean): LongInt; stdcall; external user32;
 
   function EnumDisplaySettingsW(lpszDeviceName: PWideChar; iModeNum: LongWord; var lpDevMode: TDeviceMode): Boolean; stdcall; external user32;
-  function ChangeDisplaySettingsW(lpDevMode: PDeviceMode; dwFlags: LongWord): LongInt; stdcall; external user32;
+  function ChangeDisplaySettingsExW(lpszDeviceName: PWideChar; lpDevMode: PDeviceMode;
+        wnd: HWND; dwFlags: LongWord; lParam: Pointer): Longint; stdcall; external user32;
 
   function SwapBuffers(DC: HDC): Boolean; stdcall; external gdi32;
   function SetPixelFormat(DC: HDC; PixFormat: LongInt; FormatDef: Pointer): Boolean; stdcall; external gdi32;
