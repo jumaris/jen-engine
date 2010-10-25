@@ -23,13 +23,13 @@ constructor TSameGame.Create;
 begin
   inherited;
  // SystemParams.Screen.SetMode( 1028, 768, 60 );
-  Display := TDisplayWindow.Create(1024, 768, 60, false);
+  Display := TDisplayWindow.Create(1028, 768, 60, false);
   Render := TGLRender.Create(Display);
 
   if not (Display.isValid and Render.isValid) then
     Exit;
-  glClearColor(1.0,0,0,1.0);
-
+        glClearColor(1,1,0,1);
+  Logout('Let''s rock!', LM_NOTIFY);
   Run;
 end;
 
@@ -45,7 +45,7 @@ end;
 
 procedure TSameGame.OnRender;
 begin
-glClear( GL_COLOR_BUFFER_BIT);
+  glClear( GL_COLOR_BUFFER_BIT);
 end;
 
 end.

@@ -115,6 +115,9 @@ const
   DM_PELSHEIGHT       = $100000;
   DM_DISPLAYFREQUENCY = $400000;
 
+  BITSPIXEL     = 12;
+  PLANES        = 14;
+
   // Joystick
   JOYCAPS_HASZ      = $0001;
   JOYCAPS_HASR      = $0002;
@@ -308,6 +311,8 @@ type
   function SetPixelFormat(DC: HDC; PixFormat: LongInt; FormatDef: Pointer): Boolean; stdcall; external gdi32;
   function ChoosePixelFormat(DC: HDC; FormatDef: Pointer): LongInt; stdcall; external gdi32;
   function GetStockObject(Index: Integer): LongWord; stdcall; external gdi32;
+  function GetDeviceCaps(DC: HDC; Index: Integer): Integer; stdcall; external gdi32 name 'GetDeviceCaps';
+
 
   function wglCreateContext(DC: HDC): HGLRC; stdcall; external opengl32;
   function wglDeleteContext(RC: HGLRC): Boolean; stdcall; external opengl32;

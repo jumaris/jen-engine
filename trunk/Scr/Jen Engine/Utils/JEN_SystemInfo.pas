@@ -43,6 +43,7 @@ type
       public
         function Width  : Integer;
         function Height : Integer;
+        function BPS    : Byte;
 
         function SetMode(W, H, R : integer) : TSetModeResult; overload;
         function SetMode(Idx, R  : integer) : TSetModeResult; overload;
@@ -181,7 +182,7 @@ var
   Mode         : PDisplayMode;
   i            : integer;
 begin
-
+                 {
   Mode := Modes[GetIdx(W, H)];
   if Mode <> nil then
     begin
@@ -207,19 +208,19 @@ begin
   if R = 0 then
     with Mode^.RefreshRates do
       R := GetRefresh(Count-1);
-
+                                 }
   FillChar(DevMode, SizeOf(TDeviceMode), 0);
   DevMode.dmSize := SizeOf(TDeviceMode);
 
   EnumDisplaySettingsW(nil, 0, DevMode);
   with DevMode do
     begin
-      dmPelsWidth        := Mode.Width;
+     dmPelsWidth        := Mode.Width;
       dmPelsHeight       := Mode.Height;
       dmBitsPerPel       := 32;
       if R <> 0 then
       dmDisplayFrequency := R;
-      dmFields           := $5C0000; // DM_BITSPERPEL or DM_PELSWIDTH or DM_PELSHEIGHT or DM_DISPLAYFREQUENCY ;
+      dmFields           := $5C000000; // DM_BITSPERPEL or DM_PELSWIDTH or DM_PELSHEIGHT or DM_DISPLAYFREQUENCY ;
     end;
 
   case ChangeDisplaySettingsExW( nil, @DevMode, 0, $04, nil ) of
@@ -313,6 +314,18 @@ function TSystem.TScreen.Height : Integer;
 begin
   result := GetSystemMetrics( SM_CYSCREEN );
 end;
+
+function TSystem.TScreen.BPS : Byte;
+var
+  DC: HDC;
+Begin
+  DC := GetDC(0);
+  Result := GetDeviceCaps( DC, BITSPIXEL ) * GetDeviceCaps( DC, PLANES );
+  ReleaseDC( 0, DC );
+
+End;
+
+
 
 constructor TSystem.Create;
 var

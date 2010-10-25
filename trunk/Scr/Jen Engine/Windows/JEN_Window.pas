@@ -142,7 +142,7 @@ begin
   with WinClass do
   begin
     cbsize        := SizeOf( TWndClassEx );
-	  style         := CS_DBLCLKS or CS_OWNDC or CS_HREDRAW or CS_VREDRAW;
+ 	  style         := CS_DBLCLKS or CS_OWNDC or CS_HREDRAW or CS_VREDRAW;
 	  lpfnWndProc   := @TWindow.WndProc;
 	  //hCursor		    := LoadCursor(NULL, IDC_ARROW);
 	  hbrBackground	:= GetStockObject(BLACK_BRUSH);
@@ -193,13 +193,13 @@ begin
                             0, 0, ScreenWidth, ScreenHeight, 0, 0, HInstance, nil);        }
   if FHandle = 0 Then
     begin
-      LogOut( 'Cannot create window.', LM_ERROR );
+      LogOut('Cannot create window.', LM_ERROR);
       Exit;
     end else
-      LogOut( 'Create window.', LM_NOTIFY );
+      LogOut('Create window.', LM_NOTIFY);
 
   SendMessageW(Handle, WM_SETICON, 1, LoadIconW(HInstance, 'MAINICON'));
-  FDC:= GetDC( FHandle );
+  FDC := GetDC(FHandle);
 
   FValid   := true;
 end;

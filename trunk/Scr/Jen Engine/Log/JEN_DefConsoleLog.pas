@@ -36,7 +36,6 @@ end;
 
 procedure TDefConsoleLog.AddMsg( const Text : String; MType : TLogMsg );
 var
-  i    : Byte;
   str  : String;
   tstr : String;
 begin
