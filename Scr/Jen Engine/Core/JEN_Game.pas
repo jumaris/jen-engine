@@ -89,7 +89,8 @@ begin
       OnUpdate(0);
       OnRender;
       glFlush;
-      SwapBuffers(Display.DC);
+      Display.Swap;
+
     end;
 end;
 

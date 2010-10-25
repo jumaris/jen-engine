@@ -33,7 +33,7 @@ begin
   FDisplay := Display;
   FValid := False;
 
-  if not Assigned(Display) then
+  if not (Assigned(Display) or Display.IsValid) then
   begin
     LogOut('Cannot create OpenGL context, display is not correct', LM_ERROR);
     Exit;
@@ -44,10 +44,10 @@ begin
   begin
     nSize        := SizeOf(PFD);
     nVersion     := 1;
-    dwFlags      := $25;
-    cColorBits   := 32;
+    dwFlags      := PFD_DRAW_TO_WINDOW or PFD_SUPPORT_OPENGL or PFD_DOUBLEBUFFER;//$25;
+    cColorBits   := SystemParams.Screen.BPS;
     cDepthBits   := DepthBits;
-    cStencilBits := StencilBits;
+    cStencilBits := 0;
   end;
 
   SetPixelFormat(Display.DC, ChoosePixelFormat(Display.DC, @PFD), @PFD);
@@ -66,6 +66,7 @@ begin
     exit;
   end else
     LogOut('Make current OpenGL context.', LM_NOTIFY);
+
   FValid := True;
   LogOut('OpenGL version : ' + glGetString(GL_VERSION )+ ' (' + glGetString(GL_VENDOR) +')', LM_INFO);
   LogOut('Video device   : ' + glGetString(GL_RENDERER), LM_INFO);

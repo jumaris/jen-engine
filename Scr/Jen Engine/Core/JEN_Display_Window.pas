@@ -19,13 +19,13 @@ type
     FRefresh    : Byte;
     FFullScreen : Boolean;
     FActive     : Boolean;
-    FValid      : Boolean;
-    function  GetValid : Boolean; override;
     function  GetFullScreen : Boolean; override;
     procedure SetActive(Value : Boolean); override;
     function  GetActive : Boolean; override;
     function  GetHandle : HWND; override;
     function  GetDC : HDC; override;
+    function  GetWidth : Cardinal; override;
+    function  GetHeight : Cardinal; override;
   public
     procedure Update; override;
   end;
@@ -42,24 +42,25 @@ begin
   FHeight     := Height;
   FRefresh    := Refresh;
   FFullScreen := FullScreen;
+  FValid      := True;
 
   FActive     := True;
   if FullScreen then
     FValid := SystemParams.Screen.SetMode(Width, Height, Refresh) <> SM_Error;
-  FWindow  := TWindow.Create(Self, FullScreen, Width, Height, 0);
 
-  FValid   := FValid and FWindow.isValid;
+  if FValid then
+    FWindow  := TWindow.Create(Self, FullScreen, Width, Height, 0)
+  else
+    Exit;
+
+ FValid   := FValid and FWindow.isValid;
 end;
+
 
 destructor TDisplayWindow.Destroy;
 begin
   FWindow.Free;
   inherited;
-end;
-
-function TDisplayWindow.GetValid : Boolean;
-begin
-  result := FValid;
 end;
 
 function TDisplayWindow.GetFullScreen : Boolean;
@@ -90,14 +91,24 @@ begin
   FWindow.Update;
 end;
 
-function  TDisplayWindow.GetHandle : HWND;
+function TDisplayWindow.GetHandle : HWND;
 begin
   Result := FWindow.Handle;
 end;
 
-function  TDisplayWindow.GetDC : HDC;
+function TDisplayWindow.GetDC : HDC;
 begin
   Result := FWindow.DC;
+end;
+
+function TDisplayWindow.GetWidth : Cardinal;
+begin
+  Result := FWidth;
+end;
+
+function TDisplayWindow.GetHeight : Cardinal;
+begin
+  Result := FHeight;
 end;
 
 end.

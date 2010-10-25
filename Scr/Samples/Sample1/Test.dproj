@@ -49,9 +49,7 @@
 				<MainSource>MainSource</MainSource>
 			</DelphiCompile>
 			<DCCReference Include="SomeGame.pas"/>
-			<DCCReference Include="..\..\Jen Engine\JEN_Main.pas">
-				<Form>$IFDEF DEBUG</Form>
-			</DCCReference>
+			<DCCReference Include="..\..\Jen Engine\JEN_Main.pas"/>
 			<DCCReference Include="..\..\Jen Engine\Core\JEN_Display.pas"/>
 			<DCCReference Include="..\..\Jen Engine\Core\JEN_Display_Window.pas"/>
 			<DCCReference Include="..\..\Jen Engine\Core\JEN_Game.pas"/>
@@ -65,6 +63,7 @@
 			<DCCReference Include="..\..\Jen Engine\Utils\JEN_SystemInfo.pas"/>
 			<DCCReference Include="..\..\Jen Engine\Utils\JEN_Utils.pas"/>
 			<DCCReference Include="..\..\Jen Engine\Utils\XSystem.pas"/>
+			<None Include="Jen_config.inc"/>
 			<BuildConfiguration Include="Base">
 				<Key>Base</Key>
 			</BuildConfiguration>
@@ -97,7 +96,7 @@
 						<VersionInfo Name="MajorVer">0</VersionInfo>
 						<VersionInfo Name="MinorVer">0</VersionInfo>
 						<VersionInfo Name="Release">1</VersionInfo>
-						<VersionInfo Name="Build">663</VersionInfo>
+						<VersionInfo Name="Build">804</VersionInfo>
 						<VersionInfo Name="Debug">True</VersionInfo>
 						<VersionInfo Name="PreRelease">False</VersionInfo>
 						<VersionInfo Name="Special">False</VersionInfo>
@@ -109,7 +108,7 @@
 					<VersionInfoKeys>
 						<VersionInfoKeys Name="CompanyName"/>
 						<VersionInfoKeys Name="FileDescription"/>
-						<VersionInfoKeys Name="FileVersion">0.0.1.663</VersionInfoKeys>
+						<VersionInfoKeys Name="FileVersion">0.0.1.804</VersionInfoKeys>
 						<VersionInfoKeys Name="InternalName"/>
 						<VersionInfoKeys Name="LegalCopyright"/>
 						<VersionInfoKeys Name="LegalTrademarks"/>
