@@ -1,5 +1,4 @@
 unit SomeGame;
-{$I Jen_config.INC}
 
 interface
 
@@ -22,15 +21,16 @@ implementation
 constructor TSameGame.Create;
 begin
   inherited;
- // SystemParams.Screen.SetMode( 1028, 768, 60 );
-  Display := TDisplayWindow.Create(1028, 768, 60, false);
+  Display := TDisplayWindow.Create(1024, 768, 60, false);
   Render := TGLRender.Create(Display);
-
+                        {
+  Display.FullScreen := true;
+  Display.FullScreen := false;
+                              }
   if not (Display.isValid and Render.isValid) then
     Exit;
-        glClearColor(1,1,0,1);
-  Logout('Let''s rock!', LM_NOTIFY);
-  Run;
+  glClearColor(1,1,0,1);
+
 end;
 
 procedure TSameGame.LoadContent;
