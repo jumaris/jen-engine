@@ -56,18 +56,61 @@ Type
       class operator NotEqual(const Rect1, Rect2 : TRecti): Boolean; inline;
   end;
 
-Const PointZero : TPoint2i = (x: 0; y: 0;);
-      RectEmpty : TRecti   = (x: 0; y: 0; Width: 0; Height: 0);
+  TVec3f = record
+    x, y, z : Single;
+    class operator Equal(const a, b: TVec3f): Boolean;
+    class operator Add(const a, b: TVec3f): TVec3f;
+    class operator Subtract(const a, b: TVec3f): TVec3f;
+    class operator Multiply(const a, b: TVec3f): TVec3f;
+    class operator Multiply(const v: TVec3f; x: Single): TVec3f;
+    function Dot(const v: TVec3f): Single;
+    function Cross(const v: TVec3f): TVec3f;
+    function Reflect(const n: TVec3f): TVec3f;
+    function Refract(const n: TVec3f; Factor: Single): TVec3f;
+    function Length: Single;
+    function LengthQ: Single;
+    function Normal: TVec3f;
+    function Dist(const v: TVec3f): Single;
+    function DistQ(const v: TVec3f): Single;
+    function Lerp(const v: TVec3f; t: Single): TVec3f;
+    function Min(const v: TVec3f): TVec3f;
+    function Max(const v: TVec3f): TVec3f;
+    function Clamp(const MinClamp, MaxClamp: TVec3f): TVec3f;
+    function Rotate(Angle: Single; const Axis: TVec3f): TVec3f;
+    function Angle(const v: TVec3f): Single;
+    function MultiOp(out r: TVec3f; const v1, v2, op1, op2: TVec3f): Single;
+  end;
 
-  function Max(x, y: Single): Single; overload; inline;
-  function Min(x, y: Single): Single; overload; inline;
-  function Max(x, y: Integer): Integer; overload; inline;
-  function Min(x, y: Integer): Integer; overload; inline;
-  function Sign(x: Single): Integer; inline;
+Const
+  INF     = 1 / 0;
+  NAN     = 0 / 0;
+  EPS     = 1.E-05;
+  deg2rad = pi / 180;
+  rad2deg = 180 / pi;
+  ZeroPoint : TPoint2i = (x: 0; y: 0;);
+  EmptyRect: TRecti = (x: 0; y: 0; Width: 0; Height: 0);
+  NullVec3f : TVec3f = (x: 0; y: 0; z: 0);
 
-  function Point2i(const x, y : Integer) : TPoint2i;
-  function Point2f(const x, y : Single) : TPoint2f;
-  function Recti  (const x, y, Width, Height : Integer) : TRecti;
+function Max(x, y: Single): Single; overload; inline;
+function Min(x, y: Single): Single; overload; inline;
+function Max(x, y: Integer): Integer; overload; inline;
+function Min(x, y: Integer): Integer; overload; inline;
+function Sign(x: Single): Integer; inline;
+function Clamp(x, Min, Max: LongInt): LongInt; overload; inline;
+function Clamp(x, Min, Max: Single): Single; overload; inline;
+function Tan(x: Single): Single; assembler;
+procedure SinCos(Theta: Single; out Sin, Cos: Single); assembler;
+function ArcTan2(y, x: Single): Single; assembler;
+function ArcCos(x: Single): Single; assembler;
+function ArcSin(x: Single): Single; assembler;
+function Log2(const X: Single): Single;
+function Pow(x, y: Single): Single;
+function ToPow2(x: LongInt): LongInt;
+
+function Point2i(x, y : Integer) : TPoint2i; inline;
+function Point2f(x, y : Single) : TPoint2f; inline;
+function Recti(x, y, Width, Height : Integer) : TRecti; inline;
+function Vec3f(x, y, z: Single): TVec3f; inline;
 
 implementation
 
@@ -114,27 +157,156 @@ begin
     else
       Result := 0;
 end;
+
+function Clamp(x, Min, Max: LongInt): LongInt;
+begin
+  if x < min then
+    Result := min
+  else
+    if x > max then
+      Result := max
+    else
+      Result := x;
+end;
+
+function Clamp(x, Min, Max: Single): Single;
+begin
+  if x < min then
+    Result := min
+  else
+    if x > max then
+      Result := max
+    else
+      Result := x;
+end;
+
+function ClampAngle(Angle: Single): Single;
+begin
+  if Angle > pi then
+    Result := (Frac(Angle / pi) - 1) * pi
+  else
+    if Angle < -pi then
+      Result := (Frac(Angle / pi) + 1) * pi
+    else
+      Result := Angle;
+end;
+
+
+function Tan(x: Single): Single; assembler;
+asm
+  fld x
+  fptan
+  fstp st(0)
+  fwait
+end;
+
+procedure SinCos(Theta: Single; out Sin, Cos: Single); assembler;
+asm
+  fld Theta
+  fsincos
+  fstp dword ptr [edx]
+  fstp dword ptr [eax]
+  fwait
+end;
+
+function ArcTan2(y, x: Single): Single; assembler;
+asm
+  fld y
+  fld x
+  fpatan
+  fwait
+end;
+
+function ArcCos(x: Single): Single; assembler;
+asm
+{
+  fld x
+  fmul st, st
+  fsubr ONE
+  fsqrt
+  fld x
+  fpatan
+}
+  fld1
+  fld    x
+  fst    st(2)
+  fmul   st(0), st(0)
+  fsubp
+  fsqrt
+  fxch
+  fpatan
+end;
+
+function ArcSin(x: Single): Single; assembler;
+asm
+{
+  fld x
+  fld st
+  fmul st, st
+  fsubr ONE
+  fsqrt
+  fpatan
+}
+  fld1
+  fld    X
+  fst    st(2)
+  fmul   st(0), st(0)
+  fsubp
+  fsqrt
+  fpatan
+end;
+
+function Log2(const X: Single): Single; assembler;
+asm
+  fld1
+  fld X
+  fyl2x
+  fwait
+end;
+
+function Pow(x, y: Single): Single;
+begin
+  Result := exp(ln(x) * y);
+end;
+
+function ToPow2(x: LongInt): LongInt;
+begin
+  Result := x - 1;
+  Result := Result or (Result shr 1);
+  Result := Result or (Result shr 2);
+  Result := Result or (Result shr 4);
+  Result := Result or (Result shr 8);
+  Result := Result or (Result shr 16);
+  Result := Result + 1;
+end;
 {$ENDREGION}
 
 {$REGION 'Creation'}
-function Point2i(const x, y : Integer) : TPoint2i;
+function Point2i(x, y : Integer) : TPoint2i;
 begin
   Result.x := x;
   Result.y := y;
 end;
 
-function Point2f(const x, y : Single) : TPoint2f;
+function Point2f(x, y : Single) : TPoint2f;
 begin
   Result.x := x;
   Result.y := y;
 end;
 
-function Recti(const x, y, Width, Height : Integer) : TRecti;
+function Recti(x, y, Width, Height : Integer) : TRecti;
 begin
   Result.x := x;
   Result.y := y;
   Result.Height := Height;
   Result.Width := Width;
+end;
+
+function Vec3f(x, y, z: Single) : TVec3f;
+begin
+  Result.x := x;
+  Result.y := y;
+  Result.z := z;
 end;
 {$ENDREGION}
 
@@ -253,7 +425,7 @@ function TRecti.Intersect(const Rect1,Rect2 : TRecti) : TRecti;
 var
   X1, Y1, X2, Y2 : Integer;
 begin
-  Result := RectEmpty;
+  Result := EmptyRect;
   X1 := Max(Rect1.x, Rect2.x);
   Y1 := Max(Rect1.y, Rect2.y);
   X2 := Min(Rect1.x + Rect1.Width, Rect2.x + Rect2.Width);
@@ -290,4 +462,166 @@ begin
 end;
 {$ENDREGION}
 
+{$REGION 'TVec3f'}
+class operator TVec3f.Equal(const a, b: TVec3f): Boolean;
+begin
+  with b - a do
+    Result := (abs(x) <= EPS) and (abs(y) <= EPS) and (abs(z) <= EPS);
+end;
+
+class operator TVec3f.Add(const a, b: TVec3f): TVec3f;
+begin
+  Result.x := a.x + b.x;
+  Result.y := a.y + b.y;
+  Result.z := a.z + b.z;
+end;
+
+class operator TVec3f.Subtract(const a, b: TVec3f): TVec3f;
+begin
+  Result.x := a.x - b.x;
+  Result.y := a.y - b.y;
+  Result.z := a.z - b.z;
+end;
+
+class operator TVec3f.Multiply(const a, b: TVec3f): TVec3f;
+begin
+  Result.x := a.x * b.x;
+  Result.y := a.y * b.y;
+  Result.z := a.z * b.z;
+end;
+
+class operator TVec3f.Multiply(const v: TVec3f; x: Single): TVec3f;
+begin
+  Result.x := v.x * x;
+  Result.y := v.y * x;
+  Result.z := v.z * x;
+end;
+
+function TVec3f.Dot(const v: TVec3f): Single;
+begin
+  Result := x * v.x + y * v.y + z * v.z;
+end;
+
+function TVec3f.Cross(const v: TVec3f): TVec3f;
+begin
+  Result.x := y * v.z - z * v.y;
+  Result.y := z * v.x - x * v.z;
+  Result.z := x * v.y - y * v.x;
+end;
+
+function TVec3f.Reflect(const n: TVec3f): TVec3f;
+begin
+  Result := Self - n * (2 * Dot(n));
+end;
+
+function TVec3f.Refract(const n: TVec3f; Factor: Single): TVec3f;
+var
+  d, s : Single;
+begin
+  d := Dot(n);
+  s := (1 - sqr(Factor)) * (1 - sqr(d));
+  if s < EPS then
+    Result := Reflect(n)
+  else
+    Result := Self * Factor - n * (sqrt(s) + d * Factor);
+end;
+
+function TVec3f.Length: Single;
+begin
+  Result := sqrt(LengthQ);
+end;
+
+function TVec3f.LengthQ: Single;
+begin
+  Result := sqr(x) + sqr(y) + sqr(z);
+end;
+
+function TVec3f.Normal: TVec3f;
+var
+  Len : Single;
+begin
+  Len := Length;
+  if Len < EPS then
+    Result := Vec3f(0, 0, 0)
+  else
+    Result := Self * (1 / Len);
+end;
+
+function TVec3f.Dist(const v: TVec3f): Single;
+var
+  p : TVec3f;
+begin
+  p := v - Self;
+  Result := p.Length;
+end;
+
+function TVec3f.DistQ(const v: TVec3f): Single;
+var
+  p : TVec3f;
+begin
+  p := v - Self;
+  Result := p.LengthQ;
+end;
+
+function TVec3f.Lerp(const v: TVec3f; t: Single): TVec3f;
+begin
+  Result := Self + (v - Self) * t;
+end;
+
+function TVec3f.Min(const v: TVec3f): TVec3f;
+begin
+  Result.x := JEN_Math.Min(x, v.x);
+  Result.y := JEN_Math.Min(y, v.y);
+  Result.z := JEN_Math.Min(z, v.z);
+end;
+
+function TVec3f.Max(const v: TVec3f): TVec3f;
+begin
+  Result.x := JEN_Math.Max(x, v.x);
+  Result.y := JEN_Math.Max(y, v.y);
+  Result.z := JEN_Math.Max(z, v.z);
+end;
+
+function TVec3f.Clamp(const MinClamp, MaxClamp: TVec3f): TVec3f;
+begin
+  Result := Vec3f(JEN_Math.Clamp(x, MinClamp.x, MaxClamp.x),
+                  JEN_Math.Clamp(y, MinClamp.y, MaxClamp.y),
+		              JEN_Math.Clamp(z, MinClamp.z, MaxClamp.z));
+end;
+
+function TVec3f.Rotate(Angle: Single; const Axis: TVec3f): TVec3f;
+var
+  s, c : Single;
+  v0, v1, v2 : TVec3f;
+begin
+  SinCos(Angle, s, c);
+  v0 := Axis * Dot(Axis);
+  v1 := Self - v0;
+  v2 := Axis.Cross(v1);
+  Result.x := v0.x + v1.x * c + v2.x * s;
+  Result.y := v0.y + v1.y * c + v2.y * s;
+  Result.z := v0.z + v1.z * c + v2.z * s;
+end;
+
+function TVec3f.Angle(const v: TVec3f): Single;
+begin
+  Result := ArcCos(Dot(v) / sqrt(LengthQ * v.LengthQ))
+end;
+
+function TVec3f.MultiOp(out r: TVec3f; const v1, v2, op1, op2: TVec3f): Single;
+begin
+  r.x := v1.x * op1.x + v2.x * op2.x;
+  r.y := v1.y * op1.y + v2.y * op2.y;
+  r.z := v1.z * op1.z + v2.z * op2.z;
+  Result := r.x + r.y + r.z;
+  // add   = (v1, v2, 1, 1)
+  // sub   = (v1, v2, 1, -1)
+  // neg   = (v1, 0, -1, 0)
+  // dot   = (v1, 0, v2, 0)
+  // cross = (v1.yzx, v2.yzx, v2.zxy, -v1.zxy)
+  // lenq  = (v1, 0, v1, 0)
+  // lerp  = (v1, v2, 1 - t, t)
+  // etc.
+end;
+{$ENDREGION}
 end.

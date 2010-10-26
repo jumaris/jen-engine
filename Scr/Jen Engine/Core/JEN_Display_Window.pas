@@ -20,6 +20,7 @@ type
     FFullScreen : Boolean;
     FActive     : Boolean;
     function  GetFullScreen : Boolean; override;
+    procedure SetFullScreen(Value : Boolean); override;
     procedure SetActive(Value : Boolean); override;
     function  GetActive : Boolean; override;
     function  GetHandle : HWND; override;
@@ -38,13 +39,17 @@ uses
 constructor TDisplayWindow.Create(Width : Cardinal; Height : Cardinal; Refresh : Byte; FullScreen : Boolean);
 begin
   inherited Create;
+
+  if (Width = SystemParams.Screen.Width) and (Height = SystemParams.Screen.Height) then
+    FullScreen := true;
+
   FWidth      := Width;
   FHeight     := Height;
   FRefresh    := Refresh;
   FFullScreen := FullScreen;
   FValid      := True;
-
   FActive     := True;
+
   if FullScreen then
     FValid := SystemParams.Screen.SetMode(Width, Height, Refresh) <> SM_Error;
 
@@ -53,9 +58,8 @@ begin
   else
     Exit;
 
- FValid   := FValid and FWindow.isValid;
+  FValid := FValid and FWindow.isValid;
 end;
-
 
 destructor TDisplayWindow.Destroy;
 begin
@@ -68,11 +72,24 @@ begin
   result := FFullScreen;
 end;
 
+procedure TDisplayWindow.SetFullScreen(Value : Boolean);
+begin
+  if (FFullScreen = Value) or (FValid = false) then Exit;
+  FFullScreen := Value;
+
+  if Value then
+    FValid := FValid and (SystemParams.Screen.SetMode(FWidth, FHeight, FRefresh) <> SM_Error)
+  else
+    SystemParams.Screen.ResetMode;
+
+  if FValid then
+    FWindow.FullScreen := Value;
+end;
+
 procedure TDisplayWindow.SetActive(Value : Boolean);
 begin
   if FFullScreen then
   begin
-
     if Value then
       SystemParams.Screen.SetMode(FWidth, FHeight, FRefresh)
     else

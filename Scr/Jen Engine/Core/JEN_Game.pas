@@ -53,7 +53,6 @@ end;
 
 destructor TGame.Destroy;
 begin
-
   if Assigned( FRender ) then
     begin
       FRender.Free;
@@ -78,7 +77,8 @@ end;
 
 procedure TGame.Run;
 begin
-  if FisRunnig or (not Assigned(FDisplay)) then Exit;
+  if FisRunnig or (Assigned(FDisplay)= False) or (FDisplay.IsValid = False) then Exit;
+  Logout('Let''s rock!', LM_NOTIFY);
   FisRunnig := true;
 
   LoadContent;
@@ -90,7 +90,6 @@ begin
       OnRender;
       glFlush;
       Display.Swap;
-
     end;
 end;
 

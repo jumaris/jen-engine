@@ -11,6 +11,7 @@ type
     var
       FValid : Boolean;
     function  GetFullScreen : Boolean; virtual; abstract;
+    procedure SetFullScreen(Value : Boolean); virtual; abstract;
     procedure SetActive(Value : Boolean); virtual; abstract;
     function  GetActive : Boolean; virtual; abstract;
     function  GetDC : HDC ; virtual; abstract;
@@ -19,7 +20,7 @@ type
     function  GetHeight : Cardinal; virtual; abstract;
   public
     property IsValid  : Boolean read FValid;
-    property FullScreen : Boolean read GetFullScreen;
+    property FullScreen : Boolean read GetFullScreen write SetFullScreen;
     property Active : Boolean read GetActive write SetActive;
     property Handle : HWND  read GetHandle;
     property DC : HDC read GetDC;

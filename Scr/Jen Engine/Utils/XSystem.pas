@@ -12,6 +12,27 @@ const
   winmm     = 'winmm.dll';
 
 const
+  INVALID_HANDLE_VALUE  = LongWord(-1);
+  INVALID_FILE_SIZE     = LongWord($FFFFFFFF);
+
+  FILE_BEGIN = 0;
+  FILE_CURRENT = 1;
+  FILE_END = 2;
+
+  GENERIC_READ          = LongWord($80000000);
+  GENERIC_WRITE         = $40000000;
+  GENERIC_EXECUTE       = $20000000;
+  GENERIC_ALL           = $10000000;
+
+  FILE_SHARE_READ       = $00000001;
+  FILE_SHARE_WRITE      = $00000002;
+  FILE_SHARE_DELETE     = $00000004;
+
+  CREATE_NEW        = 1;
+  CREATE_ALWAYS     = 2;
+  OPEN_EXISTING     = 3;
+  OPEN_ALWAYS       = 4;
+
   HKEY_CLASSES_ROOT     = LongWord($80000000);
   HKEY_CURRENT_USER     = LongWord($80000001);
   HKEY_LOCAL_MACHINE    = LongWord($80000002);
@@ -117,6 +138,7 @@ const
 
   BITSPIXEL     = 12;
   PLANES        = 14;
+  VREFRESH      = 116;
 
   // Joystick
   JOYCAPS_HASZ      = $0001;
@@ -157,6 +179,22 @@ type
   HWND  = LongWord;
   HDC   = LongWord;
   HGLRC = LongWord;
+
+  PSecurityAttributes = ^TSecurityAttributes;
+  TSecurityAttributes  = record
+    nLength: LongWord;
+    lpSecurityDescriptor: Pointer;
+    bInheritHandle: LongBool;
+  end;
+
+  POverlapped = ^TOverlapped;
+  TOverlapped= record
+    Internal: LongWord;
+    InternalHigh: LongWord;
+    Offset: LongWord;
+    OffsetHigh: LongWord;
+    hEvent: THandle;
+  end;
 
   TWndClassEx = packed record
     cbSize        : LongWord;
@@ -276,6 +314,13 @@ type
   end;
 {$ENDREGION}
 {$REGION 'WINDOWS API'}
+  function CreateFileW(lpFileName: PWideChar; dwDesiredAccess, dwShareMode: LongWord; lpSecurityAttributes: PSecurityAttributes; dwCreationDisposition, dwFlagsAndAttributes: LongWord; hTemplateFile: THandle): THandle; stdcall; external kernel32;
+  function GetFileSize(hFile: THandle; lpFileSizeHigh: Pointer): LongWord; stdcall; external kernel32;
+  function CloseHandle(hObject: THandle): LongBool; stdcall; external kernel32;
+  function WriteFile(hFile: THandle; const Buffer; nNumberOfBytesToWrite: LongWord; var lpNumberOfBytesWritten: LongWord; lpOverlapped: POverlapped): LongBool; stdcall; external kernel32;
+  function ReadFile(hFile: THandle; var Buffer; nNumberOfBytesToRead: LongWord; var lpNumberOfBytesRead: LongWord; lpOverlapped: POverlapped): LongBool; stdcall; external kernel32;
+  function SetFilePointer(hFile: THandle; lDistanceToMove: Longint; lpDistanceToMoveHigh: Pointer; dwMoveMethod: LongWord): LongWord; stdcall; external kernel32;
+
   function LoadCursorW(hInstance: LongInt; lpCursorName: PWideChar ): LongWord; stdcall; external user32;
   function LoadIconW(hInstance: LongInt; lpIconName: PWideChar): LongWord; stdcall; external user32;
   function RegisterClassExW(const WndClass: TWndClassEx): Word; stdcall; external user32;
@@ -307,12 +352,13 @@ type
   function ChangeDisplaySettingsExW(lpszDeviceName: PWideChar; lpDevMode: PDeviceMode;
         wnd: HWND; dwFlags: LongWord; lParam: Pointer): Longint; stdcall; external user32;
 
+  function ChangeDisplaySettingsW(lpDevMode: PDeviceMode; dwFlags: LongWord): Longint; stdcall; external user32;
+
   function SwapBuffers(DC: HDC): Boolean; stdcall; external gdi32;
   function SetPixelFormat(DC: HDC; PixFormat: LongInt; FormatDef: Pointer): Boolean; stdcall; external gdi32;
   function ChoosePixelFormat(DC: HDC; FormatDef: Pointer): LongInt; stdcall; external gdi32;
   function GetStockObject(Index: Integer): LongWord; stdcall; external gdi32;
   function GetDeviceCaps(DC: HDC; Index: Integer): Integer; stdcall; external gdi32 name 'GetDeviceCaps';
-
 
   function wglCreateContext(DC: HDC): HGLRC; stdcall; external opengl32;
   function wglDeleteContext(RC: HGLRC): Boolean; stdcall; external opengl32;

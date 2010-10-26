@@ -21,15 +21,18 @@ type
     FHandle       : HWND;
     FDC           : HDC;
     FValid        : Boolean;
+    FFullScreen   : Boolean;
     class var FCurrentWindow : TWindow;
     class function WndProc(hWnd: HWND; Msg: Cardinal; wParam: Integer; lParam: Integer): Integer; stdcall; static;
-    procedure      SetCaption(const Value: String);
+    procedure SetCaption(const Value: String);
+    procedure SetFullScreen(Value : Boolean);
   public
+    property IsValid : Boolean read FValid;
     property Caption : String read FCaption write SetCaption;
     property Handle  : HWND read FHandle;
     property DC      : HDC read FDC;
     property Display : TDisplay read FDisplay;
-    property IsValid : Boolean read FValid;
+    property FullScreen : Boolean read FFullScreen write SetFullScreen;
     class property CurrentWindow : TWindow read FCurrentWindow;
 
     procedure HandleFree;
@@ -58,13 +61,12 @@ begin
 
     WM_ACTIVATEAPP :
       begin
-        if FCurrentWindow.Display.FullScreen then
+        if CurrentWindow.FFullScreen then
          if Word(wParam) = WA_ACTIVE then
           ShowWindow(hWnd, SW_SHOW)
          else
           ShowWindow(hWnd, SW_MINIMIZE);
          FCurrentWindow.Display.Active := Word(wParam) = WA_ACTIVE;
-
       end;
       {
      with CDisplay do
@@ -129,6 +131,7 @@ begin
   FValid   := False;
   FDisplay := Display;
   FCaption := 'JEN Engine application';
+  FFullScreen := FullScreen;
 
   if not Assigned(Display) then
   begin
@@ -156,12 +159,9 @@ begin
   end else
     LogOut( 'Register window class.', LM_NOTIFY );
 
-  if (Width = SystemParams.Screen.Width) and (Height = SystemParams.Screen.Height) then
-    FullScreen := true;
-
   if FullScreen Then
     begin
-      WindowRect.Location := PointZero;
+      WindowRect.Location := ZeroPoint;
       WindowRect.Width    := SystemParams.Screen.Width;
       WindowRect.Height   := SystemParams.Screen.Height;
       Window_Style        := WS_POPUP or WS_VISIBLE or WS_SYSMENU;
@@ -230,6 +230,27 @@ end;
 procedure TWindow.SetCaption(const Value: String);
 begin
 
+end;
+
+procedure TWindow.SetFullScreen(Value : Boolean);
+var
+  Style : LongWord;
+  Rect  : TRecti;
+begin
+  FFullScreen := Value;
+
+  Rect := Recti((SystemParams.Screen.Width - FDisplay.Width) div 2, (SystemParams.Screen.Height - FDisplay.Height) div 2, FDisplay.Width, FDisplay.Height);
+
+  if Value then
+    Style := WS_POPUP
+  else
+  begin
+    Style := WS_CAPTION or WS_MINIMIZEBOX;
+    Rect.Inflate(GetSystemMetrics(SM_CXDLGFRAME), GetSystemMetrics(SM_CYDLGFRAME) + GetSystemMetrics(SM_CYCAPTION) div 2);
+  end;
+
+  SetWindowLongA(FHandle, GWL_STYLE, Style or WS_VISIBLE or WS_SYSMENU);
+  SetWindowPos(FHandle, 0, Rect.x, Rect.y, Rect.Width, Rect.Height, $220);
 end;
 
 procedure TWindow.HandleFree();
