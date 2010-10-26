@@ -27,6 +27,8 @@ type
   TDisplayWindow = JEN_Display_Window.TDisplayWindow;
   TGLRender = JEN_OpenGL.TGLRender;
 
+  TFileStream = JEN_Utils.TFileStream;
+
 var
   Utils        : TUtils;
   SystemParams : TSystem;

@@ -84,7 +84,34 @@ type
     property Items[Idx: Integer]: TManagedObj read GetItem; default;
   end;
 
+  TFileStream = class
+    class function Init(const FileName: string; RW: Boolean = False): TFileStream; overload;
+    destructor Destroy; override;
+  private
+    FSize  : LongInt;
+    FPos   : LongInt;
+    FBPos  : LongInt;
+    F      : LongWord;
+    Mem    : Pointer;
+    procedure SetPos(Value: LongInt);
+  {$IFNDEF NO_FILESYS}
+    procedure SetBlock(BPos, BSize: LongInt);
+  {$ENDIF}
+  public
+    function Read(out Buf; BufSize: LongInt): LongWord;
+    function Write(const Buf; BufSize: LongInt): LongWord;
+    function ReadAnsi: AnsiString;
+    procedure WriteAnsi(const Value: AnsiString);
+    function ReadUnicode: WideString;
+    procedure WriteUnicode(const Value: WideString);
+    property Size: LongInt read FSize;
+    property Pos: LongInt read FPos write SetPos;
+  end;
+
 implementation
+
+uses
+  JEN_MATH;
 
 { TUtils }
 constructor TUtils.Create;
@@ -366,6 +393,108 @@ end;
 function TManager.GetItem(Idx: Integer): TManagedObj;
 begin
   Result := TManagedObj(FItems[Idx]);
+end;
+
+class function TFileStream.Init(const FileName: string; RW: Boolean): TFileStream;
+var
+  i, io : LongInt;
+begin
+  Result := nil;
+
+  io := 1;
+  Result := TFileStream.Create;
+  {$I-}
+  FileMode := 2;
+
+  if RW then
+    Result.F := CreateFileW(PChar(FileName), GENERIC_WRITE or GENERIC_READ, FILE_SHARE_READ, nil, CREATE_ALWAYS, 0, 0)
+  else
+    Result.F := CreateFileW(PChar(FileName), GENERIC_READ, FILE_SHARE_READ, nil, OPEN_EXISTING, 0, 0);
+
+  if Result.F <> INVALID_HANDLE_VALUE then
+  begin
+    Result.FSize  := GetFileSize(Result.F, nil);
+    Result.FPos   := 0;
+    Result.FBPos  := 0;
+  end else
+  begin
+  //  Assert('Can''t open "' + FileName + '"');
+    Result.Free;
+    Result := nil;
+  end;
+
+end;
+
+destructor TFileStream.Destroy;
+begin
+  CloseHandle(F);
+end;
+
+procedure TFileStream.SetPos(Value: LongInt);
+begin
+  FPos := Value;
+  SetFilePointer(F, FBPos + FPos, nil, FILE_BEGIN);
+end;
+
+procedure TFileStream.SetBlock(BPos, BSize: LongInt);
+begin
+  FSize := BSize;
+  FBPos := BPos;
+  Pos := 0;
+end;
+
+function TFileStream.Read(out Buf; BufSize: LongInt): LongWord;
+begin
+  ReadFile(F, Buf, BufSize, Result, nil);
+  Inc(FPos, Result);
+end;
+
+function TFileStream.Write(const Buf; BufSize: LongInt): LongWord;
+begin
+  WriteFile(F, Buf, BufSize, Result, nil);
+  Inc(FPos, Result);
+  Inc(FSize, Max(0, FPos - FSize));
+end;
+
+function TFileStream.ReadAnsi: AnsiString;
+var
+  Len : Word;
+begin
+  Read(Len, SizeOf(Len));
+  if Len > 0 then
+  begin
+    SetLength(Result, Len);
+    Read(Result[1], Len);
+  end else
+    Result := '';
+end;
+
+procedure TFileStream.WriteAnsi(const Value: AnsiString);
+var
+  Len : Word;
+begin
+  Len := Length(Value);
+  Write(Len, SizeOf(Len));
+  if Len > 0 then
+    Write(Value[1], Len);
+end;
+
+function TFileStream.ReadUnicode: WideString;
+var
+  Len : Word;
+begin
+  Read(Len, SizeOf(Len));
+  SetLength(Result, Len);
+  Read(Result[1], Len * 2);
+end;
+
+procedure TFileStream.WriteUnicode(const Value: WideString);
+var
+  Len : Word;
+begin
+  Len := Length(Value);
+  Write(Len, SizeOf(Len));
+  Write(Value[1], Len * 2);
 end;
 
 end.

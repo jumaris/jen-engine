@@ -67,9 +67,10 @@ begin
   end else
     LogOut('Make current OpenGL context.', LM_NOTIFY);
 
-  FValid := True;
   LogOut('OpenGL version : ' + glGetString(GL_VERSION )+ ' (' + glGetString(GL_VENDOR) +')', LM_INFO);
   LogOut('Video device   : ' + glGetString(GL_RENDERER), LM_INFO);
+
+  FValid := LoadGLLibraly;
 end;
 
 destructor TGLRender.Destroy;

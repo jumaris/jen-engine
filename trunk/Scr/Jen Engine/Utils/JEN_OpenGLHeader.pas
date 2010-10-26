@@ -277,7 +277,80 @@ const
   // Alpha
   procedure glAlphaFunc(func: GLenum; ref: GLfloat); stdcall; external opengl32;
   procedure glBlendFunc(sfactor, dfactor: GLenum); stdcall; external opengl32;
+    // Matrix
+  procedure glPushMatrix; stdcall; external opengl32;
+  procedure glPopMatrix; stdcall; external opengl32;
+  procedure glMatrixMode(mode: GLenum); stdcall; external opengl32;
+  procedure glLoadIdentity; stdcall; external opengl32;
+  procedure glLoadMatrixf(const m: PGLfloat); stdcall; external opengl32;
+  procedure glMultMatrixf(const m: PGLfloat); stdcall; external opengl32;
+  procedure glRotatef(angle, x, y, z: GLfloat); stdcall; external opengl32;
+  procedure glScalef(x, y, z: GLfloat); stdcall; external opengl32;
+  procedure glTranslatef(x, y, z: GLfloat); stdcall; external opengl32;
+  // Vertex
+  procedure glVertex2f(x, y: GLfloat); stdcall; external opengl32;
+  procedure glVertex2fv(v: PGLfloat); stdcall; external opengl32;
+  procedure glVertex3f(x, y, z: GLfloat); stdcall; external opengl32;
+  procedure glVertexPointer(size: GLint; atype: GLenum; stride: GLsizei; const pointer: Pointer); stdcall; external opengl32;
+  // Normal
+  procedure glNormal3f(x, y, z: GLfloat); stdcall; external opengl32;
+  procedure glNormalPointer(atype: GLenum; stride: GLsizei; const pointer: Pointer); stdcall; external opengl32;
+
+  procedure glDrawElements(mode: GLenum; count: GLsizei; atype: GLenum; const indices: Pointer); stdcall; external opengl32;
+  procedure glPushClientAttrib(mask: GLbitfield );  stdcall;  external opengl32;
+  procedure glPopClientAttrib; stdcall; external opengl32;
+  procedure glPolygonMode(face: GLenum; mode: GLenum); stdcall;  external opengl32;
+
+var
+  // VBO
+  glBindBuffer : procedure(target : GLenum; buffer: GLuint); stdcall;
+  glDeleteBuffers : procedure(n : GLsizei; buffers : PGLuint); stdcall;
+  glGenBuffers : procedure(n : GLsizei; buffers : PGLuint); stdcall;
+  glIsBuffer : function (buffer : GLuint) :GLboolean; stdcall;
+  glBufferData : procedure(target : GLenum; size:GLsizei; data:PGLvoid;usage: GLenum); stdcall;
+  glBufferSubData : procedure(target : GLenum; offset :GLint; size : GLsizei; data: PGLvoid); stdcall;
+  glMapBuffer : function (target :GLenum; access: GLenum) : PGLvoid; stdcall;
+  glUnmapBuffer : function (target :GLenum) :GLboolean; stdcall;
+  glGetBufferParameteriv : procedure(target:GLenum; pname:GLenum; params:PGLint); stdcall;
+
+function LoadGLLibraly : Boolean;
 
 implementation
+
+uses
+  JEN_MAIN;
+
+function glGetProc(const Proc : PAnsiChar; var OldResult : Boolean) : Pointer;
+begin
+  if not OldResult then Exit(nil);
+
+  Result := wglGetProcAddress(Proc);
+  if Result = nil Then
+    Result := wglGetProcAddress(PAnsiChar(Proc + 'ARB'));
+  if Result = nil Then
+    Result := wglGetProcAddress(PAnsiChar(Proc + 'EXT'));
+
+  if Result = nil then
+  begin
+    LogOut( 'Cannot load procedure ' + Proc, LM_ERROR );
+    OldResult := false;
+  end;
+
+end;
+
+function LoadGLLibraly : Boolean;
+begin
+  Result := true;
+  glBindBuffer    := glGetProc('glBindBuffer', Result);
+  glDeleteBuffers := glGetProc('glDeleteBuffers', Result);
+  glIsBuffer      := glGetProc('glIsBuffer', Result);
+  glBufferData    := glGetProc('glBufferData', Result);
+  glBufferSubData := glGetProc('glBufferSubData' , Result);
+  glMapBuffer     := glGetProc('glMapBuffer', Result);
+  glUnmapBuffer   := glGetProc('glUnmapBuffer', Result);
+  glGetBufferParameteriv := glGetProc('glGetBufferParameteriv', Result);
+
+  Set8087CW($133F);
+end;
 
 end.

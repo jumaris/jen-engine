@@ -36,14 +36,20 @@ type
         constructor Create;
         destructor Destroy; override;
       private
-        type TSetModeResult = (SM_Successful, SM_SetDefault, SM_Error );
+        type
+          TSetModeResult = (SM_Successful, SM_SetDefault, SM_Error );
         var
-          fModes  : array of TDisplayMode;
-          function GetMode(Idx: Integer) : PDisplayMode;
+          fModes        : array of TDisplayMode;
+          fStartWidth   : Integer;
+          fStartHeight  : Integer;
+          fStartBPS     : Byte;
+          fStartRefresh : Byte;
+        function GetMode(Idx: Integer) : PDisplayMode;
       public
         function Width  : Integer;
         function Height : Integer;
         function BPS    : Byte;
+        function Refresh: Byte;
 
         function SetMode(W, H, R : integer) : TSetModeResult; overload;
         function SetMode(Idx, R  : integer) : TSetModeResult; overload;
@@ -130,6 +136,11 @@ begin
   i := 0;
   SetLength(FModes, 0);
 
+  fStartWidth   := Width;
+  fStartHeight  := Height;
+  fStartBPS     := BPS;
+  fStartRefresh := Refresh;
+
   FillChar(DevMode, SizeOf(TDeviceMode), 0);
   DevMode.dmSize := SizeOf(TDeviceMode);
 
@@ -182,48 +193,56 @@ var
   Mode         : PDisplayMode;
   i            : integer;
 begin
-                 {
   Mode := Modes[GetIdx(W, H)];
+
   if Mode <> nil then
+  begin
+    if not Mode^.RefreshRates.IsExist( R ) then
+      R := 0;
+  end else
+  begin
+    LogOut('Error set display mode ' + Utils.IntToStr(W) + 'x' + Utils.IntToStr(H) + 'x' + Utils.IntToStr(R), LM_WARNING);
+    LogOut('Change display mode to default 1024x768x60', LM_NOTIFY);
+
+    if IsModeExist(1024, 768, 60) then
     begin
-      if not Mode^.RefreshRates.IsExist( R ) then
-        R := 0;
+      if SetMode(1024, 768, 60) = SM_Successful then
+        Exit(SM_SetDefault)
+      else
+        Exit(SM_Error);
     end else
     begin
-      LogOut('Error set display mode ' + Utils.IntToStr(W) + 'x' + Utils.IntToStr(H) + 'x' + Utils.IntToStr(R), LM_WARNING);
-      LogOut('Change display mode to default 1024x768x60', LM_NOTIFY);
-
-      if IsModeExist(1024, 768, 60) then
-      begin
-        if SetMode(1024, 768, 60) = SM_Successful then
-          Exit(SM_SetDefault) else
-        Exit(SM_Error);
-      end else
-      begin
-        LogOut('Display mode critical error', LM_ERROR);
-        Exit(SM_Error);
-      end;
+      LogOut('Display mode critical error', LM_ERROR);
+      Exit(SM_Error);
     end;
+  end;
 
   if R = 0 then
     with Mode^.RefreshRates do
       R := GetRefresh(Count-1);
-                                 }
+
+  if ( (Width = Mode.Width) and
+       (Height = Mode.Height) and
+       (BPS = 32) and
+       (Refresh = R) ) then
+       Exit(SM_Successful);
+
   FillChar(DevMode, SizeOf(TDeviceMode), 0);
   DevMode.dmSize := SizeOf(TDeviceMode);
 
   EnumDisplaySettingsW(nil, 0, DevMode);
   with DevMode do
-    begin
-     dmPelsWidth        := Mode.Width;
-      dmPelsHeight       := Mode.Height;
-      dmBitsPerPel       := 32;
-      if R <> 0 then
+  begin
+    dmPelsWidth        := Mode.Width;
+    dmPelsHeight       := Mode.Height;
+    dmBitsPerPel       := 32;
+    if R <> 0 then
       dmDisplayFrequency := R;
-      dmFields           := $5C000000; // DM_BITSPERPEL or DM_PELSWIDTH or DM_PELSHEIGHT or DM_DISPLAYFREQUENCY ;
-    end;
+    dmFields           := DM_BITSPERPEL or DM_PELSWIDTH or DM_PELSHEIGHT or DM_DISPLAYFREQUENCY ;
+  end;
 
   case ChangeDisplaySettingsExW( nil, @DevMode, 0, $04, nil ) of
+//  case ChangeDisplaySettingsW( @DevMode, $04 ) of
     DISP_CHANGE_SUCCESSFUL :
     begin
       LogOut('Successful set display mode ' + Utils.IntToStr(Mode.Width) + 'x' + Utils.IntToStr(Mode.Height) + 'x' + Utils.IntToStr(R), LM_NOTIFY);
@@ -253,6 +272,13 @@ end;
 
 procedure TSystem.TScreen.ResetMode;
 begin
+  if ( (Width = fStartWidth) and
+       (Height = fStartHeight) and
+       (BPS = fStartBPS) and
+       (Refresh = fStartRefresh) ) then
+        Exit;
+
+//  ChangeDisplaySettingsW( nil, 0 );
   ChangeDisplaySettingsExW( nil, nil, 0, 0, nil );
   LogOut('Reset display mode to delfault', LM_NOTIFY);
 end;
@@ -318,14 +344,21 @@ end;
 function TSystem.TScreen.BPS : Byte;
 var
   DC: HDC;
-Begin
+begin
   DC := GetDC(0);
   Result := GetDeviceCaps( DC, BITSPIXEL ) * GetDeviceCaps( DC, PLANES );
   ReleaseDC( 0, DC );
+end;
 
-End;
 
-
+function TSystem.TScreen.Refresh : Byte;
+var
+  DC: HDC;
+begin
+  DC := GetDC(0);
+  Result := GetDeviceCaps(DC, VREFRESH);
+  ReleaseDC( 0, DC );
+end;
 
 constructor TSystem.Create;
 var
