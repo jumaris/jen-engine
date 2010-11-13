@@ -138,6 +138,7 @@ const
 
   BITSPIXEL     = 12;
   PLANES        = 14;
+
   VREFRESH      = 116;
 
   // Joystick
@@ -196,6 +197,9 @@ type
     hEvent: THandle;
   end;
 
+  PKeyboardState = ^TKeyboardState;
+  TKeyboardState = array[0..255] of Byte;
+
   TWndClassEx = packed record
     cbSize        : LongWord;
     style         : LongWord;
@@ -247,11 +251,11 @@ type
     ullAvailExtendedVirtual: UInt64;
   end;
 
-  TPoint = packed record
+  TSysPoint = packed record
     X, Y : LongInt;
   end;
 
-  TRect = packed record
+  TSysRect = packed record
     Left, Top, Right, Bottom : LongInt;
   end;
 
@@ -261,7 +265,7 @@ type
     wParam  : LongInt;
     lParam  : LongInt;
     time    : LongWord;
-    pt      : TPoint;
+    pt      : TSysPoint;
   end;
 
   PDeviceMode = ^TDeviceMode;
@@ -314,12 +318,7 @@ type
   end;
 {$ENDREGION}
 {$REGION 'WINDOWS API'}
-  function CreateFileW(lpFileName: PWideChar; dwDesiredAccess, dwShareMode: LongWord; lpSecurityAttributes: PSecurityAttributes; dwCreationDisposition, dwFlagsAndAttributes: LongWord; hTemplateFile: THandle): THandle; stdcall; external kernel32;
-  function GetFileSize(hFile: THandle; lpFileSizeHigh: Pointer): LongWord; stdcall; external kernel32;
-  function CloseHandle(hObject: THandle): LongBool; stdcall; external kernel32;
-  function WriteFile(hFile: THandle; const Buffer; nNumberOfBytesToWrite: LongWord; var lpNumberOfBytesWritten: LongWord; lpOverlapped: POverlapped): LongBool; stdcall; external kernel32;
-  function ReadFile(hFile: THandle; var Buffer; nNumberOfBytesToRead: LongWord; var lpNumberOfBytesRead: LongWord; lpOverlapped: POverlapped): LongBool; stdcall; external kernel32;
-  function SetFilePointer(hFile: THandle; lDistanceToMove: Longint; lpDistanceToMoveHigh: Pointer; dwMoveMethod: LongWord): LongWord; stdcall; external kernel32;
+  function ToUnicode(wVirtKey, wScanCode: LongWord; const KeyState: TKeyboardState;  var pwszBuff; cchBuff: Integer; wFlags: LongWord): Integer; external user32;
 
   function LoadCursorW(hInstance: LongInt; lpCursorName: PWideChar ): LongWord; stdcall; external user32;
   function LoadIconW(hInstance: LongInt; lpIconName: PWideChar): LongWord; stdcall; external user32;
@@ -338,20 +337,19 @@ type
   function SendMessageW(hWnd, Msg: LongWord; wParam, lParam: LongInt): LongInt; stdcall; external user32;
   function ShowWindow(hWnd: HWND; nCmdShow: LongInt): Boolean; stdcall; external user32;
   function SetWindowLongA(hWnd: HWND; nIndex, dwNewLong: LongInt): LongInt; stdcall; external user32;
-  function AdjustWindowRect(var lpRect: TRect; dwStyle: LongWord; bMenu: Boolean): Boolean; stdcall; external user32;
+  function AdjustWindowRect(var lpRect: TSysRect; dwStyle: LongWord; bMenu: Boolean): Boolean; stdcall; external user32;
   function SetWindowPos(hWnd, hWndInsertAfter: HWND; X, Y, cx, cy: LongInt; uFlags: LongWord): Boolean; stdcall; external user32;
-  function GetWindowRect(hWnd: HWND; var lpRect: TRect): Boolean; stdcall; external user32;
+  function GetWindowRect(hWnd: HWND; var lpRect: TSysRect): Boolean; stdcall; external user32;
   function SetWindowTextA(hWnd: HWND; Text: PAnsiChar): Boolean; stdcall; external user32;
   function GetSystemMetrics(nIndex: Integer): Integer; stdcall; external user32;
 
-  function GetCursorPos(out Point: TPoint): Boolean; stdcall; external user32;
+  function GetCursorPos(out Point: TSysPoint): Boolean; stdcall; external user32;
   function SetCursorPos(X, Y: Integer): Boolean; stdcall; external user32;
   function ShowCursor(bShow: Boolean): LongInt; stdcall; external user32;
 
   function EnumDisplaySettingsW(lpszDeviceName: PWideChar; iModeNum: LongWord; var lpDevMode: TDeviceMode): Boolean; stdcall; external user32;
   function ChangeDisplaySettingsExW(lpszDeviceName: PWideChar; lpDevMode: PDeviceMode;
         wnd: HWND; dwFlags: LongWord; lParam: Pointer): Longint; stdcall; external user32;
-
   function ChangeDisplaySettingsW(lpDevMode: PDeviceMode; dwFlags: LongWord): Longint; stdcall; external user32;
 
   function SwapBuffers(DC: HDC): Boolean; stdcall; external gdi32;
@@ -364,6 +362,14 @@ type
   function wglDeleteContext(RC: HGLRC): Boolean; stdcall; external opengl32;
   function wglMakeCurrent(DC: HDC; RC: HGLRC): Boolean; stdcall; external opengl32;
   function wglGetProcAddress(ProcName: PAnsiChar): Pointer; stdcall; external opengl32;
+
+// File operations
+  function CreateFileW(lpFileName: PWideChar; dwDesiredAccess, dwShareMode: LongWord; lpSecurityAttributes: PSecurityAttributes; dwCreationDisposition, dwFlagsAndAttributes: LongWord; hTemplateFile: THandle): THandle; stdcall; external kernel32;
+  function GetFileSize(hFile: THandle; lpFileSizeHigh: Pointer): LongWord; stdcall; external kernel32;
+  function CloseHandle(hObject: THandle): LongBool; stdcall; external kernel32;
+  function WriteFile(hFile: THandle; const Buffer; nNumberOfBytesToWrite: LongWord; var lpNumberOfBytesWritten: LongWord; lpOverlapped: POverlapped): LongBool; stdcall; external kernel32;
+  function ReadFile(hFile: THandle; var Buffer; nNumberOfBytesToRead: LongWord; var lpNumberOfBytesRead: LongWord; lpOverlapped: POverlapped): LongBool; stdcall; external kernel32;
+  function SetFilePointer(hFile: THandle; lDistanceToMove: Longint; lpDistanceToMoveHigh: Pointer; dwMoveMethod: LongWord): LongWord; stdcall; external kernel32;
 
 // System Info
   function QueryPerformanceFrequency(out Freq: Int64): Boolean; stdcall; external kernel32;
@@ -382,24 +388,11 @@ type
   function joyGetNumDevs: LongWord; stdcall; external winmm;
   function joyGetDevCapsA(uJoyID: LongWord; lpCaps: Pointer; uSize: LongWord): LongWord; stdcall; external winmm;
   function joyGetPosEx(uJoyID: LongWord; lpInfo: Pointer): LongWord; stdcall; external winmm;
-
-  function FormatPath(const Path: string): string;
-  function ExtractFileDir(const Path: string): string;
 {$ENDREGION}
-implementation
 
-function FormatPath(const Path: string): string;
-var
-  i : Integer;
-begin
-// eXgine path format: bla\blabla\mr.Freeman\
-// nix - replace '\' -> '/'
-// win - replace '/' -> '\'
-  Result := Path;
-  for i := 1 to Length(Result) do
-    if Result[i] = '/' then
-      Result[i] := '\'; 
-end;
+function ExtractFileDir(const Path: string): string;
+
+implementation
 
 function ExtractFileDir(const Path: string): string;
 var

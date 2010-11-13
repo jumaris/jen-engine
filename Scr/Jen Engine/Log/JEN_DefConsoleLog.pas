@@ -13,7 +13,7 @@ type TDefConsoleLog = class(TLogOutput)
   public
     procedure BeginHeader; override;
     procedure EndHeader; override;
-    procedure AddMsg( const Text : String; MType : TLogMsg ); override;
+    procedure AddMsg(const Text: String; MType: TLogMsg); override;
   end;
 {$ENDIF}
 
@@ -34,16 +34,16 @@ begin
   BeginHeader;
 end;
 
-procedure TDefConsoleLog.AddMsg( const Text : String; MType : TLogMsg );
+procedure TDefConsoleLog.AddMsg(const Text: String; MType: TLogMsg);
 var
   str  : String;
   tstr : String;
 begin
   case MType of
-    LM_HEADER_MSG :
+    lmHeaderMsg :
       Writeln(Text);
 
-    LM_NOTIFY :
+    lmNotify :
       begin
         Str := '00000';
         tstr := Utils.IntToStr(Round(Utils.Time/1000));
@@ -55,13 +55,13 @@ begin
         Writeln('[' + str + 'ms] ' + Text);
       end;
 
-    LM_INFO :
+    lmInfo :
       Writeln(Text);
 
-    LM_WARNING :
+    lmWarning :
       Writeln('WARNING: ' + Text);
 
-    LM_ERROR :
+    lmError :
       Writeln('ERROR: ' + Text);
   end;
   LastUpdate := Utils.Time;

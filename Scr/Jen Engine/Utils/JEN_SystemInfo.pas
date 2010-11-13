@@ -10,14 +10,14 @@ type
   TRefreshRateArray = record
     private
       FArray     : array of Byte;
-      function GetRefresh(idx : Integer) : Byte;
-      function GetRefreshIdx( R : Byte ) : Integer;
+      function GetRefresh(idx : Integer): Byte;
+      function GetRefreshIdx(R : Byte): Integer;
     public
       procedure Clear;
       function  Count : Integer;
-      property  Refresh[idx : Integer] : Byte read GetRefresh; default;
-      procedure AddRefresh( R : Byte );
-      function  IsExist(const R : Byte ) : Boolean; inline;
+      property  Refresh[idx : Integer]: Byte read GetRefresh; default;
+      procedure AddRefresh(R : Byte);
+      function  IsExist(const R : Byte): Boolean; inline;
   end;
 
   PDisplayMode = ^TDisplayMode;
@@ -37,7 +37,7 @@ type
         destructor Destroy; override;
       private
         type
-          TSetModeResult = (SM_Successful, SM_SetDefault, SM_Error );
+          TSetModeResult = (SM_Successful, SM_SetDefault, SM_Error);
         var
           fModes        : array of TDisplayMode;
           fStartWidth   : Integer;
@@ -51,16 +51,16 @@ type
         function BPS    : Byte;
         function Refresh: Byte;
 
-        function SetMode(W, H, R : integer) : TSetModeResult; overload;
-        function SetMode(Idx, R  : integer) : TSetModeResult; overload;
+        function SetMode(W, H, R : integer): TSetModeResult; overload;
+        function SetMode(Idx, R  : integer): TSetModeResult; overload;
         procedure ResetMode;
 
         function GetModesCount : Integer;
-        property Modes[Idx: Integer]           : PDisplayMode read GetMode; default;
-        function GetIdx(W, H : Integer)        : Integer; inline;
-        function GetRefresh(W, H : Integer)    : PRefreshRateArray; overload; inline;
-        function GetRefresh(Idx  : Integer)    : PRefreshRateArray; overload; inline;
-        function IsModeExist(W, H : Integer)   : Boolean; overload; inline;
+        property Modes[Idx: Integer]: PDisplayMode read GetMode; default;
+        function GetIdx(W, H : Integer): Integer; inline;
+        function GetRefresh(W, H : Integer): PRefreshRateArray; overload; inline;
+        function GetRefresh(Idx  : Integer): PRefreshRateArray; overload; inline;
+        function IsModeExist(W, H : Integer): Boolean; overload; inline;
         function IsModeExist(W, H, R : Integer): Boolean; overload; inline;
       end;
   var
@@ -70,13 +70,13 @@ type
   public
     procedure WindowsVersion(var Major: LongInt; var Minor: LongInt; var Build: LongInt);
 
-    function CPUCount  : Integer;
-    property CPUName   : String read fCPUName;
-    property CPUSpeed  : LongWord read fCPUSpeed;
-    property Screen    : TScreen read fScreen;
+    function CPUCount: Integer;
+    property CPUName: String read fCPUName;
+    property CPUSpeed: LongWord read fCPUSpeed;
+    property Screen: TScreen read fScreen;
 
-    function RAMTotal  : Cardinal;
-    function RAMFree   : Cardinal;
+    function RAMTotal: Cardinal;
+    function RAMFree: Cardinal;
   end;
 
 implementation
@@ -110,7 +110,7 @@ begin
       Exit(i);
 end;
 
-procedure TRefreshRateArray.AddRefresh( R : Byte );
+procedure TRefreshRateArray.AddRefresh(R : Byte);
 var Last : integer;
 begin
   Last := High(FArray)+1;
@@ -118,7 +118,7 @@ begin
   FArray[Last] := R;
 end;
 
-function TRefreshRateArray.IsExist(const R : Byte ) : Boolean;
+function TRefreshRateArray.IsExist(const R : Byte) : Boolean;
 begin
   result := GetRefreshIdx( R ) <> -1;
 end;
@@ -186,7 +186,7 @@ begin
   inherited;
 end;
 
-function TSystem.TScreen.SetMode( W, H, R : integer ) : TSetModeResult;
+function TSystem.TScreen.SetMode(W, H, R : integer) : TSetModeResult;
 var
   DevMode      : TDeviceMode;
   RefreshRates : PRefreshRateArray;
@@ -197,12 +197,12 @@ begin
 
   if Mode <> nil then
   begin
-    if not Mode^.RefreshRates.IsExist( R ) then
+    if not Mode^.RefreshRates.IsExist(R) then
       R := 0;
   end else
   begin
-    LogOut('Error set display mode ' + Utils.IntToStr(W) + 'x' + Utils.IntToStr(H) + 'x' + Utils.IntToStr(R), LM_WARNING);
-    LogOut('Change display mode to default 1024x768x60', LM_NOTIFY);
+    LogOut('Error set display mode ' + Utils.IntToStr(W) + 'x' + Utils.IntToStr(H) + 'x' + Utils.IntToStr(R), lmWarning);
+    LogOut('Change display mode to default 1024x768x60', lmNotify);
 
     if IsModeExist(1024, 768, 60) then
     begin
@@ -212,7 +212,7 @@ begin
         Exit(SM_Error);
     end else
     begin
-      LogOut('Display mode critical error', LM_ERROR);
+      LogOut('Display mode critical error', lmError);
       Exit(SM_Error);
     end;
   end;
@@ -245,21 +245,21 @@ begin
 //  case ChangeDisplaySettingsW( @DevMode, $04 ) of
     DISP_CHANGE_SUCCESSFUL :
     begin
-      LogOut('Successful set display mode ' + Utils.IntToStr(Mode.Width) + 'x' + Utils.IntToStr(Mode.Height) + 'x' + Utils.IntToStr(R), LM_NOTIFY);
+      LogOut('Successful set display mode ' + Utils.IntToStr(Mode.Width) + 'x' + Utils.IntToStr(Mode.Height) + 'x' + Utils.IntToStr(R), lmNotify);
       Exit(SM_Successful);
     end;
     DISP_CHANGE_FAILED :
-      LogOut('Failed set display mode ' + Utils.IntToStr(Mode.Width) + 'x' + Utils.IntToStr(Mode.Height) + 'x' + Utils.IntToStr(R), LM_ERROR);
+      LogOut('Failed set display mode ' + Utils.IntToStr(Mode.Width) + 'x' + Utils.IntToStr(Mode.Height) + 'x' + Utils.IntToStr(R), lmError);
     DISP_CHANGE_BADMODE :
-      LogOut('Failed set display mode ' + Utils.IntToStr(Mode.Width) + 'x' + Utils.IntToStr(Mode.Height) + 'x' + Utils.IntToStr(R) + ' bad mode', LM_ERROR);
+      LogOut('Failed set display mode ' + Utils.IntToStr(Mode.Width) + 'x' + Utils.IntToStr(Mode.Height) + 'x' + Utils.IntToStr(R) + ' bad mode', lmError);
     else
-      LogOut('Failed set display mode ' + Utils.IntToStr(Mode.Width) + 'x' + Utils.IntToStr(Mode.Height) + 'x' + Utils.IntToStr(R) + ' uncnown error', LM_ERROR);
+      LogOut('Failed set display mode ' + Utils.IntToStr(Mode.Width) + 'x' + Utils.IntToStr(Mode.Height) + 'x' + Utils.IntToStr(R) + ' uncnown error', lmError);
   end;
 
   Result := SM_Error;
 end;
 
-function TSystem.TScreen.SetMode( Idx, R : integer ) : TSetModeResult;
+function TSystem.TScreen.SetMode(Idx, R: integer): TSetModeResult;
 var
   Mode : PDisplayMode;
 begin
@@ -267,7 +267,7 @@ begin
   if Assigned(Mode) then
     Result := SetMode( Mode.Width, Mode.Height, R)
   else
-    Result := SetMode( -1, -1, R);
+    Result := SetMode(-1, -1, R);
 end;
 
 procedure TSystem.TScreen.ResetMode;
@@ -279,75 +279,76 @@ begin
         Exit;
 
 //  ChangeDisplaySettingsW( nil, 0 );
-  ChangeDisplaySettingsExW( nil, nil, 0, 0, nil );
-  LogOut('Reset display mode to delfault', LM_NOTIFY);
+  ChangeDisplaySettingsExW(nil, nil, 0, 0, nil);
+  LogOut('Reset display mode to delfault', lmNotify);
 end;
 
-function TSystem.TScreen.GetModesCount : integer;
+function TSystem.TScreen.GetModesCount: integer;
 begin
-  result := Length(FModes);
+  Result := Length(FModes);
 end;
 
-function TSystem.TScreen.GetMode(Idx: Integer) : PDisplayMode;
+function TSystem.TScreen.GetMode(Idx: Integer): PDisplayMode;
 begin
-  result := nil;
+  Result := nil;
   if (Idx < 0) or (Idx > High(FModes)) then exit;
-  result := @FModes[Idx];
+  Result := @FModes[Idx];
 end;
 
-function TSystem.TScreen.GetIdx(W, H : Integer) : Integer;
+function TSystem.TScreen.GetIdx(W, H : Integer): Integer;
 var i : Integer;
 begin
-  result := -1;
+  Result := -1;
   for I := 0 to High(FModes) do
     if (FModes[i].Width = W) and (FModes[i].Height = H) then
       Exit(i);
 end;
 
-function TSystem.TScreen.GetRefresh(W, H : Integer) : PRefreshRateArray;
+function TSystem.TScreen.GetRefresh(W, H: Integer): PRefreshRateArray;
 begin
-  result := GetRefresh( GetIdx(W, H) );
+  Result := GetRefresh( GetIdx(W, H) );
 end;
 
-function TSystem.TScreen.GetRefresh(Idx : Integer) : PRefreshRateArray;
+function TSystem.TScreen.GetRefresh(Idx: Integer): PRefreshRateArray;
 begin
   if (Idx < 0) or (Idx > High(FModes)) then
     Exit(nil);
-  result := @FModes[Idx].RefreshRates;
+  Result := @FModes[Idx].RefreshRates;
 end;
 
-function TSystem.TScreen.IsModeExist(W, H : Integer) : Boolean;
+function TSystem.TScreen.IsModeExist(W, H: Integer): Boolean;
 begin
   result := GetIdx(W, H)<>-1;
 end;
 
-function TSystem.TScreen.IsModeExist(W, H, R : Integer) : Boolean;
-var RRA : PRefreshRateArray;
-var i   : Integer;
+function TSystem.TScreen.IsModeExist(W, H, R: Integer): Boolean;
+var
+  RRA : PRefreshRateArray;
+  i   : Integer;
 begin
-  result := false;
+  Result := false;
   RRA := GetRefresh(GetIdx(W, H));
   if Assigned(RRA) then
-    result := RRA^.IsExist(R);
+    Result := RRA^.IsExist(R);
 end;
 
-function TSystem.TScreen.Width : Integer;
+function TSystem.TScreen.Width: Integer;
 begin
-  result := GetSystemMetrics( SM_CXSCREEN );
+  Result := GetSystemMetrics(SM_CXSCREEN);
 end;
 
-function TSystem.TScreen.Height : Integer;
+function TSystem.TScreen.Height: Integer;
 begin
-  result := GetSystemMetrics( SM_CYSCREEN );
+  Result := GetSystemMetrics(SM_CYSCREEN);
 end;
 
-function TSystem.TScreen.BPS : Byte;
+function TSystem.TScreen.BPS: Byte;
 var
   DC: HDC;
 begin
   DC := GetDC(0);
-  Result := GetDeviceCaps( DC, BITSPIXEL ) * GetDeviceCaps( DC, PLANES );
-  ReleaseDC( 0, DC );
+  Result := GetDeviceCaps(DC, BITSPIXEL) * GetDeviceCaps(DC, PLANES);
+  ReleaseDC(0, DC);
 end;
 
 
@@ -357,7 +358,7 @@ var
 begin
   DC := GetDC(0);
   Result := GetDeviceCaps(DC, VREFRESH);
-  ReleaseDC( 0, DC );
+  ReleaseDC(0, DC);
 end;
 
 constructor TSystem.Create;
@@ -403,7 +404,7 @@ procedure TSystem.WindowsVersion(var Major: LongInt; var Minor: LongInt; var Bui
 var
   OSVerInfo: TOSVERSIONINFO;
 begin
-  fillchar( OSVerInfo, SizeOf(TOSVERSIONINFO), 0 );
+  fillchar(OSVerInfo, SizeOf(TOSVERSIONINFO), 0);
   OSVerInfo.dwOSVersionInfoSize := SizeOf(TOSVERSIONINFO);
   GetVersionExW(@OSVerInfo);
   Major := OSVerInfo.dwMajorVersion;
@@ -411,25 +412,25 @@ begin
   Build := OSVerInfo.dwBuildNumber;
 end;
 
-function TSystem.CPUCount : integer;
+function TSystem.CPUCount: integer;
 begin
-  result:=System.CPUCount;
+  Result := System.CPUCount;
 end;
 
-function TSystem.RAMTotal : Cardinal;
+function TSystem.RAMTotal: Cardinal;
 var
   MemStatus : TMemoryStatusEx;
 begin
-  MemStatus.dwLength := SizeOf( TMemoryStatusEx );
+  MemStatus.dwLength := SizeOf(TMemoryStatusEx);
   GlobalMemoryStatusEx(MemStatus);
   Result := Trunc(MemStatus.ullTotalPhys/(1024*1024)+1);
 end;
 
-function TSystem.RAMFree : Cardinal;
+function TSystem.RAMFree: Cardinal;
 var
   MemStatus : TMemoryStatusEx;
 begin
-  MemStatus.dwLength := SizeOf( TMemoryStatusEx );
+  MemStatus.dwLength := SizeOf(TMemoryStatusEx);
   GlobalMemoryStatusEx(MemStatus);
   Result := Trunc(MemStatus.ullAvailPhys/(1024*1024)+1);
 end;
