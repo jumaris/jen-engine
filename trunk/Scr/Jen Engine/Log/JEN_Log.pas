@@ -8,14 +8,14 @@ uses
   JEN_SystemInfo;
 
 type
-  TLogMsg = ( LM_HEADER_MSG, LM_INFO, LM_NOTIFY, LM_WARNING, LM_ERROR );
+  TLogMsg = (lmHeaderMsg, lmInfo, lmNotify, lmWarning, lmError);
 
   TLogOutput = class
   constructor Create;
   public
     procedure BeginHeader; virtual; abstract;
     procedure EndHeader; virtual; abstract;
-    procedure AddMsg(const Text : String; MType : TLogMsg); virtual; abstract;
+    procedure AddMsg(const Text: String; MType: TLogMsg); virtual; abstract;
   end;
 
   TLog = class
@@ -26,7 +26,7 @@ type
   public
     property LogOutputs : TList read fLogOutputs; 
     procedure Init;
-    procedure AddMsg(const Text : String; MType : TLogMsg);
+    procedure AddMsg(const Text: String; MType: TLogMsg);
   end;
 
 implementation
@@ -71,28 +71,28 @@ begin
   with TLogOutput(fLogOutputs[i]) do
     begin
       BeginHeader;
-      AddMsg( 'JEngine', LM_HEADER_MSG );
-      AddMsg( 'Windows version: '+Utils.IntToStr(Major)+'.'+Utils.IntToStr(Minor)+' (Buid '+Utils.IntToStr(Build)+')', LM_HEADER_MSG);
-      AddMsg( 'CPU            : '+SystemParams.CPUName+'(~'+Utils.IntToStr(SystemParams.CPUSpeed)+')x'+Utils.IntToStr(SystemParams.CPUCount), LM_HEADER_MSG);
-      AddMsg( 'RAM Available  : '+Utils.IntToStr(SystemParams.RAMFree)+'Mb', LM_HEADER_MSG);
-      AddMsg( 'RAM Total      : '+Utils.IntToStr(SystemParams.RAMTotal)+'Mb', LM_HEADER_MSG);
+      AddMsg('JEngine', lmHeaderMsg);
+      AddMsg('Windows version: '+Utils.IntToStr(Major)+'.'+Utils.IntToStr(Minor)+' (Buid '+Utils.IntToStr(Build)+')', lmHeaderMsg);
+      AddMsg('CPU            : '+SystemParams.CPUName+'(~'+Utils.IntToStr(SystemParams.CPUSpeed)+')x'+Utils.IntToStr(SystemParams.CPUCount), lmHeaderMsg);
+      AddMsg('RAM Available  : '+Utils.IntToStr(SystemParams.RAMFree)+'Mb', lmHeaderMsg);
+      AddMsg('RAM Total      : '+Utils.IntToStr(SystemParams.RAMTotal)+'Mb', lmHeaderMsg);
       EndHeader;
     end;
                          {
   with SystemParams.Screen do
   for I := 0 to GetModesCount -1 do
     for J := 0 to Modes[i].RefreshRates.Count-1 do
-      LogOut( Utils.IntToStr(Modes[i].Width) + 'x' + Utils.IntToStr(Modes[i].Height) + 'x' + Utils.IntToStr(Modes[i].RefreshRates.Refresh[j]), LM_INFO);
+      LogOut( Utils.IntToStr(Modes[i].Width) + 'x' + Utils.IntToStr(Modes[i].Height) + 'x' + Utils.IntToStr(Modes[i].RefreshRates.Refresh[j]), lmInfo);
               }
 end;
 
 
-procedure TLog.AddMsg( const Text : String; MType : TLogMsg );
+procedure TLog.AddMsg(const Text: String; MType: TLogMsg);
 var
   i : Integer;
 begin
   for i := 0 to fLogOutputs.Count - 1 do
-    TLogOutput(fLogOutputs[i]).AddMsg( Text, MType );
+    TLogOutput(fLogOutputs[i]).AddMsg(Text, MType);
 end;
 {$ELSE}
 

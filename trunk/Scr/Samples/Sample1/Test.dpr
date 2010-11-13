@@ -15,7 +15,8 @@ uses
   JEN_OpenGLHeader in '..\..\Jen Engine\Utils\JEN_OpenGLHeader.pas',
   JEN_SystemInfo in '..\..\Jen Engine\Utils\JEN_SystemInfo.pas',
   JEN_Utils in '..\..\Jen Engine\Utils\JEN_Utils.pas',
-  XSystem in '..\..\Jen Engine\Utils\XSystem.pas';
+  XSystem in '..\..\Jen Engine\Utils\XSystem.pas',
+  JEN_Camera3D in '..\..\Jen Engine\Core\JEN_Camera3D.pas';
 
 {$IFDEF DEBUG}
   {$APPTYPE CONSOLE}

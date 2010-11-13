@@ -13,19 +13,39 @@ uses
   JEN_OpenGLHeader,
   JEN_OpenGL,
   JEN_Render,
+  JEN_Camera3D,
   JEN_Math;
 
 const
-  LM_INFO       = TLogMsg.LM_INFO;
-  LM_NOTIFY     = TLogMsg.LM_NOTIFY;
-  LM_WARNING    = TLogMsg.LM_WARNING;
-  LM_ERROR      = TLogMsg.LM_ERROR;
+  lmInfo       = TLogMsg.lmInfo;
+  lmNotify     = TLogMsg.lmNotify;
+  lmWarning    = TLogMsg.lmWarning;
+  lmError      = TLogMsg.lmError;
+
+  btNone        = TBlendType.btNone;
+  btNormal      = TBlendType.btNormal;
+  btAdd         = TBlendType.btAdd;
+  btMult        = TBlendType.btMult;
+  btOne         = TBlendType.btOne;
+  btNoOverride  = TBlendType.btNoOverride;
+  btAddAlpha    = TBlendType.btAddAlpha;
+
+  cfNone        = TCullFace.cfNone;
+  cfFront       = TCullFace.cfFront;
+  cfBack        = TCullFace.cfBack;
+
+  mtViewProj    = TMatrixType.mtViewProj;
+  mtModel       = TMatrixType.mtModel;
+  mtProj        = TMatrixType.mtProj;
+  mtView        = TMatrixType.mtView;
 
 type
   TGame     = JEN_GAME.TGame;
 
   TDisplayWindow = JEN_Display_Window.TDisplayWindow;
   TGLRender = JEN_OpenGL.TGLRender;
+
+  TCamera3D = JEN_Camera3D.TCamera3D;
 
   TFileStream = JEN_Utils.TFileStream;
 

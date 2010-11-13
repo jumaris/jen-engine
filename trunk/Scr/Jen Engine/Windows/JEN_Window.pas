@@ -13,27 +13,27 @@ const
 type
   PWindow = ^TWindow;
   TWindow = class
-    constructor Create(Display : TDisplay; FullScreen : Boolean; Width: Integer; Height: Integer; FSSA : Byte);
+    constructor Create(Display: TDisplay; FullScreen: Boolean; Width: Integer; Height: Integer; FSSA: Byte);
     destructor  Destroy; override;
   private
-    FDisplay      : TDisplay;
-    FCaption      : String;
-    FHandle       : HWND;
-    FDC           : HDC;
-    FValid        : Boolean;
-    FFullScreen   : Boolean;
+    FDisplay    : TDisplay;
+    FCaption    : String;
+    FHandle     : HWND;
+    FDC         : HDC;
+    FValid      : Boolean;
+    FFullScreen : Boolean;
     class var FCurrentWindow : TWindow;
     class function WndProc(hWnd: HWND; Msg: Cardinal; wParam: Integer; lParam: Integer): Integer; stdcall; static;
     procedure SetCaption(const Value: String);
     procedure SetFullScreen(Value : Boolean);
   public
-    property IsValid : Boolean read FValid;
-    property Caption : String read FCaption write SetCaption;
-    property Handle  : HWND read FHandle;
-    property DC      : HDC read FDC;
-    property Display : TDisplay read FDisplay;
-    property FullScreen : Boolean read FFullScreen write SetFullScreen;
-    class property CurrentWindow : TWindow read FCurrentWindow;
+    property IsValid: Boolean read FValid;
+    property Caption: String read FCaption write SetCaption;
+    property Handle: HWND read FHandle;
+    property DC: HDC read FDC;
+    property Display: TDisplay read FDisplay;
+    property FullScreen: Boolean read FFullScreen write SetFullScreen;
+    class property CurrentWindow: TWindow read FCurrentWindow;
 
     procedure HandleFree;
     procedure Update;
@@ -50,7 +50,7 @@ uses
   JEN_Math,
   JEN_Game;
 
-class function TWindow.WndProc(hWnd: HWND; Msg: Cardinal; wParam: Integer; lParam: Integer) : Integer; stdcall;
+class function TWindow.WndProc(hWnd: HWND; Msg: Cardinal; wParam: Integer; lParam: Integer): Integer; stdcall;
 begin
 // Assert(expr : Boolean [; const msg: string]
 //  LogOut('message');
@@ -135,7 +135,7 @@ begin
 
   if not Assigned(Display) then
   begin
-    LogOut('Cannot create window, display is not correct', LM_ERROR);
+    LogOut('Cannot create window, display is not correct', lmError);
     Exit;
   end;
 
@@ -144,7 +144,7 @@ begin
   FillChar(WinClass, SizeOf(TWndClassEx), 0);
   with WinClass do
   begin
-    cbsize        := SizeOf( TWndClassEx );
+    cbsize        := SizeOf(TWndClassEx);
  	  style         := CS_DBLCLKS or CS_OWNDC or CS_HREDRAW or CS_VREDRAW;
 	  lpfnWndProc   := @TWindow.WndProc;
 	  //hCursor		    := LoadCursor(NULL, IDC_ARROW);
@@ -152,12 +152,12 @@ begin
 	  lpszClassName	:= WINDOW_CLASS_NAME;
   end;
 
-  if RegisterClassExW( WinClass ) = 0 Then
+  if RegisterClassExW(WinClass) = 0 Then
   begin
-    LogOut( 'Cannot register window class.', LM_ERROR );
+    LogOut('Cannot register window class.', lmError);
     Exit;
   end else
-    LogOut( 'Register window class.', LM_NOTIFY );
+    LogOut('Register window class.', lmNotify);
 
   if FullScreen Then
     begin
@@ -186,43 +186,42 @@ begin
                                    wnd_Width  + ( wnd_BrdSizeX * 2 ) * Byte( not wnd_FullScreen ),
                                    wnd_Height + ( wnd_BrdSizeY * 2 + wnd_CpnSize ) * Byte( not isFullScreen ), 0, 0, HInstance, nil );
                           }
-  FHandle := CreateWindowExW( WS_EX_APPWINDOW or WS_EX_TOPMOST * Byte( FullScreen ), WINDOW_CLASS_NAME,  @FCaption[1], Window_Style, WindowRect.X, WindowRect.Y,
-                              WindowRect.Width, WindowRect.Height, 0, 0, HInstance, nil );
+  FHandle := CreateWindowExW(WS_EX_APPWINDOW or WS_EX_TOPMOST * Byte(FullScreen), WINDOW_CLASS_NAME, @FCaption[1], Window_Style, WindowRect.X, WindowRect.Y,
+                             WindowRect.Width, WindowRect.Height, 0, 0, HInstance, nil);
                          {
   FHandle := CreateWindowExW(0, WINDOW_CLASS_NAME, @FCaption[1], WS_CAPTION or WS_MINIMIZEBOX or WS_SYSMENU or WS_VISIBLE,
                             0, 0, ScreenWidth, ScreenHeight, 0, 0, HInstance, nil);        }
   if FHandle = 0 Then
     begin
-      LogOut('Cannot create window.', LM_ERROR);
+      LogOut('Cannot create window.', lmError);
       Exit;
     end else
-      LogOut('Create window.', LM_NOTIFY);
+      LogOut('Create window.', lmNotify);
 
   SendMessageW(Handle, WM_SETICON, 1, LoadIconW(HInstance, 'MAINICON'));
   FDC := GetDC(FHandle);
 
-  FValid   := true;
+  FValid := true;
 end;
 
-destructor TWindow.Destroy();
+destructor TWindow.Destroy;
 begin
-
   if not ReleaseDC( FHandle, FDC ) Then
-    LogOut( 'Cannot release device context.', LM_ERROR )
+    LogOut('Cannot release device context.', lmError)
   else
-    LogOut( 'Release device context.', LM_NOTIFY );
+    LogOut('Release device context.', lmNotify);
 
-  if ( FHandle <> 0 ) and ( not DestroyWindow( FHandle ) ) Then
+  if(FHandle <> 0) and (not DestroyWindow(FHandle)) Then
   begin
-    LogOut( 'Cannot destroy window.', LM_ERROR );
+    LogOut('Cannot destroy window.', lmError);
     FHandle := 0;
   end else
-    LogOut( 'Destroy window.', LM_NOTIFY );
+    LogOut('Destroy window.', lmNotify);
 
-  if not UnRegisterClassW( WINDOW_CLASS_NAME, HInstance ) Then
-    LogOut( 'Cannot unregister window class.', LM_ERROR )
+  if not UnRegisterClassW(WINDOW_CLASS_NAME, HInstance) Then
+    LogOut('Cannot unregister window class.', lmError)
   else
-    LogOut( 'Unregister window class.', LM_NOTIFY );
+    LogOut('Unregister window class.', lmNotify);
 
   inherited;
 end;
@@ -253,23 +252,21 @@ begin
   SetWindowPos(FHandle, 0, Rect.x, Rect.y, Rect.Width, Rect.Height, $220);
 end;
 
-procedure TWindow.HandleFree();
+procedure TWindow.HandleFree;
 begin
   //FHandle := 0;
 end;
 
-procedure TWindow.Update();
+procedure TWindow.Update;
 var
   Msg : TMsg;
 begin
-
   FCurrentWindow := self;
   while PeekMessageW(Msg, 0, 0, 0, PM_REMOVE) do
   begin
     TranslateMessage(Msg);
     DispatchMessageW(Msg);
   end;
-
 end;
 
 end.

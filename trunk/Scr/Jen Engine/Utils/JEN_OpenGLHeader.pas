@@ -32,15 +32,34 @@ type
   PGLvoid     = Pointer;
 
 const
+// Boolean
+  GL_FALSE                            = 0;
+  GL_TRUE                             = 1;
+
+// Pixel Format
+  WGL_DRAW_TO_WINDOW_ARB    = $2001;
+  WGL_ACCELERATION_ARB      = $2003;
+  WGL_FULL_ACCELERATION_ARB = $2027;
+  WGL_SUPPORT_OPENGL_ARB    = $2010;
+  WGL_DOUBLE_BUFFER_ARB     = $2011;
+  WGL_PIXEL_TYPE_ARB        = $2013;
+  WGL_COLOR_BITS_ARB        = $2014;
+  WGL_RED_BITS_ARB          = $2015;
+  WGL_GREEN_BITS_ARB        = $2017;
+  WGL_BLUE_BITS_ARB         = $2019;
+  WGL_ALPHA_BITS_ARB        = $201B;
+  WGL_DEPTH_BITS_ARB        = $2022;
+  WGL_STENCIL_BITS_ARB      = $2023;
+  WGL_TYPE_RGBA_ARB         = $202B;
+  WGL_SAMPLE_BUFFERS_ARB    = $2041;
+  WGL_SAMPLES_ARB           = $2042;
+
 // AttribMask
   GL_DEPTH_BUFFER_BIT                 = $00000100;
   GL_STENCIL_BUFFER_BIT               = $00000400;
   GL_COLOR_BUFFER_BIT                 = $00004000;
 
-// Boolean
-  GL_FALSE                            = 0;
-  GL_TRUE                             = 1;
-
+  {
 // Begin Mode
   GL_POINTS                           = $0000;
   GL_LINES                            = $0001;
@@ -52,7 +71,7 @@ const
   GL_QUADS                            = $0007;
   GL_QUAD_STRIP                       = $0008;
   GL_POLYGON                          = $0009;
-
+  }
 // Alpha Function
   GL_NEVER                            = $0200;
   GL_LESS                             = $0201;
@@ -146,7 +165,7 @@ const
   GL_DECR                             = $1E03;
 {      GL_INVERT }
 
-// LightParameter
+ // LightParameter
   GL_AMBIENT                          = $1200;
   GL_DIFFUSE                          = $1201;
   GL_SPECULAR                         = $1202;
@@ -197,16 +216,6 @@ const
   GL_MAX_TEXTURE_MAX_ANISOTROPY       = $84FF;
   GENERATE_MIPMAP_SGIS                = $8191;
 
-// AA
-  WGL_SAMPLE_BUFFERS                  = $2041;
-  WGL_SAMPLES                         = $2042;
-  WGL_DRAW_TO_WINDOW                  = $2001;
-  WGL_SUPPORT_OPENGL                  = $2010;
-  WGL_DOUBLE_BUFFER                   = $2011;
-  WGL_COLOR_BITS                      = $2014;
-  WGL_DEPTH_BITS                      = $2022;
-  WGL_STENCIL_BITS                    = $2023;
-
 // FBO
   GL_FRAMEBUFFER                      = $8D40;
   GL_RENDERBUFFER                     = $8D41;
@@ -224,21 +233,33 @@ const
   GL_INFO_LOG_LENGTH                  = $8B84;
 
 // VBO
-  GL_ARRAY_BUFFER                     = $8892;
-  GL_ELEMENT_ARRAY_BUFFER             = $8893;
-  GL_STATIC_DRAW                      = $88E4;
-  GL_NORMAL_ARRAY                     = $8075;
+  GL_BUFFER_SIZE_ARB                = $8764;
+  GL_ARRAY_BUFFER_ARB               = $8892;
+  GL_ELEMENT_ARRAY_BUFFER_ARB       = $8893;
+  GL_WRITE_ONLY_ARB                 = $88B9;
+  GL_STREAM_DRAW_ARB                = $88E0;
+  GL_STATIC_DRAW_ARB                = $88E4;
+
+  GL_TEXTURE_COORD_ARRAY              = $8078;
+  GL_NORMAL_ARRAY                     = $8075;
   GL_COLOR_ARRAY                      = $8076;
   GL_VERTEX_ARRAY                     = $8074;
-  GL_TEXTURE_COORD_ARRAY              = $8078;
-  GL_WRITE_ONLY                       = $88B9;
 
-// Queries
+// Queries
   GL_SAMPLES_PASSED                   = $8914;
   GL_QUERY_COUNTER_BITS               = $8864;
   GL_CURRENT_QUERY                    = $8865;
   GL_QUERY_RESULT                     = $8866;
   GL_QUERY_RESULT_AVAILABLE           = $8867;
+
+  GL_CLIENT_PIXEL_STORE_BIT = $00000001;
+  GL_CLIENT_VERTEX_ARRAY_BIT = $00000002;
+  GL_CLIENT_ALL_ATTRIB_BITS = $FFFFFFFF;
+  GL_POLYGON_OFFSET_FACTOR = $8038;
+  GL_POLYGON_OFFSET_UNITS = $2A00;
+  GL_POLYGON_OFFSET_POINT = $2A01;
+  GL_POLYGON_OFFSET_LINE = $2A02;
+  GL_POLYGON_OFFSET_FILL = $8037;
 
   procedure glFinish; stdcall; external opengl32;
   procedure glFlush; stdcall; external opengl32;
@@ -277,7 +298,9 @@ const
   // Alpha
   procedure glAlphaFunc(func: GLenum; ref: GLfloat); stdcall; external opengl32;
   procedure glBlendFunc(sfactor, dfactor: GLenum); stdcall; external opengl32;
-    // Matrix
+  // CullFace
+  procedure glCullFace(mode: GLenum); stdcall; external opengl32;
+  // Matrix
   procedure glPushMatrix; stdcall; external opengl32;
   procedure glPopMatrix; stdcall; external opengl32;
   procedure glMatrixMode(mode: GLenum); stdcall; external opengl32;
@@ -297,23 +320,26 @@ const
   procedure glNormalPointer(atype: GLenum; stride: GLsizei; const pointer: Pointer); stdcall; external opengl32;
 
   procedure glDrawElements(mode: GLenum; count: GLsizei; atype: GLenum; const indices: Pointer); stdcall; external opengl32;
-  procedure glPushClientAttrib(mask: GLbitfield );  stdcall;  external opengl32;
+  procedure glPushClientAttrib(mask: GLbitfield ); stdcall; external opengl32;
   procedure glPopClientAttrib; stdcall; external opengl32;
-  procedure glPolygonMode(face: GLenum; mode: GLenum); stdcall;  external opengl32;
+  procedure glPolygonMode(face: GLenum; mode: GLenum); stdcall; external opengl32;
 
 var
-  // VBO
-  glBindBuffer : procedure(target : GLenum; buffer: GLuint); stdcall;
-  glDeleteBuffers : procedure(n : GLsizei; buffers : PGLuint); stdcall;
-  glGenBuffers : procedure(n : GLsizei; buffers : PGLuint); stdcall;
-  glIsBuffer : function (buffer : GLuint) :GLboolean; stdcall;
-  glBufferData : procedure(target : GLenum; size:GLsizei; data:PGLvoid;usage: GLenum); stdcall;
-  glBufferSubData : procedure(target : GLenum; offset :GLint; size : GLsizei; data: PGLvoid); stdcall;
-  glMapBuffer : function (target :GLenum; access: GLenum) : PGLvoid; stdcall;
-  glUnmapBuffer : function (target :GLenum) :GLboolean; stdcall;
-  glGetBufferParameteriv : procedure(target:GLenum; pname:GLenum; params:PGLint); stdcall;
+  wglChoosePixelFormatARB: function(hdc: HDC; const piAttribIList: PGLint; const pfAttribFList: PGLfloat; nMaxFormats: GLuint; piFormats: PGLint; nNumFormats: PGLuint): LongBool; stdcall;
+  wglSwapIntervalEXT: function(interval: GLint): LongBool; stdcall;
+
+  glBindBufferARB : procedure(target: GLenum; buffer: GLuint); stdcall;
+  glDeleteBuffersARB : procedure(n: GLsizei; buffers : PGLuint); stdcall;
+  glGenBuffersARB : procedure(n: GLsizei; buffers : PGLuint); stdcall;
+  glIsBufferARB : function (buffer: GLuint): GLboolean; stdcall;
+  glBufferDataARB : procedure(target: GLenum; size: GLsizei; data: PGLvoid; usage: GLenum); stdcall;
+  glBufferSubDataARB : procedure(target: GLenum; offset: GLint; size: GLsizei; data: PGLvoid); stdcall;
+  glMapBufferARB : function (target: GLenum; access: GLenum): PGLvoid; stdcall;
+  glUnmapBufferARB : function (target: GLenum) :GLboolean; stdcall;
+  glGetBufferParameterivARB : procedure(target: GLenum; pname: GLenum; params: PGLint); stdcall;
 
 function LoadGLLibraly : Boolean;
+function glGetProc(const Proc : PAnsiChar; var OldResult : Boolean) : Pointer;
 
 implementation
 
@@ -329,26 +355,26 @@ begin
     Result := wglGetProcAddress(PAnsiChar(Proc + 'ARB'));
   if Result = nil Then
     Result := wglGetProcAddress(PAnsiChar(Proc + 'EXT'));
-
   if Result = nil then
   begin
-    LogOut( 'Cannot load procedure ' + Proc, LM_ERROR );
+    LogOut('Cannot load procedure ' + Proc, lmError);
     OldResult := false;
   end;
-
 end;
 
 function LoadGLLibraly : Boolean;
 begin
   Result := true;
-  glBindBuffer    := glGetProc('glBindBuffer', Result);
-  glDeleteBuffers := glGetProc('glDeleteBuffers', Result);
-  glIsBuffer      := glGetProc('glIsBuffer', Result);
-  glBufferData    := glGetProc('glBufferData', Result);
-  glBufferSubData := glGetProc('glBufferSubData' , Result);
-  glMapBuffer     := glGetProc('glMapBuffer', Result);
-  glUnmapBuffer   := glGetProc('glUnmapBuffer', Result);
-  glGetBufferParameteriv := glGetProc('glGetBufferParameteriv', Result);
+
+  glBindBufferARB    := glGetProc('glBindBufferARB', Result);
+  glDeleteBuffersARB := glGetProc('glDeleteBuffersARB', Result);
+  glGenBuffersARB    := glGetProc('glGenBuffersARB', Result);
+  glIsBufferARB      := glGetProc('glIsBufferARB', Result);
+  glBufferDataARB    := glGetProc('glBufferDataARB', Result);
+  glBufferSubDataARB := glGetProc('glBufferSubDataARB', Result);
+  glMapBufferARB     := glGetProc('glMapBufferARB', Result);
+  glUnmapBufferARB   := glGetProc('glUnmapBufferARB', Result);
+  glGetBufferParameterivARB := glGetProc('glGetBufferParameterivARB', Result);
 
   Set8087CW($133F);
 end;

@@ -4,6 +4,7 @@ interface
 
 uses
   JEN_MAIN,
+  xsystem,
   JEN_OPENGLHEADER;
 
 type
@@ -22,15 +23,14 @@ constructor TSameGame.Create;
 begin
   inherited;
   Display := TDisplayWindow.Create(1024, 768, 60, false);
-  Render := TGLRender.Create(Display);
-                        {
-  Display.FullScreen := true;
+  Render := TGLRender.Create(Display,24,8,2);
+
+ // Display.FullScreen := true;
   Display.FullScreen := false;
-                              }
+
   if not (Display.isValid and Render.isValid) then
     Exit;
   glClearColor(1,1,0,1);
-
 end;
 
 procedure TSameGame.LoadContent;
