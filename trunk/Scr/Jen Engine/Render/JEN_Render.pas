@@ -26,7 +26,7 @@ type
     var
       Matrix    : array [TMatrixType] of TMat4f;
       CameraPos : TVec3f;
-    property IsValid: Boolean read FValid;
+    property Valid: Boolean read FValid;
     property BlendType: TBlendType write SetBlendType;
     property AlphaTest: Byte write SetAlphaTest;
     property DepthTest: Boolean write SetDepthTest;
