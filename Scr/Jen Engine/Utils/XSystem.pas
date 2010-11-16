@@ -92,7 +92,6 @@ const
   WM_MOVE             = $0003;
   WM_SIZE             = $0005;
   WM_ACTIVATEAPP      = $001C;
-  WA_ACTIVE           = 1;
 
   WM_SETICON          = $0080;
   WM_KEYDOWN          = $0100;
@@ -121,6 +120,7 @@ const
   WS_MINIMIZEBOX = $20000;
 
   GWL_STYLE = -16;
+  GCL_HCURSOR = -12;
 
   SWP_FRAMECHANGED  = $20;
   SWP_NOOWNERZORDER = $200;
@@ -163,9 +163,9 @@ const
                        JOY_RETURNR or JOY_RETURNU or JOY_RETURNV or
                        JOY_RETURNPOV or JOY_RETURNBUTTONS);
 
-  PFD_DOUBLEBUFFER                = $00000001;
-  PFD_DRAW_TO_WINDOW              = $00000004;
-  PFD_SUPPORT_OPENGL              = $00000020;
+  PFD_DOUBLEBUFFER     = $00000001;
+  PFD_DRAW_TO_WINDOW   = $00000004;
+  PFD_SUPPORT_OPENGL   = $00000020;
 
   // OpenGL
   GL_MODELVIEW                      = $1700;
@@ -342,6 +342,7 @@ type
   function GetWindowRect(hWnd: HWND; var lpRect: TSysRect): Boolean; stdcall; external user32;
   function SetWindowTextA(hWnd: HWND; Text: PAnsiChar): Boolean; stdcall; external user32;
   function GetSystemMetrics(nIndex: Integer): Integer; stdcall; external user32;
+  function SetCursor(hCursor: LongWord): LongWord; stdcall; external user32;
 
   function GetCursorPos(out Point: TSysPoint): Boolean; stdcall; external user32;
   function SetCursorPos(X, Y: Integer): Boolean; stdcall; external user32;

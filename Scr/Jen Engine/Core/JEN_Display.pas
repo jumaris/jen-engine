@@ -21,7 +21,11 @@ type
     function  GetWidth: Cardinal; virtual; abstract;
     function  GetHeight: Cardinal; virtual; abstract;
   public
-    property IsValid: Boolean read FValid;
+    procedure Swap;
+    procedure Resize(W, H: Cardinal); virtual; abstract;
+    procedure ShowCursor(Value: Boolean); virtual; abstract;
+
+    property Valid: Boolean read FValid;
     property FullScreen: Boolean read GetFullScreen write SetFullScreen;
     property Active: Boolean read GetActive write SetActive;
     property Handle: HWND  read GetHandle;
@@ -30,7 +34,6 @@ type
     property Height: Cardinal read GetHeight;
     property Render: TRender read FRender write FRender;
 
-    procedure Swap;
     procedure Restore; virtual; abstract;
     procedure Update; virtual; abstract;
   end;

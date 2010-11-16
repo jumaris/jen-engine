@@ -22,6 +22,7 @@ type
     FDC         : HDC;
     FValid      : Boolean;
     FFullScreen : Boolean;
+    FCursor     : Boolean;
     class var FCurrentWindow : TWindow;
     class function WndProc(hWnd: HWND; Msg: Cardinal; wParam: Integer; lParam: Integer): Integer; stdcall; static;
     procedure SetCaption(const Value: String);
@@ -35,8 +36,10 @@ type
     property FullScreen: Boolean read FFullScreen write SetFullScreen;
     class property CurrentWindow: TWindow read FCurrentWindow;
 
-    procedure HandleFree;
+  //  procedure HandleFree;
     procedure Update;
+    procedure Restore;
+    procedure ShowCursor(Value: Boolean);
   end;
 
 implementation
@@ -59,32 +62,29 @@ begin
     WM_CLOSE:
       TGame.Finish;
 
-    WM_ACTIVATEAPP :
+    WM_ACTIVATEAPP:
       begin
+        FCurrentWindow.Display.Active := Word(wParam) <> 0;
+
         if CurrentWindow.FFullScreen then
-         if Word(wParam) = WA_ACTIVE then
-          ShowWindow(hWnd, SW_SHOW)
-         else
-          ShowWindow(hWnd, SW_MINIMIZE);
-         FCurrentWindow.Display.Active := Word(wParam) = WA_ACTIVE;
+          if FCurrentWindow.Display.Active then
+            ShowWindow(hWnd, SW_SHOW)
+          else
+            ShowWindow(hWnd, SW_MINIMIZE);
+         {
+        if CInput <> nil then
+          CInput.Reset;   }
+      end;
+
+    WM_SETCURSOR:
+      begin
+        if (FCurrentWindow.Display.Active) and (Word(lparam) = 1) and (not CurrentWindow.FCursor) Then
+          SetCursor(0)
+        else
+          SetCursor(LoadCursorW(0, PWideChar(32512)));
       end;
       {
-     with CDisplay do
-      begin
-        FActive := Word(wParam) = WA_ACTIVE;
-        if FullScreen then
-        begin
-          Mode(FActive, Width, Height, Freq);
-          if FActive then
-            ShowWindow(FHandle, SW_SHOW)
-          else
-            ShowWindow(FHandle, SW_MINIMIZE);
-          FFullScreen := True;
-        end;
-//        ShowCursor(not FActive);
-        if CInput <> nil then
-          CInput.Reset;
-      end;}
+}
 
   //  WM_MOVE, WM_SIZE :;
      { GetWindowRect(hWnd, CDisplay.FRect);
@@ -124,22 +124,19 @@ end;
 constructor TWindow.Create(Display : TDisplay; FullScreen: Boolean; Width: Integer; Height: Integer; FSSA: Byte);
 var
   WinClass      : TWndClassEx;
-  Window_Style  : LongWord;
-  WindowRect    : TRecti;
 begin
   inherited Create;
   FValid   := False;
   FDisplay := Display;
   FCaption := 'JEN Engine application';
   FFullScreen := FullScreen;
+  FCursor := True;
 
   if not Assigned(Display) then
   begin
     LogOut('Cannot create window, display is not correct', lmError);
     Exit;
   end;
-
-  WindowRect := Recti((SystemParams.Screen.Width - Width) div 2, (SystemParams.Screen.Height - Height) div 2, Width, Height);
 
   FillChar(WinClass, SizeOf(TWndClassEx), 0);
   with WinClass do
@@ -159,38 +156,8 @@ begin
   end else
     LogOut('Register window class.', lmNotify);
 
-  if FullScreen Then
-    begin
-      WindowRect.Location := ZeroPoint;
-      WindowRect.Width    := SystemParams.Screen.Width;
-      WindowRect.Height   := SystemParams.Screen.Height;
-      Window_Style        := WS_POPUP or WS_VISIBLE or WS_SYSMENU;
-    end else
-    begin
-      WindowRect.Inflate(GetSystemMetrics(SM_CXDLGFRAME), GetSystemMetrics(SM_CYDLGFRAME) + GetSystemMetrics(SM_CYCAPTION) div 2);
-      Window_Style        := WS_CAPTION or WS_MINIMIZEBOX or WS_SYSMENU or WS_VISIBLE;
-    end;
-     {
-      SelectWindow( wnd_Handle );
-  ShowWindow( wnd_Handle );
-  if wnd_FullScreen Then
-    wnd_SetPos( 0, 0 ); }
-
-                  {
-  Window_CpnSize  := GetSystemMetrics( SM_CYCAPTION  );
-  Window_BrdSizeX := GetSystemMetrics( SM_CXDLGFRAME );
-  Window_BrdSizeY := GetSystemMetrics( SM_CYDLGFRAME );
-                       }
-                       {
-  FHandle := CreateWindowExW( WS_EX_APPWINDOW or WS_EX_TOPMOST * Byte( isFullScreen ), WINDOW_CLASS_NAME,  @FCaption[1], Window_Style, WindowRect.X, WindowRect.Y,
-                                   wnd_Width  + ( wnd_BrdSizeX * 2 ) * Byte( not wnd_FullScreen ),
-                                   wnd_Height + ( wnd_BrdSizeY * 2 + wnd_CpnSize ) * Byte( not isFullScreen ), 0, 0, HInstance, nil );
-                          }
-  FHandle := CreateWindowExW(WS_EX_APPWINDOW or WS_EX_TOPMOST * Byte(FullScreen), WINDOW_CLASS_NAME, @FCaption[1], Window_Style, WindowRect.X, WindowRect.Y,
-                             WindowRect.Width, WindowRect.Height, 0, 0, HInstance, nil);
-                         {
-  FHandle := CreateWindowExW(0, WINDOW_CLASS_NAME, @FCaption[1], WS_CAPTION or WS_MINIMIZEBOX or WS_SYSMENU or WS_VISIBLE,
-                            0, 0, ScreenWidth, ScreenHeight, 0, 0, HInstance, nil);        }
+  FHandle := CreateWindowExW(0, WINDOW_CLASS_NAME, @FCaption[1], 0, 0, 0,
+                             0, 0, 0, 0, HInstance, nil);
   if FHandle = 0 Then
     begin
       LogOut('Cannot create window.', lmError);
@@ -201,6 +168,7 @@ begin
   SendMessageW(Handle, WM_SETICON, 1, LoadIconW(HInstance, 'MAINICON'));
   FDC := GetDC(FHandle);
 
+  Restore;
   FValid := true;
 end;
 
@@ -231,18 +199,18 @@ begin
 
 end;
 
-procedure TWindow.SetFullScreen(Value : Boolean);
+procedure TWindow.Restore;
 var
   Style : LongWord;
   Rect  : TRecti;
 begin
-  FFullScreen := Value;
-
   Rect := Recti((SystemParams.Screen.Width - FDisplay.Width) div 2, (SystemParams.Screen.Height - FDisplay.Height) div 2, FDisplay.Width, FDisplay.Height);
 
-  if Value then
+  if FFullScreen then
+  begin
+    Rect.Location := ZeroPoint;
     Style := WS_POPUP
-  else
+  end else
   begin
     Style := WS_CAPTION or WS_MINIMIZEBOX;
     Rect.Inflate(GetSystemMetrics(SM_CXDLGFRAME), GetSystemMetrics(SM_CYDLGFRAME) + GetSystemMetrics(SM_CYCAPTION) div 2);
@@ -252,10 +220,21 @@ begin
   SetWindowPos(FHandle, 0, Rect.x, Rect.y, Rect.Width, Rect.Height, $220);
 end;
 
+procedure TWindow.ShowCursor(Value: Boolean);
+begin
+  FCursor := Value;
+end;
+
+procedure TWindow.SetFullScreen(Value : Boolean);
+begin
+  FFullScreen := Value;
+  Restore;
+end;
+        {
 procedure TWindow.HandleFree;
 begin
   //FHandle := 0;
-end;
+end;      }
 
 procedure TWindow.Update;
 var

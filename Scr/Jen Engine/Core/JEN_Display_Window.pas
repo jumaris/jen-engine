@@ -30,6 +30,8 @@ type
   public
     procedure Restore; override;
     procedure Update; override;
+    procedure Resize(W, H: Cardinal); override;
+    procedure ShowCursor(Value: Boolean); override;
   end;
 
 implementation
@@ -86,19 +88,24 @@ begin
 
   if FValid then
     FWindow.FullScreen := Value;
+
+  Restore;
 end;
 
 procedure TDisplayWindow.SetActive(Value: Boolean);
 begin
+  if (FActive = Value) or (FValid = false) then Exit;
+  FActive := Value;
+
   if FFullScreen then
   begin
     if Value then
-      SystemParams.Screen.SetMode(FWidth, FHeight, FRefresh)
+      FValid := FValid and (SystemParams.Screen.SetMode(FWidth, FHeight, FRefresh) <> SM_Error)
     else
       SystemParams.Screen.ResetMode;
+    Restore;
   end;
-  FActive := Value;
-  Restore;
+
 end;
 
 function TDisplayWindow.GetActive: Boolean;
@@ -108,12 +115,27 @@ end;
 
 procedure TDisplayWindow.Restore;
 begin
+  FWindow.Restore;
   FRender.Viewport := Recti(0, 0, FWidth, FHeight);
 end;
 
 procedure TDisplayWindow.Update;
 begin
   FWindow.Update;
+end;
+
+procedure TDisplayWindow.Resize(W, H: Cardinal);
+begin
+  FWidth  := W;
+  FHeight := H;
+  if FFullScreen and FActive then
+    SystemParams.Screen.SetMode(FWidth, FHeight, FRefresh);
+  Restore;
+end;
+
+procedure TDisplayWindow.ShowCursor(Value: Boolean);
+begin
+  FWindow.ShowCursor(Value);
 end;
 
 function TDisplayWindow.GetHandle: HWND;

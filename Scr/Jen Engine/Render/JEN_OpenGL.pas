@@ -14,9 +14,9 @@ type
       constructor Create(Display: TDisplay; DepthBits: Byte = 24; StencilBits: Byte = 8; FSAA : Byte = 0);
       destructor Destroy;  override;
     private
-      FOGL_Context : HGLRC;
-      FDisplay     : TDisplay;
-      FViewport    : TRecti;
+      FGL_Context : HGLRC;
+      FDisplay    : TDisplay;
+      FViewport   : TRecti;
 
       FBlendType  : TBlendType;
       FAlphaTest  : Byte;
@@ -58,7 +58,7 @@ begin
   FDisplay := Display;
   FValid := False;
 
-  if not (Assigned(Display) and Display.IsValid) then
+  if not (Assigned(Display) and Display.Valid) then
   begin
     LogOut('Cannot create OpenGL context, display is not correct', lmError);
     Exit;
@@ -132,15 +132,15 @@ begin
     exit;
   end;
 
-  FOGL_Context := wglCreateContext(Display.DC);
-  if (FOGL_Context = 0) Then
+  FGL_Context := wglCreateContext(Display.DC);
+  if(FGL_Context = 0)Then
   begin
     LogOut('Cannot create OpenGL context.', lmError);
     exit;
   end else
     LogOut('Create OpenGL context.', lmNotify);
 
-  if not wglMakeCurrent(Display.DC, FOGL_Context) Then
+  if not wglMakeCurrent(Display.DC, FGL_Context) Then
   begin
     LogOut('Cannot set current OpenGL context.', lmError);
     exit;
@@ -152,11 +152,11 @@ begin
   LogOut('OpenGL version : ' + glGetString(GL_VERSION )+ ' (' + glGetString(GL_VENDOR) +')', lmInfo);
   LogOut('Video device   : ' + glGetString(GL_RENDERER), lmInfo);
 
-  BlendType := btNormal;
-  AlphaTest := 0;
-  DepthTest := true;
-  DepthWrite := true;
-  CullFace := cfBack;
+  BlendType   := btNormal;
+  AlphaTest   := 0;
+  DepthTest   := true;
+  DepthWrite  := true;
+  CullFace    := cfBack;
 
   glDepthFunc ( GL_LEQUAL );
   glClearDepth( 1.0 );
@@ -169,25 +169,21 @@ begin
   glClearColor(0.0, 0.0, 0.0, 0.0);
   //glShadeModel(GL_SMOOTH);
   //glHint(GL_SHADE_MODEL,GL_NICEST);
-  glEnable(GL_DEPTH_TEST);
   glDepthFunc(GL_LEQUAL);
-  glDisable(GL_ALPHA_TEST);
   glClearDepth(1.0);
 
   //glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
-
   glEnable(GL_TEXTURE_2D);
-  glEnable(GL_NORMALIZE);
-  glEnable(GL_COLOR_MATERIAL);
-
+//  glEnable(GL_NORMALIZE);
+// glEnable(GL_COLOR_MATERIAL);
 end;
 
 destructor TGLRender.Destroy;
 begin
-  if not wglDeleteContext( FOGL_Context ) Then
-    LogOut( 'Cannot delete OpenGL context.', lmError )
+  if not wglDeleteContext(FGL_Context) Then
+    LogOut('Cannot delete OpenGL context.', lmError)
   else
-    LogOut( 'Delete OpenGL context.', lmNotify );
+    LogOut('Delete OpenGL context.', lmNotify);
   inherited;
 end;
 
