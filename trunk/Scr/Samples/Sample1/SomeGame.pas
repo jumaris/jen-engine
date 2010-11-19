@@ -25,10 +25,11 @@ begin
   Display := TDisplayWindow.Create(1024, 768, 60, false);
   Render := TGLRender.Create(Display,24,8,2);
 
- // Display.FullScreen := true;
-  Display.FullScreen := false;
+//  Display.FullScreen := true;
+ // Display.FullScreen := false;
+  Display.resize( 800, 600);
 
-  if not (Display.isValid and Render.isValid) then
+  if not (Display.Valid and Render.Valid) then
     Exit;
   glClearColor(1,1,0,1);
 end;

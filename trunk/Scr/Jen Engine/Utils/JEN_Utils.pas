@@ -118,7 +118,6 @@ constructor TUtils.Create;
 var
   Count : Int64;
 begin
-  inherited;
   QueryPerformanceFrequency(FTimeFreq);
   QueryPerformanceCounter(Count);
   FTimeStart := Trunc(1000 * (Count / FTimeFreq));
@@ -196,7 +195,6 @@ end;     }
 { TList }
 constructor TList.Create;
 begin
-  inherited;
   FCount := 0;
   FItems := nil;
 end;
@@ -332,7 +330,6 @@ end;
 { TManagedObj }
 constructor TManagedObj.Create(const ManagedName: AnsiString; Manager: TManager);
 begin
-  inherited Create;
   FManager := Manager;
   FName    := ManagedName;
   FManager.Add(Self);

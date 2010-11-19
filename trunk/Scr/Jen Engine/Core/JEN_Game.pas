@@ -1,5 +1,4 @@
 unit JEN_Game;
-{$I JeN_config.INC}
 
 interface
 
@@ -13,22 +12,20 @@ type
     constructor Create;
     destructor Destroy; override;
   private
-    var FRender : TRender;
-    var FDisplay : TDisplay;
     class var FisRunnig : Boolean;
     class var FQuit : Boolean;
   protected
     procedure LoadContent; virtual; abstract;
+    procedure OnUpdate(dt: double); virtual; abstract;
+    procedure OnRender; virtual; abstract;
   public
+    Display : TDisplay;
+    Render : TRender;
+
     class property Quit: Boolean read FQuit;
     class procedure Finish;
 
-    property Display: TDisplay read FDisplay write FDisplay;
-    property Render: TRender read FRender write FRender;
-
     procedure Run;
-    procedure OnUpdate(dt: double); virtual; abstract;
-    procedure OnRender; virtual; abstract;
   end;
 
 implementation
@@ -40,29 +37,29 @@ uses
 constructor TGame.Create;
 begin
   inherited;
-  if( FisRunnig ) then
+  if(FisRunnig) then
     LogOut('Engine alredy running', lmWarning);
 
-  if Assigned(FDisplay) then
-    FDisplay.Free;
+  if Assigned(Display) then
+    Display.Free;
 
-  FDisplay:= nil;
-  FRender := nil;
-  FQuit   := False;
+  Display:= nil;
+  Render := nil;
+  FQuit  := False;
 end;
 
 destructor TGame.Destroy;
 begin
-  if Assigned( FRender ) then
+  if Assigned(Render) then
     begin
-      FRender.Free;
-      FRender := nil;
+      Render.Free;
+      Render := nil;
     end;
 
-  if Assigned( FDisplay ) then
+  if Assigned(Display) then
     begin
-      FDisplay.Free;
-      FDisplay := nil;
+      Display.Free;
+      Display := nil;
     end;
 
   FisRunnig := False;
@@ -77,7 +74,7 @@ end;
 
 procedure TGame.Run;
 begin
-  if FisRunnig or (Assigned(FDisplay)= False) or (FDisplay.Valid = False) then Exit;
+  if FisRunnig or (Assigned(Display)= False) or (Display.Valid = False) then Exit;
   Logout('Let''s rock!', lmNotify);
   FisRunnig := true;
 
