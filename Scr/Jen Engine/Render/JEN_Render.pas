@@ -1,5 +1,4 @@
 unit JEN_Render;
-{$I Jen_config.INC}
 
 interface
 

@@ -1,5 +1,4 @@
 unit JEN_Window;
-{$I Jen_config.INC}
 
 interface
 
@@ -125,7 +124,6 @@ constructor TWindow.Create(Display : TDisplay; FullScreen: Boolean; Width: Integ
 var
   WinClass      : TWndClassEx;
 begin
-  inherited Create;
   FValid   := False;
   FDisplay := Display;
   FCaption := 'JEN Engine application';

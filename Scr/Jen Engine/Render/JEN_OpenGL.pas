@@ -1,5 +1,4 @@
 unit JEN_OpenGL;
-{$I Jen_config.INC}
 
 interface
 
@@ -30,8 +29,6 @@ type
       procedure SetDepthTest(Value: Boolean); override;
       procedure SetDepthWrite(Value: Boolean); override;
       procedure SetCullFace(Value: TCullFace); override;
-    public
-
   end;
 
 implementation
@@ -54,7 +51,6 @@ var
   RC : HGLRC;
   Result : Boolean;
 begin
-  inherited Create;
   FDisplay := Display;
   FValid := False;
 

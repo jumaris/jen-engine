@@ -181,6 +181,9 @@ type
   HDC   = LongWord;
   HGLRC = LongWord;
 
+  PByteArray = ^TByteArray;
+  TByteArray = array [0..1] of Byte;
+
   PSecurityAttributes = ^TSecurityAttributes;
   TSecurityAttributes  = record
     nLength: LongWord;

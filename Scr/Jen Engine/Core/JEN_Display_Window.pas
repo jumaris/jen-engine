@@ -42,8 +42,6 @@ uses
 
 constructor TDisplayWindow.Create(Width: Cardinal; Height: Cardinal; Refresh: Byte; FullScreen: Boolean);
 begin
-  inherited Create;
-
   if (Width = SystemParams.Screen.Width) and (Height = SystemParams.Screen.Height) then
     FullScreen := true;
 
@@ -116,7 +114,7 @@ end;
 procedure TDisplayWindow.Restore;
 begin
   FWindow.Restore;
-  FRender.Viewport := Recti(0, 0, FWidth, FHeight);
+  Render.Viewport := Recti(0, 0, FWidth, FHeight);
 end;
 
 procedure TDisplayWindow.Update;

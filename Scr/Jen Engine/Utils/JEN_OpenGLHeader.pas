@@ -58,7 +58,6 @@ const
   GL_DEPTH_BUFFER_BIT                 = $00000100;
   GL_STENCIL_BUFFER_BIT               = $00000400;
   GL_COLOR_BUFFER_BIT                 = $00004000;
-
   {
 // Begin Mode
   GL_POINTS                           = $0000;
@@ -130,12 +129,12 @@ const
   GL_UNSIGNED_INT                     = $1405;
   GL_FLOAT                            = $1406;
   GL_UNSIGNED_INT_8_8_8_8             = $8035;
-
+              {
 // Matrix Mode
   GL_MODELVIEW                        = $1700;
   GL_PROJECTION                       = $1701;
   GL_TEXTURE                          = $1702;
-
+                         }
 // Pixel Format
   GL_DEPTH_COMPONENT                  = $1902;
   GL_RGB                              = $1907;
@@ -164,7 +163,7 @@ const
   GL_INCR                             = $1E02;
   GL_DECR                             = $1E03;
 {      GL_INVERT }
-
+                {
  // LightParameter
   GL_AMBIENT                          = $1200;
   GL_DIFFUSE                          = $1201;
@@ -176,7 +175,7 @@ const
   GL_CONSTANT_ATTENUATION             = $1207;
   GL_LINEAR_ATTENUATION               = $1208;
   GL_QUADRATIC_ATTENUATION            = $1209;
-
+                           }
 // GetString Parameter
   GL_VENDOR                           = $1F00;
   GL_RENDERER                         = $1F01;
@@ -233,12 +232,12 @@ const
   GL_INFO_LOG_LENGTH                  = $8B84;
 
 // VBO
-  GL_BUFFER_SIZE_ARB                = $8764;
-  GL_ARRAY_BUFFER_ARB               = $8892;
-  GL_ELEMENT_ARRAY_BUFFER_ARB       = $8893;
-  GL_WRITE_ONLY_ARB                 = $88B9;
-  GL_STREAM_DRAW_ARB                = $88E0;
-  GL_STATIC_DRAW_ARB                = $88E4;
+  GL_BUFFER_SIZE                      = $8764;
+  GL_ARRAY_BUFFER                     = $8892;
+  GL_ELEMENT_ARRAY_BUFFER             = $8893;
+  GL_WRITE_ONLY                       = $88B9;
+  GL_STREAM_DRAW                      = $88E0;
+  GL_STATIC_DRAW                      = $88E4;
 
   GL_TEXTURE_COORD_ARRAY              = $8078;
   GL_NORMAL_ARRAY                     = $8075;
@@ -266,7 +265,6 @@ const
 
   function  glGetString(name: GLenum): PAnsiChar; stdcall; external opengl32;
   procedure glHint(target, mode: GLenum); stdcall; external opengl32;
-
   procedure glShadeModel(mode: GLenum); stdcall; external opengl32;
 
   // Clear
@@ -291,17 +289,17 @@ const
   procedure glDepthFunc(func: GLenum); stdcall; external opengl32;
   procedure glDepthMask(flag: GLboolean); stdcall; external opengl32;
   // Color
-  procedure glColor4ub(red, green, blue, alpha: GLubyte); stdcall; external opengl32;
+ { procedure glColor4ub(red, green, blue, alpha: GLubyte); stdcall; external opengl32;
   procedure glColor4ubv(v: PGLubyte); stdcall; external opengl32;
   procedure glColor4f(red, green, blue, alpha: GLfloat); stdcall; external opengl32;
-  procedure glColorMask(red, green, blue, alpha: GLboolean); stdcall; external opengl32;
+  procedure glColorMask(red, green, blue, alpha: GLboolean); stdcall; external opengl32;    }
   // Alpha
   procedure glAlphaFunc(func: GLenum; ref: GLfloat); stdcall; external opengl32;
   procedure glBlendFunc(sfactor, dfactor: GLenum); stdcall; external opengl32;
   // CullFace
   procedure glCullFace(mode: GLenum); stdcall; external opengl32;
   // Matrix
-  procedure glPushMatrix; stdcall; external opengl32;
+ { procedure glPushMatrix; stdcall; external opengl32;
   procedure glPopMatrix; stdcall; external opengl32;
   procedure glMatrixMode(mode: GLenum); stdcall; external opengl32;
   procedure glLoadIdentity; stdcall; external opengl32;
@@ -309,11 +307,11 @@ const
   procedure glMultMatrixf(const m: PGLfloat); stdcall; external opengl32;
   procedure glRotatef(angle, x, y, z: GLfloat); stdcall; external opengl32;
   procedure glScalef(x, y, z: GLfloat); stdcall; external opengl32;
-  procedure glTranslatef(x, y, z: GLfloat); stdcall; external opengl32;
+  procedure glTranslatef(x, y, z: GLfloat); stdcall; external opengl32;         }
   // Vertex
-  procedure glVertex2f(x, y: GLfloat); stdcall; external opengl32;
+ { procedure glVertex2f(x, y: GLfloat); stdcall; external opengl32;
   procedure glVertex2fv(v: PGLfloat); stdcall; external opengl32;
-  procedure glVertex3f(x, y, z: GLfloat); stdcall; external opengl32;
+  procedure glVertex3f(x, y, z: GLfloat); stdcall; external opengl32;         }
   procedure glVertexPointer(size: GLint; atype: GLenum; stride: GLsizei; const pointer: Pointer); stdcall; external opengl32;
   // Normal
   procedure glNormal3f(x, y, z: GLfloat); stdcall; external opengl32;

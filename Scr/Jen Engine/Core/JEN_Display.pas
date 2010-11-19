@@ -11,7 +11,7 @@ type
   protected
     var
       FValid : Boolean;
-      FRender : TRender;
+
     function  GetFullScreen: Boolean; virtual; abstract;
     procedure SetFullScreen(Value: Boolean); virtual; abstract;
     procedure SetActive(Value: Boolean); virtual; abstract;
@@ -21,6 +21,8 @@ type
     function  GetWidth: Cardinal; virtual; abstract;
     function  GetHeight: Cardinal; virtual; abstract;
   public
+    Render : TRender;
+
     procedure Swap;
     procedure Resize(W, H: Cardinal); virtual; abstract;
     procedure ShowCursor(Value: Boolean); virtual; abstract;
@@ -32,7 +34,6 @@ type
     property DC: HDC read GetDC;
     property Width: Cardinal read GetWidth;
     property Height: Cardinal read GetHeight;
-    property Render: TRender read FRender write FRender;
 
     procedure Restore; virtual; abstract;
     procedure Update; virtual; abstract;

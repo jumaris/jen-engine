@@ -368,7 +368,6 @@ var
 	DataSize   : LongWord;
   Res        : LongWord;
 begin
-  inherited;
   fScreen := TScreen.Create;
 
   FCPUSpeed := 0;
