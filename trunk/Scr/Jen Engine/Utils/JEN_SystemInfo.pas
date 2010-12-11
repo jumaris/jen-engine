@@ -192,6 +192,7 @@ var
   RefreshRates : PRefreshRateArray;
   Mode         : PDisplayMode;
   i            : integer;
+  Str          : String;
 begin
   Mode := Modes[GetIdx(W, H)];
 
@@ -201,7 +202,7 @@ begin
       R := 0;
   end else
   begin
-    LogOut('Error set display mode ' + Utils.Conv(W) + 'x' + Utils.Conv(H) + 'x' + Utils.Conv(R), lmWarning);
+    LogOut('Error set display mode ' + Utils.IntToStr(W) + 'x' + Utils.IntToStr(H) + 'x' + Utils.IntToStr(R), lmWarning);
     LogOut('Change display mode to default 1024x768x60', lmNotify);
 
     if IsModeExist(1024, 768, 60) then
@@ -241,19 +242,21 @@ begin
     dmFields           := DM_BITSPERPEL or DM_PELSWIDTH or DM_PELSHEIGHT or DM_DISPLAYFREQUENCY ;
   end;
 
+  Str := ' ' + Utils.IntToStr(Mode.Width) + 'x' + Utils.IntToStr(Mode.Height) + 'x' + Utils.IntToStr(R);
+
   case ChangeDisplaySettingsExW( nil, @DevMode, 0, $04, nil ) of
 //  case ChangeDisplaySettingsW( @DevMode, $04 ) of
     DISP_CHANGE_SUCCESSFUL :
     begin
-      LogOut('Successful set display mode ' + Utils.Conv(Mode.Width) + 'x' + Utils.Conv(Mode.Height) + 'x' + Utils.Conv(R), lmNotify);
+      LogOut('Successful set display mode ' + Str, lmNotify);
       Exit(SM_Successful);
     end;
     DISP_CHANGE_FAILED :
-      LogOut('Failed set display mode ' + Utils.Conv(Mode.Width) + 'x' + Utils.Conv(Mode.Height) + 'x' + Utils.Conv(R), lmError);
+      LogOut('Failed set display mode ' + Str, lmError);
     DISP_CHANGE_BADMODE :
-      LogOut('Failed set display mode ' + Utils.Conv(Mode.Width) + 'x' + Utils.Conv(Mode.Height) + 'x' + Utils.Conv(R) + ' bad mode', lmError);
+      LogOut('Failed set display mode ' + Str + ' bad mode', lmError);
     else
-      LogOut('Failed set display mode ' + Utils.Conv(Mode.Width) + 'x' + Utils.Conv(Mode.Height) + 'x' + Utils.Conv(R) + ' uncnown error', lmError);
+      LogOut('Failed set display mode ' + Str + ' uncnown error', lmError);
   end;
 
   Result := SM_Error;

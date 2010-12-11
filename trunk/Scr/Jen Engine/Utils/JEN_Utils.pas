@@ -17,11 +17,11 @@ type
     FTimeStart  : LongInt;
     function GetTime : LongInt;
   public
-    function Conv(const Str: string; Def: Integer = 0): Integer; overload;
-    function Conv(const Str: string; Def: Single = 0): Single; overload;
-    function Conv(Value: LongInt): string; Overload;
-    function Conv(Value: Single; Digits: Integer = 8): string; overload;
-    property Time : LongInt Read GetTime;
+    function IntToStr(Value: Integer): string;
+    function StrToInt(const Str: string; Def: Integer = 0): Integer;
+    function FloatToStr(Value: Single; Digits: Integer = 8): string;
+    function StrToFloat(const Str: string; Def: Single = 0): Single;
+    property Time : LongInt read GetTime;
   end;
 
   TCompareFunc = function (Item1, Item2: Pointer): Integer;
@@ -147,7 +147,7 @@ begin
   Result := Trunc(1000 * (Count / FTimeFreq)) - FTimeStart;
 end;
 
-function TUtils.Conv(Value: LongInt): String;
+function TUtils.IntToStr(Value: LongInt): String;
 var
   Res : string[32];
 begin
@@ -155,7 +155,7 @@ begin
   Result := string(Res);
 end;
 
-function TUtils.Conv(const Str: String; Def: LongInt): LongInt;
+function TUtils.StrToInt(const Str: String; Def: LongInt): LongInt;
 var
   Code : LongInt;
 begin
@@ -164,7 +164,7 @@ begin
     Result := Def;
 end;
 
-function TUtils.Conv(Value: Single; Digits: LongInt = 8): String;
+function TUtils.FloatToStr(Value: Single; Digits: LongInt = 8): String;
 var
   Res : string[32];
 begin
@@ -172,7 +172,7 @@ begin
   Result := string(Res);
 end;
 
-function TUtils.Conv(const Str: String; Def: Single): Single;
+function TUtils.StrToFloat(const Str: String; Def: Single): Single;
 var
   Code : LongInt;
 begin

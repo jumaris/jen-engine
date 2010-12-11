@@ -38,20 +38,39 @@ procedure TDefConsoleLog.AddMsg(const Text: String; MType: TLogMsg);
 var
   str  : String;
   tstr : String;
+  h,m,s : LongInt;
 begin
   case MType of
     lmHeaderMsg :
       Writeln(Text);
 
     lmNotify :
-      begin
+      begin       {
         Str := '00000';
-        tstr := Utils.Conv( Round(Utils.Time/1000) );
-       // Move(tstr[1], str[6-length(tstr)], length(tstr)*2);
+        tstr := Utils.IntToStr(Round(Utils.Time/1000));
+        Move(tstr[1], str[6-length(tstr)], length(tstr)*2);
+                 }
+        h := Trunc(Utils.Time/3600000);
+        m := Trunc(Utils.Time/60000);
+        s := Trunc(Utils.Time/1000) - m*60;
+        m := m - h*60;
 
-        Str := Str + tstr + 's:0000000';
-       // tstr := Utils.Conv(Trunc(Utils.Time - LastUpdate));
-      //  Move(tstr[1], str[15-length(tstr)], length(tstr)*2);
+        Str := '';
+        if h > 0 then
+          Str := Utils.IntToStr(h) + ':';
+
+        if m < 10 then
+          Str := Str + '0';
+
+        Str := Str + Utils.IntToStr(m) + ':';
+
+        if s < 10 then
+          Str := Str + '0';
+
+        Str := Str + Utils.IntToStr(s) + ' 0000000';
+
+        tstr := Utils.IntToStr(Utils.Time - LastUpdate);
+        Move(tstr[1], str[length(Str)-length(tstr)], length(tstr)*2);
         Writeln('[' + str + 'ms] ' + Text);
       end;
 
