@@ -59,7 +59,7 @@ begin
   inherited;
 end;
 
-procedure TLog.Init;
+procedure TLog.Init;        
 var
   i,j       : Integer;
   Major     : LongInt;
@@ -72,10 +72,10 @@ begin
     begin
       BeginHeader;
       AddMsg('JEngine', lmHeaderMsg);
-      AddMsg('Windows version: '+Utils.Conv(Major)+'.'+Utils.Conv(Minor)+' (Buid '+Utils.Conv(Build)+')', lmHeaderMsg);
-      AddMsg('CPU            : '+SystemParams.CPUName+'(~'+Utils.Conv(SystemParams.CPUSpeed)+')x'+Utils.Conv(SystemParams.CPUCount), lmHeaderMsg);
-      AddMsg('RAM Available  : '+Utils.Conv(SystemParams.RAMFree)+'Mb', lmHeaderMsg);
-      AddMsg('RAM Total      : '+Utils.Conv(SystemParams.RAMTotal)+'Mb', lmHeaderMsg);
+      AddMsg('Windows version: '+Utils.IntToStr(Major)+'.'+Utils.IntToStr(Minor)+' (Buid '+Utils.IntToStr(Build)+')', lmHeaderMsg);
+      AddMsg('CPU            : '+SystemParams.CPUName+'(~'+Utils.IntToStr(SystemParams.CPUSpeed)+')x'+Utils.IntToStr(SystemParams.CPUCount), lmHeaderMsg);
+      AddMsg('RAM Available  : '+Utils.IntToStr(SystemParams.RAMFree)+'Mb', lmHeaderMsg);
+      AddMsg('RAM Total      : '+Utils.IntToStr(SystemParams.RAMTotal)+'Mb', lmHeaderMsg);
       EndHeader;
     end;
                          {

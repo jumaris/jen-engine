@@ -153,7 +153,7 @@ begin
     Exit;
   end else
     LogOut('Register window class.', lmNotify);
-                       {
+
   FHandle := CreateWindowExW(0, WINDOW_CLASS_NAME, @FCaption[1], 0, 0, 0,
                              0, 0, 0, 0, HInstance, nil);
   if FHandle = 0 Then
@@ -167,7 +167,7 @@ begin
   FDC := GetDC(FHandle);
 
   Restore;
-  FValid := true;       }
+  FValid := true;
 end;
 
 destructor TWindow.Destroy;
