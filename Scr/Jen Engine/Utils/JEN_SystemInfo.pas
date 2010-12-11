@@ -201,7 +201,7 @@ begin
       R := 0;
   end else
   begin
-    LogOut('Error set display mode ' + Utils.IntToStr(W) + 'x' + Utils.IntToStr(H) + 'x' + Utils.IntToStr(R), lmWarning);
+    LogOut('Error set display mode ' + Utils.Conv(W) + 'x' + Utils.Conv(H) + 'x' + Utils.Conv(R), lmWarning);
     LogOut('Change display mode to default 1024x768x60', lmNotify);
 
     if IsModeExist(1024, 768, 60) then
@@ -245,15 +245,15 @@ begin
 //  case ChangeDisplaySettingsW( @DevMode, $04 ) of
     DISP_CHANGE_SUCCESSFUL :
     begin
-      LogOut('Successful set display mode ' + Utils.IntToStr(Mode.Width) + 'x' + Utils.IntToStr(Mode.Height) + 'x' + Utils.IntToStr(R), lmNotify);
+      LogOut('Successful set display mode ' + Utils.Conv(Mode.Width) + 'x' + Utils.Conv(Mode.Height) + 'x' + Utils.Conv(R), lmNotify);
       Exit(SM_Successful);
     end;
     DISP_CHANGE_FAILED :
-      LogOut('Failed set display mode ' + Utils.IntToStr(Mode.Width) + 'x' + Utils.IntToStr(Mode.Height) + 'x' + Utils.IntToStr(R), lmError);
+      LogOut('Failed set display mode ' + Utils.Conv(Mode.Width) + 'x' + Utils.Conv(Mode.Height) + 'x' + Utils.Conv(R), lmError);
     DISP_CHANGE_BADMODE :
-      LogOut('Failed set display mode ' + Utils.IntToStr(Mode.Width) + 'x' + Utils.IntToStr(Mode.Height) + 'x' + Utils.IntToStr(R) + ' bad mode', lmError);
+      LogOut('Failed set display mode ' + Utils.Conv(Mode.Width) + 'x' + Utils.Conv(Mode.Height) + 'x' + Utils.Conv(R) + ' bad mode', lmError);
     else
-      LogOut('Failed set display mode ' + Utils.IntToStr(Mode.Width) + 'x' + Utils.IntToStr(Mode.Height) + 'x' + Utils.IntToStr(R) + ' uncnown error', lmError);
+      LogOut('Failed set display mode ' + Utils.Conv(Mode.Width) + 'x' + Utils.Conv(Mode.Height) + 'x' + Utils.Conv(R) + ' uncnown error', lmError);
   end;
 
   Result := SM_Error;

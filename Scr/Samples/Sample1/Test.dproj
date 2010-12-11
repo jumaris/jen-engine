@@ -3,7 +3,7 @@
 			<ProjectGuid>{C1894D3D-47FB-448E-8601-231258A2BC1E}</ProjectGuid>
 			<ProjectVersion>12.0</ProjectVersion>
 			<MainSource>Test.dpr</MainSource>
-			<Config Condition="'$(Config)'==''">Release</Config>
+			<Config Condition="'$(Config)'==''">Debug</Config>
 			<DCC_DCCCompiler>DCC32</DCC_DCCCompiler>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Config)'=='Base' or '$(Base)'!=''">
@@ -50,14 +50,8 @@
 			</DelphiCompile>
 			<DCCReference Include="SomeGame.pas"/>
 			<DCCReference Include="..\..\Jen Engine\JEN_Main.pas"/>
-			<DCCReference Include="..\..\Jen Engine\Core\JEN_Display.pas"/>
-			<DCCReference Include="..\..\Jen Engine\Core\JEN_Display_Window.pas"/>
-			<DCCReference Include="..\..\Jen Engine\Core\JEN_Game.pas"/>
-			<DCCReference Include="..\..\Jen Engine\Log\JEN_DefConsoleLog.pas"/>
-			<DCCReference Include="..\..\Jen Engine\Log\JEN_Log.pas"/>
 			<DCCReference Include="..\..\Jen Engine\Render\JEN_OpenGL.pas"/>
 			<DCCReference Include="..\..\Jen Engine\Render\JEN_Render.pas"/>
-			<DCCReference Include="..\..\Jen Engine\Windows\JEN_Window.pas"/>
 			<DCCReference Include="..\..\Jen Engine\Utils\JEN_Math.pas"/>
 			<DCCReference Include="..\..\Jen Engine\Utils\JEN_OpenGLHeader.pas"/>
 			<DCCReference Include="..\..\Jen Engine\Utils\JEN_SystemInfo.pas"/>
@@ -65,6 +59,12 @@
 			<DCCReference Include="..\..\Jen Engine\Utils\XSystem.pas"/>
 			<DCCReference Include="..\..\Jen Engine\Core\JEN_Camera3D.pas"/>
 			<DCCReference Include="..\..\Jen Engine\Render\JEN_GeometryBuffer.pas"/>
+			<DCCReference Include="..\..\Jen Engine\Core\JEN_DefConsoleLog.pas"/>
+			<DCCReference Include="..\..\Jen Engine\Core\JEN_Display.pas"/>
+			<DCCReference Include="..\..\Jen Engine\Core\JEN_Display_Window.pas"/>
+			<DCCReference Include="..\..\Jen Engine\Core\JEN_Game.pas"/>
+			<DCCReference Include="..\..\Jen Engine\Core\JEN_Log.pas"/>
+			<DCCReference Include="..\..\Jen Engine\Core\JEN_Window.pas"/>
 			<None Include="Jen_config.inc"/>
 			<BuildConfiguration Include="Base">
 				<Key>Base</Key>
@@ -98,7 +98,7 @@
 						<VersionInfo Name="MajorVer">0</VersionInfo>
 						<VersionInfo Name="MinorVer">0</VersionInfo>
 						<VersionInfo Name="Release">1</VersionInfo>
-						<VersionInfo Name="Build">1029</VersionInfo>
+						<VersionInfo Name="Build">1142</VersionInfo>
 						<VersionInfo Name="Debug">True</VersionInfo>
 						<VersionInfo Name="PreRelease">False</VersionInfo>
 						<VersionInfo Name="Special">False</VersionInfo>
@@ -110,7 +110,7 @@
 					<VersionInfoKeys>
 						<VersionInfoKeys Name="CompanyName"/>
 						<VersionInfoKeys Name="FileDescription"/>
-						<VersionInfoKeys Name="FileVersion">0.0.1.1029</VersionInfoKeys>
+						<VersionInfoKeys Name="FileVersion">0.0.1.1142</VersionInfoKeys>
 						<VersionInfoKeys Name="InternalName"/>
 						<VersionInfoKeys Name="LegalCopyright"/>
 						<VersionInfoKeys Name="LegalTrademarks"/>

@@ -337,23 +337,29 @@ var
   glGetBufferParameterivARB : procedure(target: GLenum; pname: GLenum; params: PGLint); stdcall;
 
 function LoadGLLibraly : Boolean;
-function glGetProc(const Proc : PAnsiChar; var OldResult : Boolean) : Pointer;
+function glGetProc(const Proc: PAnsiChar; var OldResult: Boolean): Pointer;
 
 implementation
 
 uses
   JEN_MAIN;
 
-function glGetProc(const Proc : PAnsiChar; var OldResult : Boolean) : Pointer;
+function glGetProc(const Proc: PAnsiChar; var OldResult: Boolean): Pointer;
 begin
   if not OldResult then Exit(nil);
 
-  Result := wglGetProcAddress(Proc);
-  if Result = nil Then
-    Result := wglGetProcAddress(PAnsiChar(Proc + 'ARB'));
-  if Result = nil Then
-    Result := wglGetProcAddress(PAnsiChar(Proc + 'EXT'));
-  if Result = nil then
+  Result := wglGetProcAddress(Proc);    {
+  if not Assigned(Result) then
+  begin
+    S := Proc + 'ARB';
+    Result := wglGetProcAddress(PAnsiChar(S));
+  end;
+  if not Assigned(Result) then
+  begin
+    S := Proc + 'EXT';
+    Result := wglGetProcAddress(PAnsiChar(S));
+  end;                            }
+  if not Assigned(Result) then
   begin
     LogOut('Cannot load procedure ' + Proc, lmError);
     OldResult := false;
@@ -363,6 +369,8 @@ end;
 function LoadGLLibraly : Boolean;
 begin
   Result := true;
+
+  wglSwapIntervalEXT := glGetProc(PAnsiChar('wglSwapIntervalEXT'), Result);
 
   glBindBufferARB    := glGetProc('glBindBufferARB', Result);
   glDeleteBuffersARB := glGetProc('glDeleteBuffersARB', Result);

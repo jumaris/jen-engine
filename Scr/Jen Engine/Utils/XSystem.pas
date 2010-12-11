@@ -330,41 +330,41 @@ type
   function CreateWindowExW(dwExStyle: LongWord; lpClassName, lpWindowName: PWideChar;
     dwStyle: LongWord; X, Y, nWidth, nHeight: LongInt;
     hWndParent, hMenu, hInstance: LongWord; lpParam: Pointer): HWND; stdcall; external user32;
-  function DestroyWindow(hWnd: HWND): Boolean; stdcall; external user32;
+  function DestroyWindow(hWnd: HWND): LongBool; stdcall; external user32;
   function GetDC(hWnd: HWND): HDC; stdcall; external user32;
   function ReleaseDC(hWnd: HWND; hDC: HDC): LongBool; stdcall; external user32;
   function DefWindowProcW(hWnd, Msg: LongWord; wParam, lParam: LongInt): LongInt; stdcall; external user32;
-  function PeekMessageW(var lpMsg: TMsg; hWnd: HWND; Min, Max, Remove: LongWord): Boolean; stdcall; external user32;
-  function TranslateMessage(const lpMsg: TMsg): Boolean; stdcall; external user32;
+  function PeekMessageW(var lpMsg: TMsg; hWnd: HWND; Min, Max, Remove: LongWord): Longbool; stdcall; external user32;
+  function TranslateMessage(const lpMsg: TMsg): LongBool; stdcall; external user32;
   function DispatchMessageW(const lpMsg: TMsg): LongInt; stdcall; external user32;
   function SendMessageW(hWnd, Msg: LongWord; wParam, lParam: LongInt): LongInt; stdcall; external user32;
-  function ShowWindow(hWnd: HWND; nCmdShow: LongInt): Boolean; stdcall; external user32;
+  function ShowWindow(hWnd: HWND; nCmdShow: LongInt): LongBool; stdcall; external user32;
   function SetWindowLongA(hWnd: HWND; nIndex, dwNewLong: LongInt): LongInt; stdcall; external user32;
-  function AdjustWindowRect(var lpRect: TSysRect; dwStyle: LongWord; bMenu: Boolean): Boolean; stdcall; external user32;
-  function SetWindowPos(hWnd, hWndInsertAfter: HWND; X, Y, cx, cy: LongInt; uFlags: LongWord): Boolean; stdcall; external user32;
-  function GetWindowRect(hWnd: HWND; var lpRect: TSysRect): Boolean; stdcall; external user32;
-  function SetWindowTextA(hWnd: HWND; Text: PAnsiChar): Boolean; stdcall; external user32;
+  function AdjustWindowRect(var lpRect: TSysRect; dwStyle: LongWord; bMenu: Longbool): Longbool; stdcall; external user32;
+  function SetWindowPos(hWnd, hWndInsertAfter: HWND; X, Y, cx, cy: LongInt; uFlags: LongWord): Longbool; stdcall; external user32;
+  function GetWindowRect(hWnd: HWND; var lpRect: TSysRect): Longbool; stdcall; external user32;
+  function SetWindowTextW(hWnd: HWND; lpString: PWideChar): Longbool; stdcall; external user32;
   function GetSystemMetrics(nIndex: Integer): Integer; stdcall; external user32;
   function SetCursor(hCursor: LongWord): LongWord; stdcall; external user32;
 
-  function GetCursorPos(out Point: TSysPoint): Boolean; stdcall; external user32;
-  function SetCursorPos(X, Y: Integer): Boolean; stdcall; external user32;
-  function ShowCursor(bShow: Boolean): LongInt; stdcall; external user32;
+  function GetCursorPos(out Point: TSysPoint): LongBool; stdcall; external user32;
+  function SetCursorPos(X, Y: Integer): LongBool; stdcall; external user32;
+  function ShowCursor(bShow: LongBool): LongInt; stdcall; external user32;
 
-  function EnumDisplaySettingsW(lpszDeviceName: PWideChar; iModeNum: LongWord; var lpDevMode: TDeviceMode): Boolean; stdcall; external user32;
+  function EnumDisplaySettingsW(lpszDeviceName: PWideChar; iModeNum: LongWord; var lpDevMode: TDeviceMode): LongBool; stdcall; external user32;
   function ChangeDisplaySettingsExW(lpszDeviceName: PWideChar; lpDevMode: PDeviceMode;
         wnd: HWND; dwFlags: LongWord; lParam: Pointer): Longint; stdcall; external user32;
   function ChangeDisplaySettingsW(lpDevMode: PDeviceMode; dwFlags: LongWord): Longint; stdcall; external user32;
 
-  function SwapBuffers(DC: HDC): Boolean; stdcall; external gdi32;
-  function SetPixelFormat(DC: HDC; PixFormat: LongInt; FormatDef: Pointer): Boolean; stdcall; external gdi32;
+  function SwapBuffers(DC: HDC): LongBool; stdcall; external gdi32;
+  function SetPixelFormat(DC: HDC; PixFormat: LongInt; FormatDef: Pointer): Longbool; stdcall; external gdi32;
   function ChoosePixelFormat(DC: HDC; FormatDef: Pointer): LongInt; stdcall; external gdi32;
   function GetStockObject(Index: Integer): LongWord; stdcall; external gdi32;
-  function GetDeviceCaps(DC: HDC; Index: Integer): Integer; stdcall; external gdi32 name 'GetDeviceCaps';
+  function GetDeviceCaps(DC: HDC; Index: Integer): Integer; stdcall; external gdi32;
 
   function wglCreateContext(DC: HDC): HGLRC; stdcall; external opengl32;
-  function wglDeleteContext(RC: HGLRC): Boolean; stdcall; external opengl32;
-  function wglMakeCurrent(DC: HDC; RC: HGLRC): Boolean; stdcall; external opengl32;
+  function wglDeleteContext(RC: HGLRC): LongBool; stdcall; external opengl32;
+  function wglMakeCurrent(DC: HDC; RC: HGLRC): LongBool; stdcall; external opengl32;
   function wglGetProcAddress(ProcName: PAnsiChar): Pointer; stdcall; external opengl32;
 
 // File operations
@@ -376,8 +376,8 @@ type
   function SetFilePointer(hFile: THandle; lDistanceToMove: Longint; lpDistanceToMoveHigh: Pointer; dwMoveMethod: LongWord): LongWord; stdcall; external kernel32;
 
 // System Info
-  function QueryPerformanceFrequency(out Freq: Int64): Boolean; stdcall; external kernel32;
-  function QueryPerformanceCounter(out Count: Int64): Boolean; stdcall; external kernel32;
+  function QueryPerformanceFrequency(out Freq: Int64): LongBool; stdcall; external kernel32;
+  function QueryPerformanceCounter(out Count: Int64): LongBool; stdcall; external kernel32;
   function GetVersionExW(lpVersionInformation: POSVERSIONINFO): Longint; stdcall; external kernel32;
   function GlobalMemoryStatusEx(var lpBuffer : TMEMORYSTATUSEX): LongBool; stdcall; external kernel32 name 'GlobalMemoryStatusEx';
 

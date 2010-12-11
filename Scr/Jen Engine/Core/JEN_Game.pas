@@ -74,7 +74,7 @@ end;
 
 procedure TGame.Run;
 begin
-  if FisRunnig or (Assigned(Display)= False) or (Display.Valid = False) then Exit;
+  if( FisRunnig or not(Assigned(Display) and Display.Valid and Assigned(Render) and Render.Valid) )then Exit;
   Logout('Let''s rock!', lmNotify);
   FisRunnig := true;
 

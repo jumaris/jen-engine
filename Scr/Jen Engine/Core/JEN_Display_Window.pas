@@ -19,9 +19,11 @@ type
     FRefresh    : Byte;
     FFullScreen : Boolean;
     FActive     : Boolean;
-    function  GetFullScreen: Boolean; override;
     procedure SetFullScreen(Value: Boolean); override;
     procedure SetActive(Value: Boolean); override;
+    procedure SetCaption(Value: String); override;
+
+    function  GetFullScreen: Boolean; override;
     function  GetActive: Boolean; override;
     function  GetHandle: HWND; override;
     function  GetDC: HDC; override;
@@ -60,12 +62,13 @@ begin
   else
     Exit;
 
-  FValid := FValid and FWindow.isValid;
+  FValid := FValid and Assigned(FWindow) and FWindow.isValid;
 end;
 
 destructor TDisplayWindow.Destroy;
 begin
-  FWindow.Free;
+  if Assigned(FWindow) then
+    FWindow.Free;
   inherited;
 end;
 
@@ -111,8 +114,16 @@ begin
   Result := FActive;
 end;
 
+procedure TDisplayWindow.SetCaption(Value: String);
+begin
+  if (FValid = false) then Exit;
+  FWindow.Caption := Value;
+end;
+
 procedure TDisplayWindow.Restore;
 begin
+  if (FValid = false) then Exit;
+  inherited;
   FWindow.Restore;
   Render.Viewport := Recti(0, 0, FWidth, FHeight);
 end;
