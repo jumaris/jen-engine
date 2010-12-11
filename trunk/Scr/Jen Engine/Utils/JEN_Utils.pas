@@ -17,10 +17,10 @@ type
     FTimeStart  : LongInt;
     function GetTime : LongInt;
   public
-    function IntToStr(Value: Integer): WideString;
-    function StrToInt(const Str: String; Def: Integer = 0): Integer;
-    function FloatToStr(Value: Single; Digits: Integer = 8): String;
-    function StrToFloat(const Str: String; Def: Single = 0): Single;
+    function Conv(const Str: string; Def: Integer = 0): Integer; overload;
+    function Conv(const Str: string; Def: Single = 0): Single; overload;
+    function Conv(Value: LongInt): string; Overload;
+    function Conv(Value: Single; Digits: Integer = 8): string; overload;
     property Time : LongInt Read GetTime;
   end;
 
@@ -84,28 +84,39 @@ type
     property Items[Idx: Integer]: TManagedObj read GetItem; default;
   end;
 
-  TFileStream = class
-    class function Init(const FileName: string; RW: Boolean = False): TFileStream; overload;
-    destructor Destroy; override;
+  TStream = class
   private
     FSize  : LongInt;
     FPos   : LongInt;
-    FBPos  : LongInt;
-    F      : LongWord;
-    Mem    : Pointer;
-    procedure SetPos(Value: LongInt);
-  {$IFNDEF NO_FILESYS}
-    procedure SetBlock(BPos, BSize: LongInt);
-  {$ENDIF}
+    procedure SetPos(Value: LongInt); virtual; abstract;
+    procedure SetBlock(BPos, BSize: LongInt); virtual; abstract;
   public
-    function Read(out Buf; BufSize: LongInt): LongWord;
-    function Write(const Buf; BufSize: LongInt): LongWord;
-    function ReadAnsi: AnsiString;
-    procedure WriteAnsi(const Value: AnsiString);
-    function ReadUnicode: WideString;
-    procedure WriteUnicode(const Value: WideString);
+    function Read(out Buf; BufSize: LongInt): LongWord; virtual; abstract;
+    function Write(const Buf; BufSize: LongInt): LongWord; virtual; abstract;
+    function ReadAnsi: AnsiString; virtual; abstract;
+    procedure WriteAnsi(const Value: AnsiString); virtual; abstract;
+    function ReadUnicode: WideString; virtual; abstract;
+    procedure WriteUnicode(const Value: WideString); virtual; abstract;
+
     property Size: LongInt read FSize;
     property Pos: LongInt read FPos write SetPos;
+  end;
+
+  TFileStream = class(TStream)
+    class function Init(const FileName: string; RW: Boolean = False): TFileStream;
+    destructor Destroy; override;
+  private
+    FBPos  : LongInt;
+    F      : LongWord;
+    procedure SetPos(Value: LongInt); override;
+    procedure SetBlock(BPos, BSize: LongInt); override;
+  public
+    function Read(out Buf; BufSize: LongInt): LongWord; override;
+    function Write(const Buf; BufSize: LongInt): LongWord; override;
+    function ReadAnsi: AnsiString; override;
+    procedure WriteAnsi(const Value: AnsiString); override;
+    function ReadUnicode: WideString; override;
+    procedure WriteUnicode(const Value: WideString); override;
   end;
 
 implementation
@@ -136,7 +147,7 @@ begin
   Result := Trunc(1000 * (Count / FTimeFreq)) - FTimeStart;
 end;
 
-function TUtils.IntToStr(Value: LongInt): WideString;
+function TUtils.Conv(Value: LongInt): String;
 var
   Res : string[32];
 begin
@@ -144,7 +155,7 @@ begin
   Result := string(Res);
 end;
 
-function TUtils.StrToInt(const Str: String; Def: LongInt): LongInt;
+function TUtils.Conv(const Str: String; Def: LongInt): LongInt;
 var
   Code : LongInt;
 begin
@@ -153,7 +164,7 @@ begin
     Result := Def;
 end;
 
-function TUtils.FloatToStr(Value: Single; Digits: LongInt = 8): String;
+function TUtils.Conv(Value: Single; Digits: LongInt = 8): String;
 var
   Res : string[32];
 begin
@@ -161,7 +172,7 @@ begin
   Result := string(Res);
 end;
 
-function TUtils.StrToFloat(const Str: String; Def: Single): Single;
+function TUtils.Conv(const Str: String; Def: Single): Single;
 var
   Code : LongInt;
 begin

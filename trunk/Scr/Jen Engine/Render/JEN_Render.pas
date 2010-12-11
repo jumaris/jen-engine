@@ -13,7 +13,7 @@ type
   TRender = class
   protected
     var
-      FValid  : Boolean;
+      FValid : Boolean;
     procedure SetViewport(Value: TRecti); virtual; abstract;
     function  GetViewport: TRecti; virtual; abstract;
     procedure SetBlendType(Value: TBlendType); virtual; abstract;

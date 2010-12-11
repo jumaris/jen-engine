@@ -150,8 +150,8 @@ begin
 
   BlendType   := btNormal;
   AlphaTest   := 0;
-  DepthTest   := true;
-  DepthWrite  := true;
+  DepthTest   := false;
+  DepthWrite  := false;
   CullFace    := cfBack;
 
   glDepthFunc ( GL_LEQUAL );
@@ -169,7 +169,7 @@ begin
   glClearDepth(1.0);
 
   //glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
-  glEnable(GL_TEXTURE_2D);
+//  glEnable(GL_TEXTURE_2D);
 //  glEnable(GL_NORMALIZE);
 // glEnable(GL_COLOR_MATERIAL);
 end;
