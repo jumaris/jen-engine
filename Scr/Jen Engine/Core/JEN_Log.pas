@@ -61,10 +61,10 @@ end;
 
 procedure TLog.Init;        
 var
-  i,j       : Integer;
-  Major     : LongInt;
-  Minor     : LongInt;
-  Build     : LongInt;
+  i,j   : Integer;
+  Major : LongInt;
+  Minor : LongInt;
+  Build : LongInt;
 begin
   SystemParams.WindowsVersion(Major, Minor, Build);
   for i := 0 to fLogOutputs.Count - 1 do

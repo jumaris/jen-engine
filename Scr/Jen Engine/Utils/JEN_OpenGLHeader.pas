@@ -8,7 +8,7 @@ uses
 type
   GLboolean   = Boolean;
   GLubyte     = Byte;
-  GLbitfield  = Cardinal;
+  GLbitfield  = LongWord;
   GLbyte      = Shortint;
   GLshort     = SmallInt;
   GLushort    = Word;

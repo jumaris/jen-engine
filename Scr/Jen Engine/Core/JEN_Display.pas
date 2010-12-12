@@ -18,7 +18,7 @@ type
       FFPSCount : LongInt;
     procedure SetFullScreen(Value: Boolean); virtual; abstract;
     procedure SetActive(Value: Boolean); virtual; abstract;
-    procedure SetCaption(Value: String); virtual; abstract;
+    procedure SetCaption(Value: string); virtual; abstract;
     procedure SetVSync(Value: Boolean);
 
     function  GetFullScreen: Boolean; virtual; abstract;

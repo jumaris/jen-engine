@@ -25,6 +25,7 @@ begin
   Display := TDisplayWindow.Create(1024, 768, 60, false);
   Render := TGLRender.Create(Display,24,8,0);
 
+  ResMan.Load('Media\asd.dds');
  // Display.VSync := false;
 //  Display.FullScreen := true;
  // Display.FullScreen := false;

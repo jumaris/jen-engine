@@ -21,7 +21,7 @@ type
     FActive     : Boolean;
     procedure SetFullScreen(Value: Boolean); override;
     procedure SetActive(Value: Boolean); override;
-    procedure SetCaption(Value: String); override;
+    procedure SetCaption(Value: string); override;
 
     function  GetFullScreen: Boolean; override;
     function  GetActive: Boolean; override;
