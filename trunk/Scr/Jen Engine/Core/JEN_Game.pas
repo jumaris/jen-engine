@@ -5,7 +5,10 @@ interface
 uses
   JEN_OpenGlHeader,
   JEN_Display,
-  JEN_Render;
+  JEN_Render,
+  JEN_ResourceManager,
+  JEN_DDSTexture,
+  JEN_Texture;
 
 type
   TGame = class
@@ -21,7 +24,7 @@ type
   public
     Display : TDisplay;
     Render : TRender;
-
+    ResMan : TResourceManager;
     class property Quit: Boolean read FQuit;
     class procedure Finish;
 
@@ -43,9 +46,9 @@ begin
   if Assigned(Display) then
     Display.Free;
 
-  Display:= nil;
-  Render := nil;
   FQuit  := False;
+  ResMan := TResourceManager.Create;
+  ResMan.AddResLoader(TDDSLoader.Create);
 end;
 
 destructor TGame.Destroy;

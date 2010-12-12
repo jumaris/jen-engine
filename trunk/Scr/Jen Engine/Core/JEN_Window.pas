@@ -23,7 +23,7 @@ type
     FFullScreen : Boolean;
     FCursor     : Boolean;
     class var FCurrentWindow : TWindow;
-    class function WndProc(hWnd: HWND; Msg: Cardinal; wParam: Integer; lParam: Integer): Integer; stdcall; static;
+    class function WndProc(hWnd: HWND; Msg: LongWord; wParam: LongInt; lParam: LongInt): LongInt; stdcall; static;
     procedure SetCaption(const Value: String);
     procedure SetFullScreen(Value : Boolean);
   public
@@ -52,7 +52,7 @@ uses
   JEN_Math,
   JEN_Game;
 
-class function TWindow.WndProc(hWnd: HWND; Msg: Cardinal; wParam: Integer; lParam: Integer): Integer; stdcall;
+class function TWindow.WndProc(hWnd: HWND; Msg: LongWord; wParam: LongInt; lParam: LongInt): Integer; stdcall;
 begin
 // Assert(expr : Boolean [; const msg: string]
 //  LogOut('message');

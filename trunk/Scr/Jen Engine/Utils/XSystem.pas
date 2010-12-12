@@ -321,7 +321,7 @@ type
   end;
 {$ENDREGION}
 {$REGION 'WINDOWS API'}
-  function ToUnicode(wVirtKey, wScanCode: LongWord; const KeyState: TKeyboardState;  var pwszBuff; cchBuff: Integer; wFlags: LongWord): Integer; external user32;
+  function ToUnicode(wVirtKey, wScanCode: LongWord; const KeyState: TKeyboardState;  var pwszBuff; cchBuff: LongInt; wFlags: LongWord): LongInt; external user32;
 
   function LoadCursorW(hInstance: LongInt; lpCursorName: PWideChar ): LongWord; stdcall; external user32;
   function LoadIconW(hInstance: LongInt; lpIconName: PWideChar): LongWord; stdcall; external user32;
@@ -344,11 +344,11 @@ type
   function SetWindowPos(hWnd, hWndInsertAfter: HWND; X, Y, cx, cy: LongInt; uFlags: LongWord): Longbool; stdcall; external user32;
   function GetWindowRect(hWnd: HWND; var lpRect: TSysRect): Longbool; stdcall; external user32;
   function SetWindowTextW(hWnd: HWND; lpString: PWideChar): Longbool; stdcall; external user32;
-  function GetSystemMetrics(nIndex: Integer): Integer; stdcall; external user32;
+  function GetSystemMetrics(nIndex: LongInt): LongInt; stdcall; external user32;
   function SetCursor(hCursor: LongWord): LongWord; stdcall; external user32;
 
   function GetCursorPos(out Point: TSysPoint): LongBool; stdcall; external user32;
-  function SetCursorPos(X, Y: Integer): LongBool; stdcall; external user32;
+  function SetCursorPos(X, Y: LongInt): LongBool; stdcall; external user32;
   function ShowCursor(bShow: LongBool): LongInt; stdcall; external user32;
 
   function EnumDisplaySettingsW(lpszDeviceName: PWideChar; iModeNum: LongWord; var lpDevMode: TDeviceMode): LongBool; stdcall; external user32;
@@ -359,8 +359,8 @@ type
   function SwapBuffers(DC: HDC): LongBool; stdcall; external gdi32;
   function SetPixelFormat(DC: HDC; PixFormat: LongInt; FormatDef: Pointer): Longbool; stdcall; external gdi32;
   function ChoosePixelFormat(DC: HDC; FormatDef: Pointer): LongInt; stdcall; external gdi32;
-  function GetStockObject(Index: Integer): LongWord; stdcall; external gdi32;
-  function GetDeviceCaps(DC: HDC; Index: Integer): Integer; stdcall; external gdi32;
+  function GetStockObject(Index: LongInt): LongWord; stdcall; external gdi32;
+  function GetDeviceCaps(DC: HDC; Index: LongInt): LongInt; stdcall; external gdi32;
 
   function wglCreateContext(DC: HDC): HGLRC; stdcall; external opengl32;
   function wglDeleteContext(RC: HGLRC): LongBool; stdcall; external opengl32;
@@ -400,7 +400,7 @@ implementation
 
 function ExtractFileDir(const Path: string): string;
 var
-  i : Integer;
+  i : LongInt;
 begin
   for i := Length(Path) downto 1 do
     if (Path[i] = '\') or (Path[i] = '/') then

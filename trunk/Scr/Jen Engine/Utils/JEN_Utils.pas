@@ -21,6 +21,10 @@ type
     function StrToInt(const Str: string; Def: Integer = 0): Integer;
     function FloatToStr(Value: Single; Digits: Integer = 8): string;
     function StrToFloat(const Str: string; Def: Single = 0): Single;
+    function ExtractFileDir(const FileName: string): string;
+    function ExtractFileName(const FileName: string): string;
+    function ExtractFileExt(const FileName: string): string;
+    function ExtractFileNameNoExt(const FileName: string): string;
     property Time : LongInt read GetTime;
   end;
 
@@ -103,7 +107,7 @@ type
   end;
 
   TFileStream = class(TStream)
-    class function Init(const FileName: string; RW: Boolean = False): TFileStream;
+    class function Open(const FileName: string; RW: Boolean = False): TFileStream;
     destructor Destroy; override;
   private
     FBPos  : LongInt;
@@ -202,6 +206,44 @@ begin
     else
       Result := Def;
 end;     }
+
+function TUtils.ExtractFileDir(const FileName: string): string;
+var
+  i : Integer;
+begin
+  for i := Length(FileName) downto 1 do
+    if (FileName[i] = '\') or (FileName[i] = '/') then
+      Exit(Copy(FileName, 1, i));
+  Result := '';
+end;
+
+function TUtils.ExtractFileName(const FileName: string): string;
+begin
+  Result := Copy(FileName, Length(ExtractFileDir(FileName)) + 1, Length(FileName));
+end;
+
+function TUtils.ExtractFileExt(const FileName: string): string;
+var
+  i: Integer;
+begin
+  Result := '';
+  for i := Length(FileName) downto 1 do
+  if (FileName[i] = '.')  then
+    Result := Copy(FileName, i+1, length(FileName)-1);
+end;
+
+function TUtils.ExtractFileNameNoExt(const FileName: string): string;
+var
+  i: Integer;
+begin
+  Result := '';
+  if Length(FileName) > 0 then begin
+    Result := ExtractFileName(FileName);
+    for i := Length(Result) - 1 downto 2 do
+     if (Result[i] = '.') and (Result[i - 1] <> '.') then Break;
+    Result := Copy(Result, 0, i - 1);
+  end;
+end;
 
 { TList }
 constructor TList.Create;
@@ -368,7 +410,7 @@ end;
 { TManager }
 function TManager.GetObj(const Name: AnsiString): TManagedObj;
 var
-  i   : Integer;
+  i : Integer;
 begin
   Result := nil;
   if Name <> '' then
@@ -403,7 +445,7 @@ begin
   Result := TManagedObj(FItems[Idx]);
 end;
 
-class function TFileStream.Init(const FileName: string; RW: Boolean): TFileStream;
+class function TFileStream.Open(const FileName: string; RW: Boolean): TFileStream;
 var
   i, io : LongInt;
 begin
