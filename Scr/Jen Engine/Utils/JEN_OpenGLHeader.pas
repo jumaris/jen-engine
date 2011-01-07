@@ -37,22 +37,35 @@ const
   GL_TRUE                             = 1;
 
 // Pixel Format
-  WGL_DRAW_TO_WINDOW_ARB    = $2001;
-  WGL_ACCELERATION_ARB      = $2003;
-  WGL_FULL_ACCELERATION_ARB = $2027;
-  WGL_SUPPORT_OPENGL_ARB    = $2010;
-  WGL_DOUBLE_BUFFER_ARB     = $2011;
-  WGL_PIXEL_TYPE_ARB        = $2013;
-  WGL_COLOR_BITS_ARB        = $2014;
-  WGL_RED_BITS_ARB          = $2015;
-  WGL_GREEN_BITS_ARB        = $2017;
-  WGL_BLUE_BITS_ARB         = $2019;
-  WGL_ALPHA_BITS_ARB        = $201B;
-  WGL_DEPTH_BITS_ARB        = $2022;
-  WGL_STENCIL_BITS_ARB      = $2023;
-  WGL_TYPE_RGBA_ARB         = $202B;
-  WGL_SAMPLE_BUFFERS_ARB    = $2041;
-  WGL_SAMPLES_ARB           = $2042;
+  WGL_DRAW_TO_WINDOW_ARB              = $2001;
+  WGL_ACCELERATION_ARB                = $2003;
+  WGL_FULL_ACCELERATION_ARB           = $2027;
+  WGL_SUPPORT_OPENGL_ARB              = $2010;
+  WGL_DOUBLE_BUFFER_ARB               = $2011;
+  WGL_PIXEL_TYPE_ARB                  = $2013;
+  WGL_COLOR_BITS_ARB                  = $2014;
+  WGL_RED_BITS_ARB                    = $2015;
+  WGL_GREEN_BITS_ARB                  = $2017;
+  WGL_BLUE_BITS_ARB                   = $2019;
+  WGL_ALPHA_BITS_ARB                  = $201B;
+  WGL_DEPTH_BITS_ARB                  = $2022;
+  WGL_STENCIL_BITS_ARB                = $2023;
+  WGL_TYPE_RGBA_ARB                   = $202B;
+  WGL_SAMPLE_BUFFERS_ARB              = $2041;
+  WGL_SAMPLES_ARB                     = $2042;
+
+// Pixel Format
+  GL_COLOR_INDEX                      = $1900;
+  GL_STENCIL_INDEX                    = $1901;
+  GL_DEPTH_COMPONENT                  = $1902;
+  GL_RED                              = $1903;
+  GL_GREEN                            = $1904;
+  GL_BLUE                             = $1905;
+  GL_ALPHA                            = $1906;
+  GL_RGB                              = $1907;
+  GL_RGBA                             = $1908;
+  GL_LUMINANCE                        = $1909;
+  GL_LUMINANCE_ALPHA                  = $190A;
 
 // AttribMask
   GL_DEPTH_BUFFER_BIT                 = $00000100;
@@ -135,17 +148,6 @@ const
   GL_PROJECTION                       = $1701;
   GL_TEXTURE                          = $1702;
                          }
-// Pixel Format
-  GL_DEPTH_COMPONENT                  = $1902;
-  GL_RGB                              = $1907;
-  GL_RGBA                             = $1908;
-  GL_LUMINANCE                        = $1909;
-  GL_LUMINANCE_ALPHA                  = $190A;
-  GL_LUMINANCE8                       = $8040;
-  GL_RGB8                             = $8051;
-  GL_RGBA8                            = $8058;
-  GL_BGR                              = $80E0;
-  GL_BGRA                             = $80E1;
 
 // PolygonMode
   GL_POINT                            = $1B00;
@@ -158,10 +160,10 @@ const
 
 // StencilOp
 {      GL_ZERO }
-  GL_KEEP                             = $1E00;
+{  GL_KEEP                             = $1E00;
   GL_REPLACE                          = $1E01;
   GL_INCR                             = $1E02;
-  GL_DECR                             = $1E03;
+  GL_DECR                             = $1E03;        ]
 {      GL_INVERT }
                 {
  // LightParameter
@@ -214,6 +216,90 @@ const
   GL_TEXTURE_MAX_ANISOTROPY           = $84FE;
   GL_MAX_TEXTURE_MAX_ANISOTROPY       = $84FF;
   GENERATE_MIPMAP_SGIS                = $8191;
+
+ // GL_EXT_texture
+  GL_ALPHA4                           = $803B;
+  GL_ALPHA8                           = $803C;
+  GL_ALPHA12                          = $803D;
+  GL_ALPHA16                          = $803E;
+  GL_LUMINANCE4                       = $803F;
+  GL_LUMINANCE8                       = $8040;
+  GL_LUMINANCE12                      = $8041;
+  GL_LUMINANCE16                      = $8042;
+  GL_LUMINANCE4_ALPHA4                = $8043;
+  GL_LUMINANCE6_ALPHA2                = $8044;
+  GL_LUMINANCE8_ALPHA8                = $8045;
+  GL_LUMINANCE12_ALPHA4               = $8046;
+  GL_LUMINANCE12_ALPHA12              = $8047;
+  GL_LUMINANCE16_ALPHA16              = $8048;
+  GL_INTENSITY                        = $8049;
+  GL_INTENSITY4                       = $804A;
+  GL_INTENSITY8                       = $804B;
+  GL_INTENSITY12                      = $804C;
+  GL_INTENSITY16                      = $804D;
+  GL_RGB2                             = $804E;
+  GL_RGB4                             = $804F;
+  GL_RGB5                             = $8050;
+  GL_RGB8                             = $8051;
+  GL_RGB10                            = $8052;
+  GL_RGB12                            = $8053;
+  GL_RGB16                            = $8054;
+  GL_RGBA2                            = $8055;
+  GL_RGBA4                            = $8056;
+  GL_RGB5_A1                          = $8057;
+  GL_RGBA8                            = $8058;
+  GL_RGB10_A2                         = $8059;
+  GL_RGBA12                           = $805A;
+  GL_RGBA16                           = $805B;
+  GL_BGR                              = $80E0;
+  GL_BGRA                             = $80E1;
+
+
+
+{
+  GL_PROXY_TEXTURE_1D                 = $8063;
+  GL_PROXY_TEXTURE_2D                 = $8064;
+  GL_TEXTURE_TOO_LARGE                = $8065;
+ }
+  // GL_EXT_texture3D
+  GL_PACK_SKIP_IMAGES                 = $806B;
+  GL_PACK_IMAGE_HEIGHT                = $806C;
+  GL_UNPACK_SKIP_IMAGES               = $806D;
+  GL_UNPACK_IMAGE_HEIGHT              = $806E;
+  GL_TEXTURE_3D                       = $806F;
+  GL_PROXY_TEXTURE_3D                 = $8070;
+  GL_TEXTURE_DEPTH                    = $8071;
+  GL_TEXTURE_WRAP_R                   = $8072;
+  GL_MAX_3D_TEXTURE_SIZE              = $8073;
+
+  // GL_EXT_texture_compression_s3tc
+  GL_COMPRESSED_RGB_S3TC_DXT1         = $83F0;
+  GL_COMPRESSED_RGBA_S3TC_DXT1        = $83F1;
+  GL_COMPRESSED_RGBA_S3TC_DXT3        = $83F2;
+  GL_COMPRESSED_RGBA_S3TC_DXT5        = $83F3;
+
+
+  GL_UNSIGNED_BYTE_2_3_3_REV          = $8362;
+  GL_UNSIGNED_SHORT_5_6_5             = $8363;
+  GL_UNSIGNED_SHORT_5_6_5_REV         = $8364;
+  GL_UNSIGNED_SHORT_4_4_4_4_REV       = $8365;
+  GL_UNSIGNED_SHORT_1_5_5_5_REV       = $8366;
+  GL_UNSIGNED_INT_8_8_8_8_REV         = $8367;
+  GL_UNSIGNED_INT_2_10_10_10_REV      = $8368;
+
+  // GL_EXT_texture_cube_map
+  GL_NORMAL_MAP                       = $8511;
+  GL_REFLECTION_MAP                   = $8512;
+  GL_TEXTURE_CUBE_MAP                 = $8513;
+  GL_TEXTURE_BINDING_CUBE_MAP         = $8514;
+  GL_TEXTURE_CUBE_MAP_POSITIVE_X      = $8515;
+  GL_TEXTURE_CUBE_MAP_NEGATIVE_X      = $8516;
+  GL_TEXTURE_CUBE_MAP_POSITIVE_Y      = $8517;
+  GL_TEXTURE_CUBE_MAP_NEGATIVE_Y      = $8518;
+  GL_TEXTURE_CUBE_MAP_POSITIVE_Z      = $8519;
+  GL_TEXTURE_CUBE_MAP_NEGATIVE_Z      = $851A;
+  GL_PROXY_TEXTURE_CUBE_MAP           = $851B;
+  GL_MAX_CUBE_MAP_TEXTURE_SIZE        = $851C;
 
 // FBO
   GL_FRAMEBUFFER                      = $8D40;
