@@ -3,7 +3,8 @@ unit JEN_ResourceManager;
 interface
 
 uses
-  JEN_Utils;
+  JEN_Utils,
+  JEN_Texture;
 
 type
   TResource = class
@@ -26,7 +27,7 @@ type
     FResList : TList;
     FLoaderList : TList;
   public
-    function Load(const FileName: string) : TResource;
+    function Load(const FileName: string) : TTexture;
     procedure AddResLoader(Loader : TResLoader);
     function Add(Resource: TResource): TResource;
     procedure Delete(Resource: TResource);
