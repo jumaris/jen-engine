@@ -3,11 +3,10 @@ unit JEN_Texture;
 interface
 
 uses
-  JEN_ResourceManager;
+  JEN_ResourceManager,
+  JEN_OpenglHeader;
 
 type
-  TTexture = class(TResource)
-  end;
 
   TMipMap = record
     Size : LongWord;
@@ -15,7 +14,7 @@ type
   end;
 
   TTextureInfo = record
-    Format : LongWord;
+    Format  : LongWord;
     Format2 : LongWord;
     MipMaps : array of TMipMap;
   end;

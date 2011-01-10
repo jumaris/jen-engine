@@ -92,6 +92,7 @@ type
   private
     FSize  : LongInt;
     FPos   : LongInt;
+    FName  : String;
     procedure SetPos(Value: LongInt); virtual; abstract;
     procedure SetBlock(BPos, BSize: LongInt); virtual; abstract;
   public
@@ -104,6 +105,7 @@ type
 
     property Size: LongInt read FSize;
     property Pos: LongInt read FPos write SetPos;
+    property Name: String read FName;
   end;
 
   TFileStream = class(TStream)
@@ -453,6 +455,7 @@ begin
 
   io := 1;
   Result := TFileStream.Create;
+  Result.FName := 'sad';
   {$I-}
   FileMode := 2;
 

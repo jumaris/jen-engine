@@ -13,6 +13,8 @@ uses
   JEN_OpenGLHeader,
   JEN_OpenGL,
   JEN_Render,
+  JEN_ResourceManager,
+  JEN_Texture,
   JEN_Camera3D,
   JEN_Math;
 
@@ -48,6 +50,11 @@ type
   TCamera3D = JEN_Camera3D.TCamera3D;
 
   TFileStream = JEN_Utils.TFileStream;
+
+  TTexture = class(TResource)
+    FID     : LongWord;
+    Sampler : GLEnum;
+  end;
 
 var
   Utils        : TUtils;
