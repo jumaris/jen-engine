@@ -16,7 +16,7 @@ type
   TResLoader = class
   public
     Ext : string;
-    function Load(Stream : TStream) : TResource; virtual; abstract;
+    function Load(Stream : TStream; Name : String) : TResource; virtual; abstract;
   end;
 
   TResourceManager = class
@@ -61,17 +61,20 @@ function TResourceManager.Load(const FileName: string) : TResource;
 var
   I : integer;
   Ext : String;
+  eFileName : String;
   RL : TResLoader;
   Stream : TStream;
 begin
   Result := nil;
   Ext := Utils.ExtractFileExt(FileName);
-         {
+  eFileName := Utils.ExtractFileName(FileName);
+
+             {
   if not FileExist(
   begin
     Logout( 'Don''t find loader for file ' + Utils.ExtractFileName(FileName), lmError);
     Exit;
-  end;   }
+  end;    }
 
   for I := 0 to FLoaderList.Count - 1 do
     if(TResLoader(FLoaderList[i]).Ext = Ext) then
@@ -79,14 +82,18 @@ begin
 
   if not Assigned(RL) then
   begin
-    Logout( 'Don''t find loader for file ' + Utils.ExtractFileName(FileName), lmError);
+    Logout('Don''t find loader for file ' + eFileName, lmWarning);
     Exit;
   end;
 
   Stream := TFileStream.Open(FileName);
   if Assigned(Stream) then
-    RL.Load(Stream) else
-  Logout( 'Can''t open file ' + Utils.ExtractFileName(FileName), lmError);
+    Result := RL.Load(Stream, eFileName) else
+  Logout('Can''t open file ' + eFileName, lmWarning);
+
+  if not Assigned(Result) then
+    Logout('Error while loading file ' + eFileName, lmWarning);
+
 
 end;
 

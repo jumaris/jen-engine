@@ -34,14 +34,14 @@ begin
   else
     FType := GL_ARRAY_BUFFER;
 
-  glGenBuffersARB(1, @FID);
-  glBindBufferARB(FType, FID);
-  glBufferDataARB(FType, Count * Stride, Data, GL_STATIC_DRAW);
+  glGenBuffers(1, @FID);
+  glBindBuffer(FType, FID);
+  glBufferData(FType, Count * Stride, Data, GL_STATIC_DRAW);
 end;
 
 destructor TGeomBuffer.Destroy;
 begin
-  glDeleteBuffersARB(1, @FID);
+  glDeleteBuffers(1, @FID);
   inherited;
 end;
 
@@ -50,14 +50,14 @@ var
   p : PByteArray;
 begin
   Bind;
-  P := glMapBufferARB(FType, GL_WRITE_ONLY);
+  P := glMapBuffer(FType, GL_WRITE_ONLY);
   Move(Data^, P[Offset], Size);
-  glUnmapBufferARB(FType);
+  glUnmapBuffer(FType);
 end;
 
 procedure TGeomBuffer.Bind;
 begin
-  glBindBufferARB(FType, FID);
+  glBindBuffer(FType, FID);
 end;
 
 end.
