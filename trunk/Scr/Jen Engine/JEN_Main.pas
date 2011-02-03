@@ -9,12 +9,12 @@ uses
   JEN_Game,
   JEN_Log,
   JEN_DefConsoleLog,
+  JEN_Display,
   JEN_Display_Window,
   JEN_OpenGLHeader,
   JEN_OpenGL,
   JEN_Render,
   JEN_ResourceManager,
-  JEN_Texture,
   JEN_Camera3D,
   JEN_Math;
 
@@ -42,25 +42,29 @@ const
   mtView        = TMatrixType.mtView;
 
 type
-  TGame     = JEN_GAME.TGame;
+  TGame           = JEN_GAME.TGame;
 
-  TDisplayWindow = JEN_Display_Window.TDisplayWindow;
-  TGLRender = JEN_OpenGL.TGLRender;
+  TDisplayWindow  = JEN_Display_Window.TDisplayWindow;
+  TGLRender       = JEN_OpenGL.TGLRender;
 
-  TCamera3D = JEN_Camera3D.TCamera3D;
+  TCamera3D       = JEN_Camera3D.TCamera3D;
 
-  TFileStream = JEN_Utils.TFileStream;
+  TFileStream     = JEN_Utils.TFileStream;
 
-  TTexture = class(TResource)
-    FID     : LongWord;
-    Sampler : GLEnum;
-  end;
+  TResourceManager= JEN_ResourceManager.TResourceManager;
+  TTexture        = JEN_ResourceManager.TTexture;
+
+
 
 var
   Utils        : TUtils;
   SystemParams : TSystem;
   Log          : TLog;
   Game         : TGame;
+
+  Display      : TDisplay;
+  Render       : TRender;
+  ResMan       : TResourceManager;
 
 procedure LogOut( const Text : String; MType : TLogMsg );
 
@@ -91,7 +95,5 @@ begin
   SystemParams.Free;
   Log.Free;
 end;
-
-
 
 end.

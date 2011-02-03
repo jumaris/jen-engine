@@ -6,16 +6,14 @@ uses
   JEN_OpenGlHeader,
   JEN_Utils,
   JEN_Math,
-  JEN_ResourceManager,
-  JEN_Texture;
+  JEN_ResourceManager;
 
 type
   TDDSLoader = class(TResLoader)
   constructor Create;
   public
-    function Load(Stream : TStream; Name : String): TResource; override;
+    procedure Load(Stream : TStream; var Resource : TResource); override;
   end;
-
 
 implementation
 
@@ -26,9 +24,10 @@ constructor TDDSLoader.Create;
 begin
   inherited;
   Ext := 'dds';
+  Resource := rtTexture;
 end;
 
-function TDDSLoader.Load(Stream : TStream; Name : String): TResource;
+procedure TDDSLoader.Load(Stream : TStream; var Resource : TResource);
 type
   TloadFormat = (lfNULL, lfDXT1c, lfDXT1a, lfDXT3, lfDXT5, lfA8, lfL8, lfAL8, lfBGRA8, lfBGR8, lfBGR5A1, lfBGR565, lfBGRA4, lfR16F, lfR32F, lfGR16F, lfGR32F, lfBGRA16F, lfBGRA32F);
 
@@ -204,10 +203,11 @@ var
 
 begin
 
+             {
   if (Stream.Size < 128) then
   begin
     Stream.Free;
-    Exit(nil);
+    Exit;
   end;
 
   Stream.Read(Header, 128);
@@ -219,7 +219,7 @@ begin
         begin
           LogOut('Wrong dds header', lmWarning);
           Stream.Free;
-          Exit(nil);
+          Exit;
         end;
 
   Format := GetLoadFormat(Header);
@@ -227,7 +227,7 @@ begin
   begin
     LogOut('Not supported texture format: ' + Stream.Name, lmWarning);
     Stream.Free;
-    Exit(nil);
+    Exit();
   end;
 
   with Header, DDSLoadFormat[Format] do
@@ -242,7 +242,7 @@ begin
         Mips := i;
         break;
       end;
-
+          {
     Texture := TTexture.Create(Name);
     // 2D image
     Texture.Sampler := GL_TEXTURE_2D;
@@ -290,14 +290,14 @@ begin
       end;
     end;
 
-    FreeMemory(Data);
-  end;
-
+    FreeMemory(Data); }
+ { end;
+               {
   glTexParameteri(Texture.Sampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
   glTexParameteri(Texture.Sampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(Texture.Sampler, GL_TEXTURE_MAX_LEVEL, Mips - 1);
 
-  Result := Texture;
+  Result := Texture;    }
 end;
 
 end.

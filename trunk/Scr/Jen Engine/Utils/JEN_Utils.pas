@@ -125,10 +125,21 @@ type
     procedure WriteUnicode(const Value: WideString); override;
   end;
 
+procedure FreeAndNil(var Obj); inline;
+
 implementation
 
 uses
   JEN_MATH;
+
+procedure FreeAndNil(var Obj);
+var
+  Temp: TObject;
+begin
+  Temp := TObject(Obj);
+  Pointer(Obj) := nil;
+  Temp.Free;
+end;
 
 { TUtils }
 constructor TUtils.Create;
