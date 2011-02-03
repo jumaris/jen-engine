@@ -10,11 +10,10 @@ uses
 
 type
   TGLRender = class(TRender)
-      constructor Create(Display: TDisplay; DepthBits: Byte = 24; StencilBits: Byte = 8; FSAA : Byte = 0);
+      constructor Create(DepthBits: Byte = 24; StencilBits: Byte = 8; FSAA : Byte = 0);
       destructor Destroy;  override;
     private
       FGL_Context : HGLRC;
-      FDisplay    : TDisplay;
       FViewport   : TRecti;
 
       FBlendType  : TBlendType;
@@ -37,7 +36,7 @@ uses
   JEN_OpenGLHeader,
   JEN_Main;
 
-constructor TGLRender.Create(Display: TDisplay; DepthBits: Byte; StencilBits: Byte; FSAA : Byte);
+constructor TGLRender.Create(DepthBits: Byte; StencilBits: Byte; FSAA : Byte);
 var
   PFD : TPixelFormatDescriptor;
   PFAttrf : array[0..1] of Single;
@@ -51,7 +50,7 @@ var
   RC : HGLRC;
   Result : Boolean;
 begin
-  FDisplay := Display;
+  Render := Self;
   FValid := False;
 
   if not (Assigned(Display) and Display.Valid) then
@@ -144,6 +143,11 @@ begin
     LogOut('Make current OpenGL context.', lmNotify);
 
   FValid := LoadGLLibraly;
+  if not FValid Then
+  begin
+    LogOut('Error when load extensions.', lmError);
+    exit;
+  end;
 
   LogOut('OpenGL version : ' + glGetString(GL_VERSION )+ ' (' + glGetString(GL_VENDOR) +')', lmInfo);
   LogOut('Video device   : ' + glGetString(GL_RENDERER), lmInfo);
@@ -157,7 +161,6 @@ begin
   glDepthFunc ( GL_LEQUAL );
   glClearDepth( 1.0 );
 
-  Display.Render := Self;
   Display.Restore;
   //glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
   glDisable(GL_TEXTURE_2D);

@@ -379,7 +379,10 @@ type
   function QueryPerformanceFrequency(out Freq: Int64): LongBool; stdcall; external kernel32;
   function QueryPerformanceCounter(out Count: Int64): LongBool; stdcall; external kernel32;
   function GetVersionExW(lpVersionInformation: POSVERSIONINFO): Longint; stdcall; external kernel32;
-  function GlobalMemoryStatusEx(var lpBuffer : TMEMORYSTATUSEX): LongBool; stdcall; external kernel32 name 'GlobalMemoryStatusEx';
+  function GlobalMemoryStatusEx(var lpBuffer : TMEMORYSTATUSEX): LongBool; stdcall; external kernel32;
+
+  function WaitForSingleObject(hHandle: THandle; dwMilliseconds: LongWord): LongWord; stdcall; external kernel32;
+  function CreateEventW(lpEventAttributes: PSecurityAttributes; bManualReset, bInitialState: LongBool; lpName: PWideChar): THandle; stdcall; external kernel32;
 
 // Reg work
   function RegCloseKey(hKey: LongWord): Longint; stdcall; external advapi32;

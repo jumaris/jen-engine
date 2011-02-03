@@ -4,11 +4,7 @@ interface
 
 uses
   JEN_OpenGlHeader,
-  JEN_Display,
-  JEN_Render,
-  JEN_ResourceManager,
-  JEN_DDSTexture,
-  JEN_Texture;
+  JEN_Utils;
 
 type
   TGame = class
@@ -22,9 +18,6 @@ type
     procedure OnUpdate(dt: double); virtual; abstract;
     procedure OnRender; virtual; abstract;
   public
-    Display : TDisplay;
-    Render : TRender;
-    ResMan : TResourceManager;
     class property Quit: Boolean read FQuit;
     class procedure Finish;
 
@@ -40,30 +33,26 @@ uses
 constructor TGame.Create;
 begin
   inherited;
-  if(FisRunnig) then
-    LogOut('Engine alredy running', lmWarning);
 
-  if Assigned(Display) then
-    Display.Free;
+  if(FisRunnig) then
+  begin
+    LogOut('Engine alredy running', lmError);
+    Exit;
+  end;
 
   FQuit  := False;
-  ResMan := TResourceManager.Create;
-  ResMan.AddResLoader(TDDSLoader.Create);
 end;
 
 destructor TGame.Destroy;
 begin
   if Assigned(Render) then
-    begin
-      Render.Free;
-      Render := nil;
-    end;
+    FreeAndNil(Render);
 
   if Assigned(Display) then
-    begin
-      Display.Free;
-      Display := nil;
-    end;
+    FreeAndNil(Display);
+
+  if Assigned(ResMan) then
+    FreeAndNil(ResMan);
 
   FisRunnig := False;
   inherited;
@@ -77,7 +66,21 @@ end;
 
 procedure TGame.Run;
 begin
-  if( FisRunnig or not(Assigned(Display) and Display.Valid and Assigned(Render) and Render.Valid) )then Exit;
+
+  if(FisRunnig) then
+  begin
+    LogOut('Engine alredy running', lmError);
+    Exit;
+  end;
+
+  if(not( Assigned(Display) and Display.Valid and
+          Assigned(Render) and Render.Valid{ and
+          Assigned(ResMan)} ) )then
+  begin
+    Logout('Error in some subsustem', lmError);
+    Exit;
+  end;
+
   Logout('Let''s rock!', lmNotify);
   FisRunnig := true;
 
@@ -88,7 +91,7 @@ begin
       Display.Update;
       OnUpdate(0);
       OnRender;
-   //   glfinish;
+  //   glfinish;
       Display.Swap;
     end;
 end;
