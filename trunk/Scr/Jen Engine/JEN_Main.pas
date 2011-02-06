@@ -5,7 +5,6 @@ interface
 uses
   JEN_Utils,
   JEN_SystemInfo,
-  JEN_Window,
   JEN_Game,
   JEN_Log,
   JEN_DefConsoleLog,
@@ -15,6 +14,7 @@ uses
   JEN_OpenGL,
   JEN_Render,
   JEN_ResourceManager,
+  JEN_DDSTexture,
   JEN_Camera3D,
   JEN_Math;
 
@@ -52,9 +52,8 @@ type
   TFileStream     = JEN_Utils.TFileStream;
 
   TResourceManager= JEN_ResourceManager.TResourceManager;
+  TDDSLoader      = JEN_DDSTexture.TDDSLoader;
   TTexture        = JEN_ResourceManager.TTexture;
-
-
 
 var
   Utils        : TUtils;
@@ -66,13 +65,13 @@ var
   Render       : TRender;
   ResMan       : TResourceManager;
 
-procedure LogOut( const Text : String; MType : TLogMsg );
+procedure LogOut(const Text: String; MType: TLogMsg);
 
 implementation
 
-procedure LogOut( const Text : String; MType : TLogMsg );
+procedure LogOut(const Text: String; MType: TLogMsg);
 begin
-  Log.AddMsg( Text, MType );
+  Log.AddMsg(Text, MType);
 end;
 
 initialization

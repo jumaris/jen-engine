@@ -50,7 +50,6 @@ var
   RC : HGLRC;
   Result : Boolean;
 begin
-  Render := Self;
   FValid := False;
 
   if not (Assigned(Display) and Display.Valid) then
@@ -168,8 +167,6 @@ begin
   glClearColor(0.0, 0.0, 0.0, 0.0);
   //glShadeModel(GL_SMOOTH);
   //glHint(GL_SHADE_MODEL,GL_NICEST);
-  glDepthFunc(GL_LEQUAL);
-  glClearDepth(1.0);
 
   //glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 //  glEnable(GL_TEXTURE_2D);
