@@ -5,8 +5,7 @@ interface
 uses
   XSystem,
   JEN_SystemInfo,
-  JEN_Display,
-  JEN_Window;
+  JEN_Display;
 
 const
   WINDOW_CLASS_NAME = 'JEngineWindowClass';

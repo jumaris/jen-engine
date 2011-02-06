@@ -24,10 +24,11 @@ var r : TTexture;
 constructor TSameGame.Create;
 begin
   inherited;
-  Display := TDisplayWindow.Create(1024, 768, 60, true);
-  TGLRender.Create(24, 8, 0);
-  TResourceManager.Create;
-  r := ResMan.Load('Media\asd.dds');
+  Display := TDisplayWindow.Create(1024, 768, 60, false);
+  Render := TGLRender.Create(24, 8, 8);
+  ResMan := TResourceManager.Create;
+  ResMan.AddResLoader(TDDSLoader.Create);
+
  // Display.VSync := false;
 { Display.FullScreen := true;
   Display.FullScreen := false;
@@ -41,7 +42,7 @@ end;
 
 procedure TSameGame.LoadContent;
 begin
-
+  r := ResMan.Load('Media\asd.dds');
 end;
 
 procedure TSameGame.OnUpdate(Dt: Double);
@@ -67,7 +68,7 @@ begin
 
   glenable(GL_TEXTURE_2D);
   glenable(GL_TEXTURE0);
-//  glbindtexture(GL_TEXTURE_2D,r.FID);
+  glbindtexture(GL_TEXTURE_2D,r.FID);
   glbegin(GL_TRIANGLES);
 
   gltexcoord2f(0,0);

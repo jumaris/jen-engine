@@ -10,22 +10,45 @@ type
   TResourceType = (rtTexture);
 
   TResource = class
-    constructor Create(Name: string);
+    constructor Create(const Name: string);
   public
     Name : string;
     Ref  : LongInt;
   end;
 
+  TTextureFilter =  (tfNone, tfBilinear, tfTrilinear, tfAniso);
+
   TTexture = class(TResource)
+    constructor Create(const Name: string);
+    destructor Destroy; override;
+  private
+  public
     FID : GLEnum;
-    Sampler : GLEnum;
+    FSampler : GLEnum;
+    FWidth  : Integer;
+    FHeight : Integer;
+    FFilter : TTextureFilter;
+    FClamp  : Boolean;
+    FMipMap : Boolean;
+    procedure SetFilter(Value: TTextureFilter);
+    procedure SetClamp(Value: Boolean);
+  {
+    procedure GenLevels;
+    procedure DataGet(Data: Pointer; Level: LongInt = 0; CFormat: TGLConst = GL_RGBA; DFormat: TGLConst = GL_UNSIGNED_BYTE);
+    procedure DataSet(X, Y, Width, Height: LongInt; Data: Pointer; Level: LongInt = 0; CFormat: TGLConst = GL_RGBA; DFormat: TGLConst = GL_UNSIGNED_BYTE);
+    procedure DataCopy(XOffset, YOffset, X, Y, Width, Height: LongInt; Level: LongInt = 0);   }
+    procedure Bind(Channel: Byte = 0);
+    property Width: LongInt read FWidth;
+    property Height: LongInt read FHeight;
+    property Filter: TTextureFilter read FFilter write SetFilter;
+    property Clamp: Boolean read FClamp write SetClamp;
   end;
 
   TResLoader = class
   public
     Ext : string;
     Resource : TResourceType;
-    procedure Load(Stream : TStream;var Resource : TResource); virtual; abstract;
+    function Load(const Stream : TStream;var Resource : TResource) : Boolean; virtual; abstract;
   end;
 
   TMipMap = record
@@ -68,9 +91,64 @@ begin
   Ref := 1;
 end;
 
+constructor TTexture.Create;
+begin
+  inherited;
+  glGenTextures(1, @FID);
+end;
+
+destructor TTexture.Destroy;
+begin
+  glDeleteTextures(1, @FID);
+  inherited;
+end;
+
+procedure TTexture.SetFilter(Value: TTextureFilter);
+const
+  FilterMode : array [Boolean, TTextureFilter, 0..1] of GLEnum =
+    (((GL_NEAREST, GL_NEAREST), (GL_LINEAR, GL_LINEAR), (GL_LINEAR, GL_LINEAR), (GL_LINEAR, GL_LINEAR)),
+     ((GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST), (GL_LINEAR_MIPMAP_NEAREST, GL_LINEAR), (GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR), (GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR)));
+begin
+  if FFilter <> Value then
+  begin
+    FFilter := Value;
+    Bind;
+    glTexParameteri(FSampler, GL_TEXTURE_MIN_FILTER, FilterMode[FMipMap, FFilter, 0]);
+    glTexParameteri(FSampler, GL_TEXTURE_MAG_FILTER, FilterMode[FMipMap, FFilter, 1]);
+    //if Render.MaxAniso > 0 then
+   {   if FFilter = tfAniso then
+        glTexParameteri(Sampler, GL_TEXTURE_MAX_ANISOTROPY, TGLConst(Render.MaxAniso))
+      else
+        glTexParameteri(Sampler, GL_TEXTURE_MAX_ANISOTROPY, TGLConst(1)); }
+  end;
+end;
+
+procedure TTexture.SetClamp(Value: Boolean);
+const
+  ClampMode : array [Boolean] of GLEnum = (GL_REPEAT, GL_CLAMP_TO_EDGE);
+begin
+  if FClamp <> Value then
+  begin
+    FClamp := Value;
+    Bind;
+    glTexParameteri(FSampler, GL_TEXTURE_WRAP_S, ClampMode[Clamp]);
+    glTexParameteri(FSampler, GL_TEXTURE_WRAP_T, ClampMode[Clamp]);
+    glTexParameteri(FSampler, GL_TEXTURE_WRAP_R, ClampMode[Clamp]);
+  end;
+end;
+
+procedure TTexture.Bind(Channel: Byte = 0);
+begin
+ // if ResManager.Active[TResType(Channel + Ord(rtTexture))] <> Self then
+ // begin
+    glActiveTexture(GL_TEXTURE0 + Channel);
+    glBindTexture(FSampler, FID);
+  // ResManager.Active[TResType(Channel + Ord(rtTexture))] := Self;
+//  end;
+end;
+
 constructor TResourceManager.Create;
 begin
-  ResMan := Self;
   FResList := TList.Create;
   FLoaderList := TList.Create;
 end;

@@ -12,7 +12,7 @@ type
   TDDSLoader = class(TResLoader)
   constructor Create;
   public
-    procedure Load(Stream : TStream; var Resource : TResource); override;
+    function Load(const Stream : TStream; var Resource : TResource) : Boolean; override;
   end;
 
 implementation
@@ -27,7 +27,8 @@ begin
   Resource := rtTexture;
 end;
 
-procedure TDDSLoader.Load(Stream : TStream; var Resource : TResource);
+
+function TDDSLoader.Load(const Stream : TStream; var Resource : TResource) : Boolean;
 type
   TloadFormat = (lfNULL, lfDXT1c, lfDXT1a, lfDXT3, lfDXT5, lfA8, lfL8, lfAL8, lfBGRA8, lfBGR8, lfBGR5A1, lfBGR565, lfBGRA4, lfR16F, lfR32F, lfGR16F, lfGR32F, lfBGRA16F, lfBGRA32F);
 
@@ -203,12 +204,13 @@ var
 
 begin
 
-             {
   if (Stream.Size < 128) then
   begin
     Stream.Free;
     Exit;
   end;
+
+  Texture := Resource as TTexture;
 
   Stream.Read(Header, 128);
 
@@ -242,15 +244,14 @@ begin
         Mips := i;
         break;
       end;
-          {
-    Texture := TTexture.Create(Name);
+
     // 2D image
-    Texture.Sampler := GL_TEXTURE_2D;
+    Texture.FSampler := GL_TEXTURE_2D;
     Samples := 1;
     // CubeMap image
     if dwCaps2 and DDSCAPS2_CUBEMAP > 0 then
     begin
-      Texture.Sampler := GL_TEXTURE_CUBE_MAP;
+      Texture.FSampler := GL_TEXTURE_CUBE_MAP;
       Samples := 6;
     end;
     // 3D image
@@ -258,16 +259,16 @@ begin
 
     Data := GetMemory((dwWidth div DivSize) * (dwHeight div DivSize) * BlockBytes);
 
-    glGenTextures(1, @Texture.FID);
-    glBindTexture(Texture.Sampler, Texture.FID);
+
+    Texture.Bind;
 
     for s := 0 to Samples - 1 do
     begin
-      case Texture.Sampler of
+      case Texture.FSampler of
         GL_TEXTURE_CUBE_MAP :
           st := (GL_TEXTURE_CUBE_MAP_POSITIVE_X) + s;
       else
-        st := Texture.Sampler;
+        st := Texture.FSampler;
       end;
 
       for i := 0 to dwMipMapCount - 1 do
@@ -281,7 +282,6 @@ begin
           continue;
         end;
 
-        logout(Utils.inttostr(Byte(Compressed)),lmNotify);
         Stream.Read(Data^, Size);
         if Compressed then
           glCompressedTexImage2D(st, i, InternalFormat, w, h, 0, Size, Data)
@@ -290,14 +290,14 @@ begin
       end;
     end;
 
-    FreeMemory(Data); }
- { end;
-               {
-  glTexParameteri(Texture.Sampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-  glTexParameteri(Texture.Sampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glTexParameteri(Texture.Sampler, GL_TEXTURE_MAX_LEVEL, Mips - 1);
+    FreeMemory(Data);
+  end;
 
-  Result := Texture;    }
+  Texture.Filter := tfBilinear;
+ // glTexParameteri(Texture.FSampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+ // glTexParameteri(Texture.FSampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(Texture.FSampler, GL_TEXTURE_MAX_LEVEL, Mips - 1);
+
 end;
 
 end.

@@ -436,7 +436,6 @@ const
   procedure glTexCoord2fv(v: PGLfloat); stdcall; external opengl32;
   procedure glTexCoordPointer(size: GLint; atype: GLenum; stride: GLsizei; const pointer: Pointer); stdcall; external opengl32;
 
-
   // Texture
   procedure glBindTexture(target: GLenum; texture: GLuint); stdcall; external opengl32;
   procedure glGenTextures(n: GLsizei; textures: PGLuint); stdcall; external opengl32;
@@ -463,6 +462,8 @@ const
 var
   wglChoosePixelFormatARB: function(hdc: HDC; const piAttribIList: PGLint; const pfAttribFList: PGLfloat; nMaxFormats: GLuint; piFormats: PGLint; nNumFormats: PGLuint): LongBool; stdcall;
   wglSwapIntervalEXT: function(interval: GLint): LongBool; stdcall;
+
+  glActiveTexture: procedure(texture: GLenum); stdcall;
 
   glBindBuffer: procedure(target: GLenum; buffer: GLuint); stdcall;
   glDeleteBuffers: procedure(n: GLsizei; buffers : PGLuint); stdcall;
@@ -513,7 +514,9 @@ function LoadGLLibraly : Boolean;
 begin
   Result := true;
 
-  wglSwapIntervalEXT := glGetProc(PAnsiChar('wglSwapIntervalEXT'), Result);
+  wglSwapIntervalEXT := glGetProc('wglSwapIntervalEXT', Result);
+
+  glActiveTexture := glGetProc('glActiveTexture', Result);
 
   glBindBuffer    := glGetProc('glBindBuffer', Result);
   glDeleteBuffers := glGetProc('glDeleteBuffers', Result);
