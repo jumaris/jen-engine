@@ -7,10 +7,10 @@ uses
   JEN_OpenglHeader;
 
 type
-  TResourceType = (rtTexture);
+  TResourceType = (rtTexture,rtShader);
 
   TResource = class
-    constructor Create(const Name: string);
+    constructor Create(const Name: string); virtual;
   public
     Name : string;
     Ref  : LongInt;
@@ -19,7 +19,7 @@ type
   TTextureFilter =  (tfNone, tfBilinear, tfTrilinear, tfAniso);
 
   TTexture = class(TResource)
-    constructor Create(const Name: string);
+    constructor Create(const Name: string); override;
     destructor Destroy; override;
   private
   public
@@ -32,11 +32,11 @@ type
     FMipMap : Boolean;
     procedure SetFilter(Value: TTextureFilter);
     procedure SetClamp(Value: Boolean);
+//    procedure DataSet(X, Y, Width, Height: LongInt; Data: Pointer; Level: LongInt = 0; CFormat: TGLConst = GL_RGBA; DFormat: TGLConst = GL_UNSIGNED_BYTE);
   {
     procedure GenLevels;
     procedure DataGet(Data: Pointer; Level: LongInt = 0; CFormat: TGLConst = GL_RGBA; DFormat: TGLConst = GL_UNSIGNED_BYTE);
-    procedure DataSet(X, Y, Width, Height: LongInt; Data: Pointer; Level: LongInt = 0; CFormat: TGLConst = GL_RGBA; DFormat: TGLConst = GL_UNSIGNED_BYTE);
-    procedure DataCopy(XOffset, YOffset, X, Y, Width, Height: LongInt; Level: LongInt = 0);   }
+       procedure DataCopy(XOffset, YOffset, X, Y, Width, Height: LongInt; Level: LongInt = 0);   }
     procedure Bind(Channel: Byte = 0);
     property Width: LongInt read FWidth;
     property Height: LongInt read FHeight;
@@ -46,7 +46,7 @@ type
 
   TResLoader = class
   public
-    Ext : string;
+    ExtString : string;
     Resource : TResourceType;
     function Load(const Stream : TStream;var Resource : TResource) : Boolean; virtual; abstract;
   end;
@@ -71,6 +71,7 @@ type
     FErrorTexture : TTexture;
     function Load(const FileName: string; Resource : TResourceType) : TResource; overload;
   public
+    DebugTexture : TTexture;
     function Load(const FileName: string) : TTexture; overload;
     procedure AddResLoader(Loader : TResLoader);
     function Add(Resource: TResource): TResource;
@@ -136,7 +137,13 @@ begin
     glTexParameteri(FSampler, GL_TEXTURE_WRAP_R, ClampMode[Clamp]);
   end;
 end;
-
+                     {
+procedure TTexture.DataSet(X, Y, Width, Height: LongInt; Data: Pointer; Level: LongInt; CFormat, DFormat: TGLConst);
+begin
+  Bind;
+  glTexSubImage2D(Sampler, Level, X, Y, Width, Height, CFormat, DFormat, Data);
+end;
+                 }
 procedure TTexture.Bind(Channel: Byte = 0);
 begin
  // if ResManager.Active[TResType(Channel + Ord(rtTexture))] <> Self then
@@ -151,6 +158,9 @@ constructor TResourceManager.Create;
 begin
   FResList := TList.Create;
   FLoaderList := TList.Create;
+
+  DebugTexture := TTexture.Create('DEBUG');
+  Add(DebugTexture);
 end;
 
 destructor TResourceManager.Destroy;
@@ -195,7 +205,7 @@ begin
 
   RL := nil;
   for I := 0 to FLoaderList.Count - 1 do
-    if(TResLoader(FLoaderList[i]).Ext = Ext) and (TResLoader(FLoaderList[i]).Resource = Resource) then
+    if(TResLoader(FLoaderList[i]).ExtString = Ext) and (TResLoader(FLoaderList[i]).Resource = Resource) then
        RL := TResLoader(FLoaderList[i]);
 
   if not Assigned(RL) then
@@ -213,9 +223,12 @@ begin
   end else
     Logout('Can''t open file ' + eFileName, lmWarning);
 
-  RL.Load(Stream, Result);
+  if not RL.Load(Stream, Result) then
+  begin
+    Result.Free;
+    Result := DebugTexture;
+  end;
   Add(Result);
-
   Stream.Free;
       {
   if not Assigned(Result) then

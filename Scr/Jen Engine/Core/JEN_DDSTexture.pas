@@ -23,7 +23,7 @@ uses
 constructor TDDSLoader.Create;
 begin
   inherited;
-  Ext := 'dds';
+  ExtString := 'dds';
   Resource := rtTexture;
 end;
 
@@ -203,14 +203,14 @@ var
   end;
 
 begin
+  Result := False;
+  Texture := Resource as TTexture;
 
   if (Stream.Size < 128) then
   begin
-    Stream.Free;
+    LogOut('Wrong dds file', lmWarning);
     Exit;
   end;
-
-  Texture := Resource as TTexture;
 
   Stream.Read(Header, 128);
 
@@ -220,7 +220,6 @@ begin
       or (Header.dwFlags and DDSD_CAPS = 0) ) then
         begin
           LogOut('Wrong dds header', lmWarning);
-          Stream.Free;
           Exit;
         end;
 
@@ -228,8 +227,7 @@ begin
   if Format = lfNULL then
   begin
     LogOut('Not supported texture format: ' + Stream.Name, lmWarning);
-    Stream.Free;
-    Exit();
+    Exit;
   end;
 
   with Header, DDSLoadFormat[Format] do
@@ -258,8 +256,6 @@ begin
     ///...
 
     Data := GetMemory((dwWidth div DivSize) * (dwHeight div DivSize) * BlockBytes);
-
-
     Texture.Bind;
 
     for s := 0 to Samples - 1 do
@@ -297,7 +293,7 @@ begin
  // glTexParameteri(Texture.FSampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
  // glTexParameteri(Texture.FSampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(Texture.FSampler, GL_TEXTURE_MAX_LEVEL, Mips - 1);
-
+  Result := True;
 end;
 
 end.

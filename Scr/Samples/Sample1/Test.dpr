@@ -18,7 +18,9 @@ uses
   JEN_Game in '..\..\Jen Engine\Core\JEN_Game.pas',
   JEN_Log in '..\..\Jen Engine\Core\JEN_Log.pas',
   JEN_ResourceManager in '..\..\Jen Engine\Core\JEN_ResourceManager.pas',
-  JEN_DDSTexture in '..\..\Jen Engine\Core\JEN_DDSTexture.pas';
+  JEN_DDSTexture in '..\..\Jen Engine\Core\JEN_DDSTexture.pas',
+  JEN_Shader in '..\..\Jen Engine\Render\JEN_Shader.pas',
+  CoreX_XML in '..\..\Jen Engine\Utils\CoreX_XML.pas';
 
 {$IFDEF DEBUG}
   {$APPTYPE CONSOLE}
@@ -27,14 +29,13 @@ uses
 {$R *.res}
 {$R ..\..\icon.RES}
 
-var h : THandle;
+
 begin
   Game := TSameGame.Create;
   Game.Run;
   Game.Free;
   {$IFDEF DEBUG}
-  h := CreateEventW(nil, true, false, '');
-  WaitForSingleObject(h, 2500);
+  Utils.Sleep(2500);
   {$EndIf}
 end.
 

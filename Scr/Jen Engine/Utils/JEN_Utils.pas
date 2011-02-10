@@ -3,6 +3,7 @@ unit JEN_Utils;
 interface
 
 uses
+  JEN_MATH,
   XSystem;
 
 const
@@ -17,6 +18,7 @@ type
     FTimeStart  : LongInt;
     function GetTime : LongInt;
   public
+    procedure Sleep(Value: LongWord);
     function IntToStr(Value: Integer): string;
     function StrToInt(const Str: string; Def: Integer = 0): Integer;
     function FloatToStr(Value: Single; Digits: Integer = 8): string;
@@ -125,12 +127,18 @@ type
     procedure WriteUnicode(const Value: WideString); override;
   end;
 
+  TCharSet = set of AnsiChar;
+
 procedure FreeAndNil(var Obj); inline;
+function LowerCase(const Str: string): string;
+function TrimChars(const Str: string; Chars: TCharSet): string;
+function Trim(const Str: string): string;
+function DeleteChars(const Str: string; Chars: TCharSet): string;
 
 implementation
 
 uses
-  JEN_MATH;
+  JEN_MAIN;
 
 procedure FreeAndNil(var Obj);
 var
@@ -139,6 +147,53 @@ begin
   Temp := TObject(Obj);
   Pointer(Obj) := nil;
   Temp.Free;
+end;
+
+function LowerCase(const Str: string): string;
+var
+  i : LongInt;
+begin
+  Result := Str;
+  for i := 1 to Length(Str) do
+    if AnsiChar(Result[i]) in ['A'..'Z', 'À'..'ß'] then
+      Result[i] := Chr(Ord(Result[i]) + 32);
+end;
+
+function TrimChars(const Str: string; Chars: TCharSet): string;
+var
+  i, j : LongInt;
+begin
+  j := Length(Str);
+  i := 1;
+  while (i <= j) and (AnsiChar(Str[i]) in Chars) do
+    Inc(i);
+  if i <= j then
+  begin
+    while AnsiChar(Str[j]) in Chars do
+      Dec(j);
+    Result := Copy(Str, i, j - i + 1);
+  end else
+    Result := '';
+end;
+
+function Trim(const Str: string): string;
+begin
+  Result := TrimChars(Str, [#9, #10, #13, #32]);
+end;
+
+function DeleteChars(const Str: string; Chars: TCharSet): string;
+var
+  i, j : LongInt;
+begin
+  j := 0;
+  SetLength(Result, Length(Str));
+  for i := 1 to Length(Str) do
+    if not (AnsiChar(Str[i]) in Chars) then
+    begin
+      Inc(j);
+      Result[j] := Str[i];
+    end;
+  SetLength(Result, j);
 end;
 
 { TUtils }
@@ -154,6 +209,14 @@ end;
 destructor TUtils.Destroy;
 begin
   inherited;
+end;
+
+procedure TUtils.Sleep(Value: LongWord);
+var h : THandle;
+begin
+  h := CreateEventW(nil, true, false, '');
+  WaitForSingleObject(h, Value);
+  CloseHandle(h);
 end;
 
 function TUtils.GetTime : LongInt;
@@ -466,7 +529,7 @@ begin
 
   io := 1;
   Result := TFileStream.Create;
-  Result.FName := 'sad';
+  Result.FName := Utils.ExtractFileName(FileName);
   {$I-}
   FileMode := 2;
 
