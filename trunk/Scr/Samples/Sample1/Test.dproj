@@ -66,6 +66,8 @@
 			<DCCReference Include="..\..\Jen Engine\Core\JEN_Log.pas"/>
 			<DCCReference Include="..\..\Jen Engine\Core\JEN_ResourceManager.pas"/>
 			<DCCReference Include="..\..\Jen Engine\Core\JEN_DDSTexture.pas"/>
+			<DCCReference Include="..\..\Jen Engine\Render\JEN_Shader.pas"/>
+			<DCCReference Include="..\..\Jen Engine\Utils\CoreX_XML.pas"/>
 			<None Include="Jen_config.inc"/>
 			<BuildConfiguration Include="Base">
 				<Key>Base</Key>
@@ -99,7 +101,7 @@
 						<VersionInfo Name="MajorVer">0</VersionInfo>
 						<VersionInfo Name="MinorVer">0</VersionInfo>
 						<VersionInfo Name="Release">1</VersionInfo>
-						<VersionInfo Name="Build">1454</VersionInfo>
+						<VersionInfo Name="Build">1489</VersionInfo>
 						<VersionInfo Name="Debug">True</VersionInfo>
 						<VersionInfo Name="PreRelease">False</VersionInfo>
 						<VersionInfo Name="Special">False</VersionInfo>
@@ -111,7 +113,7 @@
 					<VersionInfoKeys>
 						<VersionInfoKeys Name="CompanyName"/>
 						<VersionInfoKeys Name="FileDescription"/>
-						<VersionInfoKeys Name="FileVersion">0.0.1.1454</VersionInfoKeys>
+						<VersionInfoKeys Name="FileVersion">0.0.1.1489</VersionInfoKeys>
 						<VersionInfoKeys Name="InternalName"/>
 						<VersionInfoKeys Name="LegalCopyright"/>
 						<VersionInfoKeys Name="LegalTrademarks"/>
@@ -125,6 +127,7 @@
 						<Excluded_Packages Name="$(BDS)\bin\dclofficexp140.bpl">Microsoft Office XP Sample Automation Server Wrapper Components</Excluded_Packages>
 					</Excluded_Packages>
 				</Delphi.Personality>
+				<ModelSupport>False</ModelSupport>
 			</BorlandProject>
 			<ProjectFileVersion>12</ProjectFileVersion>
 		</ProjectExtensions>

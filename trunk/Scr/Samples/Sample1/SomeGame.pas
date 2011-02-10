@@ -54,29 +54,42 @@ procedure TSameGame.OnRender;
 begin
   glClear( GL_COLOR_BUFFER_BIT);
 
+   glviewport(0,0,1024,768);
 //  Render.Matrix[mtProj].Identity;
-  Render.Matrix[mtProj].Ortho(0,800,0,600,-1,1);
+  Render.Matrix[mtProj].Ortho(0,800,600,00,-1,1);
  // Render.Matrix[mtModel].Identity;
 
 
   glMatrixMode(GL_PROJECTION);
  // glLoadIdentity;
   glLoadMatrixf(@Render.Matrix[mtProj]);
+  //glOrtho(0,1,0,1,0,1);// (0,800,
  // glOrtho(0, 800, 0, 100, -1, 1);
+ // glOrtho( 0, 800, 0, 600, -1, 1 );
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity;
 
   glenable(GL_TEXTURE_2D);
-  glenable(GL_TEXTURE0);
-  glbindtexture(GL_TEXTURE_2D,r.FID);
+  r.Bind;
   glbegin(GL_TRIANGLES);
+
+      gltexcoord2f(0,1);
+  glvertex3f(0,100,0);
+
+    gltexcoord2f(1,0);
+  glvertex3f(150,0,0);
+
 
   gltexcoord2f(0,0);
   glvertex3f(0,0,0);
-  gltexcoord2f(1,0);
-  glvertex3f(150,0,0);
-  gltexcoord2f(0,1);
-  glvertex3f(0,100,0);
+
+
+
+
+
+
+
+
   glend;
 
 end;

@@ -370,7 +370,6 @@ type
 // File operations
   function CreateFileW(lpFileName: PWideChar; dwDesiredAccess, dwShareMode: LongWord; lpSecurityAttributes: PSecurityAttributes; dwCreationDisposition, dwFlagsAndAttributes: LongWord; hTemplateFile: THandle): THandle; stdcall; external kernel32;
   function GetFileSize(hFile: THandle; lpFileSizeHigh: Pointer): LongWord; stdcall; external kernel32;
-  function CloseHandle(hObject: THandle): LongBool; stdcall; external kernel32;
   function WriteFile(hFile: THandle; const Buffer; nNumberOfBytesToWrite: LongWord; var lpNumberOfBytesWritten: LongWord; lpOverlapped: POverlapped): LongBool; stdcall; external kernel32;
   function ReadFile(hFile: THandle; var Buffer; nNumberOfBytesToRead: LongWord; var lpNumberOfBytesRead: LongWord; lpOverlapped: POverlapped): LongBool; stdcall; external kernel32;
   function SetFilePointer(hFile: THandle; lDistanceToMove: Longint; lpDistanceToMoveHigh: Pointer; dwMoveMethod: LongWord): LongWord; stdcall; external kernel32;
@@ -381,6 +380,7 @@ type
   function GetVersionExW(lpVersionInformation: POSVERSIONINFO): Longint; stdcall; external kernel32;
   function GlobalMemoryStatusEx(var lpBuffer : TMEMORYSTATUSEX): LongBool; stdcall; external kernel32;
 
+  function CloseHandle(hObject: THandle): LongBool; stdcall; external kernel32;
   function WaitForSingleObject(hHandle: THandle; dwMilliseconds: LongWord): LongWord; stdcall; external kernel32;
   function CreateEventW(lpEventAttributes: PSecurityAttributes; bManualReset, bInitialState: LongBool; lpName: PWideChar): THandle; stdcall; external kernel32;
 
