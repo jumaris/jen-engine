@@ -4,20 +4,11 @@ interface
 
 uses
   JEN_Utils,
+  JEN_Shader,
+  JEN_Resource,
   JEN_OpenglHeader;
 
 type
-  TResourceType = (rtTexture,rtShader);
-
-  TResource = class
-    constructor Create(const Name: string); virtual;
-  public
-    Name : string;
-    Ref  : LongInt;
-  end;
-
-  TTextureFilter =  (tfNone, tfBilinear, tfTrilinear, tfAniso);
-
   TTexture = class(TResource)
     constructor Create(const Name: string); override;
     destructor Destroy; override;
@@ -44,13 +35,6 @@ type
     property Clamp: Boolean read FClamp write SetClamp;
   end;
 
-  TResLoader = class
-  public
-    ExtString : string;
-    Resource : TResourceType;
-    function Load(const Stream : TStream;var Resource : TResource) : Boolean; virtual; abstract;
-  end;
-
   TMipMap = record
     Size : LongWord;
     Data : Pointer;
@@ -69,11 +53,16 @@ type
     FResList : TList;
     FLoaderList : TList;
     FErrorTexture : TTexture;
-    function Load(const FileName: string; Resource : TResourceType) : TResource; overload;
   public
     DebugTexture : TTexture;
-    function Load(const FileName: string) : TTexture; overload;
-    procedure AddResLoader(Loader : TResLoader);
+
+    function Load(const FileName: string; Resource : TResourceType) : TResource; overload;
+    procedure Load(const FileName: string; var Resource : TTexture); overload;
+    procedure Load(const FileName: string; var Resource : TShader); overload;
+    function LoadTexture(const FileName: string): TTexture;
+    function LoadShader(const FileName: string): TShader;
+
+    procedure RegisterLoader(Loader : TResLoader);
     function Add(Resource: TResource): TResource;
     procedure Delete(Resource: TResource);
     function GetRef(const Name: string): TResource;
@@ -85,12 +74,6 @@ implementation
 
 uses
   JEN_Main;
-
-constructor TResource.Create;
-begin
-  Self.Name := Name;
-  Ref := 1;
-end;
 
 constructor TTexture.Create;
 begin
@@ -159,6 +142,8 @@ begin
   FResList := TList.Create;
   FLoaderList := TList.Create;
 
+  RegisterLoader(TShaderLoader.Create);
+  RegisterLoader(TDDSLoader.Create);
   DebugTexture := TTexture.Create('DEBUG');
   Add(DebugTexture);
 end;
@@ -179,9 +164,24 @@ begin
   inherited;
 end;
 
-function TResourceManager.Load(const FileName: string) : TTexture;
+function TResourceManager.LoadShader(const FileName: string) : TShader;
+begin
+  Result := TShader(Load(FileName, rtShader));
+end;
+
+function TResourceManager.LoadTexture(const FileName: string) : TTexture;
 begin
   Result := TTexture(Load(FileName, rtTexture));
+end;
+
+procedure TResourceManager.Load(const FileName: string; var Resource : TShader);
+begin
+  Resource := TShader(Load(FileName, rtShader));
+end;
+
+procedure TResourceManager.Load(const FileName: string; var Resource : TTexture);
+begin
+  Resource := TTexture(Load(FileName, rtTexture));
 end;
 
 function TResourceManager.Load(const FileName: string; Resource : TResourceType)  : TResource;
@@ -218,28 +218,35 @@ begin
   if Assigned(Stream) then
   begin
     case Resource of
+      rtShader: Result := TShader.Create(eFileName);
       rtTexture: Result := TTexture.Create(eFileName);
     end;
   end else
+  begin
     Logout('Can''t open file ' + eFileName, lmWarning);
+    Stream.Free;
+  end;
 
   if not RL.Load(Stream, Result) then
   begin
-    Result.Free;
-    Result := DebugTexture;
+    Stream.Free;
+    if Resource = rtTexture then
+    begin
+      Result.Free;
+      Result := DebugTexture;
+    end;
+
   end;
   Add(Result);
-  Stream.Free;
-      {
+
   if not Assigned(Result) then
     Logout('Error while loading file ' + eFileName, lmWarning);
-          }
-
 end;
 
-procedure TResourceManager.AddResLoader(Loader : TResLoader);
+procedure TResourceManager.RegisterLoader(Loader : TResLoader);
 begin
   FLoaderList.Add(Loader);
+  Log.AddMsg('Register '+ TResourceStringName[Loader.Resource] + ' loader. Ext string: ' + Loader.ExtString, lmNotify);
 end;
 
 function TResourceManager.Add(Resource: TResource): TResource;

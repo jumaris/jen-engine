@@ -20,7 +20,8 @@ uses
   JEN_ResourceManager in '..\..\Jen Engine\Core\JEN_ResourceManager.pas',
   JEN_DDSTexture in '..\..\Jen Engine\Core\JEN_DDSTexture.pas',
   JEN_Shader in '..\..\Jen Engine\Render\JEN_Shader.pas',
-  CoreX_XML in '..\..\Jen Engine\Utils\CoreX_XML.pas';
+  CoreX_XML in '..\..\Jen Engine\Utils\CoreX_XML.pas',
+  JEN_Resource in '..\..\Jen Engine\Core\JEN_Resource.pas';
 
 {$IFDEF DEBUG}
   {$APPTYPE CONSOLE}

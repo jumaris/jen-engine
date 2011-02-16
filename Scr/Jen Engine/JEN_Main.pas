@@ -15,6 +15,7 @@ uses
   JEN_Render,
   JEN_ResourceManager,
   JEN_DDSTexture,
+  JEN_Shader,
   JEN_Camera3D,
   JEN_Math;
 
@@ -54,6 +55,7 @@ type
   TResourceManager= JEN_ResourceManager.TResourceManager;
   TDDSLoader      = JEN_DDSTexture.TDDSLoader;
   TTexture        = JEN_ResourceManager.TTexture;
+  TShader         = JEN_Shader.TShader;
 
 var
   Utils        : TUtils;
