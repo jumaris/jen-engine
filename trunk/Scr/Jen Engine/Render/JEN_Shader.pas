@@ -3,7 +3,7 @@ unit JEN_Shader;
 interface
 
 uses
-  JEN_ResourceManager,
+  JEN_Resource,
   JEN_OpenGlHeader,
   JEN_Utils,
   CoreX_XML;
@@ -22,9 +22,10 @@ type
     constructor Create(const Name: string); override;
     destructor Destroy; override;
   private
+
   public
-    FProgram : TShaderProgram;
-    procedure Bind;
+    XN_VS, XN_FS, XML : TXML;
+    function Compile : TShaderProgram;
   end;
 
   TShaderLoader = class(TResLoader)
@@ -57,13 +58,14 @@ end;
 
 destructor TShader.Destroy;
 begin
+  if Assigned(XML) then
+    XML.Free;
   inherited;
 end;
 
-procedure TShader.Bind;
+function TShader.Compile : TShaderProgram;
 begin
-  if Assigned(FProgram) then
-    FProgram.Bind;
+
 end;
 
 constructor TShaderLoader.Create;
@@ -76,13 +78,23 @@ end;
 function TShaderLoader.Load(const Stream : TStream; var Resource : TResource) : Boolean;
 var
   Shader : TShader;
-  XML : TXml;
+  N      : TXml;
 begin
   Shader := Resource as TShader;
 
-  XML := TXML.Load(Stream);
+  with Shader do
+  begin
+    XML := TXML.Load(Stream);
+    if not Assigned(XML) then Exit(false);
 
+    N := XML.Node['Shader'];
 
+    if Assigned(N) then
+    begin
+      XN_VS := N.Node['VertexShader'];
+      XN_FS := N.Node['FragmentShader'];
+    end;
+  end;
 
 end;
 

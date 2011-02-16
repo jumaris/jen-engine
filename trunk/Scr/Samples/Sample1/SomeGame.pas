@@ -19,7 +19,9 @@ type
 
 implementation
 
-var r : TTexture;
+var
+  r : TTexture;
+  s : TShader;
 
 constructor TSameGame.Create;
 begin
@@ -27,7 +29,7 @@ begin
   Display := TDisplayWindow.Create(1024, 768, 60, false);
   Render := TGLRender.Create(24, 8, 8);
   ResMan := TResourceManager.Create;
-  ResMan.AddResLoader(TDDSLoader.Create);
+
 
  // Display.VSync := false;
 { Display.FullScreen := true;
@@ -42,7 +44,8 @@ end;
 
 procedure TSameGame.LoadContent;
 begin
-  r := ResMan.Load('Media\asd.dds');
+  ResMan.Load('Media\asd.dds', r);
+  ResMan.Load('Media\Shader.xml', s);
 end;
 
 procedure TSameGame.OnUpdate(Dt: Double);

@@ -6,7 +6,7 @@ uses
   JEN_OpenGlHeader,
   JEN_Utils,
   JEN_Math,
-  JEN_ResourceManager;
+  JEN_Resource;
 
 type
   TDDSLoader = class(TResLoader)
@@ -294,6 +294,7 @@ begin
  // glTexParameteri(Texture.FSampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(Texture.FSampler, GL_TEXTURE_MAX_LEVEL, Mips - 1);
   Result := True;
+  Stream.Free;
 end;
 
 end.
