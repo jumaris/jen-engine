@@ -46,6 +46,7 @@ procedure TSameGame.LoadContent;
 begin
   ResMan.Load('Media\asd.dds', r);
   ResMan.Load('Media\Shader.xml', s);
+  s.Compile;
 end;
 
 procedure TSameGame.OnUpdate(Dt: Double);

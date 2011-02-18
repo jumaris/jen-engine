@@ -57,10 +57,13 @@ type
     DebugTexture : TTexture;
 
     function Load(const FileName: string; Resource : TResourceType) : TResource; overload;
-    procedure Load(const FileName: string; var Resource : TTexture); overload;
+
     procedure Load(const FileName: string; var Resource : TShader); overload;
-    function LoadTexture(const FileName: string): TTexture;
+    procedure Load(const FileName: string; var Resource : TTexture); overload;
+
     function LoadShader(const FileName: string): TShader;
+    function LoadTexture(const FileName: string): TTexture;
+
 
     procedure RegisterLoader(Loader : TResLoader);
     function Add(Resource: TResource): TResource;

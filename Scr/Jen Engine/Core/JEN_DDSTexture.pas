@@ -27,7 +27,6 @@ begin
   Resource := rtTexture;
 end;
 
-
 function TDDSLoader.Load(const Stream : TStream; var Resource : TResource) : Boolean;
 type
   TloadFormat = (lfNULL, lfDXT1c, lfDXT1a, lfDXT3, lfDXT5, lfA8, lfL8, lfAL8, lfBGRA8, lfBGR8, lfBGR5A1, lfBGR565, lfBGRA4, lfR16F, lfR32F, lfGR16F, lfGR32F, lfBGRA16F, lfBGRA32F);

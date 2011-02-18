@@ -17,7 +17,8 @@ uses
   JEN_DDSTexture,
   JEN_Shader,
   JEN_Camera3D,
-  JEN_Math;
+  JEN_Math,
+  XSystem;
 
 const
   lmInfo       = TLogMsg.lmInfo;
@@ -85,6 +86,8 @@ begin
   SystemParams := TSystem.Create;
   Log := TLog.Create;
 {$IFDEF DEBUG}
+  AllocConsole;
+  SetConsoleTitleW('Jen Console');
   TDefConsoleLog.Create;
 {$EndIf}
   Log.Init;
