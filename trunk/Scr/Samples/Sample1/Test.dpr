@@ -23,13 +23,8 @@ uses
   CoreX_XML in '..\..\Jen Engine\Utils\CoreX_XML.pas',
   JEN_Resource in '..\..\Jen Engine\Core\JEN_Resource.pas';
 
-{$IFDEF DEBUG}
-  {$APPTYPE CONSOLE}
-{$EndIf}
-
 {$R *.res}
 {$R ..\..\icon.RES}
-
 
 begin
   Game := TSameGame.Create;

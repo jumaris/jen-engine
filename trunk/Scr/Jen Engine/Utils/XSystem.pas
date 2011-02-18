@@ -380,6 +380,8 @@ type
   function GetVersionExW(lpVersionInformation: POSVERSIONINFO): Longint; stdcall; external kernel32;
   function GlobalMemoryStatusEx(var lpBuffer : TMEMORYSTATUSEX): LongBool; stdcall; external kernel32;
 
+  function AllocConsole: LongBool; stdcall; stdcall; external kernel32;
+  function SetConsoleTitleW(lpConsoleTitle: PWideChar): LongBool; stdcall; external kernel32;
   function CloseHandle(hObject: THandle): LongBool; stdcall; external kernel32;
   function WaitForSingleObject(hHandle: THandle; dwMilliseconds: LongWord): LongWord; stdcall; external kernel32;
   function CreateEventW(lpEventAttributes: PSecurityAttributes; bManualReset, bInitialState: LongBool; lpName: PWideChar): THandle; stdcall; external kernel32;

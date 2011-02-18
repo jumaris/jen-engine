@@ -6,6 +6,7 @@ uses
   JEN_Resource,
   JEN_OpenGlHeader,
   JEN_Utils,
+  StrUtils,
   CoreX_XML;
 
 type
@@ -36,6 +37,9 @@ type
 
 implementation
 
+uses
+  JEN_Main;
+
 constructor TShaderProgram.Create(blabla : String);
 begin
 
@@ -64,7 +68,46 @@ begin
 end;
 
 function TShader.Compile : TShaderProgram;
+var
+  S: AnsiString;
+
+  function IndexStr(const AText: string; const AValues: array of string): Integer;
+  var
+    J : Integer;
+  begin
+  Result := -1;
+  for J := Low(AValues) to High(AValues) do
+    if AText = AValues[J] then
+    begin
+      Result := J;
+      Break;
+    end;
+  end;
+
+  function MergeCode(const Node:TXML) : AnsiString;
+  var
+    i: integer;
+  begin
+    Result:='';
+    for i:= 0 to Node.Count - 1  do
+    with Node.NodeI[i] do
+    begin
+      case IndexStr(Tag,['Code']) of
+        0 : begin
+        Result := Result + Content;
+        end;
+      end;
+    end;
+  end;
+
 begin
+  if Assigned(XN_VS) and Assigned(XN_FS) then
+  begin
+  
+  end;
+
+  logout(MergeCode(XN_VS),lmNotify);
+  logout(MergeCode(XN_FS),lmNotify);
 
 end;
 
@@ -78,7 +121,6 @@ end;
 function TShaderLoader.Load(const Stream : TStream; var Resource : TResource) : Boolean;
 var
   Shader : TShader;
-  N      : TXml;
 begin
   Shader := Resource as TShader;
 
@@ -87,13 +129,9 @@ begin
     XML := TXML.Load(Stream);
     if not Assigned(XML) then Exit(false);
 
-    N := XML.Node['Shader'];
+    XN_VS := XML.Node['VertexShader'];
+    XN_FS := XML.Node['FragmentShader'];
 
-    if Assigned(N) then
-    begin
-      XN_VS := N.Node['VertexShader'];
-      XN_FS := N.Node['FragmentShader'];
-    end;
   end;
 
 end;

@@ -28,6 +28,6 @@
 				}
 				else discard;
 			}
-		</DefCode> 
+		</Code> 
 	</FragmentShader>
 </Shader>
