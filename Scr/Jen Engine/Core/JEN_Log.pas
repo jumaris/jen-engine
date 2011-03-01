@@ -22,7 +22,7 @@ type
   constructor Create;
   destructor Destroy; Override;
   protected
-    {$IFDEF LOG}fLogOutputs : TList;{$ENDIF}
+    {$IFDEF JEN_LOG}fLogOutputs : TList;{$ENDIF}
   public
     property LogOutputs : TList read fLogOutputs; 
     procedure Init;
@@ -31,7 +31,7 @@ type
 
 implementation
 
-{$IFDEF LOG}
+{$IFDEF JEN_LOG}
 uses
   JEN_Main,
   JEN_DefConsoleLog,

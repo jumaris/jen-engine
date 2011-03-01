@@ -9,7 +9,6 @@ type
   TResourceType = (rtShader, rtTexture);
   TTextureFilter =  (tfNone, tfBilinear, tfTrilinear, tfAniso);
 
-
 const
   TResourceStringName : array[TResourceType] of string = ('shader', 'texture');
 
@@ -30,10 +29,14 @@ type
 
 implementation
 
+uses
+  JEN_Main;
+
 constructor TResource.Create;
 begin
   Self.Name := Name;
   Ref := 1;
+  ResMan.Add(Self);
 end;
 
 

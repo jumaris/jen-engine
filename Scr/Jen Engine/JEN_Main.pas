@@ -1,11 +1,12 @@
 unit JEN_Main;
+{$I Jen_config.INC}
 
 interface
 
 uses
+  JEN_Header,
   JEN_Utils,
   JEN_SystemInfo,
-  JEN_Game,
   JEN_Log,
   JEN_DefConsoleLog,
   JEN_Display,
@@ -44,12 +45,7 @@ const
   mtView        = TMatrixType.mtView;
 
 type
-  TGame           = JEN_GAME.TGame;
-
-  TDisplayWindow  = JEN_Display_Window.TDisplayWindow;
   TGLRender       = JEN_OpenGL.TGLRender;
-
-  TCamera3D       = JEN_Camera3D.TCamera3D;
 
   TFileStream     = JEN_Utils.TFileStream;
 
@@ -58,39 +54,153 @@ type
   TTexture        = JEN_ResourceManager.TTexture;
   TShader         = JEN_Shader.TShader;
 
+  TJenEngine = class(TInterfacedObject, IJenEngine)
+    constructor Create;
+  private
+    class var FisRunnig : Boolean;
+    class var FQuit : Boolean;
+  public
+    function GetSubSystem(SubSystemType: TSubSystemType; out SubSystem: IEngineSubSystem) : HResult; stdcall;
+    function Start(Game : IGame) : HResult; stdcall;
+    function Finish : HResult;
+    class property Quit: Boolean read FQuit;
+  end;
+
 var
+  Engine       : TJenEngine;
+  Game         : IGame;
   Utils        : TUtils;
   SystemParams : TSystem;
   Log          : TLog;
-  Game         : TGame;
-
-  Display      : TDisplay;
   Render       : TRender;
+  Display      : TDisplay;
   ResMan       : TResourceManager;
 
-procedure LogOut(const Text: String; MType: TLogMsg);
+procedure LogOut(const Text: string; MType: TLogMsg);
+procedure pGetEngine(out Engine: IJenEngine); stdcall;
 
 implementation
 
-procedure LogOut(const Text: String; MType: TLogMsg);
+procedure LogOut(const Text: string; MType: TLogMsg);
 begin
   Log.AddMsg(Text, MType);
 end;
 
-initialization
+procedure pGetEngine(out Engine: IJenEngine);
 begin
-{$IFDEF DEBUG}
-  ReportMemoryLeaksOnShutdown := True;
-{$EndIf}
+   Engine := TJenEngine.Create;
+end;
+
+constructor TJenEngine.Create;
+begin
+  inherited;
   Utils := TUtils.Create;
   SystemParams := TSystem.Create;
   Log := TLog.Create;
-{$IFDEF DEBUG}
+  Display := TDisplay.Create;
+  {$IFDEF DEBUG}
   AllocConsole;
   SetConsoleTitleW('Jen Console');
   TDefConsoleLog.Create;
-{$EndIf}
+  {$ENDIF}
   Log.Init;
+end;
+
+function TJenEngine.GetSubSystem(SubSystemType: TSubSystemType;out SubSystem: IEngineSubSystem): HResult;
+begin
+//Result := S_OK;
+  //subSystem := Display;
+//  case SubSystemType of
+   { ssUtils : SubSystem := Utils;
+    ssSystemParams : SubSystem := SystemParams;
+    ssLog : SubSystem := Log;         }
+ //   ssDisplay : SubSystem := Display;
+ {   ssRender : SubSystem := Render;
+    ssResMan : SubSystem := ResMan;    }
+//  else
+//     Result := S_FALSE;
+//  end;
+  //Display.Init(800,800,0,False);
+end;
+
+
+     {
+  if(FisRunnig) then
+  begin
+    LogOut('Engine alredy running', lmError);
+    Exit;
+  end;
+
+  FQuit  := False;
+
+  destructor TGame.Destroy;
+begin
+  if Assigned(Render) then
+    FreeAndNil(Render);
+
+  if Assigned(Display) then
+    FreeAndNil(Display);
+
+  if Assigned(ResMan) then
+    FreeAndNil(ResMan);
+
+  FisRunnig := False;
+  inherited;
+end;
+               }
+function TJenEngine.Finish;
+begin
+  FQuit := True;
+end;
+
+function TJenEngine.Start(Game : IGame) : HResult;
+begin
+  if not Assigned(Game) then
+  begin
+    LogOut('Game is not assigned', lmError);
+    Exit;
+  end;
+
+  if(FisRunnig) then
+  begin
+    LogOut('Engine alredy running', lmError);
+    Exit;
+  end;
+
+  {if(not( Assigned(Display) and Display.Valid and
+          Assigned(Render) and Render.Valid{ and
+          Assigned(ResMan)} {) )then   }
+  begin
+    Logout('Error in some subsustem', lmError);
+    Exit;
+  end;
+
+  Logout('Let''s rock!', lmNotify);
+  FisRunnig := true;
+
+  Game.LoadContent;
+
+  while not FQuit do
+    begin
+     // Display.Update;
+      Game.OnUpdate(0);
+      Game.OnRender;
+  //   glfinish;
+     // Display.Swap;
+    end;
+end;
+
+initialization
+begin
+  TJenEngine.FisRunnig := false;
+{$IFDEF DEBUG}
+  ReportMemoryLeaksOnShutdown := True;
+{$ENDIF}
+{$IFNDEF JEN_CTD}
+  {$IFNDEF JEN_ATTACH_DLL}
+    GetEngine := pGetEngine;
+  {$ENDIF}
+{$ENDIF}
 end;
 
 finalization

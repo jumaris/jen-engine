@@ -9,22 +9,22 @@ type
   PRefreshRateArray = ^TRefreshRateArray;
   TRefreshRateArray = record
     private
-      FArray     : array of Byte;
-      function GetRefresh(idx : Integer): Byte;
-      function GetRefreshIdx(R : Byte): Integer;
+      FArray : array of Byte;
+      function GetRefresh(idx: Integer): Byte;
+      function GetRefreshIdx(R: Byte): Integer;
     public
       procedure Clear;
-      function  Count : Integer;
-      property  Refresh[idx : Integer]: Byte read GetRefresh; default;
-      procedure AddRefresh(R : Byte);
-      function  IsExist(const R : Byte): Boolean; inline;
+      function Count : Integer;
+      property Refresh[idx: Integer]: Byte read GetRefresh; default;
+      procedure AddRefresh(R: Byte);
+      function IsExist(R: Byte): Boolean;
   end;
 
   PDisplayMode = ^TDisplayMode;
   TDisplayMode = record
-    Width         : Integer;
-    Height        : Integer;
-    RefreshRates  : TRefreshRateArray;
+    Width        : Integer;
+    Height       : Integer;
+    RefreshRates : TRefreshRateArray;
     procedure Clear; inline;
   end;
 
@@ -51,17 +51,17 @@ type
         function BPS    : Byte;
         function Refresh: Byte;
 
-        function SetMode(W, H, R : integer): TSetModeResult; overload;
-        function SetMode(Idx, R  : integer): TSetModeResult; overload;
+        function SetMode(W, H, R: integer): TSetModeResult; overload;
+        function SetMode(Idx, R: integer): TSetModeResult; overload;
         procedure ResetMode;
 
         function GetModesCount : Integer;
         property Modes[Idx: Integer]: PDisplayMode read GetMode; default;
-        function GetIdx(W, H : Integer): Integer; inline;
-        function GetRefresh(W, H : Integer): PRefreshRateArray; overload; inline;
-        function GetRefresh(Idx  : Integer): PRefreshRateArray; overload; inline;
-        function IsModeExist(W, H : Integer): Boolean; overload; inline;
-        function IsModeExist(W, H, R : Integer): Boolean; overload; inline;
+        function GetIdx(W, H: Integer): Integer; inline;
+        function GetRefresh(W, H: Integer): PRefreshRateArray; overload; inline;
+        function GetRefresh(Idx: Integer): PRefreshRateArray; overload; inline;
+        function IsModeExist(W, H: Integer): Boolean; overload; inline;
+        function IsModeExist(W, H, R: Integer): Boolean; overload; inline;
       end;
   var
     fCPUName  : String;
@@ -101,7 +101,7 @@ begin
   result := FArray[Idx];
 end;
 
-function TRefreshRateArray.GetRefreshIdx(R : Byte) : Integer;
+function TRefreshRateArray.GetRefreshIdx(R: Byte) : Integer;
 var i : Integer;
 begin
   result := -1;
@@ -110,7 +110,7 @@ begin
       Exit(i);
 end;
 
-procedure TRefreshRateArray.AddRefresh(R : Byte);
+procedure TRefreshRateArray.AddRefresh(R: Byte);
 var Last : integer;
 begin
   Last := High(FArray)+1;
@@ -118,7 +118,7 @@ begin
   FArray[Last] := R;
 end;
 
-function TRefreshRateArray.IsExist(const R : Byte) : Boolean;
+function TRefreshRateArray.IsExist(R: Byte) : Boolean;
 begin
   result := GetRefreshIdx( R ) <> -1;
 end;
@@ -186,7 +186,7 @@ begin
   inherited;
 end;
 
-function TSystem.TScreen.SetMode(W, H, R : integer) : TSetModeResult;
+function TSystem.TScreen.SetMode(W, H, R: integer) : TSetModeResult;
 var
   DevMode      : TDeviceMode;
   RefreshRates : PRefreshRateArray;
