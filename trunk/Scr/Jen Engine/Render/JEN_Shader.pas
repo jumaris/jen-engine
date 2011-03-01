@@ -10,8 +10,8 @@ uses
   CoreX_XML;
 
 type
-  TShaderProgram = class
-    constructor Create(blabla : String);
+  TShaderProgram = class(TResource)
+    constructor Create;
     destructor Destroy;
   private
   public
@@ -40,19 +40,22 @@ implementation
 uses
   JEN_Main;
 
-constructor TShaderProgram.Create(blabla : String);
+constructor TShaderProgram.Create;
 begin
-
+  inherited Create('');
+  FID := glCreateProgram;
 end;
 
 destructor TShaderProgram.Destroy;
 begin
-
+  glDeleteShader(FID);
+  inherited;
 end;
 
 procedure TShaderProgram.Bind;
 begin
-
+//glValidateProgramARB(0);
+//     glDeleteObjectARB(8);
 end;
 
 constructor TShader.Create(const Name: string);
@@ -70,6 +73,7 @@ end;
 function TShader.Compile : TShaderProgram;
 var
   S: AnsiString;
+  Shader : TShaderProgram;
 
   function IndexStr(const AText: string; const AValues: array of string): Integer;
   var
@@ -100,14 +104,54 @@ var
     end;
   end;
 
+  procedure InfoLog(Obj: LongWord; IsProgram: Boolean);
+  var
+    LogBuf : AnsiString;
+    LogLen : LongInt;
+  begin
+    if IsProgram then
+      glGetProgramiv(Obj, GL_INFO_LOG_LENGTH, @LogLen)
+    else
+      glGetShaderiv(Obj, GL_INFO_LOG_LENGTH, @LogLen);
+
+    SetLength(LogBuf, LogLen);
+
+    if IsProgram then
+      glGetProgramInfoLog(Obj, LogLen, LogLen, PAnsiChar(LogBuf))
+    else
+      glGetShaderInfoLog(Obj, LogLen, LogLen, PAnsiChar(LogBuf));
+    LogOut(Name + '\n' + string(LogBuf), lmWarning);
+  end;
+
+  function Attach(ShaderType: GLenum; const Source: AnsiString) : LongWord;
+  var
+    Obj : GLEnum;
+    SourcePtr  : PAnsiChar;
+    SourceSize : LongInt;
+    Status : LongInt;
+  begin
+    Shader := TShaderProgram.Create;
+    Obj := glCreateShader(ShaderType);
+
+    SourcePtr  := PAnsiChar(Source);
+    SourceSize := Length(Source);
+
+    glShaderSource(Obj, 1, @SourcePtr, @SourceSize);
+    glCompileShader(Obj);
+    glGetShaderiv(Obj, GL_COMPILE_STATUS, @Status);
+    if Status <> 1 then
+      InfoLog(Obj, False);
+    glAttachShader(Shader.FID, Obj);
+    glDeleteShader(Obj);
+  end;
+
 begin
   if Assigned(XN_VS) and Assigned(XN_FS) then
   begin
-  
-  end;
-
-  logout(MergeCode(XN_VS),lmNotify);
+   logout(MergeCode(XN_VS),lmNotify);
   logout(MergeCode(XN_FS),lmNotify);
+
+  end;
 
 end;
 

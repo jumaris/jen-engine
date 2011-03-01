@@ -3,7 +3,7 @@ unit JEN_DefConsoleLog;
 
 interface
 
-{$IFDEF LOG}
+{$IFDEF JEN_LOG}
 uses
   JEN_Log;
 
@@ -19,7 +19,7 @@ type TDefConsoleLog = class(TLogOutput)
 
 implementation
 
-{$IFDEF LOG}
+{$IFDEF JEN_LOG}
 uses
   JEN_MAIN;
 

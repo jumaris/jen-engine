@@ -148,7 +148,7 @@ begin
   RegisterLoader(TShaderLoader.Create);
   RegisterLoader(TDDSLoader.Create);
   DebugTexture := TTexture.Create('DEBUG');
-  Add(DebugTexture);
+
 end;
 
 destructor TResourceManager.Destroy;
@@ -240,7 +240,6 @@ begin
     end;
 
   end;
-  Add(Result);
 
   if not Assigned(Result) then
     Logout('Error while loading file ' + eFileName, lmWarning);

@@ -12,7 +12,7 @@ type
   TDDSLoader = class(TResLoader)
   constructor Create;
   public
-    function Load(const Stream : TStream; var Resource : TResource) : Boolean; override;
+    function Load(const Stream: TStream; var Resource: TResource): Boolean; override;
   end;
 
 implementation
@@ -27,7 +27,7 @@ begin
   Resource := rtTexture;
 end;
 
-function TDDSLoader.Load(const Stream : TStream; var Resource : TResource) : Boolean;
+function TDDSLoader.Load(const Stream: TStream; var Resource: TResource): Boolean;
 type
   TloadFormat = (lfNULL, lfDXT1c, lfDXT1a, lfDXT3, lfDXT5, lfA8, lfL8, lfAL8, lfBGRA8, lfBGR8, lfBGR5A1, lfBGR565, lfBGRA4, lfR16F, lfR32F, lfGR16F, lfGR32F, lfBGRA16F, lfBGRA32F);
 
@@ -53,7 +53,8 @@ type
     dwCaps2     : LongWord;
     dwReserved2 : array [0..2] of LongWord;
   end;
-
+  
+{$REGION 'CONSTANS'}
 const
   Magic                = $20534444;
 
@@ -69,7 +70,6 @@ const
 #define DDSD_LINEARSIZE             0x00080000
 #define DDSD_DEPTH                  0x00800000
                                           }
-
   FOURCC_DXT1          = $31545844;
   FOURCC_DXT3          = $33545844;
   FOURCC_DXT5          = $35545844;
@@ -132,6 +132,7 @@ const
     (Compressed: False; Swap : False; DivSize: 1; BlockBytes:  8; InternalFormat: GL_RGBA16F; ExternalFormat: GL_RGBA; DataType: GL_HALF_FLOAT),
     (Compressed: False; Swap : False; DivSize: 1; BlockBytes: 16; InternalFormat: GL_RGBA32F; ExternalFormat: GL_RGBA; DataType: GL_FLOAT)
   );
+{$ENDREGION}  
 
 var
   Header : TDDSHeader;

@@ -14,8 +14,8 @@ type
     constructor Create;
     destructor Destroy; override;
   private
-    FTimeFreq   : Int64;
-    FTimeStart  : LongInt;
+    FTimeFreq : Int64;
+    FTimeStart : LongInt;
     function GetTime : LongInt;
   public
     procedure Sleep(Value: LongWord);

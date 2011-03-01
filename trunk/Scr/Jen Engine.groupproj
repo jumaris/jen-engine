@@ -3,7 +3,13 @@
 			<ProjectGuid>{34B7A525-BAEE-4544-9366-409598452F85}</ProjectGuid>
 		</PropertyGroup>
 		<ItemGroup>
-			<Projects Include="Samples\Sample1\Test.dproj">
+			<Projects Include="DLL\JEN.dproj">
+				<Dependencies/>
+			</Projects>
+			<Projects Include="Samples\Delphi\01 Attach Engine To Project\_01_Attach_Engine_to_Project.dproj">
+				<Dependencies/>
+			</Projects>
+			<Projects Include="Samples\Delphi\02 Attach Engine from DLL\_02_Attach_Engine_from_DDL.dproj">
 				<Dependencies/>
 			</Projects>
 		</ItemGroup>
@@ -14,23 +20,41 @@
 				<Default.Personality/>
 			</BorlandProject>
 		</ProjectExtensions>
-		<Target Name="Test">
-			<MSBuild Projects="Samples\Sample1\Test.dproj"/>
+		<Target Name="JEN">
+			<MSBuild Projects="DLL\JEN.dproj"/>
 		</Target>
-		<Target Name="Test:Clean">
-			<MSBuild Targets="Clean" Projects="Samples\Sample1\Test.dproj"/>
+		<Target Name="JEN:Clean">
+			<MSBuild Targets="Clean" Projects="DLL\JEN.dproj"/>
 		</Target>
-		<Target Name="Test:Make">
-			<MSBuild Targets="Make" Projects="Samples\Sample1\Test.dproj"/>
+		<Target Name="JEN:Make">
+			<MSBuild Targets="Make" Projects="DLL\JEN.dproj"/>
+		</Target>
+		<Target Name="_01_Attach_Engine_to_Project">
+			<MSBuild Projects="Samples\Delphi\01 Attach Engine To Project\_01_Attach_Engine_to_Project.dproj"/>
+		</Target>
+		<Target Name="_01_Attach_Engine_to_Project:Clean">
+			<MSBuild Targets="Clean" Projects="Samples\Delphi\01 Attach Engine To Project\_01_Attach_Engine_to_Project.dproj"/>
+		</Target>
+		<Target Name="_01_Attach_Engine_to_Project:Make">
+			<MSBuild Targets="Make" Projects="Samples\Delphi\01 Attach Engine To Project\_01_Attach_Engine_to_Project.dproj"/>
+		</Target>
+		<Target Name="_02_Attach_Engine_from_DDL">
+			<MSBuild Projects="Samples\Delphi\02 Attach Engine from DLL\_02_Attach_Engine_from_DDL.dproj"/>
+		</Target>
+		<Target Name="_02_Attach_Engine_from_DDL:Clean">
+			<MSBuild Targets="Clean" Projects="Samples\Delphi\02 Attach Engine from DLL\_02_Attach_Engine_from_DDL.dproj"/>
+		</Target>
+		<Target Name="_02_Attach_Engine_from_DDL:Make">
+			<MSBuild Targets="Make" Projects="Samples\Delphi\02 Attach Engine from DLL\_02_Attach_Engine_from_DDL.dproj"/>
 		</Target>
 		<Target Name="Build">
-			<CallTarget Targets="Test"/>
+			<CallTarget Targets="JEN;_01_Attach_Engine_to_Project;_02_Attach_Engine_from_DDL"/>
 		</Target>
 		<Target Name="Clean">
-			<CallTarget Targets="Test:Clean"/>
+			<CallTarget Targets="JEN:Clean;_01_Attach_Engine_to_Project:Clean;_02_Attach_Engine_from_DDL:Clean"/>
 		</Target>
 		<Target Name="Make">
-			<CallTarget Targets="Test:Make"/>
+			<CallTarget Targets="JEN:Make;_01_Attach_Engine_to_Project:Make;_02_Attach_Engine_from_DDL:Make"/>
 		</Target>
 		<Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
 	</Project>

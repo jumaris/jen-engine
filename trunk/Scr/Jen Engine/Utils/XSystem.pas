@@ -15,6 +15,7 @@ const
   INVALID_HANDLE_VALUE  = LongWord(-1);
   INVALID_FILE_SIZE     = LongWord($FFFFFFFF);
 
+  //File operations
   FILE_BEGIN = 0;
   FILE_CURRENT = 1;
   FILE_END = 2;
@@ -33,6 +34,7 @@ const
   OPEN_EXISTING     = 3;
   OPEN_ALWAYS       = 4;
 
+  //REG Works
   HKEY_CLASSES_ROOT     = LongWord($80000000);
   HKEY_CURRENT_USER     = LongWord($80000001);
   HKEY_LOCAL_MACHINE    = LongWord($80000002);
@@ -54,7 +56,7 @@ const
   REG_FULL_RESOURCE_DESCRIPTOR = 9;
   REG_RESOURCE_REQUIREMENTS_LIST = 10;
 
-    { Return values for ChangeDisplaySettings }
+  // Return values for ChangeDisplaySettings
   DISP_CHANGE_SUCCESSFUL          = 0;
   DISP_CHANGE_FAILED              = -1;
   DISP_CHANGE_BADMODE             = -2;
@@ -86,6 +88,7 @@ const
   SM_CXDLGFRAME       = 7;
   SM_CYDLGFRAME       = 8;
 
+  //Windows messages
   WM_QUIT             = $0012;
   WM_CLOSE            = $0010;
   WM_DESTROY          = $0002;
@@ -163,17 +166,18 @@ const
                        JOY_RETURNR or JOY_RETURNU or JOY_RETURNV or
                        JOY_RETURNPOV or JOY_RETURNBUTTONS);
 
+  //Pixel format
   PFD_DOUBLEBUFFER     = $00000001;
   PFD_DRAW_TO_WINDOW   = $00000004;
   PFD_SUPPORT_OPENGL   = $00000020;
 
   // OpenGL
-  GL_MODELVIEW                      = $1700;
-  GL_PROJECTION                     = $1701;
-  GL_TRIANGLES                      = $0004;
-  GL_STENCIL_BUFFER_BIT             = $00000400;
-  GL_DEPTH_BUFFER_BIT               = $00000100;
-  GL_COLOR_BUFFER_BIT               = $00004000;
+  GL_MODELVIEW            = $1700;
+  GL_PROJECTION           = $1701;
+  GL_TRIANGLES            = $0004;
+  GL_STENCIL_BUFFER_BIT   = $00000400;
+  GL_DEPTH_BUFFER_BIT     = $00000100;
+  GL_COLOR_BUFFER_BIT     = $00004000;
 {$ENDREGION}
 {$REGION 'TYPES'}
 type
@@ -224,7 +228,8 @@ type
     dwFlags         : LongWord;
     iPixelType      : Byte;
     cColorBits      : Byte;
-    Color           : array [0..7] of Byte;
+    Color           : array [0..6] of Byte;
+    cAlphaBits      : Byte;
     Accum           : array [0..4] of Byte;
     cDepthBits      : Byte;
     cStencilBits    : Byte;
@@ -323,38 +328,51 @@ type
 {$REGION 'WINDOWS API'}
   function ToUnicode(wVirtKey, wScanCode: LongWord; const KeyState: TKeyboardState;  var pwszBuff; cchBuff: LongInt; wFlags: LongWord): LongInt; external user32;
 
-  function LoadCursorW(hInstance: LongInt; lpCursorName: PWideChar ): LongWord; stdcall; external user32;
-  function LoadIconW(hInstance: LongInt; lpIconName: PWideChar): LongWord; stdcall; external user32;
   function RegisterClassExW(const WndClass: TWndClassEx): Word; stdcall; external user32;
   function UnregisterClassW(lpClassName: PWideChar; hInstance: HINST): LongBool; stdcall; external user32;
   function CreateWindowExW(dwExStyle: LongWord; lpClassName, lpWindowName: PWideChar;
     dwStyle: LongWord; X, Y, nWidth, nHeight: LongInt;
     hWndParent, hMenu, hInstance: LongWord; lpParam: Pointer): HWND; stdcall; external user32;
   function DestroyWindow(hWnd: HWND): LongBool; stdcall; external user32;
-  function GetDC(hWnd: HWND): HDC; stdcall; external user32;
-  function ReleaseDC(hWnd: HWND; hDC: HDC): LongBool; stdcall; external user32;
   function DefWindowProcW(hWnd, Msg: LongWord; wParam, lParam: LongInt): LongInt; stdcall; external user32;
-  function PeekMessageW(var lpMsg: TMsg; hWnd: HWND; Min, Max, Remove: LongWord): Longbool; stdcall; external user32;
-  function TranslateMessage(const lpMsg: TMsg): LongBool; stdcall; external user32;
-  function DispatchMessageW(const lpMsg: TMsg): LongInt; stdcall; external user32;
-  function SendMessageW(hWnd, Msg: LongWord; wParam, lParam: LongInt): LongInt; stdcall; external user32;
-  function ShowWindow(hWnd: HWND; nCmdShow: LongInt): LongBool; stdcall; external user32;
+
+//Window settings
   function SetWindowLongA(hWnd: HWND; nIndex, dwNewLong: LongInt): LongInt; stdcall; external user32;
   function AdjustWindowRect(var lpRect: TSysRect; dwStyle: LongWord; bMenu: Longbool): Longbool; stdcall; external user32;
   function SetWindowPos(hWnd, hWndInsertAfter: HWND; X, Y, cx, cy: LongInt; uFlags: LongWord): Longbool; stdcall; external user32;
   function GetWindowRect(hWnd: HWND; var lpRect: TSysRect): Longbool; stdcall; external user32;
   function SetWindowTextW(hWnd: HWND; lpString: PWideChar): Longbool; stdcall; external user32;
-  function GetSystemMetrics(nIndex: LongInt): LongInt; stdcall; external user32;
-  function SetCursor(hCursor: LongWord): LongWord; stdcall; external user32;
 
+//Other
+  function LoadCursorW(hInstance: LongInt; lpCursorName: PWideChar ): LongWord; stdcall; external user32;
+  function LoadIconW(hInstance: LongInt; lpIconName: PWideChar): LongWord; stdcall; external user32;
+  function GetModuleHandleW(lpModuleName: PWideChar): HMODULE; stdcall; external kernel32;
+  function MessageBoxW(hWnd: HWND; lpText, lpCaption: PWideChar; uType: LongWord): Integer; stdcall; external user32;
+  function GetProcAddress(hModule: HMODULE; lpProcName: PAnsiChar): Pointer; stdcall; external kernel32;
+
+//Messages
+  function PeekMessageW(var lpMsg: TMsg; hWnd: HWND; Min, Max, Remove: LongWord): Longbool; stdcall; external user32;
+  function TranslateMessage(const lpMsg: TMsg): LongBool; stdcall; external user32;
+  function DispatchMessageW(const lpMsg: TMsg): LongInt; stdcall; external user32;
+  function SendMessageW(hWnd, Msg: LongWord; wParam, lParam: LongInt): LongInt; stdcall; external user32;
+  function ShowWindow(hWnd: HWND; nCmdShow: LongInt): LongBool; stdcall; external user32;
+
+//Cursor
+  function SetCursor(hCursor: LongWord): LongWord; stdcall; external user32;
   function GetCursorPos(out Point: TSysPoint): LongBool; stdcall; external user32;
   function SetCursorPos(X, Y: LongInt): LongBool; stdcall; external user32;
   function ShowCursor(bShow: LongBool): LongInt; stdcall; external user32;
 
+//Display
   function EnumDisplaySettingsW(lpszDeviceName: PWideChar; iModeNum: LongWord; var lpDevMode: TDeviceMode): LongBool; stdcall; external user32;
   function ChangeDisplaySettingsExW(lpszDeviceName: PWideChar; lpDevMode: PDeviceMode;
         wnd: HWND; dwFlags: LongWord; lParam: Pointer): Longint; stdcall; external user32;
   function ChangeDisplaySettingsW(lpDevMode: PDeviceMode; dwFlags: LongWord): Longint; stdcall; external user32;
+  function GetSystemMetrics(nIndex: LongInt): LongInt; stdcall; external user32;
+
+//DC
+  function GetDC(hWnd: HWND): HDC; stdcall; external user32;
+  function ReleaseDC(hWnd: HWND; hDC: HDC): LongBool; stdcall; external user32;
 
   function SwapBuffers(DC: HDC): LongBool; stdcall; external gdi32;
   function SetPixelFormat(DC: HDC; PixFormat: LongInt; FormatDef: Pointer): Longbool; stdcall; external gdi32;
@@ -362,6 +380,7 @@ type
   function GetStockObject(Index: LongInt): LongWord; stdcall; external gdi32;
   function GetDeviceCaps(DC: HDC; Index: LongInt): LongInt; stdcall; external gdi32;
 
+//wGL
   function wglCreateContext(DC: HDC): HGLRC; stdcall; external opengl32;
   function wglDeleteContext(RC: HGLRC): LongBool; stdcall; external opengl32;
   function wglMakeCurrent(DC: HDC; RC: HGLRC): LongBool; stdcall; external opengl32;
@@ -380,8 +399,11 @@ type
   function GetVersionExW(lpVersionInformation: POSVERSIONINFO): Longint; stdcall; external kernel32;
   function GlobalMemoryStatusEx(var lpBuffer : TMEMORYSTATUSEX): LongBool; stdcall; external kernel32;
 
+//Console
   function AllocConsole: LongBool; stdcall; stdcall; external kernel32;
   function SetConsoleTitleW(lpConsoleTitle: PWideChar): LongBool; stdcall; external kernel32;
+
+// Handels events etc
   function CloseHandle(hObject: THandle): LongBool; stdcall; external kernel32;
   function WaitForSingleObject(hHandle: THandle; dwMilliseconds: LongWord): LongWord; stdcall; external kernel32;
   function CreateEventW(lpEventAttributes: PSecurityAttributes; bManualReset, bInitialState: LongBool; lpName: PWideChar): THandle; stdcall; external kernel32;

@@ -19,9 +19,9 @@ Type
     x, y          : integer;
     Width, Height : integer;
     private
-      function  GetLocation : TPoint2i; inline;
-      procedure SetLocation(Location : TPoint2i); inline;
-      function  GetCenter   : TPoint2i; inline;
+      function  GetLocation: TPoint2i; inline;
+      procedure SetLocation(Location: TPoint2i); inline;
+      function  GetCenter: TPoint2i; inline;
     public
       function Left     : Integer; inline;
       function Right    : Integer; inline;
@@ -33,27 +33,27 @@ Type
 
       function IsEmpty  : Boolean; inline;
 
-      procedure Offset(const Point : TPoint2i);           overload; inline;
+      procedure Offset(const Point: TPoint2i);           overload; inline;
       procedure Offset(const offsetX, offsetY: Integer);  overload; inline;
 
       procedure Inflate(const HAmount, VAmount: Integer); overload; inline;
 
-      function Contains(const x, y : Integer)  : Boolean; overload; inline;
-      function Contains(const Point: TPoint2i) : Boolean; overload; inline;
-      function Contains(const Point: TPoint2f) : Boolean; overload; inline;
-      function Contains(const Rect : TRecti)   : Boolean; overload; inline;
+      function Contains(const x, y: Integer): Boolean; overload; inline;
+      function Contains(const Point: TPoint2i): Boolean; overload; inline;
+      function Contains(const Point: TPoint2f): Boolean; overload; inline;
+      function Contains(const Rect: TRecti): Boolean; overload; inline;
 //    function Contains(const Rect : TRectf)  : Boolean; overload; inline;
 
-      function Intersects(const Rect : TRecti) : Boolean; overload; inline;
+      function Intersects(const Rect: TRecti): Boolean; overload; inline;
 //    function Intersects(const Rect : TRectf)  : Boolean; overload; inline;
-      function Intersect(const Rect1, Rect2 : TRecti)  : TRecti ; overload;  inline;
+      function Intersect(const Rect1, Rect2: TRecti): TRecti ; overload;  inline;
 
   //  function Intersect(const Rect : TRectf)  : TRectf ; inline;
       function Union(const Rect1, Rect2 : TRecti): TRecti ; overload;  inline;
   //  function Union(const Rect1, Rect2 : TRectf): TRectf ; overload;  inline;
 
-      class operator Equal(const Rect1, Rect2 : TRecti): Boolean; inline;
-      class operator NotEqual(const Rect1, Rect2 : TRecti): Boolean; inline;
+      class operator Equal(const Rect1, Rect2: TRecti): Boolean; inline;
+      class operator NotEqual(const Rect1, Rect2: TRecti): Boolean; inline;
   end;
 
   TVec3f = record
@@ -390,48 +390,48 @@ end;
 {$ENDREGION}
 
 {$REGION 'TRecti'}
-function TRecti.Left : Integer;
+function TRecti.Left: Integer;
 begin
   Result := x;
 end;
 
-function TRecti.Right : Integer;
+function TRecti.Right: Integer;
 begin
   Result := x + Width;
 end;
 
-function TRecti.Top : Integer;
+function TRecti.Top: Integer;
 begin
   Result := y;
 end;
 
-function TRecti.Bottom : Integer;
+function TRecti.Bottom: Integer;
 begin
   Result := y + Height;
 end;
 
-function TRecti.GetLocation : TPoint2i;
+function TRecti.GetLocation: TPoint2i;
 begin
   Result := Point2i(x, y);
 end;
 
-procedure TRecti.SetLocation(Location : TPoint2i);
+procedure TRecti.SetLocation(Location: TPoint2i);
 begin
   x := Location.x;
   y := Location.y;
 end;
 
-function TRecti.GetCenter : TPoint2i;
+function TRecti.GetCenter: TPoint2i;
 begin
   Result := Point2i(x, y);
 end;
 
-function TRecti.IsEmpty : Boolean;
+function TRecti.IsEmpty: Boolean;
 begin
   Result := ((((Width = 0) and (Height = 0)) and (x = 0)) and (y = 0));
 end;
 
-procedure TRecti.Offset(const Point : TPoint2i);
+procedure TRecti.Offset(const Point: TPoint2i);
 begin
   inc(x, Point.x);
   inc(y, Point.y);
@@ -451,32 +451,32 @@ begin
   inc(Height, VAmount*2);
 end;
 
-function TRecti.Contains(const x, y :integer)   : Boolean;
+function TRecti.Contains(const x, y:integer): Boolean;
 begin
   Result := ((((self.x <= x) and (x < (self.x + Width))) and (self.y <= y)) and (y < (self.y + Height)));
 end;
 
-function TRecti.Contains(const Point: TPoint2i) : Boolean;
+function TRecti.Contains(const Point: TPoint2i): Boolean;
 begin
   Result := ((((x <= Point.x) and (Point.x < (x + Width))) and (y <= Point.y)) and (Point.y < (y + Height)));
 end;
 
-function TRecti.Contains(const Point: TPoint2f) : Boolean;
+function TRecti.Contains(const Point: TPoint2f): Boolean;
 begin
   Result := ((((x <= Point.x) and (Point.x < (x + Width))) and (y <= Point.y)) and (Point.y < (y + Height)));
 end;
 
-function TRecti.Contains(const Rect : TRecti)   : Boolean;
+function TRecti.Contains(const Rect: TRecti): Boolean;
 begin
   Result := ((((x <= Rect.x) and ((Rect.x + Rect.Width) <= (x + Width))) and (x <= Rect.y)) and ((Rect.y + Rect.Height) <= (y + Height)));
 end;
 
-function TRecti.Intersects(const Rect : TRecti) : Boolean;
+function TRecti.Intersects(const Rect: TRecti): Boolean;
 begin
   Result := ((((Rect.X < (X + Width)) and (X < (Rect.X + Rect.Width))) and (Rect.Y < (Y + Height))) and (Y < (Rect.Y + Rect.Height)));
 end;
 
-function TRecti.Intersect(const Rect1,Rect2 : TRecti) : TRecti;
+function TRecti.Intersect(const Rect1,Rect2: TRecti): TRecti;
 var
   X1, Y1, X2, Y2 : Integer;
 begin
@@ -485,7 +485,7 @@ begin
   Y1 := Max(Rect1.y, Rect2.y);
   X2 := Min(Rect1.x + Rect1.Width, Rect2.x + Rect2.Width);
   Y2 := Min(Rect1.y + Rect1.Height, Rect2.y + Rect2.Height);
-  if ((X2 > X1) and (Y2 > Y1))then
+  if ((X2 > X1) and (Y2 > Y1)) then
   begin
     Result.X := X1;
     Result.Y := Y1;
@@ -494,7 +494,7 @@ begin
   end;
 end;
 
-function TRecti.Union(const Rect1, Rect2 : TRecti): TRecti;
+function TRecti.Union(const Rect1, Rect2: TRecti): TRecti;
 var
   X1, Y1 : Integer;
 begin
@@ -506,12 +506,12 @@ begin
   Result.Height := Max(Rect1.Y + Rect1.Height, Rect2.Y + Rect2.Height) - Y1;
 end;
 
-class operator TRecti.Equal(const Rect1, Rect2 : TRecti): Boolean;
+class operator TRecti.Equal(const Rect1, Rect2: TRecti): Boolean;
 begin
   Result := ((((Rect1.X = Rect2.X) and (Rect1.Y = Rect2.Y)) and (Rect1.Width = Rect2.Width)) and (Rect1.Height = Rect2.Height));
 end;
 
-class operator TRecti.NotEqual(const Rect1, Rect2 : TRecti): Boolean;
+class operator TRecti.NotEqual(const Rect1, Rect2: TRecti): Boolean;
 begin
   Result := ((((Rect1.X <> Rect2.X) and (Rect1.Y <> Rect2.Y)) and (Rect1.Width <> Rect2.Width)) and (Rect1.Height <> Rect2.Height));
 end;
