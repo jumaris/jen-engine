@@ -4,28 +4,25 @@ unit JEN_Header;
 interface
 
 type
-  TSubSystemType = (ssUtils, ssSystemParams, ssLog, ssDisplay, ssRender, ssResMan);
+  TJenSubSystemType = (ssUtils, ssSystemParams, ssLog, ssDisplay, ssRender, ssResMan);
 
 type
   HWND  = LongWord;
   HDC   = LongWord;
 
   IGame = interface
-  ['{90D553BB-F6AF-4DD1-960E-649678FC909E}']
     procedure LoadContent; stdcall;
     procedure OnUpdate(dt: double); stdcall;
     procedure OnRender; stdcall;
   end;
 
-  IEngineSubSystem = interface(IUnknown)
-	['{76E1647A-63ED-4E9A-86CA-D9E3BEE296D6}']
+  IJenSubSystem = interface(IUnknown)
 
-	end;
+  end;
 
   IJenEngine = interface
-  ['{0BBFAF93-B133-4708-B4CC-6B815268C591}']
-    function GetSubSystem(SubSustemType: TSubSystemType; out SubSystem: IEngineSubSystem) : HResult; stdcall;
-    function Start(Game : IGame) : HResult; stdcall;
+    procedure GetSubSystem(SubSustemType: TJenSubSystemType; out SubSystem: IJenSubSystem); stdcall;
+    procedure Start(Game : IGame); stdcall;
    { Utils        : TUtils;
     SystemParams : TSystem;
     Log          : TLog;
@@ -35,22 +32,29 @@ type
     Valid        : Boolean;     }
   end;
 
-  IDisplay = interface(IEngineSubSystem)
-  ['{FE4E8245-F1DA-43D4-8E42-3B308660E613}']
-    function Init(Width: Cardinal = 800; Height: Cardinal = 600; Refresh: Byte = 0; FullScreen: Boolean = False): HRESULT; stdcall;
+  IUtils = interface(IJenSubSystem)
 
-    function SetFullScreen(Value: Boolean): HRESULT; stdcall;
-    function SetActive(Value: Boolean): HRESULT; stdcall;
-    function SetCaption(const Value: string): HRESULT; stdcall;
-    function SetVSync(Value: Boolean): HRESULT; stdcall;
+  end;
 
-    function GetFullScreen: LongBool; stdcall;
-    function GetActive: LongBool; stdcall;
-    function GetCursorState: LongBool; stdcall;
-    function GetHDC(out Value : HDC) : HRESULT; stdcall;
-    function GetHandle(out Value : HWND): HRESULT; stdcall;
-    function GetWidth(out Value : LongWord): HRESULT; stdcall;
-    function GetHeight(out Value : LongWord): HRESULT; stdcall;
+  ILog = interface(IJenSubSystem)
+
+  end;
+
+  IDisplay = interface(IJenSubSystem)
+    function Init(Width: Cardinal = 800; Height: Cardinal = 600; Refresh: Byte = 0; FullScreen: Boolean = False): Boolean; stdcall;
+
+    procedure SetActive(Value: Boolean); stdcall;
+    procedure SetCaption(const Value: string); stdcall;
+    procedure SetVSync(Value: Boolean); stdcall;
+    procedure SetFullScreen(Value: Boolean); stdcall;
+
+    function GetFullScreen: Boolean; stdcall;
+    function GetActive: Boolean; stdcall;
+    function GetCursorState: Boolean; stdcall;
+    function GetHDC: HDC; stdcall;
+    function GetHandle: HWND; stdcall;
+    function GetWidth: LongWord; stdcall;
+    function GetHeight: LongWord; stdcall;
                 {
     procedure Swap;
     procedure Resize(W, H: Cardinal);
@@ -68,11 +72,15 @@ type
     property FPS: LongInt read FFPS;       }
   end;
 
+  IRender = interface(IJenSubSystem)
+    procedure Init(DepthBits: Byte = 24; StencilBits: Byte = 8; FSAA: Byte = 0); stdcall;
+  end;
+
 {$IFNDEF JEN_CTD}
   {$IFDEF JEN_ATTACH_DLL}
-    procedure GetEngine(out Engine: IJenEngine); stdcall; external 'JEN.dll';
+    procedure GetJenEngine(out Engine: IJenEngine); stdcall; external 'JEN.dll';
   {$ELSE}
-    var GetEngine : procedure(out Engine: IJenEngine); stdcall;
+    var GetJenEngine : procedure(out Engine: IJenEngine); stdcall;
   {$ENDIF}
 {$ENDIF}
 

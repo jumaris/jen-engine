@@ -12,7 +12,6 @@ uses
   JEN_Display,
   JEN_Display_Window,
   JEN_OpenGLHeader,
-  JEN_OpenGL,
   JEN_Render,
   JEN_ResourceManager,
   JEN_DDSTexture,
@@ -45,8 +44,6 @@ const
   mtView        = TMatrixType.mtView;
 
 type
-  TGLRender       = JEN_OpenGL.TGLRender;
-
   TFileStream     = JEN_Utils.TFileStream;
 
   TResourceManager= JEN_ResourceManager.TResourceManager;
@@ -60,10 +57,10 @@ type
     class var FisRunnig : Boolean;
     class var FQuit : Boolean;
   public
-    function GetSubSystem(SubSystemType: TSubSystemType; out SubSystem: IEngineSubSystem) : HResult; stdcall;
-    function Start(Game : IGame) : HResult; stdcall;
-    function Finish : HResult;
-    class property Quit: Boolean read FQuit;
+    procedure GetSubSystem(SubSystemType: TJenSubSystemType; out SubSystem: IJenSubSystem); stdcall;
+    procedure Start(Game : IGame); stdcall;
+    procedure Finish; stdcall;
+    class property Quit: Boolean read FQuit write FQuit;
   end;
 
 var
@@ -98,6 +95,7 @@ begin
   SystemParams := TSystem.Create;
   Log := TLog.Create;
   Display := TDisplay.Create;
+  Render := TRender.Create;
   {$IFDEF DEBUG}
   AllocConsole;
   SetConsoleTitleW('Jen Console');
@@ -106,21 +104,20 @@ begin
   Log.Init;
 end;
 
-function TJenEngine.GetSubSystem(SubSystemType: TSubSystemType;out SubSystem: IEngineSubSystem): HResult;
+procedure TJenEngine.GetSubSystem(SubSystemType: TJenSubSystemType;out SubSystem: IJenSubSystem);
 begin
-//Result := S_OK;
-  //subSystem := Display;
-//  case SubSystemType of
-   { ssUtils : SubSystem := Utils;
+
+ case SubSystemType of
+    {ssUtils : SubSystem := Utils;
     ssSystemParams : SubSystem := SystemParams;
-    ssLog : SubSystem := Log;         }
- //   ssDisplay : SubSystem := Display;
- {   ssRender : SubSystem := Render;
-    ssResMan : SubSystem := ResMan;    }
-//  else
-//     Result := S_FALSE;
-//  end;
-  //Display.Init(800,800,0,False);
+    ssLog : SubSystem := Log;       }
+    ssDisplay : SubSystem := IJenSubSystem(Display);
+    ssRender : SubSystem := IJenSubSystem(Render);
+   { ssResMan : SubSystem := ResMan;     }
+    else
+      SubSystem := nil;
+  end;
+
 end;
 
 
@@ -148,13 +145,14 @@ begin
   inherited;
 end;
                }
-function TJenEngine.Finish;
+procedure TJenEngine.Finish;
 begin
   FQuit := True;
 end;
 
-function TJenEngine.Start(Game : IGame) : HResult;
+procedure TJenEngine.Start(Game : IGame);
 begin
+
   if not Assigned(Game) then
   begin
     LogOut('Game is not assigned', lmError);
@@ -169,11 +167,11 @@ begin
 
   {if(not( Assigned(Display) and Display.Valid and
           Assigned(Render) and Render.Valid{ and
-          Assigned(ResMan)} {) )then   }
+          Assigned(ResMan)} {) )then   }    {
   begin
     Logout('Error in some subsustem', lmError);
     Exit;
-  end;
+  end;                        }
 
   Logout('Let''s rock!', lmNotify);
   FisRunnig := true;
@@ -182,12 +180,14 @@ begin
 
   while not FQuit do
     begin
-     // Display.Update;
+      Display.Update;
       Game.OnUpdate(0);
       Game.OnRender;
-  //   glfinish;
-     // Display.Swap;
+   //   glfinish;
+   glClear( GL_COLOR_BUFFER_BIT);
+      Display.Swap;
     end;
+
 end;
 
 initialization
@@ -198,9 +198,10 @@ begin
 {$ENDIF}
 {$IFNDEF JEN_CTD}
   {$IFNDEF JEN_ATTACH_DLL}
-    GetEngine := pGetEngine;
+    GetJenEngine := pGetEngine;
   {$ENDIF}
 {$ENDIF}
+
 end;
 
 finalization

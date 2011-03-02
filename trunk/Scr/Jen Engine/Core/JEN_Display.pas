@@ -12,49 +12,42 @@ uses
 const
   WINDOW_CLASS_NAME = 'JEngineWindowClass';
 
-function Display_SetFullScreen(Value: Boolean): HRESULT; stdcall;
-
 type
-  TDisplay = class
+  TDisplay = class(TInterfacedObject, IJenSubSystem, IDisplay)
     constructor Create;
-    destructor Destroy;
-    function Init(Width: Cardinal; Height: Cardinal; Refresh: Byte; FullScreen: Boolean): HRESULT; stdcall; export;
-    private
-      FValid      : Boolean;
-      FVSync      : Boolean;
-      FFPS        : LongInt;
-      FFPSTime    : LongInt;
-      FFPSCount   : LongInt;
-      FCaption    : String;
-      FHandle     : HWND;
-      FDC         : HDC;
-      FWidth      : Cardinal;
-      FHeight     : Cardinal;
-      FRefresh    : Byte;
-      FFullScreen : Boolean;
-      FActive     : Boolean;
-      FCursor     : Boolean;
+    destructor Destroy; override;
+  private
+    FValid      : Boolean;
+    FVSync      : Boolean;
+    FFPS        : LongInt;
+    FFPSTime    : LongInt;
+    FFPSCount   : LongInt;
+    FCaption    : String;
+    FHandle     : HWND;
+    FDC         : HDC;
+    FWidth      : Cardinal;
+    FHeight     : Cardinal;
+    FRefresh    : Byte;
+    FFullScreen : Boolean;
+    FActive     : Boolean;
+    FCursor     : Boolean;
 
-    function SetActive(Value: Boolean): HRESULT; stdcall;
-    function SetCaption(const Value: string): HRESULT; stdcall;
-    function SetVSync(Value: Boolean): HRESULT; stdcall;
+    procedure SetActive(Value: Boolean); stdcall;
+    procedure SetCaption(const Value: string); stdcall;
+    procedure SetVSync(Value: Boolean); stdcall;
+    procedure SetFullScreen(Value: Boolean); stdcall;
 
-    function GetFullScreen: LongBool; stdcall;
-    function GetActive: LongBool; stdcall;
-    function GetCursorState: LongBool; stdcall;
-    function GetHDC(out Value: HDC) : HRESULT; stdcall;
-    function GetHandle(out Value: HWND): HRESULT; stdcall;
-    function GetWidth(out Value: LongWord): HRESULT; stdcall;
-    function GetHeight(out Value: LongWord): HRESULT; stdcall;
-
-    procedure oSetFullScreen(Value: Boolean);
-    procedure oSetActive(Value: Boolean);
-    procedure oSetCaption(const Value: string);
-    procedure oSetVSync(Value: Boolean);
+    function GetFullScreen: Boolean; stdcall;
+    function GetActive: Boolean; stdcall;
+    function GetCursorState: Boolean; stdcall;
+    function GetHDC: HDC; stdcall;
+    function GetHandle: HWND; stdcall;
+    function GetWidth: LongWord; stdcall;
+    function GetHeight: LongWord; stdcall;
 
     class function WndProc(hWnd: HWND; Msg: LongWord; wParam: LongInt; lParam: LongInt): LongInt; stdcall; static;
-  public
-    const SetFullScreen: function(Value: Boolean): HRESULT stdcall = Display_SetFullScreen;
+   public
+    function Init(Width: Cardinal; Height: Cardinal; Refresh: Byte; FullScreen: Boolean): Boolean; stdcall;
 
     procedure Swap;
     procedure Resize(W, H: Cardinal);
@@ -63,20 +56,18 @@ type
     procedure Update;
 
     property Valid: Boolean read FValid;
-    property Active: Boolean read FActive write oSetActive;
+    property Active: Boolean read FActive write SetActive;
     property Cursor: Boolean read FCursor write ShowCursor;
-    property FullScreen: Boolean read FFullScreen write oSetFullScreen;
-    property VSync: Boolean read FVSync write oSetVSync;
+    property FullScreen: Boolean read FFullScreen write SetFullScreen;
+    property VSync: Boolean read FVSync write SetVSync;
 
     property Handle: HWND  read FHandle;
     property DC: HDC read FDC;
     property Width: Cardinal read FWidth;
     property Height: Cardinal read FHeight;
-    property Caption: String write oSetCaption;
+    property Caption: String write SetCaption;
     property FPS: LongInt read FFPS;
   end;
-
-
 
 implementation
 
@@ -84,18 +75,14 @@ uses
   JEN_MAIN,
   JEN_MATH;
 
-  function Display_SetFullScreen(Value: Boolean): HRESULT; stdcall;
-  begin
-
-  end;
-class function TDisplay.WndProc(hWnd: HWND; Msg: LongWord; wParam: LongInt; lParam: LongInt): Integer; stdcall;
+class function TDisplay.WndProc(hWnd: HWND; Msg: LongWord; wParam: LongInt; lParam: LongInt): LongInt; stdcall;
 begin
 // Assert(expr : Boolean [; const msg: string]
 //  LogOut('message');
   Result := 0;
   case Msg of
     WM_CLOSE:
-       Engine.Finish;
+      TJenEngine.Quit := True;
 
     WM_ACTIVATEAPP:
       begin
@@ -154,20 +141,24 @@ begin
   else
     Result := DefWindowProcW(hWnd, Msg, wParam, lParam);
   end;
+
 end;
 
 constructor TDisplay.Create;
+var
+  WinClass: TWndClassEx;
 begin
   inherited;
 end;
 
-function TDisplay.Init(Width: Cardinal; Height: Cardinal; Refresh: Byte; FullScreen: Boolean) : HRESULT;
+function TDisplay.Init(Width: Cardinal; Height: Cardinal; Refresh: Byte; FullScreen: Boolean): Boolean;
 var
-  WinClass      : TWndClassEx;
+  WinClass: TWndClassEx;
 begin
-  Result := S_FALSE;
   if (Width = SystemParams.Screen.Width) and (Height = SystemParams.Screen.Height) then
     FullScreen := true;
+
+  Result := false;
 
   FCaption    := 'JEN Engine application';
   FWidth      := Width;
@@ -188,7 +179,7 @@ begin
  	  style         := CS_DBLCLKS or CS_OWNDC or CS_HREDRAW or CS_VREDRAW;
 	  lpfnWndProc   := @TDisplay.WndProc;
 	  //hCursor		    := LoadCursor(NULL, IDC_ARROW);
-	  hbrBackground	:= GetStockObject(BLACK_BRUSH);
+    hbrBackground	:= GetStockObject(BLACK_BRUSH);
 	  lpszClassName	:= WINDOW_CLASS_NAME;
   end;
 
@@ -199,8 +190,8 @@ begin
   end else
     LogOut('Register window class.', lmNotify);
 
-  FHandle := CreateWindowExW(0, WINDOW_CLASS_NAME, @FCaption[1], 0, 0, 0,
-                             0, 0, 0, 0, HInstance, nil);
+  FHandle := CreateWindowExW(0, WINDOW_CLASS_NAME,@FCaption[1], 0, 0, 0,
+                             0, 0, 0, 0, 0, nil);
 
   if FHandle = 0 Then
     begin
@@ -212,7 +203,7 @@ begin
   SendMessageW(Handle, WM_SETICON, 1, LoadIconW(HInstance, 'MAINICON'));
   FDC := GetDC(FHandle);
   FValid := true;
-  Result := S_OK;
+  Result := true;
   Restore;
 end;
 
@@ -256,7 +247,7 @@ begin
   end;
 end;
 
-procedure TDisplay.oSetVSync(Value: Boolean);
+procedure TDisplay.SetVSync(Value: Boolean);
 begin
   FVSync := Value;
   if FullScreen then
@@ -265,7 +256,7 @@ begin
     wglSwapIntervalEXT(0);
 end;
 
-procedure TDisplay.oSetFullScreen(Value: Boolean);
+procedure TDisplay.SetFullScreen(Value: Boolean);
 begin
   if (FFullScreen = Value) or (FValid = false) then Exit;
   FFullScreen := Value;
@@ -278,7 +269,7 @@ begin
   Restore;
 end;
 
-procedure TDisplay.oSetActive(Value: Boolean);
+procedure TDisplay.SetActive(Value: Boolean);
 begin
   if (FActive = Value) or (FValid = false) then Exit;
   FActive := Value;
@@ -294,7 +285,7 @@ begin
 
 end;
 
-procedure TDisplay.oSetCaption(const Value: String);
+procedure TDisplay.SetCaption(const Value: String);
 begin
   if (FValid = false) then Exit;
   FCaption := Value;
@@ -359,52 +350,38 @@ begin
  // FullScreen := Value;
 end;
                }
-function TDisplay.SetActive(Value: Boolean): HRESULT;
-begin
-  Active := Value;
-end;
 
-function TDisplay.SetCaption(const Value: string): HRESULT;
-begin
-  Caption := Value;
-end;
-
-function TDisplay.SetVSync(Value: Boolean): HRESULT;
-begin
-  VSync := Value;
-end;
-
-function TDisplay.GetFullScreen: LongBool;
+function TDisplay.GetFullScreen: Boolean;
 begin
   Result := FullScreen;
 end;
 
-function TDisplay.GetActive: LongBool;
+function TDisplay.GetActive: Boolean;
 begin
   Result := Active;
 end;
 
-function TDisplay.GetCursorState: LongBool;
+function TDisplay.GetCursorState: Boolean;
 begin
   Result := Cursor;
 end;
 
-function TDisplay.GetHDC(out Value: HDC) : HRESULT;
+function TDisplay.GetHDC: HDC;
 begin
   Result := DC;
 end;
 
-function TDisplay.GetHandle(out Value: HWND): HRESULT;
+function TDisplay.GetHandle: HWND;
 begin
   Result := Handle;
 end;
 
-function TDisplay.GetWidth(out Value: LongWord): HRESULT;
+function TDisplay.GetWidth: LongWord;
 begin
   Result := Width;
 end;
 
-function TDisplay.GetHeight(out Value: LongWord): HRESULT;
+function TDisplay.GetHeight: LongWord;
 begin
   Result := Height;
 end;
