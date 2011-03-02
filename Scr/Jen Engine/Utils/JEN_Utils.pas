@@ -3,6 +3,7 @@ unit JEN_Utils;
 interface
 
 uses
+  JEN_Header,
   JEN_MATH,
   XSystem;
 
@@ -10,7 +11,7 @@ const
   LIST_DELTA = 32;
 
 type
-  TUtils = class
+  TUtils = class(TInterfacedObject, IJenSubSystem, IUtils)
     constructor Create;
     destructor Destroy; override;
   private

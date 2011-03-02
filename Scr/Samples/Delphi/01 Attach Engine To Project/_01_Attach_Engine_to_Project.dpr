@@ -2,7 +2,6 @@ program _01_Attach_Engine_to_Project;
 
 uses
   JEN_Main in '..\..\..\Jen Engine\JEN_Main.pas',
-  JEN_OpenGL in '..\..\..\Jen Engine\Render\JEN_OpenGL.pas',
   JEN_Render in '..\..\..\Jen Engine\Render\JEN_Render.pas',
   JEN_Math in '..\..\..\Jen Engine\Utils\JEN_Math.pas',
   JEN_OpenGLHeader in '..\..\..\Jen Engine\Utils\JEN_OpenGLHeader.pas',
@@ -26,13 +25,42 @@ uses
 {$R *.res}
 {$R ..\..\..\icon.RES}
 
+type
+  TGame = class(TInterfacedObject, IGame)
+  public
+    procedure LoadContent; stdcall;
+    procedure OnUpdate(dt: double); stdcall;
+    procedure OnRender; stdcall;
+  end;
 
-procedure pp;
-var Engine : IJenEngine;
+
+procedure TGame.LoadContent; stdcall;
 begin
 
-  GetEngine(Engine);
+end;
+procedure TGame.OnUpdate(dt: double); stdcall;
+begin
 
+end;
+procedure TGame.OnRender; stdcall;
+begin
+
+end;
+
+procedure pp;
+var
+  Engine : IJenEngine;
+  Display : IDisplay;
+  Render : IRender;
+  Game : TGame;
+begin
+  GetJenEngine(Engine);
+  Engine.GetSubSystem(ssDisplay, IJenSubSystem(Display));
+  Engine.GetSubSystem(ssRender, IJenSubSystem(Render));
+  Display.Init();
+  Render.Init();
+  Game := TGame.Create;
+  Engine.Start(Game);
 end;
 
 begin

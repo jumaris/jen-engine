@@ -10,6 +10,7 @@
     <Transaction>2011.03.01 15:46:52.191.dproj,D:\Kot\Programming\Engines\MY\jen-engine\Scr\Samples\Delphi\01 Attach Engine To Project\AttachEngineToProject.dproj=D:\Kot\Programming\Engines\MY\jen-engine\Scr\Samples\Delphi\01 Attach Engine To Project\_01AttachEngineToProject.dproj</Transaction>
     <Transaction>2011.03.01 15:47:35.395.dproj,D:\Kot\Programming\Engines\MY\jen-engine\Scr\Samples\Delphi\01 Attach Engine To Project\_01AttachEngineToProject.dproj=D:\Kot\Programming\Engines\MY\jen-engine\Scr\Samples\Delphi\01 Attach Engine To Project\_01_AttachEngineToProject.dproj</Transaction>
     <Transaction>2011.03.01 15:48:22.317.dproj,D:\Kot\Programming\Engines\MY\jen-engine\Scr\Samples\Delphi\01 Attach Engine To Project\_01_AttachEngineToProject.dproj=D:\Kot\Programming\Engines\MY\jen-engine\Scr\Samples\Delphi\01 Attach Engine To Project\_01_Attach_Engine_to_Project.dproj</Transaction>
+    <Transaction>2011.03.02 23:20:54.536.pas,D:\Kot\Programming\Engines\MY\jen-engine\Scr\Jen Engine\Render\JEN_OpenGL.pas=</Transaction>
   </Transactions>
 	<ProjectSortOrder AutoSort="0" SortType="0">
     <File Path="..\..\..\..\Scr"/>
@@ -28,7 +29,6 @@
     <File Path="..\..\..\Jen Engine\Core\JEN_ResourceManager.pas"/>
     <File Path="..\..\..\Jen Engine\Render"/>
     <File Path="..\..\..\Jen Engine\Render\JEN_GeometryBuffer.pas"/>
-    <File Path="..\..\..\Jen Engine\Render\JEN_OpenGL.pas"/>
     <File Path="..\..\..\Jen Engine\Render\JEN_Render.pas"/>
     <File Path="..\..\..\Jen Engine\Render\JEN_Shader.pas"/>
     <File Path="..\..\..\Jen Engine\Utils"/>

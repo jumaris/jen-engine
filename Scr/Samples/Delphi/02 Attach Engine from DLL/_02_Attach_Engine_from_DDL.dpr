@@ -7,6 +7,9 @@ uses
 {$R ..\..\..\icon.RES}
 
 var Engine : IJenEngine;
+var Display : IDisplay;
 begin
   GetEngine(Engine);
+  //Engine.GetSubSystem(ssDisplay, IEngineSubSystem(Display));
+//  Display.Init;
 end.

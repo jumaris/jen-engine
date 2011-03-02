@@ -4,6 +4,7 @@ unit JEN_Log;
 interface
 
 uses
+  JEN_Header,
   JEN_Utils,
   JEN_SystemInfo;
 
@@ -18,7 +19,7 @@ type
     procedure AddMsg(const Text: String; MType: TLogMsg); virtual; abstract;
   end;
 
-  TLog = class
+  TLog = class(TInterfacedObject, IJenSubSystem, ILog)
   constructor Create;
   destructor Destroy; Override;
   protected
