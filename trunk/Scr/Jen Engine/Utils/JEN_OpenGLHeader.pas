@@ -537,8 +537,7 @@ function LoadGLLibraly: Boolean;
 implementation
 
 uses
-  JEN_MAIN,
-  windows;
+  JEN_MAIN;
      {
 var
   GlModuleH : HMODULE;

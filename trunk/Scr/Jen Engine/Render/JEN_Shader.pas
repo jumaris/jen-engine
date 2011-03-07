@@ -6,7 +6,7 @@ uses
   JEN_Resource,
   JEN_OpenGlHeader,
   JEN_Utils,
-  StrUtils,
+
   CoreX_XML;
 
 type

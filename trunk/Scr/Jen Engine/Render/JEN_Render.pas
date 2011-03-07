@@ -8,10 +8,6 @@ uses
   JEN_Math;
 
 type
-  TBlendType = (btNone, btNormal, btAdd, btMult, btOne, btNoOverride, btAddAlpha);
-  TCullFace = (cfNone, cfFront, cfBack);
-  TMatrixType = (mtViewProj, mtModel, mtProj, mtView);
-
   TRender = class(TInterfacedObject, IJenSubSystem, IRender)
     procedure Init(DepthBits: Byte; StencilBits: Byte; FSAA: Byte); stdcall;
     constructor Create;
@@ -27,11 +23,11 @@ type
       FDepthWrite: Boolean;
       FCullFace: TCullFace;
     procedure SetViewport(Value: TRecti);
-    procedure SetBlendType(Value: TBlendType);
-    procedure SetAlphaTest(Value: Byte);
-    procedure SetDepthTest(Value: Boolean);
-    procedure SetDepthWrite(Value: Boolean);
-    procedure SetCullFace(Value: TCullFace);
+    procedure SetBlendType(Value: TBlendType); stdcall;
+    procedure SetAlphaTest(Value: Byte); stdcall;
+    procedure SetDepthTest(Value: Boolean); stdcall;
+    procedure SetDepthWrite(Value: Boolean); stdcall;
+    procedure SetCullFace(Value: TCullFace); stdcall;
   public
     var
       Matrix    : array [TMatrixType] of TMat4f;

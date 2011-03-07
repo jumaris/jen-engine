@@ -10,14 +10,14 @@ uses
   JEN_Log,
   JEN_DefConsoleLog,
   JEN_Display,
-  JEN_Display_Window,
+
   JEN_OpenGLHeader,
   JEN_Render,
   JEN_ResourceManager,
   JEN_DDSTexture,
   JEN_Shader,
-  JEN_Camera3D,
-  JEN_Math,
+
+
   XSystem;
 
 const
@@ -53,6 +53,7 @@ type
 
   TJenEngine = class(TInterfacedObject, IJenEngine)
     constructor Create;
+    destructor Destroy; override;
   private
     class var FisRunnig : Boolean;
     class var FQuit : Boolean;
@@ -80,7 +81,7 @@ implementation
 
 procedure LogOut(const Text: string; MType: TLogMsg);
 begin
-  Log.AddMsg(Text, MType);
+  Log.Print(Text, MType);
 end;
 
 procedure pGetEngine(out Engine: IJenEngine);
@@ -104,18 +105,25 @@ begin
   Log.Init;
 end;
 
+destructor TJenEngine.Destroy;
+begin
+  Utils.Free;
+  SystemParams.Free;
+  Log.Free;
+  inherited;
+end;
+
 procedure TJenEngine.GetSubSystem(SubSystemType: TJenSubSystemType;out SubSystem: IJenSubSystem);
 begin
-
- case SubSystemType of
-    {ssUtils : SubSystem := Utils;
-    ssSystemParams : SubSystem := SystemParams;
-    ssLog : SubSystem := Log;       }
+  case SubSystemType of
+    ssUtils : SubSystem :=  IJenSubSystem(Utils);
+ //   ssSystemParams : SubSystem := SystemParams;
+    ssLog : SubSystem :=  IJenSubSystem(Log);
     ssDisplay : SubSystem := IJenSubSystem(Display);
     ssRender : SubSystem := IJenSubSystem(Render);
    { ssResMan : SubSystem := ResMan;     }
-    else
-      SubSystem := nil;
+  else
+    SubSystem := nil;
   end;
 
 end;
@@ -152,7 +160,6 @@ end;
 
 procedure TJenEngine.Start(Game : IGame);
 begin
-
   if not Assigned(Game) then
   begin
     LogOut('Game is not assigned', lmError);
@@ -184,7 +191,7 @@ begin
       Game.OnUpdate(0);
       Game.OnRender;
    //   glfinish;
-   glClear( GL_COLOR_BUFFER_BIT);
+      glClear( GL_COLOR_BUFFER_BIT);
       Display.Swap;
     end;
 
@@ -201,14 +208,6 @@ begin
     GetJenEngine := pGetEngine;
   {$ENDIF}
 {$ENDIF}
-
-end;
-
-finalization
-begin
-  Utils.Free;
-  SystemParams.Free;
-  Log.Free;
 end;
 
 end.

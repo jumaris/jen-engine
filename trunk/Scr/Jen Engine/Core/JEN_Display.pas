@@ -6,7 +6,7 @@ uses
   JEN_Header,
   XSystem,
   JEN_SystemInfo,
-  JEN_Render,
+
   JEN_OpenGLHeader;
 
 const
