@@ -5,6 +5,7 @@ interface
 
 {$IFDEF JEN_LOG}
 uses
+  JEN_Header,
   JEN_Log;
 
 type TDefConsoleLog = class(TLogOutput)

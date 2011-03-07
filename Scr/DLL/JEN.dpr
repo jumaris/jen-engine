@@ -34,7 +34,7 @@ uses
   JEN_Header in '..\Include\Delphi\JEN_Header.pas';
 
 exports
-  pGetEngine name 'GetEngine';
+  pGetEngine name 'GetJenEngine';
 
 {$R *.res}
 {$R ..\icon.RES}

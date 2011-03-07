@@ -9,8 +9,6 @@ uses
   JEN_SystemInfo;
 
 type
-  TLogMsg = (lmHeaderMsg, lmInfo, lmNotify, lmWarning, lmError);
-
   TLogOutput = class
   constructor Create;
   public
@@ -25,18 +23,16 @@ type
   protected
     {$IFDEF JEN_LOG}fLogOutputs : TList;{$ENDIF}
   public
-    property LogOutputs : TList read fLogOutputs; 
     procedure Init;
-    procedure AddMsg(const Text: String; MType: TLogMsg);
+    procedure Print(const Text: String; MType: TLogMsg); stdcall;
+    property LogOutputs : TList read fLogOutputs;
   end;
 
 implementation
 
 {$IFDEF JEN_LOG}
 uses
-  JEN_Main,
-  JEN_DefConsoleLog,
-  JEN_OpenGlHeader;
+  JEN_Main;
 
 constructor TLogOutput.Create;
 begin
@@ -88,7 +84,7 @@ begin
 end;
 
 
-procedure TLog.AddMsg(const Text: String; MType: TLogMsg);
+procedure TLog.Print(const Text: String; MType: TLogMsg);
 var
   i : Integer;
 begin

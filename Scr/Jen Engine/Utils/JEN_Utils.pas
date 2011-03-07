@@ -17,17 +17,17 @@ type
   private
     FTimeFreq : Int64;
     FTimeStart : LongInt;
-    function GetTime : LongInt;
+    function GetTime : LongInt; stdcall;
   public
-    procedure Sleep(Value: LongWord);
-    function IntToStr(Value: Integer): string;
-    function StrToInt(const Str: string; Def: Integer = 0): Integer;
-    function FloatToStr(Value: Single; Digits: Integer = 8): string;
-    function StrToFloat(const Str: string; Def: Single = 0): Single;
-    function ExtractFileDir(const FileName: string): string;
-    function ExtractFileName(const FileName: string): string;
-    function ExtractFileExt(const FileName: string): string;
-    function ExtractFileNameNoExt(const FileName: string): string;
+    procedure Sleep(Value: LongWord); stdcall;
+    function IntToStr(Value: Integer): string; stdcall;
+    function StrToInt(const Str: string; Def: Integer = 0): Integer; stdcall;
+    function FloatToStr(Value: Single; Digits: Integer = 8): string; stdcall;
+    function StrToFloat(const Str: string; Def: Single = 0): Single; stdcall;
+    function ExtractFileDir(const FileName: string): string; stdcall;
+    function ExtractFileName(const FileName: string): string; stdcall;
+    function ExtractFileExt(const FileName: string): string; stdcall;
+    function ExtractFileNameNoExt(const FileName: string): string; stdcall;
     property Time : LongInt read GetTime;
   end;
 

@@ -248,7 +248,7 @@ end;
 procedure TResourceManager.RegisterLoader(Loader : TResLoader);
 begin
   FLoaderList.Add(Loader);
-  Log.AddMsg('Register '+ TResourceStringName[Loader.Resource] + ' loader. Ext string: ' + Loader.ExtString, lmNotify);
+  LogOut('Register '+ TResourceStringName[Loader.Resource] + ' loader. Ext string: ' + Loader.ExtString, lmNotify);
 end;
 
 function TResourceManager.Add(Resource: TResource): TResource;

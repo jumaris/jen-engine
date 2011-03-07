@@ -2,10 +2,7 @@ unit JEN_Display_Window;
 
 interface
 
-uses
-  XSystem,
-  JEN_SystemInfo,
-  JEN_Display;
+
 
 {
 type
@@ -44,9 +41,7 @@ type
       }
 implementation
 
-uses
-  JEN_MAIN,
-  JEN_MATH;
+
 
 
 end.
