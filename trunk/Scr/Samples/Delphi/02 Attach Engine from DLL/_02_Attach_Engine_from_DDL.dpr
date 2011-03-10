@@ -15,31 +15,36 @@ type
     procedure OnRender; stdcall;
   end;
 
-procedure TGame.LoadContent; stdcall;
+var
+  Engine : IJenEngine;
+  Display : IDisplay;
+  Render : IRender;
+  Game : TGame;
+  ResMan : IResourceManager;
+
+
+procedure TGame.LoadContent;
+begin
+  ResMan.LoadTexture('Media\asd.dds');
+end;
+
+procedure TGame.OnUpdate(dt: double);
 begin
 
 end;
 
-procedure TGame.OnUpdate(dt: double); stdcall;
+procedure TGame.OnRender;
 begin
 
 end;
 
-procedure TGame.OnRender; stdcall;
-begin
-
-end;
-
-var Engine : IJenEngine;
-var Display : IDisplay;
-var Render : IRender;
-var Game : TGame;
 begin
   ReportMemoryLeaksOnShutdown := True;
   GetJenEngine(Engine);
   Engine.GetSubSystem(ssDisplay, IJenSubSystem(Display));
   Engine.GetSubSystem(ssRender, IJenSubSystem(Render));
-  Display.Init();
+  Engine.GetSubSystem(ssResMan, IJenSubSystem(ResMan));
+  Display.Init(1024,768,999,True);
   Render.Init();
   Game := TGame.Create;
   Engine.Start(Game);

@@ -8,7 +8,11 @@ uses
   JEN_Math;
 
 type
-  TRender = class(TInterfacedObject, IJenSubSystem, IRender)
+  IRender = interface(JEN_Header.IRender)
+
+  end;
+
+  TRender = class(TInterfacedObject, IRender)
     procedure Init(DepthBits: Byte; StencilBits: Byte; FSAA: Byte); stdcall;
     constructor Create;
     destructor Destroy; override;

@@ -3,6 +3,7 @@ unit JEN_DDSTexture;
 interface
 
 uses
+  JEN_Header,
   JEN_OpenGlHeader,
   JEN_Utils,
   JEN_Math,
@@ -24,7 +25,7 @@ constructor TDDSLoader.Create;
 begin
   inherited;
   ExtString := 'dds';
-  Resource := rtTexture;
+  ResType := rtTexture;
 end;
 
 function TDDSLoader.Load(const Stream: TStream; var Resource: TResource): Boolean;

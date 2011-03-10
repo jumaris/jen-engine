@@ -53,11 +53,14 @@ var
   Display : IDisplay;
   Render : IRender;
   Game : TGame;
+  ResMan : IResourceManager;
 begin
+  ReportMemoryLeaksOnShutdown := True;
   GetJenEngine(Engine);
   Engine.GetSubSystem(ssDisplay, IJenSubSystem(Display));
   Engine.GetSubSystem(ssRender, IJenSubSystem(Render));
-  Display.Init();
+  Engine.GetSubSystem(ssResMan, IJenSubSystem(ResMan));
+  Display.Init(1024,768,60,True);
   Render.Init();
   Game := TGame.Create;
   Engine.Start(Game);
