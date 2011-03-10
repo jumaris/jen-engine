@@ -3,6 +3,7 @@ unit JEN_Shader;
 interface
 
 uses
+  JEN_Header,
   JEN_Resource,
   JEN_OpenGlHeader,
   JEN_Utils,
@@ -159,7 +160,7 @@ constructor TShaderLoader.Create;
 begin
   inherited;
   ExtString := 'xml';
-  Resource := rtShader;
+  ResType := rtShader;
 end;
 
 function TShaderLoader.Load(const Stream : TStream; var Resource : TResource) : Boolean;

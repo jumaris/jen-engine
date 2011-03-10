@@ -3,17 +3,14 @@ unit JEN_Resource;
 interface
 
 uses
+  JEN_Header,
   JEN_Utils;
-
-type
-  TResourceType = (rtShader, rtTexture);
-  TTextureFilter =  (tfNone, tfBilinear, tfTrilinear, tfAniso);
 
 const
   TResourceStringName : array[TResourceType] of string = ('shader', 'texture');
 
 type
-  TResource = class
+  TResource = class(TInterfacedObject, IResource)
     constructor Create(const Name: string); virtual;
   public
     Name : string;
@@ -23,7 +20,7 @@ type
   TResLoader = class
   public
     ExtString : string;
-    Resource : TResourceType;
+    ResType : TResourceType;
     function Load(const Stream : TStream;var Resource : TResource) : Boolean; virtual; abstract;
   end;
 

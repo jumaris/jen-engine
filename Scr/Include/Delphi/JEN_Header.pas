@@ -13,6 +13,10 @@ type
   TBlendType = (btNone, btNormal, btAdd, btMult, btOne, btNoOverride, btAddAlpha);
   TCullFace = (cfNone, cfFront, cfBack);
   TMatrixType = (mtViewProj, mtModel, mtProj, mtView);
+  TResourceType = (rtShader, rtTexture);
+  TTextureFilter =  (tfNone, tfBilinear, tfTrilinear, tfAniso);
+  TSetModeResult = (SM_Successful, SM_SetDefault, SM_Error);
+
 
   IGame = interface
     procedure LoadContent; stdcall;
@@ -43,6 +47,34 @@ type
     property Time : LongInt read GetTime;
   end;
 
+  IScreen = interface
+    function GetWidth  : Integer; stdcall;
+    function GetHeight : Integer; stdcall;
+    function GetBPS    : Byte; stdcall;
+    function GetRefresh: Byte; stdcall;
+
+    function SetMode(W, H, R: integer): TSetModeResult; stdcall;
+
+    property Width  : Integer read GetWidth;
+    property Height : Integer read GetHeight;
+    property BPS    : Byte read GetBPS;
+    property Refresh: Byte read GetRefresh;
+  end;
+
+  ISystemParams = interface(IJenSubSystem)
+    function GetRAMTotal: Cardinal; stdcall;
+    function GetRAMFree: Cardinal; stdcall;
+    function GetCPUCount: Integer; stdcall;
+    function GetCPUName: String; stdcall;
+    function GetCPUSpeed: LongWord; stdcall;
+
+    property CPUCount: Integer read GetCPUCount;
+    property CPUName: String read GetCPUName;
+    property CPUSpeed: LongWord read GetCPUSpeed;
+    property RAMTotal: Cardinal read GetRAMTotal;
+    property RAMFree: Cardinal read GetRAMFree;
+  end;
+
   ILog = interface(IJenSubSystem)
     procedure Print(const Text: String; MType: TLogMsg); stdcall;
   end;
@@ -62,20 +94,23 @@ type
     function GetHandle: HWND; stdcall;
     function GetWidth: LongWord; stdcall;
     function GetHeight: LongWord; stdcall;
-                {
-    procedure Swap;
-    procedure Resize(W, H: Cardinal);
-    procedure ShowCursor(Value: Boolean);
 
- //   property Cursor: LongBool read GetCursorState write ShowCursor;
-   { property FullScreen: Boolean read GetFullScreen write SetFullScreen;
+    procedure Swap; stdcall;
+    procedure ShowCursor(Value: Boolean); stdcall;
+                {
+    procedure Resize(W, H: Cardinal);
     property VSync: Boolean read FVSync write SetVSync;
                                                 }
+    property Active: Boolean read GetActive write SetActive;
+    property Cursor: Boolean read GetCursorState write ShowCursor;
+    property FullScreen: Boolean read GetFullScreen write SetFullScreen;
+
     property Handle: HWND  read GetHandle;
     property DC: HDC read GetHDC;
     property Width: Cardinal read GetWidth;
     property Height: Cardinal read GetHeight;
     property Caption: String write SetCaption;
+
    // property FPS: LongInt read FFPS;
   end;
 
@@ -93,6 +128,27 @@ type
     property DepthTest: Boolean write SetDepthTest;
     property DepthWrite: Boolean write SetDepthWrite;
     property CullFace: TCullFace write SetCullFace;
+  end;
+
+  IResource = interface
+
+  end;
+
+  IShader = interface(IResource)
+
+  end;
+
+  ITexture = interface(IResource)
+
+  end;
+
+  IResourceManager = interface(IJenSubSystem)
+    function Load(const FileName: string; Resource : TResourceType) : IResource; overload; stdcall;
+    procedure Load(const FileName: string; var Resource : IShader); overload; stdcall;
+    procedure Load(const FileName: string; var Resource : ITexture); overload; stdcall;
+
+    function LoadShader(const FileName: string): IShader; stdcall;
+    function LoadTexture(const FileName: string): ITexture; stdcall;
   end;
 
 {$IFNDEF JEN_CTD}

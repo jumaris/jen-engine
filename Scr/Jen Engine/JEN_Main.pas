@@ -17,7 +17,6 @@ uses
   JEN_DDSTexture,
   JEN_Shader,
 
-
   XSystem;
 
 const
@@ -65,51 +64,63 @@ type
   end;
 
 var
-  Engine       : TJenEngine;
-  Game         : IGame;
+  Engine       : IJenEngine;
   Utils        : TUtils;
-  SystemParams : TSystem;
-  Log          : TLog;
-  Render       : TRender;
-  Display      : TDisplay;
-  ResMan       : TResourceManager;
+  SystemParams :  JEN_SystemInfo.ISystemParams;
+  Log          : ILog;
+  Render       : IRender;
+  Display      : IDisplay;
+  ResMan       : IResourceManager;
+  Game         : IGame;
 
 procedure LogOut(const Text: string; MType: TLogMsg);
-procedure pGetEngine(out Engine: IJenEngine); stdcall;
+procedure pGetEngine(out Eng: IJenEngine); stdcall;
 
 implementation
 
 procedure LogOut(const Text: string; MType: TLogMsg);
 begin
+  if Assigned(Log) then
+
   Log.Print(Text, MType);
 end;
 
-procedure pGetEngine(out Engine: IJenEngine);
+procedure pGetEngine(out Eng: IJenEngine);
 begin
    Engine := TJenEngine.Create;
+   Eng := Engine;
 end;
 
 constructor TJenEngine.Create;
 begin
+
   inherited;
   Utils := TUtils.Create;
   SystemParams := TSystem.Create;
   Log := TLog.Create;
-  Display := TDisplay.Create;
-  Render := TRender.Create;
   {$IFDEF DEBUG}
   AllocConsole;
   SetConsoleTitleW('Jen Console');
   TDefConsoleLog.Create;
   {$ENDIF}
   Log.Init;
+
+  Render := TRender.Create;
+  Display := TDisplay.Create;
+  ResMan := TResourceManager.Create;
 end;
 
 destructor TJenEngine.Destroy;
 begin
+
+  ResMan := nil;
+  Render := nil;
+  Display := nil;
+
+  Log := nil;
   Utils.Free;
-  SystemParams.Free;
-  Log.Free;
+
+
   inherited;
 end;
 
@@ -121,7 +132,7 @@ begin
     ssLog : SubSystem :=  IJenSubSystem(Log);
     ssDisplay : SubSystem := IJenSubSystem(Display);
     ssRender : SubSystem := IJenSubSystem(Render);
-   { ssResMan : SubSystem := ResMan;     }
+    ssResMan : SubSystem := IJenSubSystem(ResMan);
   else
     SubSystem := nil;
   end;

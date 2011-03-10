@@ -17,15 +17,19 @@ type
     procedure AddMsg(const Text: String; MType: TLogMsg); virtual; abstract;
   end;
 
-  TLog = class(TInterfacedObject, IJenSubSystem, ILog)
+  ILog = interface(JEN_Header.ILog)
+    procedure Init;
+  end;
+
+  TLog = class(TInterfacedObject,  ILog)
   constructor Create;
   destructor Destroy; Override;
   protected
-    {$IFDEF JEN_LOG}fLogOutputs : TList;{$ENDIF}
+    class var {$IFDEF JEN_LOG}fLogOutputs : TList;{$ENDIF}
   public
     procedure Init;
     procedure Print(const Text: String; MType: TLogMsg); stdcall;
-    property LogOutputs : TList read fLogOutputs;
+    class property LogOutputs : TList read fLogOutputs;
   end;
 
 implementation
@@ -37,7 +41,7 @@ uses
 constructor TLogOutput.Create;
 begin
   inherited;
-  Log.LogOutputs.Add(self);
+  TLog.LogOutputs.Add(self);
 end;
 
 constructor TLog.Create;

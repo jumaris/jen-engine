@@ -6,14 +6,20 @@ uses
   JEN_Header,
   XSystem,
   JEN_SystemInfo,
-
   JEN_OpenGLHeader;
 
 const
   WINDOW_CLASS_NAME = 'JEngineWindowClass';
 
 type
-  TDisplay = class(TInterfacedObject, IJenSubSystem, IDisplay)
+  IDisplay = interface(JEN_Header.IDisplay)
+
+    procedure Resize(W, H: Cardinal);
+    procedure Restore;
+    procedure Update;
+  end;
+
+  TDisplay = class(TInterfacedObject, IDisplay)
     constructor Create;
     destructor Destroy; override;
   private
@@ -49,16 +55,14 @@ type
    public
     function Init(Width: Cardinal; Height: Cardinal; Refresh: Byte; FullScreen: Boolean): Boolean; stdcall;
 
-    procedure Swap;
+    procedure Swap; stdcall;
+    procedure ShowCursor(Value: Boolean); stdcall;
+
     procedure Resize(W, H: Cardinal);
-    procedure ShowCursor(Value: Boolean);
     procedure Restore;
     procedure Update;
-
+                  {
     property Valid: Boolean read FValid;
-    property Active: Boolean read FActive write SetActive;
-    property Cursor: Boolean read FCursor write ShowCursor;
-    property FullScreen: Boolean read FFullScreen write SetFullScreen;
     property VSync: Boolean read FVSync write SetVSync;
 
     property Handle: HWND  read FHandle;
@@ -66,7 +70,7 @@ type
     property Width: Cardinal read FWidth;
     property Height: Cardinal read FHeight;
     property Caption: String write SetCaption;
-    property FPS: LongInt read FFPS;
+    property FPS: LongInt read FFPS;  }
   end;
 
 implementation
@@ -169,8 +173,16 @@ begin
   FActive     := True;
   FCursor     := True;
 
-  if FullScreen and (SystemParams.Screen.SetMode(Width, Height, Refresh) = SM_Error) then
-    Exit;
+  if FullScreen then
+    case SystemParams.Screen.SetMode(Width, Height, Refresh) of
+      SM_SetDefault:
+        begin
+          FWidth      := SystemParams.Screen.Width;
+          FHeight     := SystemParams.Screen.Height;
+          FRefresh    := SystemParams.Screen.Refresh;
+        end;
+      SM_Error: Exit;
+    end;
 
   FillChar(WinClass, SizeOf(TWndClassEx), 0);
   with WinClass do
@@ -200,7 +212,7 @@ begin
     end else
       LogOut('Create window.', lmNotify);
 
-  SendMessageW(Handle, WM_SETICON, 1, LoadIconW(HInstance, 'MAINICON'));
+  SendMessageW(FHandle, WM_SETICON, 1, LoadIconW(HInstance, 'MAINICON'));
   FDC := GetDC(FHandle);
   FValid := true;
   Result := true;
@@ -236,7 +248,7 @@ end;
 
 procedure TDisplay.Swap;
 begin
-  SwapBuffers(DC);
+  SwapBuffers(FDC);
 
   Inc(FFPSCount);
   if Utils.Time - FFPSTime >= 1000 then
@@ -250,7 +262,7 @@ end;
 procedure TDisplay.SetVSync(Value: Boolean);
 begin
   FVSync := Value;
-  if FullScreen then
+  if FFullScreen then
     wglSwapIntervalEXT(Ord(FVSync))
   else
     wglSwapIntervalEXT(0);
@@ -289,7 +301,7 @@ procedure TDisplay.SetCaption(const Value: String);
 begin
   if (FValid = false) then Exit;
   FCaption := Value;
-  SetWindowTextW(Handle, PWideChar(Value));
+  SetWindowTextW(FHandle, PWideChar(Value));
 end;
 
 procedure TDisplay.Restore;
@@ -344,48 +356,40 @@ procedure TDisplay.ShowCursor(Value: Boolean);
 begin
   FCursor := Value;
 end;
-            {
-class function TDisplay.SetFullScreen(Value: Boolean): HRESULT;
-begin
- // FullScreen := Value;
-end;
-               }
 
 function TDisplay.GetFullScreen: Boolean;
 begin
-  Result := FullScreen;
+  Result := FFullScreen;
 end;
 
 function TDisplay.GetActive: Boolean;
 begin
-  Result := Active;
+  Result := FActive;
 end;
 
 function TDisplay.GetCursorState: Boolean;
 begin
-  Result := Cursor;
+  Result := FCursor;
 end;
 
 function TDisplay.GetHDC: HDC;
 begin
-  Result := DC;
+  Result := FDC;
 end;
 
 function TDisplay.GetHandle: HWND;
 begin
-  Result := Handle;
+  Result := FHandle;
 end;
 
 function TDisplay.GetWidth: LongWord;
 begin
-  Result := Width;
+  Result := FWidth;
 end;
 
 function TDisplay.GetHeight: LongWord;
 begin
-  Result := Height;
+  Result := FHeight;
 end;
-
-
 
 end.
