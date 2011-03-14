@@ -10,8 +10,8 @@ uses
   JEN_OpenglHeader;
 
 type
-  TTexture = class(TResource, IResource, ITexture)
-    constructor Create(const Name: string); override;
+  TTexture = class(TInterfacedObject, IResource, ITexture)
+    constructor Create(const Name: string);// override;
     destructor Destroy; override;
   private
   public
@@ -29,7 +29,7 @@ type
     procedure GenLevels;
     procedure DataGet(Data: Pointer; Level: LongInt = 0; CFormat: TGLConst = GL_RGBA; DFormat: TGLConst = GL_UNSIGNED_BYTE);
        procedure DataCopy(XOffset, YOffset, X, Y, Width, Height: LongInt; Level: LongInt = 0);   }
-    procedure Bind(Channel: Byte = 0);
+    procedure Bind(Channel: Byte = 0); stdcall;
     property Width: LongInt read FWidth;
     property Height: LongInt read FHeight;
     property Filter: TTextureFilter read FFilter write SetFilter;
@@ -49,32 +49,32 @@ type
 
   IResourceManager = interface(JEN_Header.IResourceManager)
     procedure RegisterLoader(Loader : TResLoader);
-    function Add(Resource: TResource): TResource;
-    procedure Delete(Resource: TResource);
-    function GetRef(const Name: string): TResource;
+    function Add(Resource: IResource): IResource;
+    procedure Delete(Resource: IResource);
+    function GetRef(const Name: string): IResource;
   end;
 
   TResourceManager = class(TInterfacedObject, IResourceManager)
   constructor Create;
   destructor Destroy; override;
   private
-    FResList : TList;
+    FResList : TResourceList;
     FLoaderList : TList;
     FErrorTexture : TTexture;
   public
     DebugTexture : TTexture;
 
     function Load(const FileName: string; ResType : TResourceType) : IResource; overload; stdcall;
-    procedure Load(const FileName: string; var Resource : IShader); overload; stdcall;
-    procedure Load(const FileName: string; var Resource : ITexture); overload; stdcall;
+    procedure Load(const FileName: string; out Resource : IShader); overload; stdcall;
+    procedure Load(const FileName: string; out Resource : ITexture); overload; stdcall;
 
     function LoadShader(const FileName: string): IShader; stdcall;
     function LoadTexture(const FileName: string): ITexture; stdcall;
 
     procedure RegisterLoader(Loader : TResLoader);
-    function Add(Resource: TResource): TResource;
-    procedure Delete(Resource: TResource);
-    function GetRef(const Name: string): TResource;
+    function Add(Resource: IResource): IResource;
+    procedure Delete(Resource: IResource);
+    function GetRef(const Name: string): IResource;
 
     property ErrorTexture : TTexture read FErrorTexture;
   end;
@@ -86,7 +86,7 @@ uses
 
 constructor TTexture.Create;
 begin
-  inherited;
+ // inherited;
   glGenTextures(1, @FID);
 end;
 
@@ -148,7 +148,7 @@ end;
 
 constructor TResourceManager.Create;
 begin
-  FResList := TList.Create;
+  FResList := TResourceList.Create;
   FLoaderList := TList.Create;
 
   RegisterLoader(TShaderLoader.Create);
@@ -160,15 +160,16 @@ end;
 destructor TResourceManager.Destroy;
 var
   i : integer;
-begin
+begin            {
   for I := 0 to FResList.Count - 1 do
     TResource(FResList[i]).Free;
-
+                 }
   for I := 0 to FLoaderList.Count - 1 do
     TResLoader(FLoaderList[i]).Free;
 
   FResList.Free;
   FLoaderList.Free;
+
 
   inherited;
 end;
@@ -183,12 +184,12 @@ begin
   Result := ITexture(Load(FileName, rtTexture));
 end;
 
-procedure TResourceManager.Load(const FileName: string; var Resource: IShader);
+procedure TResourceManager.Load(const FileName: string; out Resource: IShader);
 begin
   Resource := IShader(Load(FileName, rtShader));
 end;
 
-procedure TResourceManager.Load(const FileName: string; var Resource: ITexture);
+procedure TResourceManager.Load(const FileName: string; out Resource: ITexture);
 begin
   Resource := ITexture(Load(FileName, rtTexture));
 end;
@@ -200,7 +201,7 @@ var
   eFileName : String;
   RL : TResLoader;
   Stream : TStream;
-  Resource : TResource;
+  Resource : IResource;
 begin
   Result := nil;
   Resource := nil;
@@ -241,18 +242,22 @@ begin
   if not RL.Load(Stream, Resource) then
   begin
     Stream.Free;
-    if ResType = ResType then
+    Resource := nil;
+   { if ResType = ResType then
     begin
-      Resource.Free;
-      Resource := DebugTexture;
-    end;
+
+     // Resource := DebugTexture;
+    end;      }
 
   end;
 
   if not Assigned(Resource) then
+  begin
     Logout('Error while loading file ' + eFileName, lmWarning);
+    Exit;
+  end;
 
-  Result := Resource;
+  Result := Add(Resource);
 end;
 
 procedure TResourceManager.RegisterLoader(Loader : TResLoader);
@@ -261,17 +266,18 @@ begin
   LogOut('Register '+ TResourceStringName[Loader.ResType] + ' loader. Ext string: ' + Loader.ExtString, lmNotify);
 end;
 
-function TResourceManager.Add(Resource: TResource): TResource;
+function TResourceManager.Add(Resource: IResource): IResource;
 begin
-  FResList.Add(Resource);
+  Result := FResList.Add(Resource);
+ // LogOut('Loading '+ IResource(Resource).Name, lmNotify);
 end;
 
-procedure TResourceManager.Delete(Resource: TResource);
+procedure TResourceManager.Delete(Resource: IResource);
 begin
 
 end;
 
-function TResourceManager.GetRef(const Name: string): TResource;
+function TResourceManager.GetRef(const Name: string): IResource;
 begin
 
 end;
