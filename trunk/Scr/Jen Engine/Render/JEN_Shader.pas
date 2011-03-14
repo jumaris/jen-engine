@@ -11,7 +11,7 @@ uses
   CoreX_XML;
 
 type
-  TShaderProgram = class(TResource)
+  TShaderProgram = class
     constructor Create;
     destructor Destroy;
   private
@@ -20,20 +20,21 @@ type
     procedure Bind;
   end;
 
-  TShader = class(TResource)
-    constructor Create(const Name: string); override;
+  TShader = class(TInterfacedObject, IResource, IShader)
+    constructor Create(const Name: string);
     destructor Destroy; override;
   private
 
   public
-    XN_VS, XN_FS, XML : TXML;
-    function Compile : TShaderProgram;
+    XN_VS, XN_FS, XML: TXML;
+    FName: String;
+    function Compile: TShaderProgram;
   end;
 
   TShaderLoader = class(TResLoader)
     constructor Create;
   public
-    function Load(const Stream : TStream; var Resource : TResource) : Boolean; override;
+    function Load(const Stream: TStream; var Resource: IResource): Boolean; override;
   end;
 
 implementation
@@ -43,7 +44,7 @@ uses
 
 constructor TShaderProgram.Create;
 begin
-  inherited Create('');
+  inherited;
   FID := glCreateProgram;
 end;
 
@@ -61,7 +62,8 @@ end;
 
 constructor TShader.Create(const Name: string);
 begin
-  inherited Create(Name);
+  inherited Create;
+  FName := Name;
 end;
 
 destructor TShader.Destroy;
@@ -121,7 +123,7 @@ var
       glGetProgramInfoLog(Obj, LogLen, LogLen, PAnsiChar(LogBuf))
     else
       glGetShaderInfoLog(Obj, LogLen, LogLen, PAnsiChar(LogBuf));
-    LogOut(Name + '\n' + string(LogBuf), lmWarning);
+  //  LogOut(Name + '\n' + string(LogBuf), lmWarning);
   end;
 
   function Attach(ShaderType: GLenum; const Source: AnsiString) : LongWord;
@@ -163,7 +165,7 @@ begin
   ResType := rtShader;
 end;
 
-function TShaderLoader.Load(const Stream : TStream; var Resource : TResource) : Boolean;
+function TShaderLoader.Load(const Stream : TStream; var Resource : IResource) : Boolean;
 var
   Shader : TShader;
 begin

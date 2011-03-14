@@ -136,7 +136,6 @@ begin
   else
     SubSystem := nil;
   end;
-
 end;
 
 
@@ -183,13 +182,13 @@ begin
     Exit;
   end;
 
-  {if(not( Assigned(Display) and Display.Valid and
-          Assigned(Render) and Render.Valid{ and
-          Assigned(ResMan)} {) )then   }    {
+  if(not( Assigned(Display) {and Display.Valid }and
+          Assigned(Render) {and Render.Valid }and
+          Assigned(ResMan) ) )then
   begin
     Logout('Error in some subsustem', lmError);
     Exit;
-  end;                        }
+  end;
 
   Logout('Let''s rock!', lmNotify);
   FisRunnig := true;
@@ -201,8 +200,8 @@ begin
       Display.Update;
       Game.OnUpdate(0);
       Game.OnRender;
-   //   glfinish;
-      glClear( GL_COLOR_BUFFER_BIT);
+      glfinish;
+    //  glClear( GL_COLOR_BUFFER_BIT);
       Display.Swap;
     end;
 

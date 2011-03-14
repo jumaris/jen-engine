@@ -139,13 +139,13 @@ type
   end;
 
   ITexture = interface(IResource)
-
+    procedure Bind(Channel: Byte = 0); stdcall;
   end;
 
   IResourceManager = interface(IJenSubSystem)
     function Load(const FileName: string; Resource : TResourceType) : IResource; overload; stdcall;
-    procedure Load(const FileName: string; var Resource : IShader); overload; stdcall;
-    procedure Load(const FileName: string; var Resource : ITexture); overload; stdcall;
+    procedure Load(const FileName: string; out Resource : IShader); overload; stdcall;
+    procedure Load(const FileName: string; out Resource : ITexture); overload; stdcall;
 
     function LoadShader(const FileName: string): IShader; stdcall;
     function LoadTexture(const FileName: string): ITexture; stdcall;
