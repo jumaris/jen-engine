@@ -65,6 +65,22 @@ type
     property Items[Idx: Integer]: TObject read GetItem write SetItem; default;
   end;
 
+  TInterfaceList = class
+    constructor Create;
+    destructor Destroy; override;
+  protected
+    FCount : Integer;
+    FItems : array of IUnknown;
+    function GetItem(idx: Integer): IUnknown; inline;
+    procedure SetItem(idx: Integer; Value: IUnknown); inline;
+  public
+    function Add(p: IUnknown): IUnknown;
+    procedure Del(idx: Integer);
+    procedure Clear; virtual;
+    property Count: Integer read FCount;
+    property Items[Idx: Integer]: IUnknown read GetItem write SetItem; default;
+  end;
+
   TManager = class;
 
 { Managed Object Class }
@@ -455,6 +471,56 @@ end;
 procedure TObjectList.SetItem(Idx: Integer; Value: TObject);
 begin
   TObject(FItems[Idx]) := Value;
+end;
+
+{ TInterfaceList }
+constructor TInterfaceList.Create;
+begin
+  FCount := 0;
+  FItems := nil;
+end;
+
+destructor TInterfaceList.Destroy;
+begin
+  Clear;
+  inherited;
+end;
+
+function TInterfaceList.Add(p: IUnknown): IUnknown;
+begin
+  if FCount mod LIST_DELTA = 0 then
+    SetLength(FItems, Length(FItems) + LIST_DELTA);
+  FItems[FCount] := p;
+  Result := p;
+  Inc(FCount);
+end;
+
+procedure TInterfaceList.Del(Idx: Integer);
+var
+  i : Integer;
+begin
+  for i := Idx to FCount - 2 do
+    FItems[i] := FItems[i + 1];
+  Dec(FCount);
+
+  if Length(FItems) - FCount + 1 > LIST_DELTA then
+    SetLength(FItems, Length(FItems) - LIST_DELTA);
+end;
+
+procedure TInterfaceList.Clear;
+begin
+  FCount := 0;
+  FItems := nil;
+end;
+
+function TInterfaceList.GetItem(Idx: Integer): IUnknown;
+begin
+  Result := FItems[Idx];
+end;
+
+procedure TInterfaceList.SetItem(Idx: Integer; Value: IUnknown);
+begin
+  FItems[Idx] := Value;
 end;
 
 { TManagedObj }

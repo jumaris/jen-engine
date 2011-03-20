@@ -11,24 +11,25 @@ uses
   CoreX_XML;
 
 type
-  TShaderProgram = class
+  TShaderProgram = class(TInterfacedObject, IShaderProgram)
     constructor Create;
     destructor Destroy;
   private
   public
     FID : GLEnum;
-    procedure Bind;
+    procedure Bind; stdcall;
   end;
 
-  TShader = class(TInterfacedObject, IResource, IShader)
+  TShaderResource = class(TInterfacedObject, IResource, IShaderResource)
     constructor Create(const Name: string);
     destructor Destroy; override;
   private
-
+    FShaderPrograms : TInterfaceList;
+    function GetName: string; stdcall;
   public
     XN_VS, XN_FS, XML: TXML;
-    FName: String;
-    function Compile: TShaderProgram;
+    FName: string;
+    function Compile: IShaderProgram; stdcall;
   end;
 
   TShaderLoader = class(TResLoader)
@@ -60,23 +61,33 @@ begin
 //     glDeleteObjectARB(8);
 end;
 
-constructor TShader.Create(const Name: string);
+constructor TShaderResource.Create(const Name: string);
 begin
   inherited Create;
   FName := Name;
+  FShaderPrograms := TInterfaceList.Create;
 end;
 
-destructor TShader.Destroy;
+destructor TShaderResource.Destroy;
 begin
   if Assigned(XML) then
     XML.Free;
+  FShaderPrograms.Free;
   inherited;
 end;
 
-function TShader.Compile : TShaderProgram;
+function TShaderResource.GetName: string;
+begin
+  Result := FName;
+end;
+
+function TShaderResource.Compile : IShaderProgram;
 var
   S: AnsiString;
   Shader : TShaderProgram;
+  Status : LongInt;
+  LogBuf : AnsiString;
+  LogLen : LongInt;
 
   function IndexStr(const AText: string; const AValues: array of string): Integer;
   var
@@ -107,33 +118,14 @@ var
     end;
   end;
 
-  procedure InfoLog(Obj: LongWord; IsProgram: Boolean);
-  var
-    LogBuf : AnsiString;
-    LogLen : LongInt;
-  begin
-    if IsProgram then
-      glGetProgramiv(Obj, GL_INFO_LOG_LENGTH, @LogLen)
-    else
-      glGetShaderiv(Obj, GL_INFO_LOG_LENGTH, @LogLen);
-
-    SetLength(LogBuf, LogLen);
-
-    if IsProgram then
-      glGetProgramInfoLog(Obj, LogLen, LogLen, PAnsiChar(LogBuf))
-    else
-      glGetShaderInfoLog(Obj, LogLen, LogLen, PAnsiChar(LogBuf));
-  //  LogOut(Name + '\n' + string(LogBuf), lmWarning);
-  end;
-
   function Attach(ShaderType: GLenum; const Source: AnsiString) : LongWord;
   var
     Obj : GLEnum;
     SourcePtr  : PAnsiChar;
     SourceSize : LongInt;
-    Status : LongInt;
+    P,Start : PAnsiChar;
+    L, S : AnsiString;
   begin
-    Shader := TShaderProgram.Create;
     Obj := glCreateShader(ShaderType);
 
     SourcePtr  := PAnsiChar(Source);
@@ -143,16 +135,57 @@ var
     glCompileShader(Obj);
     glGetShaderiv(Obj, GL_COMPILE_STATUS, @Status);
     if Status <> 1 then
-      InfoLog(Obj, False);
+    begin
+      LogOut('Error compiling shader', lmWarning);
+
+      S := '';
+      P := Pointer(Source);
+      while P^ <> #0 do
+        begin
+          Start := P;
+          while not (P^ in [#0, #10, #13]) do Inc(P);
+          SetString(L, Start, P - Start);
+
+          Insert(Trim(L)+ #10 ,S,Length(S));
+        //  S := S +  ;
+          if P^ = #13 then Inc(P);
+          if P^ = #10 then Inc(P);
+        end;
+
+      LogOut( S, lmNotify);
+
+      glGetShaderiv(Obj, GL_INFO_LOG_LENGTH, @LogLen);
+      SetLength(LogBuf, LogLen);
+      glGetShaderInfoLog(Obj, LogLen, LogLen, PAnsiChar(LogBuf));
+      LogOut(string(LogBuf), lmWarning);
+    end;
+
     glAttachShader(Shader.FID, Obj);
     glDeleteShader(Obj);
   end;
 
 begin
+
   if Assigned(XN_VS) and Assigned(XN_FS) then
   begin
-   logout(MergeCode(XN_VS),lmNotify);
-  logout(MergeCode(XN_FS),lmNotify);
+    Shader := TShaderProgram.Create;
+    with Shader do
+    begin
+      Attach(GL_VERTEX_SHADER, MergeCode(XN_VS));
+      Attach(GL_FRAGMENT_SHADER, MergeCode(XN_FS));
+      glLinkProgram(FID);
+      glGetProgramiv(FID, GL_LINK_STATUS, @Status);
+      if Status <> 1 then
+      begin
+        LogOut('Error linking shader', lmWarning);
+        glGetProgramiv(FID, GL_INFO_LOG_LENGTH, @LogLen);
+        SetLength(LogBuf, LogLen);
+        glGetProgramInfoLog(FID, LogLen, LogLen, PAnsiChar(LogBuf));
+        LogOut(string(LogBuf), lmWarning);
+      end;
+
+      Result := IShaderProgram(FShaderPrograms.Add(Shader));
+     end;
 
   end;
 
@@ -167,9 +200,9 @@ end;
 
 function TShaderLoader.Load(const Stream : TStream; var Resource : IResource) : Boolean;
 var
-  Shader : TShader;
+  Shader: TShaderResource;
 begin
-  Shader := Resource as TShader;
+  Shader := Resource as TShaderResource;
 
   with Shader do
   begin
@@ -178,7 +211,6 @@ begin
 
     XN_VS := XML.Node['VertexShader'];
     XN_FS := XML.Node['FragmentShader'];
-
   end;
 
 end;

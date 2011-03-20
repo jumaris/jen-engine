@@ -48,7 +48,7 @@ type
   TResourceManager= JEN_ResourceManager.TResourceManager;
   TDDSLoader      = JEN_DDSTexture.TDDSLoader;
   TTexture        = JEN_ResourceManager.TTexture;
-  TShader         = JEN_Shader.TShader;
+  TShaderResource = JEN_Shader.TShaderResource;
 
   TJenEngine = class(TInterfacedObject, IJenEngine)
     constructor Create;

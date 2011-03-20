@@ -29,19 +29,19 @@ type
   TGame = class(TInterfacedObject, IGame)
   var
   r : ITexture;
-  s : IShader;
+  s : IShaderResource;
+  sp : IShaderProgram;
   public
     procedure LoadContent; stdcall;
     procedure OnUpdate(dt: double); stdcall;
     procedure OnRender; stdcall;
   end;
 
-
-
 procedure TGame.LoadContent; stdcall;
 begin
   ResMan.Load('Media\asd.dds', r);
   ResMan.Load('Media\Shader.xml', s);
+  sp := s.Compile;
 end;
 
 procedure TGame.OnUpdate(dt: double); stdcall;
@@ -51,7 +51,7 @@ end;
 
 procedure TGame.OnRender; stdcall;
 begin
-
+     {
 glClear( GL_COLOR_BUFFER_BIT);
 
    glviewport (0,0,1024,768);
@@ -85,7 +85,7 @@ glClear( GL_COLOR_BUFFER_BIT);
   glvertex3f(0,0,0);
 
   glend;
-
+            }
 end;
 
 procedure pp;
@@ -101,7 +101,7 @@ begin
   Engine.GetSubSystem(ssDisplay, IJenSubSystem(Display));
   Engine.GetSubSystem(ssRender, IJenSubSystem(Render));
   Engine.GetSubSystem(ssResMan, IJenSubSystem(ResMan));
-  Display.Init(1024,768,60,false);
+  Display.Init(1024, 768, 60, false);
   Render.Init();
   Game := TGame.Create;
   Engine.Start(Game);
@@ -113,5 +113,3 @@ begin
   pp;
 
 end.
-
-

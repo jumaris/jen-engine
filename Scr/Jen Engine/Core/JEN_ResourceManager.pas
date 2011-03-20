@@ -14,6 +14,8 @@ type
     constructor Create(const Name: string);// override;
     destructor Destroy; override;
   private
+    FName : string;
+    function GetName: string; stdcall;
   public
     FID : GLEnum;
     FSampler : GLEnum;
@@ -58,17 +60,17 @@ type
   constructor Create;
   destructor Destroy; override;
   private
-    FResList : TResourceList;
+    FResList : TInterfaceList;
     FLoaderList : TList;
     FErrorTexture : TTexture;
   public
     DebugTexture : TTexture;
 
     function Load(const FileName: string; ResType : TResourceType) : IResource; overload; stdcall;
-    procedure Load(const FileName: string; out Resource : IShader); overload; stdcall;
+    procedure Load(const FileName: string; out Resource : IShaderResource); overload; stdcall;
     procedure Load(const FileName: string; out Resource : ITexture); overload; stdcall;
 
-    function LoadShader(const FileName: string): IShader; stdcall;
+    function LoadShader(const FileName: string): IShaderResource; stdcall;
     function LoadTexture(const FileName: string): ITexture; stdcall;
 
     procedure RegisterLoader(Loader : TResLoader);
@@ -86,7 +88,8 @@ uses
 
 constructor TTexture.Create;
 begin
- // inherited;
+  inherited Create;
+  FName := Name;
   glGenTextures(1, @FID);
 end;
 
@@ -94,6 +97,11 @@ destructor TTexture.Destroy;
 begin
   glDeleteTextures(1, @FID);
   inherited;
+end;
+
+function TTexture.GetName: string;
+begin
+  Result := FName;
 end;
 
 procedure TTexture.SetFilter(Value: TTextureFilter);
@@ -148,7 +156,7 @@ end;
 
 constructor TResourceManager.Create;
 begin
-  FResList := TResourceList.Create;
+  FResList := TInterfaceList.Create;
   FLoaderList := TList.Create;
 
   RegisterLoader(TShaderLoader.Create);
@@ -174,9 +182,9 @@ begin            {
   inherited;
 end;
 
-function TResourceManager.LoadShader(const FileName: string): IShader;
+function TResourceManager.LoadShader(const FileName: string): IShaderResource;
 begin
-  Result := IShader(Load(FileName, rtShader));
+  Result := IShaderResource(Load(FileName, rtShader));
 end;
 
 function TResourceManager.LoadTexture(const FileName: string): ITexture;
@@ -184,9 +192,9 @@ begin
   Result := ITexture(Load(FileName, rtTexture));
 end;
 
-procedure TResourceManager.Load(const FileName: string; out Resource: IShader);
+procedure TResourceManager.Load(const FileName: string; out Resource: IShaderResource);
 begin
-  Resource := IShader(Load(FileName, rtShader));
+  Resource := IShaderResource(Load(FileName, rtShader));
 end;
 
 procedure TResourceManager.Load(const FileName: string; out Resource: ITexture);
@@ -230,7 +238,7 @@ begin
   if Assigned(Stream) then
   begin
     case ResType of
-      rtShader: Resource := TShader.Create(eFileName);
+      rtShader: Resource := TShaderResource.Create(eFileName);
       rtTexture: Resource := TTexture.Create(eFileName);
     end;
   end else
@@ -268,8 +276,8 @@ end;
 
 function TResourceManager.Add(Resource: IResource): IResource;
 begin
-  Result := FResList.Add(Resource);
- // LogOut('Loading '+ IResource(Resource).Name, lmNotify);
+  Result := IResource(FResList.Add(Resource));
+  LogOut('Loading '+ Resource.Name, lmNotify);
 end;
 
 procedure TResourceManager.Delete(Resource: IResource);
