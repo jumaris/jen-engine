@@ -7,7 +7,7 @@ type
   HWND  = LongWord;
   HDC   = LongWord;
 
-  TLogMsg = (lmHeaderMsg, lmInfo, lmNotify, lmWarning, lmError);
+  TLogMsg = (lmHeaderMsg, lmInfo, lmNotify, lmCode, lmWarning, lmError);
 
   TJenSubSystemType = (ssUtils, ssSystemParams, ssLog, ssDisplay, ssRender, ssResMan);
   TBlendType = (btNone, btNormal, btAdd, btMult, btOne, btNoOverride, btAddAlpha);

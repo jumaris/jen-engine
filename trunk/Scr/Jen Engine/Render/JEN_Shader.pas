@@ -125,6 +125,7 @@ var
     SourceSize : LongInt;
     P,Start : PAnsiChar;
     L, S : AnsiString;
+    I,Tab,Len : integer;
   begin
     Obj := glCreateShader(ShaderType);
 
@@ -138,21 +139,7 @@ var
     begin
       LogOut('Error compiling shader', lmWarning);
 
-      S := '';
-      P := Pointer(Source);
-      while P^ <> #0 do
-        begin
-          Start := P;
-          while not (P^ in [#0, #10, #13]) do Inc(P);
-          SetString(L, Start, P - Start);
-
-          Insert(Trim(L)+ #10 ,S,Length(S));
-        //  S := S +  ;
-          if P^ = #13 then Inc(P);
-          if P^ = #10 then Inc(P);
-        end;
-
-      LogOut( S, lmNotify);
+      LogOut(Source, lmCode);
 
       glGetShaderiv(Obj, GL_INFO_LOG_LENGTH, @LogLen);
       SetLength(LogBuf, LogLen);

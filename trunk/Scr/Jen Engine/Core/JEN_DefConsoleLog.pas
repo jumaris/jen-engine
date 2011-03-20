@@ -39,7 +39,8 @@ procedure TDefConsoleLog.AddMsg(const Text: String; MType: TLogMsg);
 var
   str  : String;
   tstr : String;
-  h,m,s : LongInt;
+  h,m,s,start,i,j : LongInt;
+
 begin
   case MType of
     lmHeaderMsg :
@@ -77,6 +78,21 @@ begin
 
     lmInfo :
       Writeln(Text);
+
+    lmCode:
+      begin
+        i := 1;
+        str := '';
+
+        while Text[i] <> #0 do
+        begin
+          start := i;
+          while (Text[i] <> #09) and (Text[i] <> #0) do Inc(i);
+          str := str + Copy(Text, start, i-start -1) + '   ';
+          Inc(i);
+        end;
+        Writeln(str);
+      end;
 
     lmWarning :
       Writeln('WARNING: ' + Text);
