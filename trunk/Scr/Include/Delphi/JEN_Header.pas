@@ -131,11 +131,16 @@ type
   end;
 
   IResource = interface
-
+    function GetName: string; stdcall;
+    property Name: string read GetName;
   end;
 
-  IShader = interface(IResource)
+  IShaderProgram = interface
+    procedure Bind; stdcall;
+  end;
 
+  IShaderResource = interface(IResource)
+    function Compile: IShaderProgram; stdcall;
   end;
 
   ITexture = interface(IResource)
@@ -143,11 +148,11 @@ type
   end;
 
   IResourceManager = interface(IJenSubSystem)
-    function Load(const FileName: string; Resource : TResourceType) : IResource; overload; stdcall;
-    procedure Load(const FileName: string; out Resource : IShader); overload; stdcall;
-    procedure Load(const FileName: string; out Resource : ITexture); overload; stdcall;
+    function Load(const FileName: string; Resource: TResourceType): IResource; overload; stdcall;
+    procedure Load(const FileName: string; out Resource: IShaderResource); overload; stdcall;
+    procedure Load(const FileName: string; out Resource: ITexture); overload; stdcall;
 
-    function LoadShader(const FileName: string): IShader; stdcall;
+    function LoadShader(const FileName: string): IShaderResource; stdcall;
     function LoadTexture(const FileName: string): ITexture; stdcall;
   end;
 
