@@ -22,6 +22,7 @@ uses
 const
   lmInfo       = TLogMsg.lmInfo;
   lmNotify     = TLogMsg.lmNotify;
+  lmCode       = TLogMsg.lmCode;
   lmWarning    = TLogMsg.lmWarning;
   lmError      = TLogMsg.lmError;
 

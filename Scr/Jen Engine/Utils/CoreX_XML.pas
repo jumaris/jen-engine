@@ -158,6 +158,42 @@ var
   Flag : (F_BEGIN, F_TAG, F_PARAMS, F_CONTENT, F_END);
   BeginIndex : LongInt;
   TextFlag   : Boolean;
+
+  function TrimCode(const Text: string): string;
+  var
+    Start, k, t : PChar;
+    Tab, Len : Integer;
+  begin
+    if Pointer(Text) = nil then
+      Exit('');
+
+    Result := '';
+    t := Pointer(Text);
+    Tab := MaxInt;
+
+    while (t^ <> #0) do
+    begin
+      Start := t;
+      while not (t^ in [#0, #10, #13]) do Inc(t);
+      Len := t - Start;
+
+      k := Start;
+      if (Len > 1) then
+      begin
+        while (k - Start < Tab) and (k - Start <= Len) and (k^ in [#9, #32]) do Inc(k);
+
+        if (Tab = MaxInt) then
+          Tab := k - Start;
+
+        Insert( Copy(Start, k - Start+1, Len - (k - Start) + 1)+ #10, Result, Length(Result) );
+      end;
+
+      if t^ = #13 then Inc(t);
+      if t^ = #10 then Inc(t);
+    end;
+    Result := Trim(Result);
+  end;
+
 begin
   TextFlag := False;
   Flag     := F_BEGIN;
@@ -219,7 +255,8 @@ begin
             '<' :
               if not TextFlag then
               begin
-                FContent := FContent + Trim(Copy(Text, BeginIndex, i - BeginIndex));
+                FContent := FContent + TrimCode(Copy(Text, BeginIndex, i - BeginIndex));
+
               // is new tag or my tag closing?
                 for j := i to Length(Text) do
                   if Text[j] = '>' then
