@@ -491,7 +491,7 @@ const
   glCreateProgram: function(): GLhandle; stdcall;
   glAttachShader: procedure(programObj, shaderObj: GLhandle); stdcall;
   glLinkProgram: procedure(programObj: GLhandle); stdcall;
-  glUseProgramObject: procedure(programObj: GLhandle); stdcall;
+  glUseProgram: procedure(programObj: GLhandle); stdcall;
   glValidateProgram: procedure(programObj: GLhandle); stdcall;
   glUniform1f: procedure(location: GLint; v0: GLfloat); stdcall;
   glUniform2f: procedure(location: GLint; v0: GLfloat; v1: GLfloat); stdcall;
@@ -604,7 +604,7 @@ begin
   glCreateProgram := glGetProc('glCreateProgram', Result);
   glAttachShader := glGetProc('glAttachShader', Result);
   glLinkProgram := glGetProc('glLinkProgram', Result);
-  glUseProgramObject := glGetProc('glUseProgramObjectARB', Result);
+  glUseProgram := glGetProc('glUseProgram', Result);
   glValidateProgram := glGetProc('glValidateProgram', Result);
   glUniform1f := glGetProc('glUniform1f', Result);
   glUniform2f := glGetProc('glUniform2f', Result);

@@ -1,7 +1,8 @@
 program _02_Attach_Engine_from_DDL;
 
 uses
-  JEN_Header in '..\..\..\Include\Delphi\JEN_Header.pas';
+  JEN_Header in '..\..\..\Include\Delphi\JEN_Header.pas',
+  JEN_Math in '..\..\..\Include\Delphi\JEN_Math.pas';
 
 {$R *.res}
 {$R ..\..\..\icon.RES}
@@ -35,7 +36,7 @@ end;
 
 procedure TGame.OnRender;
 begin
-
+  Render.Clear(True,False,False);
 end;
 
 begin
@@ -44,7 +45,7 @@ begin
   Engine.GetSubSystem(ssDisplay, IJenSubSystem(Display));
   Engine.GetSubSystem(ssRender, IJenSubSystem(Render));
   Engine.GetSubSystem(ssResMan, IJenSubSystem(ResMan));
-  Display.Init(1024,768,999,True);
+  Display.Init(1024,768,9,false);
   Render.Init();
   Game := TGame.Create;
   Engine.Start(Game);

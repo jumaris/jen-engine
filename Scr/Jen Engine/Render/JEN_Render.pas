@@ -26,24 +26,20 @@ type
       FDepthTest: Boolean;
       FDepthWrite: Boolean;
       FCullFace: TCullFace;
+      FMatrix: array [TMatrixType] of TMat4f;
+      FCameraPos : TVec3f;
     procedure SetViewport(Value: TRecti);
     procedure SetBlendType(Value: TBlendType); stdcall;
     procedure SetAlphaTest(Value: Byte); stdcall;
     procedure SetDepthTest(Value: Boolean); stdcall;
     procedure SetDepthWrite(Value: Boolean); stdcall;
     procedure SetCullFace(Value: TCullFace); stdcall;
+    procedure SetMatrix(Idx: TMatrixType; Value: TMat4f); stdcall;
+    function  GetMatrix(Idx: TMatrixType): TMat4f; stdcall;
   public
-    var
-      Matrix    : array [TMatrixType] of TMat4f;
-      CameraPos : TVec3f;
+    procedure Clear(ColorBuff, DepthBuff, StensilBuff: Boolean); stdcall;
 
     property Valid: Boolean read FValid;
-    property BlendType: TBlendType write SetBlendType;
-    property AlphaTest: Byte write SetAlphaTest;
-    property DepthTest: Boolean write SetDepthTest;
-    property DepthWrite: Boolean write SetDepthWrite;
-    property CullFace: TCullFace write SetCullFace;
-    property Viewport: TRecti read FViewport write SetViewport;
   end;
 
 implementation
@@ -176,18 +172,18 @@ begin
       (GL_VENDOR) + ')', lmInfo);
   LogOut('Video device   : ' + glGetString(GL_RENDERER), lmInfo);
 
-  BlendType := btNormal;
-  AlphaTest := 0;
-  DepthTest := False;
-  DepthWrite := False;
-  CullFace := cfBack;
+  SetBlendType(btNormal);
+  SetAlphaTest(0);
+  SetDepthTest(False);
+  SetDepthWrite(False);
+  SetCullFace(cfBack);
 
   glDepthFunc(GL_LEQUAL);
   glClearDepth(1.0);
 
  // Display.Restore;
   // glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-  glDisable(GL_TEXTURE_2D);
+
 
   glClearColor(1.0, 0.0, 0.0, 0.0);
   // glShadeModel(GL_SMOOTH);
@@ -292,6 +288,23 @@ begin
       glDisable(GL_CULL_FACE);
     end;
   end;
+end;
+
+procedure TRender.SetMatrix(Idx: TMatrixType; Value: TMat4f); stdcall;
+begin
+  FMatrix[Idx] := Value;
+end;
+
+function TRender.GetMatrix(Idx: TMatrixType): TMat4f; stdcall;
+begin
+  Result := FMatrix[Idx];
+end;
+
+procedure TRender.Clear(ColorBuff, DepthBuff, StensilBuff: Boolean);
+begin
+  glClear( (GL_COLOR_BUFFER_BIT * Ord(ColorBuff)) or
+            (GL_DEPTH_BUFFER_BIT * Ord(DepthBuff)) or
+              (GL_STENCIL_BUFFER_BIT * Ord(StensilBuff)) );
 end;
 
 end.

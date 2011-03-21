@@ -50,7 +50,7 @@
 			</DelphiCompile>
 			<DCCReference Include="..\..\..\Jen Engine\JEN_Main.pas"/>
 			<DCCReference Include="..\..\..\Jen Engine\Render\JEN_Render.pas"/>
-			<DCCReference Include="..\..\..\Jen Engine\Utils\JEN_Math.pas"/>
+			<DCCReference Include="..\..\..\Include\Delphi\JEN_Math.pas"/>
 			<DCCReference Include="..\..\..\Jen Engine\Utils\JEN_OpenGLHeader.pas"/>
 			<DCCReference Include="..\..\..\Jen Engine\Utils\JEN_SystemInfo.pas"/>
 			<DCCReference Include="..\..\..\Jen Engine\Utils\JEN_Utils.pas"/>
@@ -100,7 +100,7 @@
 						<VersionInfo Name="MajorVer">0</VersionInfo>
 						<VersionInfo Name="MinorVer">0</VersionInfo>
 						<VersionInfo Name="Release">1</VersionInfo>
-						<VersionInfo Name="Build">2016</VersionInfo>
+						<VersionInfo Name="Build">2056</VersionInfo>
 						<VersionInfo Name="Debug">True</VersionInfo>
 						<VersionInfo Name="PreRelease">False</VersionInfo>
 						<VersionInfo Name="Special">False</VersionInfo>
@@ -112,7 +112,7 @@
 					<VersionInfoKeys>
 						<VersionInfoKeys Name="CompanyName"/>
 						<VersionInfoKeys Name="FileDescription"/>
-						<VersionInfoKeys Name="FileVersion">0.0.1.2016</VersionInfoKeys>
+						<VersionInfoKeys Name="FileVersion">0.0.1.2056</VersionInfoKeys>
 						<VersionInfoKeys Name="InternalName"/>
 						<VersionInfoKeys Name="LegalCopyright"/>
 						<VersionInfoKeys Name="LegalTrademarks"/>

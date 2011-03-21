@@ -7,7 +7,7 @@ uses
   JEN_Resource,
   JEN_OpenGlHeader,
   JEN_Utils,
-
+  JEN_Math,
   CoreX_XML;
 
 type
@@ -16,8 +16,20 @@ type
     destructor Destroy;
   private
   public
-    FID : GLEnum;
+    FID: GLEnum;
     procedure Bind; stdcall;
+  end;
+
+  TShaderUniform = class(TInterfacedObject, IShaderUniform)
+  private
+    FID    : GLEnum;
+    FType  : TShaderUniformType;
+    FName  : string;
+    FValue : array [0..11] of Single;
+    procedure Init(ShaderID: GLEnum; const UName: string; UniformType: TShaderUniformType);
+  public
+    procedure Value(const Data; Count: LongInt); stdcall;
+    property Name: string read FName;
   end;
 
   TShaderResource = class(TInterfacedObject, IResource, IShaderResource)
@@ -59,6 +71,42 @@ procedure TShaderProgram.Bind;
 begin
 //glValidateProgramARB(0);
 //     glDeleteObjectARB(8);
+  glUseProgram(FID);
+end;
+
+procedure TShaderUniform.Init(ShaderID: LongWord; const UName: string; UniformType: TShaderUniformType);
+var
+  i : LongInt;
+begin
+  FID   := glGetUniformLocation(ShaderID, PAnsiChar(AnsiString(UName)));
+  FName := UName;
+  FType := UniformType;
+  for i := 0 to Length(FValue) - 1 do
+    FValue[i] := NAN;
+end;
+
+procedure TShaderUniform.Value(const Data; Count: LongInt);
+const
+  USize : array [TShaderUniformType] of LongInt = (4, 4, 8, 12, 16, 36, 64);
+begin
+  if FID <> -1 then
+  begin
+    if Count * USize[FType] <= SizeOf(FValue) then
+      if MemCmp(@FValue, @Data, Count * USize[FType]) <> 0 then
+        Move(Data, FValue, Count * USize[FType])
+      else
+        Exit;
+
+    case FType of
+      utInt  : glUniform1iv(FID, Count, @Data);
+      utVec1 : glUniform1fv(FID, Count, @Data);
+      utVec2 : glUniform2fv(FID, Count, @Data);
+      utVec3 : glUniform3fv(FID, Count, @Data);
+      utVec4 : glUniform4fv(FID, Count, @Data);
+      utMat3 : glUniformMatrix3fv(FID, Count, False, @Data);
+      utMat4 : glUniformMatrix4fv(FID, Count, False, @Data);
+    end;
+  end;
 end;
 
 constructor TShaderResource.Create(const Name: string);
@@ -138,7 +186,6 @@ var
     if Status <> 1 then
     begin
       LogOut('Error compiling shader', lmWarning);
-
       LogOut(Source, lmCode);
 
       glGetShaderiv(Obj, GL_INFO_LOG_LENGTH, @LogLen);
@@ -171,7 +218,7 @@ begin
         LogOut(string(LogBuf), lmWarning);
       end;
 
-      Result := IShaderProgram(FShaderPrograms.Add(Shader));
+      Result := IShaderProgram(FShaderPrograms.Add(IShaderProgram(Shader)));
      end;
 
   end;
