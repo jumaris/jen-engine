@@ -3,7 +3,7 @@
 uses
   JEN_Main in '..\..\..\Jen Engine\JEN_Main.pas',
   JEN_Render in '..\..\..\Jen Engine\Render\JEN_Render.pas',
-  JEN_Math in '..\..\..\Jen Engine\Utils\JEN_Math.pas',
+  JEN_Math in '..\..\..\Include\Delphi\JEN_Math.pas',
   JEN_OpenGLHeader in '..\..\..\Jen Engine\Utils\JEN_OpenGLHeader.pas',
   JEN_SystemInfo in '..\..\..\Jen Engine\Utils\JEN_SystemInfo.pas',
   JEN_Utils in '..\..\..\Jen Engine\Utils\JEN_Utils.pas',
@@ -22,7 +22,7 @@ uses
   JEN_Header in '..\..\..\Include\Delphi\JEN_Header.pas',
   SomeGame in 'SomeGame.pas';
 
-{$R *.res}
+{$R ..\..\..\dll\jen.res}
 {$R ..\..\..\icon.RES}
 
 type
@@ -51,11 +51,15 @@ end;
 
 procedure TGame.OnRender; stdcall;
 begin
-     {
-glClear( GL_COLOR_BUFFER_BIT);
 
-   glviewport (0,0,1024,768);
-//  Render.Matrix[mtProj].Identity;
+  Render.Clear(True,False,False);
+  Render.CullFace := cfNone;
+
+//   glviewport (0,0,1024,768);
+
+  Render.Matrix[mtProj].Ortho( 0, 800, 000, 600, -1, 1 );
+  Render.Matrix[mtModel].Identity;
+  {
  // Render.Matrix[mtProj].Ortho(0,800,600,00,-1,1);
  // Render.Matrix[mtModel].Identity;
 
@@ -68,13 +72,12 @@ glClear( GL_COLOR_BUFFER_BIT);
   glOrtho( 0, 800, 000, 600, -1, 1 );
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity;
-
-  Render.CullFace := cfNone;
-  glenable(GL_TEXTURE_2D);
+                      }
+  sp.Bind;
   r.Bind;
   glbegin(GL_TRIANGLES);
 
-      gltexcoord2f(0,1);
+  gltexcoord2f(0,1);
   glvertex3f(0,100,0);
 
     gltexcoord2f(1,0);
@@ -85,7 +88,7 @@ glClear( GL_COLOR_BUFFER_BIT);
   glvertex3f(0,0,0);
 
   glend;
-            }
+
 end;
 
 procedure pp;

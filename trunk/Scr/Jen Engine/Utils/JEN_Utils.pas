@@ -147,6 +147,8 @@ type
   TCharSet = set of AnsiChar;
 
 procedure FreeAndNil(var Obj); inline;
+function MemCmp(p1, p2: Pointer; Size: LongInt): LongInt;
+
 function LowerCase(const Str: string): string;
 function TrimChars(const Str: string; Chars: TCharSet): string;
 function Trim(const Str: string): string;
@@ -164,6 +166,22 @@ begin
   Temp := TObject(Obj);
   Pointer(Obj) := nil;
   Temp.Free;
+end;
+
+function MemCmp(p1, p2: Pointer; Size: LongInt): LongInt;
+asm
+       PUSH    ESI
+       PUSH    EDI
+       MOV     ESI,P1
+       MOV     EDI,P2
+       XOR     EAX,EAX
+       REPE    CMPSB
+       JE      @@1
+       MOVZX   EAX,BYTE PTR [ESI-1]
+       MOVZX   EDX,BYTE PTR [EDI-1]
+       SUB     EAX,EDX
+@@1:   POP     EDI
+       POP     ESI
 end;
 
 function LowerCase(const Str: string): string;

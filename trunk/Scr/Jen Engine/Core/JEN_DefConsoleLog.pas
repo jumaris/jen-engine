@@ -37,11 +37,13 @@ end;
 
 procedure TDefConsoleLog.AddMsg(const Text: String; MType: TLogMsg);
 var
-  str  : String;
+  str : String;
   tstr : String;
   h,m,s,start,i,j : LongInt;
-
 begin
+  if Pointer(Text) = nil then
+    Exit;
+
   case MType of
     lmHeaderMsg :
       Writeln(Text);
@@ -82,16 +84,33 @@ begin
     lmCode:
       begin
         i := 1;
+        j := 1;
         str := '';
 
+        Writeln('Source code:');
         while Text[i] <> #0 do
         begin
           start := i;
-          while (Text[i] <> #09) and (Text[i] <> #0) do Inc(i);
-          str := str + Copy(Text, start, i-start -1) + '   ';
-          Inc(i);
+          while not (Text[i] in [#0, #09, #10, #13]) do Inc(i);
+
+          if Text[i] = #0 then
+            break;
+
+          if Text[i] = #09 then
+          begin
+            str := str + Copy(Text, start, i-start) + '   ';
+            Inc(i);
+            Continue;
+          end;
+
+          Writeln(Utils.IntToStr(j), ':', str, Copy(Text, start, i-start));
+          str := '';
+          Inc(j);
+
+          if Text[i] = #13 then Inc(i);
+          if Text[i] = #10 then Inc(i);
         end;
-        Writeln(str);
+
       end;
 
     lmWarning :

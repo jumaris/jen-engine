@@ -3,6 +3,9 @@ unit JEN_Header;
 
 interface
 
+uses
+  JEN_Math;
+
 type
   HWND  = LongWord;
   HDC   = LongWord;
@@ -14,9 +17,9 @@ type
   TCullFace = (cfNone, cfFront, cfBack);
   TMatrixType = (mtViewProj, mtModel, mtProj, mtView);
   TResourceType = (rtShader, rtTexture);
-  TTextureFilter =  (tfNone, tfBilinear, tfTrilinear, tfAniso);
+  TShaderUniformType = (utInt, utVec1, utVec2, utVec3, utVec4, utMat3, utMat4);
+  TTextureFilter = (tfNone, tfBilinear, tfTrilinear, tfAniso);
   TSetModeResult = (SM_Successful, SM_SetDefault, SM_Error);
-
 
   IGame = interface
     procedure LoadContent; stdcall;
@@ -123,16 +126,26 @@ type
     procedure SetDepthWrite(Value: Boolean); stdcall;
     procedure SetCullFace(Value: TCullFace); stdcall;
 
+    procedure SetMatrix(Idx: TMatrixType; Value: TMat4f); stdcall;
+    function  GetMatrix(Idx: TMatrixType): TMat4f; stdcall;
+
+    procedure Clear(ColorBuff, DepthBuff, StensilBuff: Boolean); stdcall;
+
     property BlendType: TBlendType write SetBlendType;
     property AlphaTest: Byte write SetAlphaTest;
     property DepthTest: Boolean write SetDepthTest;
     property DepthWrite: Boolean write SetDepthWrite;
     property CullFace: TCullFace write SetCullFace;
+    property Matrix[Idx: TMatrixType]: TMat4f read GetMatrix write SetMatrix;
   end;
 
   IResource = interface
     function GetName: string; stdcall;
     property Name: string read GetName;
+  end;
+
+  IShaderUniform = interface
+    procedure Value(const Data; Count: LongInt = 1); stdcall;
   end;
 
   IShaderProgram = interface

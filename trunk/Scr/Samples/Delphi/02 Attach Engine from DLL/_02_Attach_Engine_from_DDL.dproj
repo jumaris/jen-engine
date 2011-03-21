@@ -49,6 +49,7 @@
 				<MainSource>MainSource</MainSource>
 			</DelphiCompile>
 			<DCCReference Include="..\..\..\Include\Delphi\JEN_Header.pas"/>
+			<DCCReference Include="..\..\..\Include\Delphi\JEN_Math.pas"/>
 			<BuildConfiguration Include="Base">
 				<Key>Base</Key>
 			</BuildConfiguration>

@@ -185,7 +185,7 @@ var
         if (Tab = MaxInt) then
           Tab := k - Start;
 
-        Insert( Copy(Start, k - Start+1, Len - (k - Start) + 1)+ #10, Result, Length(Result) );
+        Insert( Copy(Start, k - Start+1, Len - (k - Start) )+ #10, Result, Length(Result)+1 );
       end;
 
       if t^ = #13 then Inc(t);

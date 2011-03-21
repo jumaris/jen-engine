@@ -2,31 +2,25 @@
 	<VertexShader>
 		<InsCode code="utilityLib/fragDeferredRead.glsl" />
 		<Code>
-			varying vec2 texCoords;
-				
+			varying vec2 Texcoord;
+
 			void main( void )
 			{
-				texCoords = gl_MultiTexCoord0.st;
-				gl_Position = gl_ProjectionMatrix * gl_Vertex;
+				gl_Position = ftransform();
+				Texcoord    = gl_MultiTexCoord0.xy;
 			}
 		</Code>
 	</VertexShader>
 	
 	<FragmentShader>
 		<Code>
-			varying vec2 texCoords;
-				
+			uniform sampler2D baseMap;
+
+			varying vec2 Texcoord;
+
 			void main( void )
 			{
-				if( getMatID( texCoords ) == 1.0 )	// Standard phong material
-				{
-					float vsPos = (gl_ModelViewMatrix * vec4( getPos( texCoords ), 1.0 )).z;
-						
-					gl_FragColor.rgb =
-						calcPhongSpotLight( getPos( texCoords ), getNormal( texCoords ),
-												getAlbedo( texCoords ), getSpecMask( texCoords ), 16.0, -vsPos, 0.3 );
-				}
-				else discard;
+				gl_FragColor = texture2D( baseMap, Texcoord )*vec4(0.4,0.6,0.8,1.0);
 			}
 		</Code> 
 	</FragmentShader>
