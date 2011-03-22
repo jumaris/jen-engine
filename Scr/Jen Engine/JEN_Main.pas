@@ -66,8 +66,8 @@ type
 
 var
   Engine       : IJenEngine;
-  Utils        : TUtils;
-  SystemParams :  JEN_SystemInfo.ISystemParams;
+  Utils        : IUtils;
+  SystemParams : ISystemParams;
   Log          : ILog;
   Render       : IRender;
   Display      : IDisplay;
@@ -82,7 +82,6 @@ implementation
 procedure LogOut(const Text: string; MType: TLogMsg);
 begin
   if Assigned(Log) then
-
   Log.Print(Text, MType);
 end;
 
@@ -113,14 +112,10 @@ end;
 
 destructor TJenEngine.Destroy;
 begin
-
   ResMan := nil;
   Render := nil;
   Display := nil;
-
-  Log := nil;
-  Utils.Free;
-
+  Utils.Sleep(5000);
 
   inherited;
 end;
@@ -139,31 +134,6 @@ begin
   end;
 end;
 
-
-     {
-  if(FisRunnig) then
-  begin
-    LogOut('Engine alredy running', lmError);
-    Exit;
-  end;
-
-  FQuit  := False;
-
-  destructor TGame.Destroy;
-begin
-  if Assigned(Render) then
-    FreeAndNil(Render);
-
-  if Assigned(Display) then
-    FreeAndNil(Display);
-
-  if Assigned(ResMan) then
-    FreeAndNil(ResMan);
-
-  FisRunnig := False;
-  inherited;
-end;
-               }
 procedure TJenEngine.Finish;
 begin
   FQuit := True;
@@ -205,7 +175,6 @@ begin
     //  glClear( GL_COLOR_BUFFER_BIT);
       Display.Swap;
     end;
-
 end;
 
 initialization

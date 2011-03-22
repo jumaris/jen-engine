@@ -39,6 +39,9 @@ type
   public
     procedure Clear(ColorBuff, DepthBuff, StensilBuff: Boolean); stdcall;
 
+ {   procedure Quad(const Rect, TexRect: TRecti; Color: TColor; Angle: Single); overload; stdcall;
+    procedure Quad(x1, y1, x2, y2, x3, y3, x4, y4, cx, cy: Single; Color: TColor; PtIdx: Word; Angle: Single); overload; stdcall;
+    }
     property Valid: Boolean read FValid;
   end;
 
@@ -168,8 +171,7 @@ begin
     Exit;
   end;
 
-  LogOut('OpenGL version : ' + glGetString(GL_VERSION) + ' (' + glGetString
-      (GL_VENDOR) + ')', lmInfo);
+  LogOut('OpenGL version : ' + glGetString(GL_VERSION) + ' (' + glGetString(GL_VENDOR) + ')', lmInfo);
   LogOut('Video device   : ' + glGetString(GL_RENDERER), lmInfo);
 
   SetBlendType(btNormal);
@@ -306,5 +308,117 @@ begin
             (GL_DEPTH_BUFFER_BIT * Ord(DepthBuff)) or
               (GL_STENCIL_BUFFER_BIT * Ord(StensilBuff)) );
 end;
+
+                 {
+procedure TRender.DrawQuad(const Texture: N4Header.TTexture; v1, v2, v3, v4: N4Header.TTexVec; cx, cy: Single; Color: N4Header.TColor; Angle, Scale: Single);
+var
+  s, c : Single;
+  tx, ty : Single;
+  qColor   : N4.TVec4f;
+  qTexture : N4.TTexture;
+begin
+  with TRGBA(Color) do
+    qColor := Math.Vec4f(B, G, R, A) * (1 / 255);
+
+  if Texture.Texture <> nil then
+    qTexture := TTexture(Texture.Texture)
+  else
+    qTexture := Render.WhiteTex;
+
+  Render.CheckBatch(qTexture, qColor);
+  Render.SimpleMat.ColorParam.Diffuse := qColor;
+  Render.SimpleMat.DiffuseMap := qTexture;
+  if Render.SimpleMat.Blending = 3 then
+    Render.SimpleMat.ColorParam.Ambient.x := 0
+  else
+    Render.SimpleMat.ColorParam.Ambient.x := 1;
+
+  Render.SimpleMat.Enable;
+  Math.SinCos(Angle * Math.deg2rad, s, c);
+
+  tx := 0.5 / Texture.Width;
+  ty := 0.5 / Texture.Height;
+
+  v1.x := v1.x - cx;
+  v1.y := v1.y - cy;
+  v2.x := v2.x - cx;
+  v2.y := v2.y - cy;
+  v3.x := v3.x - cx;
+  v3.y := v3.y - cy;
+  v4.x := v4.x - cx;
+  v4.y := v4.y - cy;
+
+  with Math do
+    Render.Quad(Vec4f(cx + (v1.x * c - v1.y * s) * Scale, cy + (v1.x * s + v1.y * c) * Scale, v1.s + tx, v1.t + ty),
+                Vec4f(cx + (v2.x * c - v2.y * s) * Scale, cy + (v2.x * s + v2.y * c) * Scale, v2.s + tx, v2.t + ty),
+                Vec4f(cx + (v3.x * c - v3.y * s) * Scale, cy + (v3.x * s + v3.y * c) * Scale, v3.s + tx, v3.t + ty),
+                Vec4f(cx + (v4.x * c - v4.y * s) * Scale, cy + (v4.x * s + v4.y * c) * Scale, v4.s + tx, v4.t + ty));
+//  Render.FlushBatch;
+end;             }
+                 {
+procedure TRender.DrawQuad(v1, v2, v3, v4: N4Header.TTexVec; cx, cy: Single; Color: N4Header.TColor; Angle, Scale: Single);
+var
+  s, c : Single;
+  tx, ty : Single;
+  qColor   : N4.TVec4f;
+  qTexture : N4.TTexture;
+begin
+  with TRGBA(Color) do
+    qColor := Math.Vec4f(B, G, R, A) * (1 / 255);
+
+  Math.SinCos(Angle * Math.deg2rad, s, c);
+
+  tx := 0.5 / Texture.Width;
+  ty := 0.5 / Texture.Height;
+
+  v1.x := v1.x - cx;
+  v1.y := v1.y - cy;
+  v2.x := v2.x - cx;
+  v2.y := v2.y - cy;
+  v3.x := v3.x - cx;
+  v3.y := v3.y - cy;
+  v4.x := v4.x - cx;
+  v4.y := v4.y - cy;
+
+  with Math do
+    Render.Quad(Vec4f(cx + (v1.x * c - v1.y * s) * Scale, cy + (v1.x * s + v1.y * c) * Scale, v1.s + tx, v1.t + ty),
+                Vec4f(cx + (v2.x * c - v2.y * s) * Scale, cy + (v2.x * s + v2.y * c) * Scale, v2.s + tx, v2.t + ty),
+                Vec4f(cx + (v3.x * c - v3.y * s) * Scale, cy + (v3.x * s + v3.y * c) * Scale, v3.s + tx, v3.t + ty),
+                Vec4f(cx + (v4.x * c - v4.y * s) * Scale, cy + (v4.x * s + v4.y * c) * Scale, v4.s + tx, v4.t + ty));
+
+end;
+
+
+procedure TRender.Quad(const v1, v2, v3, v4: TTexVec; Color: TColor; Angle: Single);
+begin
+  DrawQuad(v1, v2, v3, v4, 0, 0, Color, Angle);
+end;
+
+procedure TRender.Quad(const Rect, TexRect: TRecti; Color: TColor; Angle: Single);
+begin
+  Quad(TexVec(Rect.Left, Rect.Top, TexRect.Left, TexRect.Top),
+       TexVec(Rect.Right, Rect.Top, TexRect.Right, TexRect.Top),
+       TexVec(Rect.Right, Rect.Bottom, TexRect.Right, TexRect.Bottom),
+       TexVec(Rect.Left, Rect.Bottom, TexRect.Left, TexRect.Bottom), Color, Angle);
+end;
+
+procedure TRender.Quad(x1, y1, x2, y2, x3, y3, x4, y4, cx, cy: Single; Color: TColor; PtIdx: Word; Angle: Single);
+var
+  s, t, ss, ts : Single;
+begin
+  ss := Texture.PatternWidth / Texture.Width;
+  ts := Texture.PatternHeight / Texture.Height;
+  s := PtIdx mod (Texture.Width div Texture.PatternWidth) * ss;
+  t := PtIdx div (Texture.Height div Texture.PatternHeight) * ts;
+  ss := ss + s;
+  ts := ts + t;
+
+  DrawQuad(Texture,
+           TexVec(x1, y1, s, t),
+           TexVec(x2, y2, ss, t),
+           TexVec(x3, y3, ss, ts),
+           TexVec(x4, y4, s, ts), cx, cy, Color, Angle, Scale);
+end;
+                                                                     }
 
 end.

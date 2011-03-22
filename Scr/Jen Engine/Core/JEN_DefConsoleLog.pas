@@ -12,8 +12,7 @@ type TDefConsoleLog = class(TLogOutput)
   private
     LastUpdate : LongInt;
   public
-    procedure BeginHeader; override;
-    procedure EndHeader; override;
+    procedure Init; override;
     procedure AddMsg(const Text: String; MType: TLogMsg); override;
   end;
 {$ENDIF}
@@ -24,15 +23,24 @@ implementation
 uses
   JEN_MAIN;
 
-procedure TDefConsoleLog.BeginHeader;
+procedure TDefConsoleLog.Init;
+var
+  S : AnsiString;
+  Major : LongInt;
+  Minor : LongInt;
+  Build : LongInt;
 begin
-  Writeln('*******************************************************************************');
+  SystemParams.WindowsVersion(Major, Minor, Build);
+  SetLength(S,80);
+  FillChar(S[1],80,ord('*'));
+  Write(s);
+  Writeln('JenEngine');
+  Writeln('Windows version: '+Utils.IntToStr(Major)+'.'+Utils.IntToStr(Minor)+' (Buid '+Utils.IntToStr(Build)+')');
+  Writeln('CPU            : '+SystemParams.CPUName+'(~'+Utils.IntToStr(SystemParams.CPUSpeed)+')x'+Utils.IntToStr(SystemParams.CPUCount));
+  Writeln('RAM Available  : '+Utils.IntToStr(SystemParams.RAMFree)+'Mb');
+  Writeln('RAM Total      : '+Utils.IntToStr(SystemParams.RAMTotal)+'Mb');
+  Write(s);
   LastUpdate := Utils.Time;
-end;
-
-procedure TDefConsoleLog.EndHeader;
-begin
-  BeginHeader;
 end;
 
 procedure TDefConsoleLog.AddMsg(const Text: String; MType: TLogMsg);

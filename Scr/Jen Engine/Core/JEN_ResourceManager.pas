@@ -168,17 +168,12 @@ end;
 destructor TResourceManager.Destroy;
 var
   i : integer;
-begin            {
-  for I := 0 to FResList.Count - 1 do
-    TResource(FResList[i]).Free;
-                 }
+begin
   for I := 0 to FLoaderList.Count - 1 do
     TResLoader(FLoaderList[i]).Free;
 
   FResList.Free;
   FLoaderList.Free;
-
-
   inherited;
 end;
 

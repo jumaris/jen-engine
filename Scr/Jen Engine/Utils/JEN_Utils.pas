@@ -607,12 +607,7 @@ begin
 end;
 
 class function TFileStream.Open(const FileName: string; RW: Boolean): TFileStream;
-var
-  i, io : LongInt;
 begin
-  Result := nil;
-
-  io := 1;
   Result := TFileStream.Create;
   Result.FName := Utils.ExtractFileName(FileName);
   {$I-}

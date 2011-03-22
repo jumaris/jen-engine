@@ -9,12 +9,6 @@ Type
     class operator NotEqual(const a, b: TPoint2i): Boolean; inline;
   end;
 
-  TPoint2f  = record
-    x, y : single;
-    class operator Equal(const a, b: TPoint2f): Boolean; inline;
-    class operator NotEqual(const a, b: TPoint2f): Boolean; inline;
-  end;
-
   TRecti    = record
     x, y          : integer;
     Width, Height : integer;
@@ -40,7 +34,7 @@ Type
 
       function Contains(const x, y: Integer): Boolean; overload; inline;
       function Contains(const Point: TPoint2i): Boolean; overload; inline;
-      function Contains(const Point: TPoint2f): Boolean; overload; inline;
+  //    function Contains(const Point: TPoint2f): Boolean; overload; inline;
       function Contains(const Rect: TRecti): Boolean; overload; inline;
 //    function Contains(const Rect : TRectf)  : Boolean; overload; inline;
 
@@ -54,6 +48,29 @@ Type
 
       class operator Equal(const Rect1, Rect2: TRecti): Boolean; inline;
       class operator NotEqual(const Rect1, Rect2: TRecti): Boolean; inline;
+  end;
+
+  TVec2f = record
+    x, y : Single;
+    class operator Equal(const a, b: TVec2f): Boolean;
+    class operator Add(const a, b: TVec2f): TVec2f;
+    class operator Subtract(const a, b: TVec2f): TVec2f;
+    class operator Multiply(const a, b: TVec2f): TVec2f;
+    class operator Multiply(const v: TVec2f; x: Single): TVec2f;
+    function Dot(const v: TVec2f): Single;
+    function Reflect(const n: TVec2f): TVec2f;
+    function Refract(const n: TVec2f; Factor: Single): TVec2f;
+    function Length: Single;
+    function LengthQ: Single;
+    function Normal: TVec2f;
+    function Dist(const v: TVec2f): Single;
+    function DistQ(const v: TVec2f): Single;
+    function Lerp(const v: TVec2f; t: Single): TVec2f;
+    function Min(const v: TVec2f): TVec2f;
+    function Max(const v: TVec2f): TVec2f;
+    function Clamp(const MinClamp, MaxClamp: TVec2f): TVec2f;
+    function Rotate(Angle: Single): TVec2f;
+    function Angle(const v: TVec2f): Single;
   end;
 
   TVec3f = record
@@ -79,6 +96,17 @@ Type
     function Rotate(Angle: Single; const Axis: TVec3f): TVec3f;
     function Angle(const v: TVec3f): Single;
     function MultiOp(out r: TVec3f; const v1, v2, op1, op2: TVec3f): Single;
+  end;
+
+  TVec4f = record
+    x, y, z, w : Single;
+    class operator Equal(const a, b: TVec4f): Boolean;
+    class operator Add(const a, b: TVec4f): TVec4f;
+    class operator Subtract(const a, b: TVec4f): TVec4f;
+    class operator Multiply(const a, b: TVec4f): TVec4f;
+    class operator Multiply(const v: TVec4f; x: Single): TVec4f;
+    function Dot(const v: TVec3f): Single;
+    function Lerp(const v: TVec4f; t: Single): TVec4f;
   end;
 
   TMat4f = record
@@ -140,9 +168,10 @@ function Pow(x, y: Single): Single;
 function ToPow2(x: LongInt): LongInt;
 
 function Point2i(x, y : Integer) : TPoint2i; inline;
-function Point2f(x, y : Single) : TPoint2f; inline;
 function Recti(x, y, Width, Height : Integer) : TRecti; inline;
+function Vec2f(x, y: Single): TVec2f; inline;
 function Vec3f(x, y, z: Single): TVec3f; inline;
+function Vec4f(x, y, z, w: Single): TVec4f; inline;
 function Mat4f(Angle: Single; const Axis: TVec3f): TMat4f; inline;
 
 implementation
@@ -315,19 +344,13 @@ end;
 {$ENDREGION}
 
 {$REGION 'Creation'}
-function Point2i(x, y : Integer) : TPoint2i;
+function Point2i(x, y: Integer): TPoint2i;
 begin
   Result.x := x;
   Result.y := y;
 end;
 
-function Point2f(x, y : Single) : TPoint2f;
-begin
-  Result.x := x;
-  Result.y := y;
-end;
-
-function Recti(x, y, Width, Height : Integer) : TRecti;
+function Recti(x, y, Width, Height: Integer): TRecti;
 begin
   Result.x := x;
   Result.y := y;
@@ -335,11 +358,25 @@ begin
   Result.Width := Width;
 end;
 
-function Vec3f(x, y, z: Single) : TVec3f;
+function Vec2f(x, y: Single): TVec2f;
+begin
+  Result.x := x;
+  Result.y := y;
+end;
+
+function Vec3f(x, y, z: Single): TVec3f;
 begin
   Result.x := x;
   Result.y := y;
   Result.z := z;
+end;
+
+function Vec4f(x, y, z, w: Single): TVec4f;
+begin
+  Result.x := x;
+  Result.y := y;
+  Result.z := z;
+  Result.w := w;
 end;
 
 function Mat4f(Angle: Single; const Axis: TVec3f): TMat4f;
@@ -371,18 +408,6 @@ begin
 end;
 
 class operator TPoint2i.NotEqual(const a, b: TPoint2i): Boolean;
-begin
-  Result := (a.x <> b.x) and (a.y <> b.y);
-end;
-{$ENDREGION}
-
-{$REGION 'TPoint2f'}
-class operator TPoint2f.Equal(const a, b: TPoint2f): Boolean;
-begin
-  Result := (a.x = b.x) and (a.y = b.y);
-end;
-
-class operator TPoint2f.NotEqual(const a, b: TPoint2f): Boolean;
 begin
   Result := (a.x <> b.x) and (a.y <> b.y);
 end;
@@ -459,11 +484,11 @@ function TRecti.Contains(const Point: TPoint2i): Boolean;
 begin
   Result := ((((x <= Point.x) and (Point.x < (x + Width))) and (y <= Point.y)) and (Point.y < (y + Height)));
 end;
-
+             {
 function TRecti.Contains(const Point: TPoint2f): Boolean;
 begin
   Result := ((((x <= Point.x) and (Point.x < (x + Width))) and (y <= Point.y)) and (Point.y < (y + Height)));
-end;
+end;           }
 
 function TRecti.Contains(const Rect: TRecti): Boolean;
 begin
@@ -513,6 +538,133 @@ end;
 class operator TRecti.NotEqual(const Rect1, Rect2: TRecti): Boolean;
 begin
   Result := ((((Rect1.X <> Rect2.X) and (Rect1.Y <> Rect2.Y)) and (Rect1.Width <> Rect2.Width)) and (Rect1.Height <> Rect2.Height));
+end;
+{$ENDREGION}
+
+{$REGION 'TVec2f'}
+class operator TVec2f.Equal(const a, b: TVec2f): Boolean;
+begin
+  with b - a do
+    Result := (abs(x) <= EPS) and (abs(y) <= EPS);
+end;
+
+class operator TVec2f.Add(const a, b: TVec2f): TVec2f;
+begin
+  Result.x := a.x + b.x;
+  Result.y := a.y + b.y;
+end;
+
+class operator TVec2f.Subtract(const a, b: TVec2f): TVec2f;
+begin
+  Result.x := a.x - b.x;
+  Result.y := a.y - b.y;
+end;
+
+class operator TVec2f.Multiply(const a, b: TVec2f): TVec2f;
+begin
+  Result.x := a.x * b.x;
+  Result.y := a.y * b.y;
+end;
+
+class operator TVec2f.Multiply(const v: TVec2f; x: Single): TVec2f;
+begin
+  Result.x := v.x * x;
+  Result.y := v.y * x;
+end;
+
+function TVec2f.Dot(const v: TVec2f): Single;
+begin
+  Result := x * v.x + y * v.y;
+end;
+
+function TVec2f.Reflect(const n: TVec2f): TVec2f;
+begin
+  Result := Self - n * (2 * Dot(n));
+end;
+
+function TVec2f.Refract(const n: TVec2f; Factor: Single): TVec2f;
+var
+  d, s : Single;
+begin
+  d := Dot(n);
+  s := 1 - sqr(Factor) * (1 - sqr(d));
+  if s < EPS then
+    Result := Reflect(n)
+  else
+    Result := Self * Factor - n * (sqrt(s) + d * Factor);
+end;
+
+function TVec2f.Length: Single;
+begin
+  Result := sqrt(LengthQ);
+end;
+
+function TVec2f.LengthQ: Single;
+begin
+  Result := sqr(x) + sqr(y);
+end;
+
+function TVec2f.Normal: TVec2f;
+var
+  Len : Single;
+begin
+  Len := Length;
+  if Len < EPS then
+    Result := Vec2f(0, 0)
+  else
+    Result := Self * (1 / Len);
+end;
+
+function TVec2f.Dist(const v: TVec2f): Single;
+var
+  p : TVec2f;
+begin
+  p := v - Self;
+  Result := p.Length;
+end;
+
+function TVec2f.DistQ(const v: TVec2f): Single;
+var
+  p : TVec2f;
+begin
+  p := v - Self;
+  Result := p.LengthQ;
+end;
+
+function TVec2f.Lerp(const v: TVec2f; t: Single): TVec2f;
+begin
+  Result := Self + (v - Self) * t;
+end;
+
+function TVec2f.Min(const v: TVec2f): TVec2f;
+begin
+  Result.x := JEN_Math.Min(x, v.x);
+  Result.y := JEN_Math.Min(y, v.y);
+end;
+
+function TVec2f.Max(const v: TVec2f): TVec2f;
+begin
+  Result.x := JEN_Math.Max(x, v.x);
+  Result.y := JEN_Math.Max(y, v.y);
+end;
+
+function TVec2f.Clamp(const MinClamp, MaxClamp: TVec2f): TVec2f;
+begin
+  Result := Vec2f(JEN_Math.Clamp(x, MinClamp.x, MaxClamp.x),
+                  JEN_Math.Clamp(y, MinClamp.y, MaxClamp.y));
+end;
+
+function TVec2f.Rotate(Angle: Single): TVec2f;
+var
+  s, c : Single;
+begin
+  SinCos(Angle, s, c);
+  Result := Vec2f(x * c - y * s, x * s + y * c);
+end;
+
+function TVec2f.Angle(const v: TVec2f): Single;
+begin
+  Result := ArcTan2(x * v.y - y * v.x, x * v.x + y * v.y);
 end;
 {$ENDREGION}
 
@@ -676,6 +828,56 @@ begin
   // lenq  = (v1, 0, v1, 0)
   // lerp  = (v1, v2, 1 - t, t)
   // etc.
+end;
+{$ENDREGION}
+
+{$REGION 'TVec4f'}
+class operator TVec4f.Equal(const a, b: TVec4f): Boolean;
+begin
+  with b - a do
+    Result := (abs(x) <= EPS) and (abs(y) <= EPS) and (abs(z) <= EPS) and (abs(w) <= EPS);
+end;
+
+class operator TVec4f.Add(const a, b: TVec4f): TVec4f;
+begin
+  Result.x := a.x + b.x;
+  Result.y := a.y + b.y;
+  Result.z := a.z + b.z;
+  Result.w := a.w + b.w;
+end;
+
+class operator TVec4f.Subtract(const a, b: TVec4f): TVec4f;
+begin
+  Result.x := a.x - b.x;
+  Result.y := a.y - b.y;
+  Result.z := a.z - b.z;
+  Result.w := a.w - b.w;
+end;
+
+class operator TVec4f.Multiply(const a, b: TVec4f): TVec4f;
+begin
+  Result.x := a.x * b.x;
+  Result.y := a.y * b.y;
+  Result.z := a.z * b.z;
+  Result.w := a.w * b.w;
+end;
+
+class operator TVec4f.Multiply(const v: TVec4f; x: Single): TVec4f;
+begin
+  Result.x := v.x * x;
+  Result.y := v.y * x;
+  Result.z := v.z * x;
+  Result.w := v.w * x;
+end;
+
+function TVec4f.Dot(const v: TVec3f): Single;
+begin
+  Result := x * v.x + y * v.y + z * v.z + w;
+end;
+
+function TVec4f.Lerp(const v: TVec4f; t: Single): TVec4f;
+begin
+  Result := Self + (v - Self) * t;
 end;
 {$ENDREGION}
 

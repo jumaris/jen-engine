@@ -13,10 +13,12 @@ uses
 type
   TShaderProgram = class(TInterfacedObject, IShaderProgram)
     constructor Create;
-    destructor Destroy;
+    destructor Destroy; override;
   private
   public
     FID: GLEnum;
+    FUniformList: TInterfaceList;
+    function Uniform(const UName: string; UniformType: TShaderUniformType): IShaderUniform; stdcall;
     procedure Bind; stdcall;
   end;
 
@@ -59,12 +61,30 @@ constructor TShaderProgram.Create;
 begin
   inherited;
   FID := glCreateProgram;
+  FUniformList := TInterfaceList.Create;
 end;
 
 destructor TShaderProgram.Destroy;
 begin
   glDeleteShader(FID);
+  FUniformList.Free;
   inherited;
+end;
+
+function TShaderProgram.Uniform(const UName: string; UniformType: TShaderUniformType): IShaderUniform;
+var
+  i : LongInt;
+  u : TShaderUniform;
+begin
+  for i := 0 to FUniformList.Count - 1 do
+    if TShaderUniform(FUniformList[i]).Name = UName then
+    begin
+      Result := IShaderUniform(FUniformList[i]);
+      Exit;
+    end;
+  U := TShaderUniform.Create;
+  U.Init(FID, UName, UniformType);
+  Result := IShaderUniform(FUniformList.Add(IShaderUniform(U)));
 end;
 
 procedure TShaderProgram.Bind;
@@ -89,23 +109,20 @@ procedure TShaderUniform.Value(const Data; Count: LongInt);
 const
   USize : array [TShaderUniformType] of LongInt = (4, 4, 8, 12, 16, 36, 64);
 begin
-  if FID <> -1 then
-  begin
-    if Count * USize[FType] <= SizeOf(FValue) then
-      if MemCmp(@FValue, @Data, Count * USize[FType]) <> 0 then
-        Move(Data, FValue, Count * USize[FType])
-      else
-        Exit;
+  if Count * USize[FType] <= SizeOf(FValue) then
+    if MemCmp(@FValue, @Data, Count * USize[FType]) <> 0 then
+      Move(Data, FValue, Count * USize[FType])
+    else
+      Exit;
 
-    case FType of
-      utInt  : glUniform1iv(FID, Count, @Data);
-      utVec1 : glUniform1fv(FID, Count, @Data);
-      utVec2 : glUniform2fv(FID, Count, @Data);
-      utVec3 : glUniform3fv(FID, Count, @Data);
-      utVec4 : glUniform4fv(FID, Count, @Data);
-      utMat3 : glUniformMatrix3fv(FID, Count, False, @Data);
-      utMat4 : glUniformMatrix4fv(FID, Count, False, @Data);
-    end;
+  case FType of
+    utInt  : glUniform1iv(FID, Count, @Data);
+    utVec1 : glUniform1fv(FID, Count, @Data);
+    utVec2 : glUniform2fv(FID, Count, @Data);
+    utVec3 : glUniform3fv(FID, Count, @Data);
+    utVec4 : glUniform4fv(FID, Count, @Data);
+    utMat3 : glUniformMatrix3fv(FID, Count, False, @Data);
+    utMat4 : glUniformMatrix4fv(FID, Count, False, @Data);
   end;
 end;
 
@@ -131,7 +148,6 @@ end;
 
 function TShaderResource.Compile : IShaderProgram;
 var
-  S: AnsiString;
   Shader : TShaderProgram;
   Status : LongInt;
   LogBuf : AnsiString;
@@ -150,7 +166,7 @@ var
     end;
   end;
 
-  function MergeCode(const Node:TXML) : AnsiString;
+  function MergeCode(const Node:TXML): AnsiString;
   var
     i: integer;
   begin
@@ -160,20 +176,17 @@ var
     begin
       case IndexStr(Tag,['Code']) of
         0 : begin
-        Result := Result + Content;
+        Result := Result + AnsiString(Content);
         end;
       end;
     end;
   end;
 
-  function Attach(ShaderType: GLenum; const Source: AnsiString) : LongWord;
+  procedure Attach(ShaderType: GLenum; const Source: AnsiString);
   var
     Obj : GLEnum;
     SourcePtr  : PAnsiChar;
     SourceSize : LongInt;
-    P,Start : PAnsiChar;
-    L, S : AnsiString;
-    I,Tab,Len : integer;
   begin
     Obj := glCreateShader(ShaderType);
 
@@ -186,7 +199,7 @@ var
     if Status <> 1 then
     begin
       LogOut('Error compiling shader', lmWarning);
-      LogOut(Source, lmCode);
+      LogOut(string(Source), lmCode);
 
       glGetShaderiv(Obj, GL_INFO_LOG_LENGTH, @LogLen);
       SetLength(LogBuf, LogLen);
@@ -236,17 +249,21 @@ function TShaderLoader.Load(const Stream : TStream; var Resource : IResource) : 
 var
   Shader: TShaderResource;
 begin
+  Result := False;
   Shader := Resource as TShaderResource;
 
   with Shader do
   begin
     XML := TXML.Load(Stream);
-    if not Assigned(XML) then Exit(false);
+    if not Assigned(XML) then Exit;
 
     XN_VS := XML.Node['VertexShader'];
     XN_FS := XML.Node['FragmentShader'];
+
+    if not (Assigned(XN_VS) and Assigned(XN_FS)) then Exit;
   end;
 
+  Result := True;
 end;
 
 end.
