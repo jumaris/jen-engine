@@ -149,8 +149,6 @@ begin
 end;
 
 constructor TDisplay.Create;
-var
-  WinClass: TWndClassEx;
 begin
   inherited;
 end;

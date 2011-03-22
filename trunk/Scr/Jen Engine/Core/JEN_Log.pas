@@ -12,8 +12,7 @@ type
   TLogOutput = class
   constructor Create;
   public
-    procedure BeginHeader; virtual; abstract;
-    procedure EndHeader; virtual; abstract;
+    procedure Init; virtual; abstract;
     procedure AddMsg(const Text: String; MType: TLogMsg); virtual; abstract;
   end;
 
@@ -62,23 +61,13 @@ end;
 
 procedure TLog.Init;        
 var
-  i,j   : Integer;
-  Major : LongInt;
-  Minor : LongInt;
-  Build : LongInt;
+  i : Integer;
 begin
-  SystemParams.WindowsVersion(Major, Minor, Build);
+
+
   for i := 0 to fLogOutputs.Count - 1 do
   with TLogOutput(fLogOutputs[i]) do
-    begin
-      BeginHeader;
-      AddMsg('JEngine', lmHeaderMsg);
-      AddMsg('Windows version: '+Utils.IntToStr(Major)+'.'+Utils.IntToStr(Minor)+' (Buid '+Utils.IntToStr(Build)+')', lmHeaderMsg);
-      AddMsg('CPU            : '+SystemParams.CPUName+'(~'+Utils.IntToStr(SystemParams.CPUSpeed)+')x'+Utils.IntToStr(SystemParams.CPUCount), lmHeaderMsg);
-      AddMsg('RAM Available  : '+Utils.IntToStr(SystemParams.RAMFree)+'Mb', lmHeaderMsg);
-      AddMsg('RAM Total      : '+Utils.IntToStr(SystemParams.RAMTotal)+'Mb', lmHeaderMsg);
-      EndHeader;
-    end;
+    Init;
                          {
   with SystemParams.Screen do
   for I := 0 to GetModesCount -1 do

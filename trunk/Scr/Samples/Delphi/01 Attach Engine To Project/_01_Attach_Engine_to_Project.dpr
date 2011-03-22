@@ -20,7 +20,8 @@ uses
   CoreX_XML in '..\..\..\Jen Engine\Utils\CoreX_XML.pas',
   JEN_Resource in '..\..\..\Jen Engine\Core\JEN_Resource.pas',
   JEN_Header in '..\..\..\Include\Delphi\JEN_Header.pas',
-  SomeGame in 'SomeGame.pas';
+  SomeGame in 'SomeGame.pas',
+  JEN_Render2D in '..\..\..\Jen Engine\Render\JEN_Render2D.pas';
 
 {$R ..\..\..\dll\jen.res}
 {$R ..\..\..\icon.RES}
@@ -42,6 +43,7 @@ begin
   ResMan.Load('Media\asd.dds', r);
   ResMan.Load('Media\Shader.xml', s);
   sp := s.Compile;
+
 end;
 
 procedure TGame.OnUpdate(dt: double); stdcall;
@@ -56,10 +58,10 @@ begin
   Render.CullFace := cfNone;
 
 //   glviewport (0,0,1024,768);
-
+  {
   Render.Matrix[mtProj].Ortho( 0, 800, 000, 600, -1, 1 );
   Render.Matrix[mtModel].Identity;
-  {
+
  // Render.Matrix[mtProj].Ortho(0,800,600,00,-1,1);
  // Render.Matrix[mtModel].Identity;
 
@@ -78,10 +80,10 @@ begin
   glbegin(GL_TRIANGLES);
 
   gltexcoord2f(0,1);
-  glvertex3f(0,100,0);
+  glvertex3f(0,1,0);
 
     gltexcoord2f(1,0);
-  glvertex3f(150,0,0);
+  glvertex3f(1,0,0);
 
 
   gltexcoord2f(0,0);
@@ -96,6 +98,7 @@ var
   Engine : IJenEngine;
   Display : IDisplay;
   Render : IRender;
+  Utils : IUtils;
   Game : TGame;
   ResMan : IResourceManager;
 begin
@@ -104,10 +107,14 @@ begin
   Engine.GetSubSystem(ssDisplay, IJenSubSystem(Display));
   Engine.GetSubSystem(ssRender, IJenSubSystem(Render));
   Engine.GetSubSystem(ssResMan, IJenSubSystem(ResMan));
+  Engine.GetSubSystem(ssUtils, IJenSubSystem(Utils));
   Display.Init(1024, 768, 60, false);
   Render.Init();
   Game := TGame.Create;
   Engine.Start(Game);
+
+  Game := nil;
+  Engine := nil;
 end;
 
 begin

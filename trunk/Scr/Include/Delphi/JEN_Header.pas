@@ -21,6 +21,8 @@ type
   TTextureFilter = (tfNone, tfBilinear, tfTrilinear, tfAniso);
   TSetModeResult = (SM_Successful, SM_SetDefault, SM_Error);
 
+  TColor = LongWord;
+
   IGame = interface
     procedure LoadContent; stdcall;
     procedure OnUpdate(dt: double); stdcall;
@@ -139,6 +141,12 @@ type
     property Matrix[Idx: TMatrixType]: TMat4f read GetMatrix write SetMatrix;
   end;
 
+  IRender2D = interface(IJenSubSystem)
+    procedure Quad(const v1, v2, v3, v4: TVec4f; const C: TVec2f; Angle: Single = 0; Color: TColor = $FFFFFFFF); overload; stdcall;
+ ///  procedure Quad(const Rect, TexRect: TRecti; Color: TColor; Angle: Single = 0); overload; stdcall;
+  //  procedure Quad(x1, y1, x2, y2, x3, y3, x4, y4, cx, cy: Single; Color: TColor; PtIdx: Word = 0; Angle: Single = 0); overload; stdcall;
+  end;
+
   IResource = interface
     function GetName: string; stdcall;
     property Name: string read GetName;
@@ -149,6 +157,8 @@ type
   end;
 
   IShaderProgram = interface
+    function Uniform(const UName: string; UniformType: TShaderUniformType): IShaderUniform; stdcall;
+    //function Attrib(const AName: string; AttribType: TShaderAttribType; Norm: Boolean = False): TShaderAttrib; stdcall;
     procedure Bind; stdcall;
   end;
 

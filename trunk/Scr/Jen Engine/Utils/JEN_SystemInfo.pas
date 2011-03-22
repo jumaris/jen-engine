@@ -188,7 +188,7 @@ end;
 constructor TScreen.Create;
 var
   DevMode : TDeviceMode;
-  i,idx   : Integer;
+  i  : Integer;
 begin
   i := 0;
   SetLength(FModes.FModes, 0);
@@ -224,7 +224,6 @@ var
   DevMode      : TDeviceMode;
  // RefreshRates : PRefreshRateArray;
   Mode         : PDisplayMode;
-  i            : integer;
   Str          : String;
 begin
   Mode := FModes.GetMode(W, H);
@@ -349,7 +348,10 @@ begin
 
   Res := RegOpenKeyExW(HKEY_LOCAL_MACHINE, 'HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0', 0, KEY_READ, &Handle);
   if Res <> ERROR_SUCCESS then
+  begin
+    RegCloseKey(Handle);
     Exit;
+  end;
 
 	Res := RegQueryValueExW(Handle,	'ProcessorNameString', nil, @DataType, nil,	@DataSize);
   if (Res <> ERROR_SUCCESS) or (DataType <> REG_SZ) or (DataSize = 0)  then
@@ -361,8 +363,8 @@ begin
   SetLength(FCPUName,DataSize div 2);
   RegQueryValueExW(Handle, 'ProcessorNameString', nil, @DataType, PByte(@FCPUName[1]), @DataSize);
 
-	DataSize  := SizeOf(LongWord);
-	Res := RegQueryValueExW(Handle,	'~MHz', nil, @DataType, @FCPUSpeed,	@DataSize);
+	DataSize := SizeOf(LongWord);
+	RegQueryValueExW(Handle, '~MHz', nil, @DataType, @FCPUSpeed,	@DataSize);
   RegCloseKey(Handle);
 end;
 

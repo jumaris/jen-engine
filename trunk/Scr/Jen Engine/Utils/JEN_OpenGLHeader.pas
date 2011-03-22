@@ -555,12 +555,12 @@ begin
 
   if not Assigned(Result) then
   begin
-    S := ProcName + 'ARB';
+    S := ProcName + AnsiString('ARB');
     Result := wglGetProcAddress(@S[1]);
   end;
   if not Assigned(Result) then
   begin
-    S := ProcName + 'EXT';
+    S := ProcName + AnsiString('EXT');
     Result := wglGetProcAddress(@S[1]);
   end;
 
