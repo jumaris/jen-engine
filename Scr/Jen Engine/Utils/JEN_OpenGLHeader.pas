@@ -434,6 +434,8 @@ const
   procedure glVertex2f(x, y: GLfloat); stdcall; external opengl32;
   procedure glVertex2fv(v: PGLfloat); stdcall; external opengl32;
   procedure glVertex3f(x, y, z: GLfloat); stdcall; external opengl32;
+  procedure glVertex4f(x, y, z, w: GLfloat); stdcall; external opengl32;
+  procedure glVertex4fv(v: PGLfloat); stdcall; external opengl32;
   procedure glVertexPointer(size: GLint; atype: GLenum; stride: GLsizei; const pointer: Pointer); stdcall; external opengl32;
 
   // TexCoords

@@ -12,7 +12,7 @@ type
 
   TLogMsg = (lmHeaderMsg, lmInfo, lmNotify, lmCode, lmWarning, lmError);
 
-  TJenSubSystemType = (ssUtils, ssSystemParams, ssLog, ssDisplay, ssRender, ssResMan);
+  TJenSubSystemType = (ssUtils, ssSystemParams, ssLog, ssDisplay, ssResMan, ssRender, ssRender2d);
   TBlendType = (btNone, btNormal, btAdd, btMult, btOne, btNoOverride, btAddAlpha);
   TCullFace = (cfNone, cfFront, cfBack);
   TMatrixType = (mtViewProj, mtModel, mtProj, mtView);
