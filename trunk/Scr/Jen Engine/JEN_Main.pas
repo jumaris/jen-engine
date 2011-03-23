@@ -13,6 +13,7 @@ uses
 
   JEN_OpenGLHeader,
   JEN_Render,
+  JEN_Render2D,
   JEN_ResourceManager,
   JEN_DDSTexture,
   JEN_Shader,
@@ -70,6 +71,7 @@ var
   SystemParams : ISystemParams;
   Log          : ILog;
   Render       : IRender;
+  Render2d     : IRender2D;
   Display      : IDisplay;
   ResMan       : IResourceManager;
   Game         : IGame;
@@ -106,6 +108,7 @@ begin
   Log.Init;
 
   Render := TRender.Create;
+  Render2d := TRender2D.Create;
   Display := TDisplay.Create;
   ResMan := TResourceManager.Create;
 end;
@@ -115,7 +118,7 @@ begin
   ResMan := nil;
   Render := nil;
   Display := nil;
-  Utils.Sleep(5000);
+  Utils.Sleep(2000);
 
   inherited;
 end;
@@ -127,8 +130,9 @@ begin
  //   ssSystemParams : SubSystem := SystemParams;
     ssLog : SubSystem :=  IJenSubSystem(Log);
     ssDisplay : SubSystem := IJenSubSystem(Display);
-    ssRender : SubSystem := IJenSubSystem(Render);
     ssResMan : SubSystem := IJenSubSystem(ResMan);
+    ssRender : SubSystem := IJenSubSystem(Render);
+    ssRender2d : SubSystem := IJenSubSystem(Render2d);
   else
     SubSystem := nil;
   end;

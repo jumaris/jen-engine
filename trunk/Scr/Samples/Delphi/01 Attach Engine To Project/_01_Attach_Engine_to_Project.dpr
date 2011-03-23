@@ -77,20 +77,10 @@ begin
                       }
   sp.Bind;
   r.Bind;
-  glbegin(GL_TRIANGLES);
-
-  gltexcoord2f(0,1);
-  glvertex3f(0,1,0);
-
-    gltexcoord2f(1,0);
-  glvertex3f(1,0,0);
-
-
-  gltexcoord2f(0,0);
-  glvertex3f(0,0,0);
-
-  glend;
-
+  render2d.Quad(Vec4f(0,1,0,0),
+                Vec4f(1,0,1,1),
+                Vec4f(0,0,0,1),
+                Vec4f(1,1,1,0),vec2f(0,0));
 end;
 
 procedure pp;
