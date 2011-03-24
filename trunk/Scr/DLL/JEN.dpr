@@ -17,7 +17,6 @@ uses
   JEN_DDSTexture in '..\Jen Engine\Core\JEN_DDSTexture.pas',
   JEN_DefConsoleLog in '..\Jen Engine\Core\JEN_DefConsoleLog.pas',
   JEN_Display in '..\Jen Engine\Core\JEN_Display.pas',
-  JEN_Display_Window in '..\Jen Engine\Core\JEN_Display_Window.pas',
   JEN_Game in '..\Jen Engine\Core\JEN_Game.pas',
   JEN_Log in '..\Jen Engine\Core\JEN_Log.pas',
   JEN_Resource in '..\Jen Engine\Core\JEN_Resource.pas',
@@ -31,7 +30,8 @@ uses
   JEN_SystemInfo in '..\Jen Engine\Utils\JEN_SystemInfo.pas',
   JEN_Utils in '..\Jen Engine\Utils\JEN_Utils.pas',
   XSystem in '..\Jen Engine\Utils\XSystem.pas',
-  JEN_Header in '..\Include\Delphi\JEN_Header.pas';
+  JEN_Header in '..\Include\Delphi\JEN_Header.pas',
+  JEN_Render2D in '..\Jen Engine\Render\JEN_Render2D.pas';
 
 exports
   pGetEngine name 'GetJenEngine';

@@ -10,8 +10,6 @@ uses
   JEN_Log,
   JEN_DefConsoleLog,
   JEN_Display,
-
-  JEN_OpenGLHeader,
   JEN_Render,
   JEN_Render2D,
   JEN_ResourceManager,
@@ -100,6 +98,7 @@ begin
   Utils := TUtils.Create;
   SystemParams := TSystem.Create;
   Log := TLog.Create;
+
   {$IFDEF DEBUG}
   AllocConsole;
   SetConsoleTitleW('Jen Console');
@@ -115,10 +114,18 @@ end;
 
 destructor TJenEngine.Destroy;
 begin
-  ResMan := nil;
-  Render := nil;
-  Display := nil;
-  Utils.Sleep(2000);
+  ResMan       := nil;
+  Render2d     := nil;
+  Render       := nil;
+  Display      := nil;
+
+  {$IFDEF DEBUG}
+  Utils.Sleep(1500);
+  {$ENDIF}
+
+  Log          := nil;
+  Utils        := nil;
+  SystemParams := nil;
 
   inherited;
 end;
@@ -145,6 +152,7 @@ end;
 
 procedure TJenEngine.Start(Game : IGame);
 begin
+
   if not Assigned(Game) then
   begin
     LogOut('Game is not assigned', lmError);
@@ -157,8 +165,8 @@ begin
     Exit;
   end;
 
-  if(not( Assigned(Display) {and Display.Valid }and
-          Assigned(Render) {and Render.Valid }and
+  if(not( Assigned(Display) and Display.Valid and
+          Assigned(Render) and Render.Valid and
           Assigned(ResMan) ) )then
   begin
     Logout('Error in some subsustem', lmError);
@@ -175,10 +183,10 @@ begin
       Display.Update;
       Game.OnUpdate(0);
       Game.OnRender;
-      glfinish;
-    //  glClear( GL_COLOR_BUFFER_BIT);
+     // glfinish;
       Display.Swap;
     end;
+
 end;
 
 initialization

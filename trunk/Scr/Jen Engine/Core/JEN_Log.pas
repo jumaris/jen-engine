@@ -5,8 +5,7 @@ interface
 
 uses
   JEN_Header,
-  JEN_Utils,
-  JEN_SystemInfo;
+  JEN_Utils;
 
 type
   TLogOutput = class
@@ -20,7 +19,7 @@ type
     procedure Init;
   end;
 
-  TLog = class(TInterfacedObject,  ILog)
+  TLog = class(TInterfacedObject, ILog)
   constructor Create;
   destructor Destroy; Override;
   protected
@@ -34,8 +33,7 @@ type
 implementation
 
 {$IFDEF JEN_LOG}
-uses
-  JEN_Main;
+
 
 constructor TLogOutput.Create;
 begin
@@ -51,7 +49,7 @@ end;
 
 destructor TLog.Destroy;
 var  
-  i : integer;
+  i : LongInt;
 begin
   for I := 0 to fLogOutputs.Count - 1 do
      TObject(fLogOutputs[i]).Free;    
@@ -61,7 +59,7 @@ end;
 
 procedure TLog.Init;        
 var
-  i : Integer;
+  i : LongInt;
 begin
 
 
@@ -79,7 +77,7 @@ end;
 
 procedure TLog.Print(const Text: String; MType: TLogMsg);
 var
-  i : Integer;
+  i : LongInt;
 begin
   for i := 0 to fLogOutputs.Count - 1 do
     TLogOutput(fLogOutputs[i]).AddMsg(Text, MType);

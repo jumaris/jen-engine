@@ -41,9 +41,9 @@ type
   IUtils = interface(IJenSubSystem)
     function GetTime : LongInt; stdcall;
     procedure Sleep(Value: LongWord); stdcall;
-    function IntToStr(Value: Integer): string; stdcall;
-    function StrToInt(const Str: string; Def: Integer = 0): Integer; stdcall;
-    function FloatToStr(Value: Single; Digits: Integer = 8): string; stdcall;
+    function IntToStr(Value: LongInt): string; stdcall;
+    function StrToInt(const Str: string; Def: LongInt = 0): LongInt; stdcall;
+    function FloatToStr(Value: Single; Digits: LongInt = 8): string; stdcall;
     function StrToFloat(const Str: string; Def: Single = 0): Single; stdcall;
     function ExtractFileDir(const FileName: string): string; stdcall;
     function ExtractFileName(const FileName: string): string; stdcall;
@@ -53,31 +53,31 @@ type
   end;
 
   IScreen = interface
-    function GetWidth  : Integer; stdcall;
-    function GetHeight : Integer; stdcall;
+    function GetWidth  : LongInt; stdcall;
+    function GetHeight : LongInt; stdcall;
     function GetBPS    : Byte; stdcall;
     function GetRefresh: Byte; stdcall;
 
-    function SetMode(W, H, R: integer): TSetModeResult; stdcall;
+    function SetMode(W, H, R: LongInt): TSetModeResult; stdcall;
 
-    property Width  : Integer read GetWidth;
-    property Height : Integer read GetHeight;
+    property Width  : LongInt read GetWidth;
+    property Height : LongInt read GetHeight;
     property BPS    : Byte read GetBPS;
     property Refresh: Byte read GetRefresh;
   end;
 
   ISystemParams = interface(IJenSubSystem)
-    function GetRAMTotal: Cardinal; stdcall;
-    function GetRAMFree: Cardinal; stdcall;
-    function GetCPUCount: Integer; stdcall;
+    function GetRAMTotal: LongWord; stdcall;
+    function GetRAMFree: LongWord; stdcall;
+    function GetCPUCount: LongInt; stdcall;
     function GetCPUName: String; stdcall;
     function GetCPUSpeed: LongWord; stdcall;
 
-    property CPUCount: Integer read GetCPUCount;
+    property CPUCount: LongInt read GetCPUCount;
     property CPUName: String read GetCPUName;
     property CPUSpeed: LongWord read GetCPUSpeed;
-    property RAMTotal: Cardinal read GetRAMTotal;
-    property RAMFree: Cardinal read GetRAMFree;
+    property RAMTotal: LongWord read GetRAMTotal;
+    property RAMFree: LongWord read GetRAMFree;
   end;
 
   ILog = interface(IJenSubSystem)
@@ -85,7 +85,7 @@ type
   end;
 
   IDisplay = interface(IJenSubSystem)
-    function Init(Width: Cardinal = 800; Height: Cardinal = 600; Refresh: Byte = 0; FullScreen: Boolean = False): Boolean; stdcall;
+    function Init(Width: LongWord = 800; Height: LongWord = 600; Refresh: Byte = 0; FullScreen: Boolean = False): Boolean; stdcall;
 
     procedure SetActive(Value: Boolean); stdcall;
     procedure SetCaption(const Value: string); stdcall;
@@ -99,11 +99,12 @@ type
     function GetHandle: HWND; stdcall;
     function GetWidth: LongWord; stdcall;
     function GetHeight: LongWord; stdcall;
+    function GetFPS: LongWord; stdcall;
 
     procedure Swap; stdcall;
     procedure ShowCursor(Value: Boolean); stdcall;
                 {
-    procedure Resize(W, H: Cardinal);
+    procedure Resize(W, H: LongWord);
     property VSync: Boolean read FVSync write SetVSync;
                                                 }
     property Active: Boolean read GetActive write SetActive;
@@ -112,11 +113,10 @@ type
 
     property Handle: HWND  read GetHandle;
     property DC: HDC read GetHDC;
-    property Width: Cardinal read GetWidth;
-    property Height: Cardinal read GetHeight;
+    property Width: LongWord read GetWidth;
+    property Height: LongWord read GetHeight;
     property Caption: String write SetCaption;
-
-   // property FPS: LongInt read FFPS;
+    property FPS: LongWord read GetFPS;
   end;
 
   IRender = interface(IJenSubSystem)

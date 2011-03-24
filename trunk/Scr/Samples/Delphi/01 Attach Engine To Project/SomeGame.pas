@@ -4,8 +4,7 @@ interface
     {
 uses
   JEN_Header;//,
- { xsystem;,
-  JEN_OPENGLHEADER;
+ { xsystem;
                   }   {
 type
   TSomeGame = class(TInterfacedObject, IGame)

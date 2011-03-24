@@ -54,7 +54,6 @@
 			<DCCReference Include="..\Jen Engine\Core\JEN_DDSTexture.pas"/>
 			<DCCReference Include="..\Jen Engine\Core\JEN_DefConsoleLog.pas"/>
 			<DCCReference Include="..\Jen Engine\Core\JEN_Display.pas"/>
-			<DCCReference Include="..\Jen Engine\Core\JEN_Display_Window.pas"/>
 			<DCCReference Include="..\Jen Engine\Core\JEN_Game.pas"/>
 			<DCCReference Include="..\Jen Engine\Core\JEN_Log.pas"/>
 			<DCCReference Include="..\Jen Engine\Core\JEN_Resource.pas"/>
@@ -69,6 +68,7 @@
 			<DCCReference Include="..\Jen Engine\Utils\JEN_Utils.pas"/>
 			<DCCReference Include="..\Jen Engine\Utils\XSystem.pas"/>
 			<DCCReference Include="..\Include\Delphi\JEN_Header.pas"/>
+			<DCCReference Include="..\Jen Engine\Render\JEN_Render2D.pas"/>
 			<BuildConfiguration Include="Base">
 				<Key>Base</Key>
 			</BuildConfiguration>

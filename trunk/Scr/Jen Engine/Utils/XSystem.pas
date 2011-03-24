@@ -347,7 +347,7 @@ type
   function LoadCursorW(hInstance: LongInt; lpCursorName: PWideChar ): LongWord; stdcall; external user32;
   function LoadIconW(hInstance: LongInt; lpIconName: PWideChar): LongWord; stdcall; external user32;
   function GetModuleHandleW(lpModuleName: PWideChar): HMODULE; stdcall; external kernel32;
-  function MessageBoxW(hWnd: HWND; lpText, lpCaption: PWideChar; uType: LongWord): Integer; stdcall; external user32;
+  function MessageBoxW(hWnd: HWND; lpText, lpCaption: PWideChar; uType: LongWord): LongInt; stdcall; external user32;
   function GetProcAddress(hModule: HMODULE; lpProcName: PAnsiChar): Pointer; stdcall; external kernel32;
 
 //Messages

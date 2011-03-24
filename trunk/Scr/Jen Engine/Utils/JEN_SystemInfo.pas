@@ -12,17 +12,17 @@ type
 
     procedure Clear;
     procedure Add(Value: Byte);
-    function Count: Integer;
-    function GetRefresh(Idx: Integer): Byte;
+    function Count: LongInt;
+    function GetRefresh(Idx: LongInt): Byte;
     function IsExist(Value: Byte): Boolean;
 
-    property Rates[Idx: Integer]: Byte read GetRefresh; default;
+    property Rates[Idx: LongInt]: Byte read GetRefresh; default;
   end;
 
   PDisplayMode = ^TDisplayMode;
   TDisplayMode = record
-    Width        : Integer;
-    Height       : Integer;
+    Width        : LongInt;
+    Height       : LongInt;
     RefreshRates : TRefreshRates;
   end;
 
@@ -30,9 +30,9 @@ type
     FModes : array of TDisplayMode;
 
     procedure Clear;
-    function Add(Width, Height: Integer; Refresh: Byte): Integer;
-    function GetMode(Idx: Integer): PDisplayMode; overload;
-    function GetMode(Width, Height: Integer): PDisplayMode; overload;
+    function Add(Width, Height: LongInt; Refresh: Byte): LongInt;
+    function GetMode(Idx: LongInt): PDisplayMode; overload;
+    function GetMode(Width, Height: LongInt): PDisplayMode; overload;
 
     property Modes[Idx: Integer]: PDisplayMode read GetMode; default;
   end;
@@ -47,17 +47,17 @@ type
   private
     var
       FModes        : TDisplayModes;
-      FStartWidth   : Integer;
-      FStartHeight  : Integer;
+      FStartWidth   : LongInt;
+      FStartHeight  : LongInt;
       FStartBPS     : Byte;
       FStartRefresh : Byte;
   public
-    function GetWidth  : Integer; stdcall;
-    function GetHeight : Integer; stdcall;
+    function GetWidth  : LongInt; stdcall;
+    function GetHeight : LongInt; stdcall;
     function GetBPS    : Byte; stdcall;
     function GetRefresh: Byte; stdcall;
 
-    function SetMode(W, H, R: integer): TSetModeResult; stdcall;
+    function SetMode(W, H, R: LongInt): TSetModeResult; stdcall;
     procedure ResetMode;
   end;
 
@@ -76,9 +76,9 @@ type
     fCPUSpeed : LongWord;
     fScreen   : IScreen;
 
-    function GetRAMTotal: Cardinal; stdcall;
-    function GetRAMFree: Cardinal; stdcall;
-    function GetCPUCount: Integer; stdcall;
+    function GetRAMTotal: LongWord; stdcall;
+    function GetRAMFree: LongWord; stdcall;
+    function GetCPUCount: LongInt; stdcall;
     function GetCPUName: String; stdcall;
     function GetCPUSpeed: LongWord; stdcall;
     function GetScreen: IScreen; stdcall;
@@ -93,7 +93,7 @@ uses
 
 procedure TRefreshRates.Add(Value: Byte);
 var
-  Idx, i: integer;
+  Idx, i: LongInt;
 begin
   Idx := -1;
 
@@ -110,12 +110,12 @@ begin
   FRefreshRates[Idx] := Value;
 end;
 
-function TRefreshRates.Count: Integer;
+function TRefreshRates.Count: LongInt;
 begin
   Result := Length(FRefreshRates);
 end;
 
-function TRefreshRates.GetRefresh(Idx: Integer): Byte;
+function TRefreshRates.GetRefresh(Idx: LongInt): Byte;
 begin
   if (Idx < 0) or (Idx > High(FRefreshRates)) then Exit(0);
   Result := FRefreshRates[Idx];
@@ -123,7 +123,7 @@ end;
 
 function TRefreshRates.IsExist(Value: Byte): Boolean;
 var
-  i: integer;
+  i: LongInt;
 begin
   Result := False;
   for i := 0 to High(FRefreshRates) do
@@ -138,16 +138,16 @@ end;
 
 procedure TDisplayModes.Clear;
 var
-  i : integer;
+  i : LongInt;
 begin
   for i := 0 to High(FModes) do
     FModes[i].RefreshRates.Clear;
   SetLength(FModes, 0);
 end;
 
-function TDisplayModes.Add(Width, Height: Integer; Refresh: Byte): integer;
+function TDisplayModes.Add(Width, Height: LongInt; Refresh: Byte): LongInt;
 var
-  i : integer;
+  i : LongInt;
 begin
   Result := -1;
 
@@ -167,16 +167,16 @@ begin
   FModes[Result].RefreshRates.Add(Refresh);
 end;
 
-function TDisplayModes.GetMode(Idx: Integer): PDisplayMode;
+function TDisplayModes.GetMode(Idx: LongInt): PDisplayMode;
 begin
   if (Idx < 0) or (Idx > High(FModes)) then
     Exit(nil);
   Result := @FModes[Idx];
 end;
 
-function TDisplayModes.GetMode(Width, Height: Integer): PDisplayMode;
+function TDisplayModes.GetMode(Width, Height: LongInt): PDisplayMode;
 var
-  i : Integer;
+  i : LongInt;
 begin
   Result := nil;
   for i := 0 to High(FModes) do
@@ -188,7 +188,7 @@ end;
 constructor TScreen.Create;
 var
   DevMode : TDeviceMode;
-  i  : Integer;
+  i  : LongInt;
 begin
   i := 0;
   SetLength(FModes.FModes, 0);
@@ -219,7 +219,7 @@ begin
   inherited;
 end;
 
-function TScreen.SetMode(W, H, R: integer): TSetModeResult;
+function TScreen.SetMode(W, H, R: LongInt): TSetModeResult;
 var
   DevMode      : TDeviceMode;
  // RefreshRates : PRefreshRateArray;
@@ -305,12 +305,12 @@ begin
   LogOut('Reset display mode to default', lmNotify);
 end;
 
-function TScreen.GetWidth: Integer;
+function TScreen.GetWidth: LongInt;
 begin
   Result := GetSystemMetrics(SM_CXSCREEN);
 end;
 
-function TScreen.GetHeight: Integer;
+function TScreen.GetHeight: LongInt;
 begin
   Result := GetSystemMetrics(SM_CYSCREEN);
 end;
@@ -385,7 +385,7 @@ begin
   Build := OSVerInfo.dwBuildNumber;
 end;
 
-function TSystem.GetCPUCount: integer;
+function TSystem.GetCPUCount: LongInt;
 begin
   Result := System.CPUCount;
 end;
@@ -405,7 +405,7 @@ begin
   Result := fScreen;
 end;
 
-function TSystem.GetRAMTotal: Cardinal;
+function TSystem.GetRAMTotal: LongWord;
 var
   MemStatus : TMemoryStatusEx;
 begin
@@ -414,7 +414,7 @@ begin
   Result := Trunc(MemStatus.ullTotalPhys/(1024*1024)+1);
 end;
 
-function TSystem.GetRAMFree: Cardinal;
+function TSystem.GetRAMFree: LongWord;
 var
   MemStatus : TMemoryStatusEx;
 begin

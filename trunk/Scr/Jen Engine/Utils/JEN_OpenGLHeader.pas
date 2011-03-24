@@ -12,13 +12,13 @@ type
   GLbyte      = Shortint;
   GLshort     = SmallInt;
   GLushort    = Word;
-  GLint       = Integer;
+  GLint       = LongInt;
   GLuint      = LongWord;
   GLenum      = LongWord;
   GLfloat     = Single;
   GLdouble    = Double;
-  GLsizei     = Integer;
-  GLhandle    = Cardinal;
+  GLsizei     = LongInt;
+  GLhandle    = LongWord;
 
   PGLboolean = ^GLboolean;
   PGLbyte    = ^GLbyte;
@@ -420,6 +420,7 @@ const
   procedure glBlendFunc(sfactor, dfactor: GLenum); stdcall; external opengl32;
   // CullFace
   procedure glCullFace(mode: GLenum); stdcall; external opengl32;
+ {
   // Matrix
   procedure glPushMatrix; stdcall; external opengl32;
   procedure glPopMatrix; stdcall; external opengl32;
@@ -430,6 +431,8 @@ const
   procedure glRotatef(angle, x, y, z: GLfloat); stdcall; external opengl32;
   procedure glScalef(x, y, z: GLfloat); stdcall; external opengl32;
   procedure glTranslatef(x, y, z: GLfloat); stdcall; external opengl32;
+   }
+
   // Vertex
   procedure glVertex2f(x, y: GLfloat); stdcall; external opengl32;
   procedure glVertex2fv(v: PGLfloat); stdcall; external opengl32;
@@ -455,7 +458,7 @@ const
   procedure glGetTexImage(target: GLenum; level: GLint; format: GLenum; atype: GLenum; pixels: Pointer); stdcall; external opengl32;
   procedure glCopyTexSubImage2D(target: GLenum; level, xoffset, yoffset, x, y: GLint; width, height: GLsizei); stdcall; external opengl32;
   procedure glTexEnvi(target: GLenum; pname: GLenum; param: GLint); stdcall; external opengl32;
-  function  gluBuild2DMipmaps(target: GLenum; components, width, height: GLint; format, atype: GLenum; const data: Pointer): Integer; stdcall; external opengl32;
+  function  gluBuild2DMipmaps(target: GLenum; components, width, height: GLint; format, atype: GLenum; const data: Pointer): LongInt; stdcall; external opengl32;
 
   // Normal
   procedure glNormal3f(x, y, z: GLfloat); stdcall; external opengl32;

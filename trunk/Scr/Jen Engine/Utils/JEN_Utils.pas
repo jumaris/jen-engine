@@ -11,6 +11,74 @@ const
   LIST_DELTA = 32;
 
 type
+  TCompareFunc = function (Item1, Item2: Pointer): LongInt;
+
+  TItemArray = array of Pointer;
+
+  TList = class
+    constructor Create;
+    destructor Destroy; override;
+  protected
+    FCount : LongInt;
+    FItems : TItemArray;
+    function GetItem(idx: LongInt): Pointer; inline;
+    procedure SetItem(idx: LongInt; Value: Pointer); inline;
+  public
+    function Add(p: Pointer): Pointer;
+    procedure Del(idx: LongInt);
+    procedure Clear; virtual;
+    procedure Sort(CompareFunc: TCompareFunc);
+    function IndexOf(p: Pointer): LongInt;
+    property Count: LongInt read FCount;
+    property Items[Idx: LongInt]: Pointer read GetItem write SetItem; default;
+  end;
+
+  TObjectList = class(TList)
+  protected
+    function GetItem(Idx: LongInt): TObject; inline;
+    procedure SetItem(Idx: LongInt; Value: TObject); inline;
+  public
+    function Add(Obj: TObject): TObject;
+    procedure Del(Idx: LongInt);
+    procedure Clear; override;
+    function IndexOf(Obj: TObject): LongInt;
+    property Items[Idx: LongInt]: TObject read GetItem write SetItem; default;
+  end;
+
+  TInterfaceList = class;
+
+  TManagedInterfacedObj = class(TObject, IInterface)
+    constructor Create(Manager: TInterfaceList);
+  protected
+    FRefCount: LongInt;
+    FManager: TInterfaceList;
+    function QueryInterface(const IID: TGUID; out Obj): HResult; stdcall;
+    function _AddRef: LongInt; stdcall;
+    function _Release: LongInt; stdcall;
+  public
+    procedure AfterConstruction; override;
+    procedure BeforeDestruction; override;
+    class function NewInstance: TObject; override;
+    property RefCount: LongInt read FRefCount;
+  end;
+
+  TInterfaceList = class
+    constructor Create;
+    destructor Destroy; override;
+  protected
+    FCount : LongInt;
+    FItems : array of IUnknown;
+    function GetItem(idx: LongInt): IUnknown; inline;
+    procedure SetItem(idx: LongInt; Value: IUnknown); inline;
+  public
+    function Add(p: IUnknown): IUnknown;
+    procedure Del(idx: LongInt);
+    procedure Clear; virtual;
+    function IndexOf(p: IUnknown): LongInt;
+    property Count: LongInt read FCount;
+    property Items[Idx: LongInt]: IUnknown read GetItem write SetItem; default;
+  end;
+
   TUtils = class(TInterfacedObject, IJenSubSystem, IUtils)
     constructor Create;
     destructor Destroy; override;
@@ -20,91 +88,15 @@ type
     function GetTime : LongInt; stdcall;
   public
     procedure Sleep(Value: LongWord); stdcall;
-    function IntToStr(Value: Integer): string; stdcall;
-    function StrToInt(const Str: string; Def: Integer = 0): Integer; stdcall;
-    function FloatToStr(Value: Single; Digits: Integer = 8): string; stdcall;
+    function IntToStr(Value: LongInt): string; stdcall;
+    function StrToInt(const Str: string; Def: LongInt = 0): LongInt; stdcall;
+    function FloatToStr(Value: Single; Digits: LongInt = 8): string; stdcall;
     function StrToFloat(const Str: string; Def: Single = 0): Single; stdcall;
     function ExtractFileDir(const FileName: string): string; stdcall;
     function ExtractFileName(const FileName: string): string; stdcall;
     function ExtractFileExt(const FileName: string): string; stdcall;
     function ExtractFileNameNoExt(const FileName: string): string; stdcall;
     property Time : LongInt read GetTime;
-  end;
-
-  TCompareFunc = function (Item1, Item2: Pointer): Integer;
-
-  TItemArray = array of Pointer;
-
-  TList = class
-    constructor Create;
-    destructor Destroy; override;
-  protected
-    FCount : Integer;
-    FItems : TItemArray;
-    function GetItem(idx: Integer): Pointer; inline;
-    procedure SetItem(idx: Integer; Value: Pointer); inline;
-  public
-    function Add(p: Pointer): Pointer;
-    procedure Del(idx: Integer);
-    procedure Clear; virtual;
-    procedure Sort(CompareFunc: TCompareFunc);
-    function IndexOf(p: Pointer): Integer;
-    property Count: Integer read FCount;
-    property Items[Idx: Integer]: Pointer read GetItem write SetItem; default;
-  end;
-
-  TObjectList = class(TList)
-  protected
-    function GetItem(Idx: Integer): TObject; inline;
-    procedure SetItem(Idx: Integer; Value: TObject); inline;
-  public
-    function Add(Obj: TObject): TObject;
-    procedure Del(Idx: Integer);
-    procedure Clear; override;
-    function IndexOf(Obj: TObject): Integer;
-    property Items[Idx: Integer]: TObject read GetItem write SetItem; default;
-  end;
-
-  TInterfaceList = class
-    constructor Create;
-    destructor Destroy; override;
-  protected
-    FCount : Integer;
-    FItems : array of IUnknown;
-    function GetItem(idx: Integer): IUnknown; inline;
-    procedure SetItem(idx: Integer; Value: IUnknown); inline;
-  public
-    function Add(p: IUnknown): IUnknown;
-    procedure Del(idx: Integer);
-    procedure Clear; virtual;
-    property Count: Integer read FCount;
-    property Items[Idx: Integer]: IUnknown read GetItem write SetItem; default;
-  end;
-
-  TManager = class;
-
-{ Managed Object Class }
-  TManagedObj = class
-    constructor Create(const ManagedName: AnsiString; Manager: TManager); virtual;
-  protected
-    FName     : AnsiString;
-    FRefCount : Integer;
-    FManager  : TManager;
-  public
-    function AddRef: Integer;
-    function Release: Integer;
-    procedure Free;
-    property Name: AnsiString read FName;
-  end;
-
-  TManager = class(TObjectList)
-  protected
-    function GetItem(Idx: Integer): TManagedObj; inline;
-  public
-    function GetObj(const Name: AnsiString): TManagedObj;
-    procedure Add(ManObj: TManagedObj);
-    procedure Del(ManObj: TManagedObj);
-    property Items[Idx: Integer]: TManagedObj read GetItem; default;
   end;
 
   TStream = class
@@ -184,6 +176,22 @@ asm
        POP     ESI
 end;
 
+function InterlockedIncrement(var Addend: LongInt): LongInt;
+asm
+      MOV   EDX,1
+      XCHG  EAX,EDX
+ LOCK XADD  [EDX],EAX
+      INC   EAX
+end;
+
+function InterlockedDecrement(var Addend: LongInt): LongInt;
+asm
+      MOV   EDX,-1
+      XCHG  EAX,EDX
+ LOCK XADD  [EDX],EAX
+      DEC   EAX
+end;
+
 function LowerCase(const Str: string): string;
 var
   i : LongInt;
@@ -231,7 +239,266 @@ begin
   SetLength(Result, j);
 end;
 
+{ TList }
+{$REGION 'TList'}
+constructor TList.Create;
+begin
+  FCount := 0;
+  FItems := nil;
+end;
+
+destructor TList.Destroy;
+begin
+  Clear;
+  inherited;
+end;
+
+function TList.Add(p: Pointer): Pointer;
+begin
+  if FCount mod LIST_DELTA = 0 then
+    SetLength(FItems, Length(FItems) + LIST_DELTA);
+  FItems[FCount] := p;
+  Result := p;
+  Inc(FCount);
+end;
+
+procedure TList.Del(Idx: LongInt);
+var
+  i : LongInt;
+begin
+  for i := Idx to FCount - 2 do
+    FItems[i] := FItems[i + 1];
+  Dec(FCount);
+
+  if Length(FItems) - FCount + 1 > LIST_DELTA then
+    SetLength(FItems, Length(FItems) - LIST_DELTA);
+end;
+
+procedure TList.Clear;
+begin
+  FCount := 0;
+  FItems := nil;
+end;
+
+procedure TList.Sort(CompareFunc: TCompareFunc);
+
+  procedure SortFragment(L, R: LongInt);
+  var
+    i, j : LongInt;
+    P, T : Pointer;
+  begin
+    repeat
+      i := L;
+      j := R;
+      P := FItems[(L + R) div 2];
+      repeat
+        while CompareFunc(FItems[i], P) < 0 do
+          Inc(i);
+        while CompareFunc(FItems[j], P) > 0 do
+          Dec(j);
+        if i <= j then
+        begin
+          T := FItems[i];
+          FItems[i] := FItems[j];
+          FItems[j] := T;
+          Inc(i);
+          Dec(j);
+        end;
+      until i > j;
+      if L < j then
+        SortFragment(L, j);
+      L := i;
+    until i >= R;
+  end;
+
+begin
+  if FCount > 1 then
+    SortFragment(0, FCount - 1);
+end;
+
+function TList.IndexOf(p: Pointer): LongInt;
+var
+  i : LongInt;
+begin
+  for i := 0 to FCount - 1 do
+    if FItems[i] = p then
+    begin
+      Result := i;
+      Exit;
+    end;
+  Result := -1;
+end;
+
+function TList.GetItem(Idx: LongInt): Pointer;
+begin
+  Result := FItems[Idx];
+end;
+
+procedure TList.SetItem(Idx: LongInt; Value: Pointer);
+begin
+  FItems[Idx] := Value;
+end;
+{$ENDREGION}
+
+{ TObjectList }
+{$REGION 'TObjectList'}
+function TObjectList.Add(Obj: TObject): TObject;
+begin
+  Result := TObject(inherited Add(Pointer(Obj)));
+end;
+
+procedure TObjectList.Del(Idx: LongInt);
+begin
+  TObject(FItems[Idx]).Free;
+  inherited;
+end;
+
+procedure TObjectList.Clear;
+var
+  i : LongInt;
+begin
+  for i := 0 to Count - 1 do
+    TObject(FItems[i]).Free;
+  inherited;
+end;
+
+function TObjectList.IndexOf(Obj: TObject): LongInt;
+begin
+  Result := inherited IndexOf(Pointer(Obj));
+end;
+
+function TObjectList.GetItem(Idx: LongInt): TObject;
+begin
+  Result := TObject(FItems[Idx]);
+end;
+
+procedure TObjectList.SetItem(Idx: LongInt; Value: TObject);
+begin
+  TObject(FItems[Idx]) := Value;
+end;
+{$ENDREGION}
+
+{ TManagedInterfacedObj }
+{$REGION 'TManagedInterfacedObj'}
+constructor TManagedInterfacedObj.Create;
+begin
+  inherited Create;
+  FManager := Manager;
+ // FManager.Add(self);
+end;
+
+procedure TManagedInterfacedObj.AfterConstruction;
+begin
+  InterlockedDecrement(FRefCount);
+end;
+
+procedure TManagedInterfacedObj.BeforeDestruction;
+begin
+  if RefCount <> 0 then
+    Error(reInvalidPtr);
+end;
+
+class function TManagedInterfacedObj.NewInstance: TObject;
+begin
+  Result := inherited NewInstance;
+  TManagedInterfacedObj(Result).FRefCount := 1;
+end;
+
+function TManagedInterfacedObj.QueryInterface(const IID: TGUID; out Obj): HResult;
+begin
+  if GetInterface(IID, Obj) then
+    Result := 0
+  else
+    Result := E_NOINTERFACE;
+end;
+
+function TManagedInterfacedObj._AddRef: LongInt;
+begin
+  Result := InterlockedIncrement(FRefCount);
+end;
+
+function TManagedInterfacedObj._Release: LongInt;
+var
+  Manager : TInterfaceList;
+begin
+  Result := InterlockedDecrement(FRefCount);
+  case Result of
+    0: Destroy;
+    1: if(Assigned(FManager)) then
+      begin
+        Manager := FManager;
+        FManager := nil;
+        Manager.Del(Manager.IndexOf(Self));
+      end;
+  end;
+
+end;
+{$ENDREGION}
+
+{ TInterfaceList }
+{$REGION 'TInterfaceList'}
+constructor TInterfaceList.Create;
+begin
+  FCount := 0;
+  FItems := nil;
+end;
+
+destructor TInterfaceList.Destroy;
+begin
+  Clear;
+  inherited;
+end;
+
+function TInterfaceList.Add(p: IUnknown): IUnknown;
+begin
+  if FCount mod LIST_DELTA = 0 then
+    SetLength(FItems, Length(FItems) + LIST_DELTA);
+  FItems[FCount] := p;
+  Result := p;
+  Inc(FCount);
+end;
+
+procedure TInterfaceList.Del(Idx: LongInt);
+begin
+  if idx < 0  then Exit;     {
+  for i := Idx to FCount - 2 do
+    FItems[i] := FItems[i + 1];   }
+  FItems[Idx] := FItems[FCount - 1];
+  Dec(FCount);
+
+  if Length(FItems) - FCount + 1 > LIST_DELTA then
+    SetLength(FItems, Length(FItems) - LIST_DELTA);
+end;
+
+procedure TInterfaceList.Clear;
+begin
+  FCount := 0;
+  FItems := nil;
+end;
+
+function TInterfaceList.IndexOf(p: IUnknown): LongInt;
+var
+  i : LongInt;
+begin
+  Result := -1;
+  for i := 0 to FCount - 1 do
+    if FItems[i] = p then
+      Exit(i);
+end;
+
+function TInterfaceList.GetItem(Idx: LongInt): IUnknown;
+begin
+  Result := FItems[Idx];
+end;
+
+procedure TInterfaceList.SetItem(Idx: LongInt; Value: IUnknown);
+begin
+  FItems[Idx] := Value;
+end;
+{$ENDREGION}
+
 { TUtils }
+{$REGION 'TUtils'}
 constructor TUtils.Create;
 var
   Count : Int64;
@@ -320,7 +587,7 @@ end;     }
 
 function TUtils.ExtractFileDir(const FileName: string): string;
 var
-  i : Integer;
+  i : LongInt;
 begin
   for i := Length(FileName) downto 1 do
     if (FileName[i] = '\') or (FileName[i] = '/') then
@@ -335,7 +602,7 @@ end;
 
 function TUtils.ExtractFileExt(const FileName: string): string;
 var
-  i: Integer;
+  i: LongInt;
 begin
   Result := '';
   for i := Length(FileName) downto 1 do
@@ -345,7 +612,7 @@ end;
 
 function TUtils.ExtractFileNameNoExt(const FileName: string): string;
 var
-  i: Integer;
+  i: LongInt;
 begin
   Result := '';
   if Length(FileName) > 0 then begin
@@ -355,257 +622,10 @@ begin
     Result := Copy(Result, 0, i - 1);
   end;
 end;
+{$ENDREGION}
 
-{ TList }
-constructor TList.Create;
-begin
-  FCount := 0;
-  FItems := nil;
-end;
-
-destructor TList.Destroy;
-begin
-  Clear;
-  inherited;
-end;
-
-function TList.Add(p: Pointer): Pointer;
-begin
-  if FCount mod LIST_DELTA = 0 then
-    SetLength(FItems, Length(FItems) + LIST_DELTA);
-  FItems[FCount] := p;
-  Result := p;
-  Inc(FCount);
-end;
-
-procedure TList.Del(Idx: Integer);
-var
-  i : Integer;
-begin
-  for i := Idx to FCount - 2 do
-    FItems[i] := FItems[i + 1];
-  Dec(FCount);
-
-  if Length(FItems) - FCount + 1 > LIST_DELTA then
-    SetLength(FItems, Length(FItems) - LIST_DELTA);
-end;
-
-procedure TList.Clear;
-begin
-  FCount := 0;
-  FItems := nil;
-end;
-
-procedure TList.Sort(CompareFunc: TCompareFunc);
-
-  procedure SortFragment(L, R: Integer);
-  var
-    i, j : Integer;
-    P, T : Pointer;
-  begin
-    repeat
-      i := L;
-      j := R;
-      P := FItems[(L + R) div 2];
-      repeat
-        while CompareFunc(FItems[i], P) < 0 do
-          Inc(i);
-        while CompareFunc(FItems[j], P) > 0 do
-          Dec(j);
-        if i <= j then
-        begin
-          T := FItems[i];
-          FItems[i] := FItems[j];
-          FItems[j] := T;
-          Inc(i);
-          Dec(j);
-        end;
-      until i > j;
-      if L < j then
-        SortFragment(L, j);
-      L := i;
-    until i >= R;
-  end;
- 
-begin
-  if FCount > 1 then
-    SortFragment(0, FCount - 1);
-end;
-
-function TList.IndexOf(p: Pointer): Integer;
-var
-  i : Integer;
-begin
-  for i := 0 to FCount - 1 do
-    if FItems[i] = p then
-    begin
-      Result := i;
-      Exit;
-    end;
-  Result := -1;
-end;
-
-function TList.GetItem(Idx: Integer): Pointer;
-begin
-  Result := FItems[Idx];
-end;
-
-procedure TList.SetItem(Idx: Integer; Value: Pointer);
-begin
-  FItems[Idx] := Value;
-end;
-
-{ TObjectList }
-function TObjectList.Add(Obj: TObject): TObject;
-begin
-  Result := TObject(inherited Add(Pointer(Obj)));
-end;
-
-procedure TObjectList.Del(Idx: Integer);
-begin
-  TObject(FItems[Idx]).Free;
-  inherited;
-end;
-
-procedure TObjectList.Clear;
-var
-  i : Integer;
-begin
-  for i := 0 to Count - 1 do
-    TObject(FItems[i]).Free;
-  inherited;
-end;
-
-function TObjectList.IndexOf(Obj: TObject): Integer;
-begin
-  Result := inherited IndexOf(Pointer(Obj));
-end;
-
-function TObjectList.GetItem(Idx: Integer): TObject;
-begin
-  Result := TObject(FItems[Idx]);
-end;
-
-procedure TObjectList.SetItem(Idx: Integer; Value: TObject);
-begin
-  TObject(FItems[Idx]) := Value;
-end;
-
-{ TInterfaceList }
-constructor TInterfaceList.Create;
-begin
-  FCount := 0;
-  FItems := nil;
-end;
-
-destructor TInterfaceList.Destroy;
-begin
-  Clear;
-  inherited;
-end;
-
-function TInterfaceList.Add(p: IUnknown): IUnknown;
-begin
-  if FCount mod LIST_DELTA = 0 then
-    SetLength(FItems, Length(FItems) + LIST_DELTA);
-  FItems[FCount] := p;
-  Result := p;
-  Inc(FCount);
-end;
-
-procedure TInterfaceList.Del(Idx: Integer);
-var
-  i : Integer;
-begin
-  for i := Idx to FCount - 2 do
-    FItems[i] := FItems[i + 1];
-  Dec(FCount);
-
-  if Length(FItems) - FCount + 1 > LIST_DELTA then
-    SetLength(FItems, Length(FItems) - LIST_DELTA);
-end;
-
-procedure TInterfaceList.Clear;
-begin
-  FCount := 0;
-  FItems := nil;
-end;
-
-function TInterfaceList.GetItem(Idx: Integer): IUnknown;
-begin
-  Result := FItems[Idx];
-end;
-
-procedure TInterfaceList.SetItem(Idx: Integer; Value: IUnknown);
-begin
-  FItems[Idx] := Value;
-end;
-
-{ TManagedObj }
-constructor TManagedObj.Create(const ManagedName: AnsiString; Manager: TManager);
-begin
-  FManager := Manager;
-  FName    := ManagedName;
-  FManager.Add(Self);
-  FRefCount := 1;
-end;
-
-procedure TManagedObj.Free;
-begin
-  if Release <= 0 then
-    FManager.Del(Self);
-end;
-
-function TManagedObj.AddRef: Integer;
-begin
-  Inc(FRefCount);
-  Result := FRefCount;
-end;
-
-function TManagedObj.Release: Integer;
-begin
-  Dec(FRefCount);
-  Result := FRefCount;
-end;
-
-{ TManager }
-function TManager.GetObj(const Name: AnsiString): TManagedObj;
-var
-  i : Integer;
-begin
-  Result := nil;
-  if Name <> '' then
-    for i := 0 to Count - 1 do
-      if TManagedObj(FItems[i]).Name = Name then
-      begin
-        Result := TManagedObj(FItems[i]);
-        Result.AddRef;
-        break;
-      end;
-end;
-
-procedure TManager.Add(ManObj: TManagedObj);
-begin
-  inherited Add(ManObj);
-end;
-
-procedure TManager.Del(ManObj: TManagedObj);
-var
-  i : Integer;
-begin
-  for i := 0 to Count - 1 do
-    if FItems[i] = Pointer(ManObj) then
-    begin
-      inherited Del(i);
-      break;
-    end;
-end;
-
-function TManager.GetItem(Idx: Integer): TManagedObj;
-begin
-  Result := TManagedObj(FItems[Idx]);
-end;
-
+{ TFileStream }
+{$REGION 'TFileStream'}
 class function TFileStream.Open(const FileName: string; RW: Boolean): TFileStream;
 begin
   Result := TFileStream.Create;
@@ -703,5 +723,6 @@ begin
   Write(Len, SizeOf(Len));
   Write(Value[1], Len * 2);
 end;
+{$ENDREGION}
 
 end.

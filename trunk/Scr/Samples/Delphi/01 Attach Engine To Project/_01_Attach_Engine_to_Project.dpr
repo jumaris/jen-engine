@@ -12,7 +12,6 @@ uses
   JEN_GeometryBuffer in '..\..\..\Jen Engine\Render\JEN_GeometryBuffer.pas',
   JEN_DefConsoleLog in '..\..\..\Jen Engine\Core\JEN_DefConsoleLog.pas',
   JEN_Display in '..\..\..\Jen Engine\Core\JEN_Display.pas',
-  JEN_Display_Window in '..\..\..\Jen Engine\Core\JEN_Display_Window.pas',
   JEN_Log in '..\..\..\Jen Engine\Core\JEN_Log.pas',
   JEN_ResourceManager in '..\..\..\Jen Engine\Core\JEN_ResourceManager.pas',
   JEN_DDSTexture in '..\..\..\Jen Engine\Core\JEN_DDSTexture.pas',
@@ -43,19 +42,18 @@ begin
   ResMan.Load('Media\asd.dds', r);
   ResMan.Load('Media\Shader.xml', s);
   sp := s.Compile;
-
 end;
 
 procedure TGame.OnUpdate(dt: double); stdcall;
 begin
-
+  Display.Caption := Utils.IntToStr(Display.FPs);
 end;
 
 procedure TGame.OnRender; stdcall;
 begin
 
   Render.Clear(True,False,False);
-  Render.CullFace := cfNone;
+  Render.CullFace := cfBack;
 
 //   glviewport (0,0,1024,768);
   {
@@ -77,10 +75,11 @@ begin
                       }
   sp.Bind;
   r.Bind;
-  render2d.Quad(Vec4f(0,1,0,0),
+
+  render2d.Quad(Vec4f(0,0,0,1),
                 Vec4f(1,0,1,1),
-                Vec4f(0,0,0,1),
-                Vec4f(1,1,1,0),vec2f(0,0));
+                Vec4f(1,1,1,0),
+                Vec4f(0,1,0,0),vec2f(0,0));
 end;
 
 procedure pp;
