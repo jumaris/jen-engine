@@ -139,8 +139,8 @@ var
   Header : TDDSHeader;
   Format : TLoadFormat;
   st     : GLEnum;
-  i,s    : Integer;
-  w,h    : Integer;
+  i,s    : LongInt;
+  w,h    : LongInt;
   Mips   : Byte;
   Data    : Pointer;
   Samples : LongInt;

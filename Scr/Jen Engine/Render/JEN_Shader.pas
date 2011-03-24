@@ -11,8 +11,8 @@ uses
   CoreX_XML;
 
 type
-  TShaderProgram = class(TInterfacedObject, IShaderProgram)
-    constructor Create;
+  TShaderProgram = class(TManagedInterfacedObj, IShaderProgram)
+    constructor Create(Manager : TInterfaceList);
     destructor Destroy; override;
   private
   public
@@ -22,7 +22,8 @@ type
     procedure Bind; stdcall;
   end;
 
-  TShaderUniform = class(TInterfacedObject, IShaderUniform)
+  TShaderUniform = class(TManagedInterfacedObj, IShaderUniform)
+    constructor Create(Manager : TInterfaceList);
   private
     FID    : GLEnum;
     FType  : TShaderUniformType;
@@ -34,8 +35,8 @@ type
     property Name: string read FName;
   end;
 
-  TShaderResource = class(TInterfacedObject, IResource, IShaderResource)
-    constructor Create(const Name: string);
+  TShaderResource = class(TManagedInterfacedObj, IResource, IShaderResource)
+    constructor Create(const Name: string; Manager : TInterfaceList);
     destructor Destroy; override;
   private
     FShaderPrograms : TInterfaceList;
@@ -57,7 +58,7 @@ implementation
 uses
   JEN_Main;
 
-constructor TShaderProgram.Create;
+constructor TShaderProgram.Create(Manager: TInterfaceList);
 begin
   inherited;
   FID := glCreateProgram;
@@ -82,9 +83,9 @@ begin
       Result := IShaderUniform(FUniformList[i]);
       Exit;
     end;
-  U := TShaderUniform.Create;
+  U := TShaderUniform.Create(FUniformList);
   U.Init(FID, UName, UniformType);
-  Result := IShaderUniform(FUniformList.Add(IShaderUniform(U)));
+  Result := U;
 end;
 
 procedure TShaderProgram.Bind;
@@ -92,6 +93,11 @@ begin
 //glValidateProgramARB(0);
 //     glDeleteObjectARB(8);
   glUseProgram(FID);
+end;
+
+constructor TShaderUniform.Create(Manager: TInterfaceList);
+begin
+  inherited;
 end;
 
 procedure TShaderUniform.Init(ShaderID: LongWord; const UName: string; UniformType: TShaderUniformType);
@@ -126,9 +132,9 @@ begin
   end;
 end;
 
-constructor TShaderResource.Create(const Name: string);
+constructor TShaderResource.Create(const Name: string; Manager: TInterfaceList);
 begin
-  inherited Create;
+  inherited Create(Manager);
   FName := Name;
   FShaderPrograms := TInterfaceList.Create;
 end;
@@ -153,7 +159,7 @@ var
   LogBuf : AnsiString;
   LogLen : LongInt;
 
-  function IndexStr(const AText: string; const AValues: array of string): Integer;
+  function IndexStr(const AText: string; const AValues: array of string): LongInt;
   var
     J : Integer;
   begin
@@ -168,7 +174,7 @@ var
 
   function MergeCode(const Node:TXML): AnsiString;
   var
-    i: integer;
+    i: LongInt;
   begin
     Result:='';
     for i:= 0 to Node.Count - 1  do
@@ -215,7 +221,7 @@ begin
 
   if Assigned(XN_VS) and Assigned(XN_FS) then
   begin
-    Shader := TShaderProgram.Create;
+    Shader := TShaderProgram.Create(FShaderPrograms);
     with Shader do
     begin
       Attach(GL_VERTEX_SHADER, MergeCode(XN_VS));
@@ -231,7 +237,7 @@ begin
         LogOut(string(LogBuf), lmWarning);
       end;
 
-      Result := IShaderProgram(FShaderPrograms.Add(IShaderProgram(Shader)));
+      Result := Shader;
      end;
 
   end;

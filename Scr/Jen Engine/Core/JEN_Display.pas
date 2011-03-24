@@ -13,10 +13,13 @@ const
 
 type
   IDisplay = interface(JEN_Header.IDisplay)
+    function GetValid : Boolean;
 
-    procedure Resize(W, H: Cardinal);
+    procedure Resize(W, H: LongWord);
     procedure Restore;
     procedure Update;
+
+    property Valid: Boolean read GetValid;
   end;
 
   TDisplay = class(TInterfacedObject, IDisplay)
@@ -31,8 +34,8 @@ type
     FCaption    : String;
     FHandle     : HWND;
     FDC         : HDC;
-    FWidth      : Cardinal;
-    FHeight     : Cardinal;
+    FWidth      : LongWord;
+    FHeight     : LongWord;
     FRefresh    : Byte;
     FFullScreen : Boolean;
     FActive     : Boolean;
@@ -43,6 +46,7 @@ type
     procedure SetVSync(Value: Boolean); stdcall;
     procedure SetFullScreen(Value: Boolean); stdcall;
 
+    function GetValid : Boolean;
     function GetFullScreen: Boolean; stdcall;
     function GetActive: Boolean; stdcall;
     function GetCursorState: Boolean; stdcall;
@@ -50,27 +54,18 @@ type
     function GetHandle: HWND; stdcall;
     function GetWidth: LongWord; stdcall;
     function GetHeight: LongWord; stdcall;
+    function GetFPS: LongWord; stdcall;
 
     class function WndProc(hWnd: HWND; Msg: LongWord; wParam: LongInt; lParam: LongInt): LongInt; stdcall; static;
    public
-    function Init(Width: Cardinal; Height: Cardinal; Refresh: Byte; FullScreen: Boolean): Boolean; stdcall;
+    function Init(Width: LongWord; Height: LongWord; Refresh: Byte; FullScreen: Boolean): Boolean; stdcall;
 
     procedure Swap; stdcall;
     procedure ShowCursor(Value: Boolean); stdcall;
 
-    procedure Resize(W, H: Cardinal);
+    procedure Resize(W, H: LongWord);
     procedure Restore;
     procedure Update;
-                  {
-    property Valid: Boolean read FValid;
-    property VSync: Boolean read FVSync write SetVSync;
-
-    property Handle: HWND  read FHandle;
-    property DC: HDC read FDC;
-    property Width: Cardinal read FWidth;
-    property Height: Cardinal read FHeight;
-    property Caption: String write SetCaption;
-    property FPS: LongInt read FFPS;  }
   end;
 
 implementation
@@ -153,7 +148,7 @@ begin
   inherited;
 end;
 
-function TDisplay.Init(Width: Cardinal; Height: Cardinal; Refresh: Byte; FullScreen: Boolean): Boolean;
+function TDisplay.Init(Width: LongWord; Height: LongWord; Refresh: Byte; FullScreen: Boolean): Boolean;
 var
   WinClass: TWndClassEx;
 begin
@@ -341,7 +336,7 @@ begin
   end;
 end;
 
-procedure TDisplay.Resize(W, H: Cardinal);
+procedure TDisplay.Resize(W, H: LongWord);
 begin
   FWidth  := W;
   FHeight := H;
@@ -353,6 +348,11 @@ end;
 procedure TDisplay.ShowCursor(Value: Boolean);
 begin
   FCursor := Value;
+end;
+
+function TDisplay.GetValid : Boolean;
+begin
+  Result := FValid;
 end;
 
 function TDisplay.GetFullScreen: Boolean;
@@ -388,6 +388,11 @@ end;
 function TDisplay.GetHeight: LongWord;
 begin
   Result := FHeight;
+end;
+
+function TDisplay.GetFPS: LongWord;
+begin
+  Result := FFPS;
 end;
 
 end.

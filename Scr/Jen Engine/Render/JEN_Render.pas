@@ -9,7 +9,8 @@ uses
 
 type
   IRender = interface(JEN_Header.IRender)
-
+    function GetValid : Boolean;
+    property Valid : Boolean read GetValid;
   end;
 
   TRender = class(TInterfacedObject, IRender)
@@ -17,7 +18,6 @@ type
     constructor Create;
     destructor Destroy; override;
   private
-    var
       FValid : Boolean;
       FGL_Context: HGLRC;
       FViewport: TRecti;
@@ -35,7 +35,9 @@ type
     procedure SetDepthWrite(Value: Boolean); stdcall;
     procedure SetCullFace(Value: TCullFace); stdcall;
     procedure SetMatrix(Idx: TMatrixType; Value: TMat4f); stdcall;
-    function  GetMatrix(Idx: TMatrixType): TMat4f; stdcall;
+
+    function GetValid: Boolean;
+    function GetMatrix(Idx: TMatrixType): TMat4f; stdcall;
   public
     procedure Clear(ColorBuff, DepthBuff, StensilBuff: Boolean); stdcall;
 
@@ -55,7 +57,7 @@ procedure TRender.Init(DepthBits: Byte; StencilBits: Byte; FSAA: Byte);
 var
   PFD: TPixelFormatDescriptor;
   PFAttrf: array [0 .. 1] of Single;
-  PFAttri: array [0 .. 21] of Integer;
+  PFAttri: array [0 .. 21] of LongInt;
 
   PFIdx: LongInt;
   PFCount: LongWord;
@@ -65,13 +67,13 @@ var
   RC: HGLRC;
   Result: Boolean;
 begin
-                           {
-  if not(Assigned(Display) and Display.Valid) then
+
+  if not(Assigned(Display){ and Display.Valid}) then
   begin
     LogOut('Cannot create OpenGL context, display is not correct', lmError);
     Exit;
   end;
-                           }
+
   FillChar(PFD, SizeOf(PFD), 0);
   with PFD do
   begin
@@ -297,6 +299,11 @@ begin
   FMatrix[Idx] := Value;
 end;
 
+function TRender.GetValid: Boolean;
+begin
+  Result := FValid;
+end;
+
 function TRender.GetMatrix(Idx: TMatrixType): TMat4f; stdcall;
 begin
   Result := FMatrix[Idx];
@@ -305,8 +312,8 @@ end;
 procedure TRender.Clear(ColorBuff, DepthBuff, StensilBuff: Boolean);
 begin
   glClear( (GL_COLOR_BUFFER_BIT * Ord(ColorBuff)) or
-            (GL_DEPTH_BUFFER_BIT * Ord(DepthBuff)) or
-              (GL_STENCIL_BUFFER_BIT * Ord(StensilBuff)) );
+           (GL_DEPTH_BUFFER_BIT * Ord(DepthBuff)) or
+           (GL_STENCIL_BUFFER_BIT * Ord(StensilBuff)) );
 end;
 
                  {

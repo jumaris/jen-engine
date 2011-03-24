@@ -2,6 +2,7 @@
 	<VertexShader>
 		<InsCode code="utilityLib/fragDeferredRead.glsl" />
 		<Code>
+			#version 120
 			varying vec2 Texcoord;
 
 			void main( void )
@@ -14,13 +15,14 @@
 	
 	<FragmentShader>
 		<Code>
+			#version 120
 			uniform sampler2D baseMap;
 
 			varying vec2 Texcoord;
 
 			void main( void )
 			{
-				gl_FragColor = texture2D( baseMap, Texcoord )*vec4(1.0, 0.7, 0.7,1.0);
+				gl_FragColor = texture2D( baseMap, Texcoord )*vec4(0.7, 0.12, 0.15,1.0);
 			}
 		</Code> 
 	</FragmentShader>

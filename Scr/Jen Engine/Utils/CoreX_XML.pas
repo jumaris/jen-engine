@@ -162,7 +162,7 @@ var
   function TrimCode(const Text: string): string;
   var
     Start, k, t : PChar;
-    Tab, Len : Integer;
+    Tab, Len : LongInt;
   begin
     if Pointer(Text) = nil then
       Exit('');

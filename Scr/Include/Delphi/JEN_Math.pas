@@ -4,23 +4,23 @@ interface
 
 Type
   TPoint2i  = record
-    x, y : integer;
+    x, y : LongInt;
     class operator Equal(const a, b: TPoint2i): Boolean; inline;
     class operator NotEqual(const a, b: TPoint2i): Boolean; inline;
   end;
 
   TRecti    = record
-    x, y          : integer;
-    Width, Height : integer;
+    x, y          : LongInt;
+    Width, Height : LongInt;
     private
       function  GetLocation: TPoint2i; inline;
       procedure SetLocation(Location: TPoint2i); inline;
       function  GetCenter: TPoint2i; inline;
     public
-      function Left     : Integer; inline;
-      function Right    : Integer; inline;
-      function Top      : Integer; inline;
-      function Bottom   : Integer; inline;
+      function Left     : LongInt; inline;
+      function Right    : LongInt; inline;
+      function Top      : LongInt; inline;
+      function Bottom   : LongInt; inline;
 
       property Location : TPoint2i read GetLocation write SetLocation;
       property Center   : TPoint2i read GetCenter;
@@ -28,11 +28,11 @@ Type
       function IsEmpty  : Boolean; inline;
 
       procedure Offset(const Point: TPoint2i);           overload; inline;
-      procedure Offset(const offsetX, offsetY: Integer);  overload; inline;
+      procedure Offset(const offsetX, offsetY: LongInt);  overload; inline;
 
-      procedure Inflate(const HAmount, VAmount: Integer); overload; inline;
+      procedure Inflate(const HAmount, VAmount: LongInt); overload; inline;
 
-      function Contains(const x, y: Integer): Boolean; overload; inline;
+      function Contains(const x, y: LongInt): Boolean; overload; inline;
       function Contains(const Point: TPoint2i): Boolean; overload; inline;
   //    function Contains(const Point: TPoint2f): Boolean; overload; inline;
       function Contains(const Rect: TRecti): Boolean; overload; inline;
@@ -153,9 +153,9 @@ Const
 
 function Max(x, y: Single): Single; overload; inline;
 function Min(x, y: Single): Single; overload; inline;
-function Max(x, y: Integer): Integer; overload; inline;
-function Min(x, y: Integer): Integer; overload; inline;
-function Sign(x: Single): Integer; inline;
+function Max(x, y: LongInt): LongInt; overload; inline;
+function Min(x, y: LongInt): LongInt; overload; inline;
+function Sign(x: Single): LongInt; inline;
 function Clamp(x, Min, Max: LongInt): LongInt; overload; inline;
 function Clamp(x, Min, Max: Single): Single; overload; inline;
 function Tan(x: Single): Single; assembler;
@@ -167,8 +167,8 @@ function Log2(const X: Single): Single;
 function Pow(x, y: Single): Single;
 function ToPow2(x: LongInt): LongInt;
 
-function Point2i(x, y : Integer) : TPoint2i; inline;
-function Recti(x, y, Width, Height : Integer) : TRecti; inline;
+function Point2i(x, y : LongInt) : TPoint2i; inline;
+function Recti(x, y, Width, Height : LongInt) : TRecti; inline;
 function Vec2f(x, y: Single): TVec2f; inline;
 function Vec3f(x, y, z: Single): TVec3f; inline;
 function Vec4f(x, y, z, w: Single): TVec4f; inline;
@@ -193,7 +193,7 @@ begin
     Result := y;
 end;
 
-function Max(x, y: Integer): Integer;
+function Max(x, y: LongInt): LongInt;
 begin
   if x > y then
     Result := x
@@ -201,7 +201,7 @@ begin
     Result := y;
 end;
 
-function Min(x, y: Integer): Integer;
+function Min(x, y: LongInt): LongInt;
 begin
   if x < y then
     Result := x
@@ -209,7 +209,7 @@ begin
     Result := y;
 end;
 
-function Sign(x: Single): Integer;
+function Sign(x: Single): LongInt;
 begin
   if x > 0 then
     Result := 1
@@ -344,13 +344,13 @@ end;
 {$ENDREGION}
 
 {$REGION 'Creation'}
-function Point2i(x, y: Integer): TPoint2i;
+function Point2i(x, y: LongInt): TPoint2i;
 begin
   Result.x := x;
   Result.y := y;
 end;
 
-function Recti(x, y, Width, Height: Integer): TRecti;
+function Recti(x, y, Width, Height: LongInt): TRecti;
 begin
   Result.x := x;
   Result.y := y;
@@ -414,22 +414,22 @@ end;
 {$ENDREGION}
 
 {$REGION 'TRecti'}
-function TRecti.Left: Integer;
+function TRecti.Left: LongInt;
 begin
   Result := x;
 end;
 
-function TRecti.Right: Integer;
+function TRecti.Right: LongInt;
 begin
   Result := x + Width;
 end;
 
-function TRecti.Top: Integer;
+function TRecti.Top: LongInt;
 begin
   Result := y;
 end;
 
-function TRecti.Bottom: Integer;
+function TRecti.Bottom: LongInt;
 begin
   Result := y + Height;
 end;
@@ -461,13 +461,13 @@ begin
   inc(y, Point.y);
 end;
 
-procedure TRecti.Offset(const offsetX, offsetY: Integer);
+procedure TRecti.Offset(const offsetX, offsetY: LongInt);
 begin
   inc(x, offsetX);
   inc(y, offsetY);
 end;
 
-procedure TRecti.Inflate(const HAmount, VAmount: Integer);
+procedure TRecti.Inflate(const HAmount, VAmount: LongInt);
 begin
   dec(x, HAmount);
   dec(y, VAmount);
@@ -475,7 +475,7 @@ begin
   inc(Height, VAmount*2);
 end;
 
-function TRecti.Contains(const x, y:integer): Boolean;
+function TRecti.Contains(const x, y:LongInt): Boolean;
 begin
   Result := ((((self.x <= x) and (x < (self.x + Width))) and (self.y <= y)) and (y < (self.y + Height)));
 end;
@@ -520,7 +520,7 @@ end;
 
 function TRecti.Union(const Rect1, Rect2: TRecti): TRecti;
 var
-  X1, Y1 : Integer;
+  X1, Y1 : LongInt;
 begin
   X1 := Min(Rect1.X,Rect2.X);
   Y1 := Min(Rect1.Y,Rect2.Y);

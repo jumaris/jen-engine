@@ -20,15 +20,12 @@ implementation
 
 procedure TRender2D.Quad(const v1, v2, v3, v4: TVec4f; const C: TVec2f; Angle: Single; Color: TColor);
 begin
-  glbegin(GL_TRIANGLES);
+  glbegin(GL_QUADS);
 
   glvertex4fv(@v1);
   glvertex4fv(@v2);
   glvertex4fv(@v3);
-
-  glvertex4fv(@v1);
   glvertex4fv(@v4);
-  glvertex4fv(@v2);
 
   glend;
 end;

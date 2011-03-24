@@ -10,8 +10,8 @@ uses
   JEN_OpenglHeader;
 
 type
-  TTexture = class(TInterfacedObject, IResource, ITexture)
-    constructor Create(const Name: string);// override;
+  TTexture = class(TManagedInterfacedObj, IResource, ITexture)
+    constructor Create(const Name: string; Manager: TInterfaceList);
     destructor Destroy; override;
   private
     FName : string;
@@ -19,8 +19,8 @@ type
   public
     FID : GLEnum;
     FSampler : GLEnum;
-    FWidth  : Integer;
-    FHeight : Integer;
+    FWidth  : LongInt;
+    FHeight : LongInt;
     FFilter : TTextureFilter;
     FClamp  : Boolean;
     FMipMap : Boolean;
@@ -51,8 +51,6 @@ type
 
   IResourceManager = interface(JEN_Header.IResourceManager)
     procedure RegisterLoader(Loader : TResLoader);
-    function Add(Resource: IResource): IResource;
-    procedure Delete(Resource: IResource);
     function GetRef(const Name: string): IResource;
   end;
 
@@ -74,8 +72,6 @@ type
     function LoadTexture(const FileName: string): ITexture; stdcall;
 
     procedure RegisterLoader(Loader : TResLoader);
-    function Add(Resource: IResource): IResource;
-    procedure Delete(Resource: IResource);
     function GetRef(const Name: string): IResource;
 
     property ErrorTexture : TTexture read FErrorTexture;
@@ -88,7 +84,7 @@ uses
 
 constructor TTexture.Create;
 begin
-  inherited Create;
+  inherited Create(Manager);
   FName := Name;
   glGenTextures(1, @FID);
 end;
@@ -96,6 +92,7 @@ end;
 destructor TTexture.Destroy;
 begin
   glDeleteTextures(1, @FID);
+  LogOut('sad',lmNotify);
   inherited;
 end;
 
@@ -167,7 +164,7 @@ end;
 
 destructor TResourceManager.Destroy;
 var
-  i : integer;
+  i : LongInt;
 begin
   for I := 0 to FLoaderList.Count - 1 do
     TResLoader(FLoaderList[i]).Free;
@@ -199,7 +196,7 @@ end;
 
 function TResourceManager.Load(const FileName: string; ResType: TResourceType): IResource;
 var
-  I : integer;
+  I : LongInt;
   Ext : String;
   eFileName : String;
   RL : TResLoader;
@@ -233,8 +230,8 @@ begin
   if Assigned(Stream) then
   begin
     case ResType of
-      rtShader: Resource := TShaderResource.Create(eFileName);
-      rtTexture: Resource := TTexture.Create(eFileName);
+      rtShader: Resource := TShaderResource.Create(eFileName, FResList);
+      rtTexture: Resource := TTexture.Create(eFileName, FResList);
     end;
   end else
   begin
@@ -260,24 +257,14 @@ begin
     Exit;
   end;
 
-  Result := Add(Resource);
+  LogOut('Loading '+ Resource.Name, lmNotify);
+  Result := Resource;
 end;
 
 procedure TResourceManager.RegisterLoader(Loader : TResLoader);
 begin
   FLoaderList.Add(Loader);
   LogOut('Register '+ TResourceStringName[Loader.ResType] + ' loader. Ext string: ' + Loader.ExtString, lmNotify);
-end;
-
-function TResourceManager.Add(Resource: IResource): IResource;
-begin
-  Result := IResource(FResList.Add(Resource));
-  LogOut('Loading '+ Resource.Name, lmNotify);
-end;
-
-procedure TResourceManager.Delete(Resource: IResource);
-begin
-
 end;
 
 function TResourceManager.GetRef(const Name: string): IResource;
