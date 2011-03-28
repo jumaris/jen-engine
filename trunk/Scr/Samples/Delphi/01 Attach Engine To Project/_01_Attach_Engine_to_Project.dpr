@@ -1,4 +1,4 @@
- program _01_Attach_Engine_to_Project;
+program _01_Attach_Engine_to_Project;
 
 uses
   JEN_Main in '..\..\..\Jen Engine\JEN_Main.pas',
@@ -37,6 +37,14 @@ type
     procedure OnRender; stdcall;
   end;
 
+var
+  Engine : IJenEngine = nil;
+  Display : IDisplay = nil;
+  Render : IRender = nil;
+  Utils : IUtils = nil;
+  Game : TGame = nil;
+  ResMan : IResourceManager = nil;
+
 procedure TGame.LoadContent; stdcall;
 begin
   ResMan.Load('Media\asd.dds', r);
@@ -51,7 +59,6 @@ end;
 
 procedure TGame.OnRender; stdcall;
 begin
-
   Render.Clear(True,False,False);
   Render.CullFace := cfBack;
 
@@ -76,20 +83,13 @@ begin
   sp.Bind;
   r.Bind;
 
-  render2d.Quad(Vec4f(0,0,0,1),
-                Vec4f(1,0,1,1),
-                Vec4f(1,1,1,0),
-                Vec4f(0,1,0,0),vec2f(0,0));
+  render2d.DrawSprite(r,0,0,1,1);
+  render2d.DrawSprite(r,0,0,0.5,0.5);
+  render2d.DrawSprite(r,0,0,0.3,0.3);
+  log.Print(Utils.IntToStr(Render.DipCount), lmNotify);
 end;
 
 procedure pp;
-var
-  Engine : IJenEngine;
-  Display : IDisplay;
-  Render : IRender;
-  Utils : IUtils;
-  Game : TGame;
-  ResMan : IResourceManager;
 begin
   ReportMemoryLeaksOnShutdown := True;
   GetJenEngine(Engine);
@@ -99,6 +99,8 @@ begin
   Engine.GetSubSystem(ssUtils, IJenSubSystem(Utils));
   Display.Init(1024, 768, 60, false);
   Render.Init();
+//  Display.SetVSync(False);
+  Display.FullScreen := false;
   Game := TGame.Create;
   Engine.Start(Game);
 
@@ -107,8 +109,5 @@ begin
 end;
 
 begin
- // Engine := nil;
- // Game := TSomeGame.Create;
   pp;
-
 end.

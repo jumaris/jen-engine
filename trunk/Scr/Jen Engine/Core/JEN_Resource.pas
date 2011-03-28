@@ -7,7 +7,7 @@ uses
   JEN_Utils;
 
 const
-  TResourceStringName : array[TResourceType] of string = ('shader', 'texture');
+  TResourceStringName : array[TResourceType] of string = ('shader', 'texture', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '');
 
 type
   TResLoader = class

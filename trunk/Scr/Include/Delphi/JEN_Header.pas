@@ -16,7 +16,9 @@ type
   TBlendType = (btNone, btNormal, btAdd, btMult, btOne, btNoOverride, btAddAlpha);
   TCullFace = (cfNone, cfFront, cfBack);
   TMatrixType = (mtViewProj, mtModel, mtProj, mtView);
-  TResourceType = (rtShader, rtTexture);
+  TResourceType = (rtShader, rtTexture, rtTexture1, rtTexture2, rtTexture3, rtTexture4, rtTexture5, rtTexture6,
+                  rtTexture7, rtTexture8, rtTexture9, rtTexture10, rtTexture11, rtTexture12,
+	                rtTexture13, rtTexture14, rtTexture15);
   TShaderUniformType = (utInt, utVec1, utVec2, utVec3, utVec4, utMat3, utMat4);
   TTextureFilter = (tfNone, tfBilinear, tfTrilinear, tfAniso);
   TSetModeResult = (SM_Successful, SM_SetDefault, SM_Error);
@@ -80,7 +82,13 @@ type
     property RAMFree: LongWord read GetRAMFree;
   end;
 
+  ILogOutput = interface
+    procedure Init; stdcall;
+    procedure AddMsg(const Text: String; MType: TLogMsg); stdcall;
+  end;
+
   ILog = interface(IJenSubSystem)
+    procedure RegisterOutput(Value : ILogOutput); stdcall;
     procedure Print(const Text: String; MType: TLogMsg); stdcall;
   end;
 
@@ -119,34 +127,6 @@ type
     property FPS: LongWord read GetFPS;
   end;
 
-  IRender = interface(IJenSubSystem)
-    procedure Init(DepthBits: Byte = 24; StencilBits: Byte = 8; FSAA: Byte = 0); stdcall;
-
-    procedure SetBlendType(Value: TBlendType); stdcall;
-    procedure SetAlphaTest(Value: Byte); stdcall;
-    procedure SetDepthTest(Value: Boolean); stdcall;
-    procedure SetDepthWrite(Value: Boolean); stdcall;
-    procedure SetCullFace(Value: TCullFace); stdcall;
-
-    procedure SetMatrix(Idx: TMatrixType; Value: TMat4f); stdcall;
-    function  GetMatrix(Idx: TMatrixType): TMat4f; stdcall;
-
-    procedure Clear(ColorBuff, DepthBuff, StensilBuff: Boolean); stdcall;
-
-    property BlendType: TBlendType write SetBlendType;
-    property AlphaTest: Byte write SetAlphaTest;
-    property DepthTest: Boolean write SetDepthTest;
-    property DepthWrite: Boolean write SetDepthWrite;
-    property CullFace: TCullFace write SetCullFace;
-    property Matrix[Idx: TMatrixType]: TMat4f read GetMatrix write SetMatrix;
-  end;
-
-  IRender2D = interface(IJenSubSystem)
-    procedure Quad(const v1, v2, v3, v4: TVec4f; const C: TVec2f; Angle: Single = 0; Color: TColor = $FFFFFFFF); overload; stdcall;
- ///  procedure Quad(const Rect, TexRect: TRecti; Color: TColor; Angle: Single = 0); overload; stdcall;
-  //  procedure Quad(x1, y1, x2, y2, x3, y3, x4, y4, cx, cy: Single; Color: TColor; PtIdx: Word = 0; Angle: Single = 0); overload; stdcall;
-  end;
-
   IResource = interface
     function GetName: string; stdcall;
     property Name: string read GetName;
@@ -177,6 +157,40 @@ type
 
     function LoadShader(const FileName: string): IShaderResource; stdcall;
     function LoadTexture(const FileName: string): ITexture; stdcall;
+  end;
+
+  IRender = interface(IJenSubSystem)
+    procedure Init(DepthBits: Byte = 24; StencilBits: Byte = 8; FSAA: Byte = 0); stdcall;
+
+    procedure SetBlendType(Value: TBlendType); stdcall;
+    procedure SetAlphaTest(Value: Byte); stdcall;
+    procedure SetDepthTest(Value: Boolean); stdcall;
+    procedure SetDepthWrite(Value: Boolean); stdcall;
+    procedure SetCullFace(Value: TCullFace); stdcall;
+
+    procedure SetMatrix(Idx: TMatrixType; Value: TMat4f); stdcall;
+    function  GetMatrix(Idx: TMatrixType): TMat4f; stdcall;
+
+    function GetDipCount : LongWord;
+    procedure SetDipCount(Value : LongWord);
+    procedure IncDip;
+
+    procedure Clear(ColorBuff, DepthBuff, StensilBuff: Boolean); stdcall;
+
+    property BlendType: TBlendType write SetBlendType;
+    property AlphaTest: Byte write SetAlphaTest;
+    property DepthTest: Boolean write SetDepthTest;
+    property DepthWrite: Boolean write SetDepthWrite;
+    property CullFace: TCullFace write SetCullFace;
+    property Matrix[Idx: TMatrixType]: TMat4f read GetMatrix write SetMatrix;
+    property DipCount: LongWord read GetDipCount write SetDipCount;
+  end;
+
+  IRender2D = interface(IJenSubSystem)
+    procedure DrawQuad(const v1, v2, v3, v4: TVec4f; const C: TVec2f; Angle: Single = 0); overload; stdcall;
+    procedure DrawSprite(Tex : ITexture; X, Y, W, H: Single; Angle: Single = 0); stdcall;
+ ///  procedure Quad(const Rect, TexRect: TRecti; Color: TColor; Angle: Single = 0); overload; stdcall;
+  //  procedure Quad(x1, y1, x2, y2, x3, y3, x4, y4, cx, cy: Single; Color: TColor; PtIdx: Word = 0; Angle: Single = 0); overload; stdcall;
   end;
 
 {$IFNDEF JEN_CTD}

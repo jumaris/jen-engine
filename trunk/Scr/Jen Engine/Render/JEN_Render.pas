@@ -21,13 +21,16 @@ type
       FValid : Boolean;
       FGL_Context: HGLRC;
       FViewport: TRecti;
+
       FBlendType: TBlendType;
       FAlphaTest: Byte;
       FDepthTest: Boolean;
       FDepthWrite: Boolean;
       FCullFace: TCullFace;
+
+      FDipCount : LongWord;
       FMatrix: array [TMatrixType] of TMat4f;
-      FCameraPos : TVec3f;
+      FCameraPos: TVec3f;
     procedure SetViewport(Value: TRecti);
     procedure SetBlendType(Value: TBlendType); stdcall;
     procedure SetAlphaTest(Value: Byte); stdcall;
@@ -35,16 +38,19 @@ type
     procedure SetDepthWrite(Value: Boolean); stdcall;
     procedure SetCullFace(Value: TCullFace); stdcall;
     procedure SetMatrix(Idx: TMatrixType; Value: TMat4f); stdcall;
+    procedure SetDipCount(Value : LongWord);
 
     function GetValid: Boolean;
+
     function GetMatrix(Idx: TMatrixType): TMat4f; stdcall;
+    function GetDipCount : LongWord;
+    procedure IncDip;
   public
     procedure Clear(ColorBuff, DepthBuff, StensilBuff: Boolean); stdcall;
 
  {   procedure Quad(const Rect, TexRect: TRecti; Color: TColor; Angle: Single); overload; stdcall;
     procedure Quad(x1, y1, x2, y2, x3, y3, x4, y4, cx, cy: Single; Color: TColor; PtIdx: Word; Angle: Single); overload; stdcall;
     }
-    property Valid: Boolean read FValid;
   end;
 
 implementation
@@ -67,8 +73,7 @@ var
   RC: HGLRC;
   Result: Boolean;
 begin
-
-  if not(Assigned(Display){ and Display.Valid}) then
+  if not (Assigned(Display) and Display.Valid) then
   begin
     LogOut('Cannot create OpenGL context, display is not correct', lmError);
     Exit;
@@ -307,6 +312,21 @@ end;
 function TRender.GetMatrix(Idx: TMatrixType): TMat4f; stdcall;
 begin
   Result := FMatrix[Idx];
+end;
+
+procedure TRender.SetDipCount(Value: LongWord);
+begin
+  FDipCount := Value;
+end;
+
+function TRender.GetDipCount: LongWord;
+begin
+  Result := FDipCount;
+end;
+
+procedure TRender.IncDip;
+begin
+  Inc(FDipCount);
 end;
 
 procedure TRender.Clear(ColorBuff, DepthBuff, StensilBuff: Boolean);

@@ -8,12 +8,12 @@ uses
   JEN_Header,
   JEN_Log;
 
-type TDefConsoleLog = class(TLogOutput)
+type TDefConsoleLog = class(TInterfacedObject, ILogOutput)
   private
     LastUpdate : LongInt;
   public
-    procedure Init; override;
-    procedure AddMsg(const Text: String; MType: TLogMsg); override;
+    procedure Init; stdcall;
+    procedure AddMsg(const Text: String; MType: TLogMsg); stdcall;
   end;
 {$ENDIF}
 

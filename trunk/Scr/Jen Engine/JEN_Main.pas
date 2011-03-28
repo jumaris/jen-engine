@@ -102,9 +102,8 @@ begin
   {$IFDEF DEBUG}
   AllocConsole;
   SetConsoleTitleW('Jen Console');
-  TDefConsoleLog.Create;
+  Log.RegisterOutput(TDefConsoleLog.Create);
   {$ENDIF}
-  Log.Init;
 
   Render := TRender.Create;
   Render2d := TRender2D.Create;
@@ -183,6 +182,8 @@ begin
       Display.Update;
       Game.OnUpdate(0);
       Game.OnRender;
+      ResMan.ResChangeCallBack := nil;
+      Render.DipCount := 0;
      // glfinish;
       Display.Swap;
     end;

@@ -10,6 +10,8 @@ uses
   JEN_OpenglHeader;
 
 type
+  TProc = procedure stdcall;
+
   TTexture = class(TManagedInterfacedObj, IResource, ITexture)
     constructor Create(const Name: string; Manager: TInterfaceList);
     destructor Destroy; override;
@@ -50,8 +52,15 @@ type
   end;
 
   IResourceManager = interface(JEN_Header.IResourceManager)
-    procedure RegisterLoader(Loader : TResLoader);
+    procedure RegisterLoader(Loader: TResLoader);
     function GetRef(const Name: string): IResource;
+    procedure SetResChangeCallBack(Proc: Pointer);
+
+    function GetActiveRes(RT: TResourceType): IUnknown;
+    procedure SetActiveRes(RT: TResourceType; Value: IUnknown);
+
+    property ResChangeCallBack: Pointer write SetResChangeCallBack;
+    property Active[RT :TResourceType]: IUnknown read GetActiveRes write SetActiveRes;
   end;
 
   TResourceManager = class(TInterfacedObject, IResourceManager)
@@ -61,8 +70,15 @@ type
     FResList : TInterfaceList;
     FLoaderList : TList;
     FErrorTexture : TTexture;
+    FResChangeCallBack : Pointer;
+    FActiveRes: array [TResourceType] of IUnknown;
   public
     DebugTexture : TTexture;
+
+    procedure SetResChangeCallBack(Proc: Pointer);
+
+    function GetActiveRes(RT: TResourceType): IUnknown;
+    procedure SetActiveRes(RT: TResourceType; Value: IUnknown);
 
     function Load(const FileName: string; ResType : TResourceType) : IResource; overload; stdcall;
     procedure Load(const FileName: string; out Resource : IShaderResource); overload; stdcall;
@@ -71,7 +87,7 @@ type
     function LoadShader(const FileName: string): IShaderResource; stdcall;
     function LoadTexture(const FileName: string): ITexture; stdcall;
 
-    procedure RegisterLoader(Loader : TResLoader);
+    procedure RegisterLoader(Loader: TResLoader);
     function GetRef(const Name: string): IResource;
 
     property ErrorTexture : TTexture read FErrorTexture;
@@ -143,12 +159,12 @@ end;
                  }
 procedure TTexture.Bind(Channel: Byte = 0);
 begin
- // if ResManager.Active[TResType(Channel + Ord(rtTexture))] <> Self then
- // begin
+  if ResMan.Active[TResourceType(Channel + Ord(rtTexture))] <> IResource(Self) then
+  begin
     glActiveTexture(GL_TEXTURE0 + Channel);
     glBindTexture(FSampler, FID);
-  // ResManager.Active[TResType(Channel + Ord(rtTexture))] := Self;
-//  end;
+    ResMan.Active[TResourceType(Channel + Ord(rtTexture))] := Self;
+  end;
 end;
 
 constructor TResourceManager.Create;
@@ -159,7 +175,6 @@ begin
   RegisterLoader(TShaderLoader.Create);
   RegisterLoader(TDDSLoader.Create);
   //DebugTexture := TTexture.Create('DEBUG');
-
 end;
 
 destructor TResourceManager.Destroy;
@@ -172,6 +187,26 @@ begin
   FResList.Free;
   FLoaderList.Free;
   inherited;
+end;
+
+procedure TResourceManager.SetResChangeCallBack(Proc: Pointer);
+begin
+  if(FResChangeCallBack<>Proc)and(Assigned(FResChangeCallBack)) then
+    TProc(FResChangeCallBack);
+  FResChangeCallBack := Proc;
+end;
+
+function TResourceManager.GetActiveRes(RT: TResourceType): IUnknown;
+begin
+  Result := FActiveRes[RT];
+end;
+
+procedure TResourceManager.SetActiveRes(RT: TResourceType; Value: IUnknown);
+begin
+  if Assigned(FResChangeCallBack) and (Value<>FActiveRes[RT]) then
+    TProc(FResChangeCallBack);
+
+  FActiveRes[RT] := Value;
 end;
 
 function TResourceManager.LoadShader(const FileName: string): IShaderResource;
