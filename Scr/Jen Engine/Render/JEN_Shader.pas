@@ -90,9 +90,11 @@ end;
 
 procedure TShaderProgram.Bind;
 begin
-//glValidateProgramARB(0);
-//     glDeleteObjectARB(8);
-  glUseProgram(FID);
+  if ResMan.Active[rtShader] <> IUnknown(Self) then
+  begin
+    glUseProgram(FID);
+    ResMan.Active[rtShader] := Self;
+  end;
 end;
 
 constructor TShaderUniform.Create(Manager: TInterfaceList);

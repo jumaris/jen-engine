@@ -214,7 +214,7 @@ end;
 
 destructor TDisplay.Destroy;
 begin
-   if not FValid then Exit;
+  if not FValid then Exit;
 
   if not ReleaseDC( FHandle, FDC ) Then
     LogOut('Cannot release device context.', lmError)
@@ -263,36 +263,39 @@ end;
 
 procedure TDisplay.SetFullScreen(Value: Boolean);
 begin
-  if (FFullScreen = Value) or (FValid = false) then Exit;
-  FFullScreen := Value;
-
-  if Value then
-    FValid := FValid and (SystemParams.Screen.SetMode(FWidth, FHeight, FRefresh) <> SM_Error)
-  else
-    SystemParams.Screen.ResetMode;
-
-  Restore;
-end;
-
-procedure TDisplay.SetActive(Value: Boolean);
-begin
-  if (FActive = Value) or (FValid = false) then Exit;
-  FActive := Value;
-
-  if FFullScreen then
+  if (FFullScreen <> Value) then
   begin
+    FFullScreen := Value;
+
     if Value then
       FValid := FValid and (SystemParams.Screen.SetMode(FWidth, FHeight, FRefresh) <> SM_Error)
     else
       SystemParams.Screen.ResetMode;
+
     Restore;
   end;
+end;
 
+procedure TDisplay.SetActive(Value: Boolean);
+begin
+  if (FActive <> Value) then
+  begin
+    FActive := Value;
+
+    if FFullScreen then
+    begin
+      if Value then
+        FValid := FValid and (SystemParams.Screen.SetMode(FWidth, FHeight, FRefresh) <> SM_Error)
+      else
+        SystemParams.Screen.ResetMode;
+      Restore;
+    end;
+
+  end;
 end;
 
 procedure TDisplay.SetCaption(const Value: String);
 begin
-  if (FValid = false) then Exit;
   FCaption := Value;
   SetWindowTextW(FHandle, PWideChar(Value));
 end;
@@ -302,8 +305,6 @@ var
   Style : LongWord;
   Rect  : TRecti;
 begin
-  if (FValid = false) then Exit;
-
   FFPSTime  := Utils.Time;
   FFPSCount := 0;
 

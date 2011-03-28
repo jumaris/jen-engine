@@ -146,10 +146,28 @@ function TrimChars(const Str: string; Chars: TCharSet): string;
 function Trim(const Str: string): string;
 function DeleteChars(const Str: string; Chars: TCharSet): string;
 
+function ExtractFileDir(const Path: string): string;
+
 implementation
 
 uses
   JEN_MAIN;
+
+function InterlockedIncrement(var Addend: LongInt): LongInt;
+asm
+      MOV   EDX,1
+      XCHG  EAX,EDX
+ LOCK XADD  [EDX],EAX
+      INC   EAX
+end;
+
+function InterlockedDecrement(var Addend: LongInt): LongInt;
+asm
+      MOV   EDX,-1
+      XCHG  EAX,EDX
+ LOCK XADD  [EDX],EAX
+      DEC   EAX
+end;
 
 procedure FreeAndNil(var Obj);
 var
@@ -174,22 +192,6 @@ asm
        SUB     EAX,EDX
 @@1:   POP     EDI
        POP     ESI
-end;
-
-function InterlockedIncrement(var Addend: LongInt): LongInt;
-asm
-      MOV   EDX,1
-      XCHG  EAX,EDX
- LOCK XADD  [EDX],EAX
-      INC   EAX
-end;
-
-function InterlockedDecrement(var Addend: LongInt): LongInt;
-asm
-      MOV   EDX,-1
-      XCHG  EAX,EDX
- LOCK XADD  [EDX],EAX
-      DEC   EAX
 end;
 
 function LowerCase(const Str: string): string;
@@ -239,7 +241,20 @@ begin
   SetLength(Result, j);
 end;
 
-{ TList }
+function ExtractFileDir(const Path: string): string;
+var
+  i : LongInt;
+begin
+  for i := Length(Path) downto 1 do
+    if (Path[i] = '\') or (Path[i] = '/') then
+    begin
+      Result := Copy(Path, 1, i);
+      Exit;
+    end;
+  Result := '';
+end;
+
+// TList
 {$REGION 'TList'}
 constructor TList.Create;
 begin
@@ -340,7 +355,7 @@ begin
 end;
 {$ENDREGION}
 
-{ TObjectList }
+// TObjectList
 {$REGION 'TObjectList'}
 function TObjectList.Add(Obj: TObject): TObject;
 begin
@@ -378,7 +393,7 @@ begin
 end;
 {$ENDREGION}
 
-{ TManagedInterfacedObj }
+// TManagedInterfacedObj
 {$REGION 'TManagedInterfacedObj'}
 constructor TManagedInterfacedObj.Create;
 begin
@@ -435,7 +450,7 @@ begin
 end;
 {$ENDREGION}
 
-{ TInterfaceList }
+// TInterfaceList
 {$REGION 'TInterfaceList'}
 constructor TInterfaceList.Create;
 begin
@@ -497,7 +512,7 @@ begin
 end;
 {$ENDREGION}
 
-{ TUtils }
+// TUtils
 {$REGION 'TUtils'}
 constructor TUtils.Create;
 var
@@ -624,7 +639,7 @@ begin
 end;
 {$ENDREGION}
 
-{ TFileStream }
+// TFileStream
 {$REGION 'TFileStream'}
 class function TFileStream.Open(const FileName: string; RW: Boolean): TFileStream;
 begin

@@ -421,21 +421,6 @@ type
   function joyGetPosEx(uJoyID: LongWord; lpInfo: Pointer): LongWord; stdcall; external winmm;
 {$ENDREGION}
 
-function ExtractFileDir(const Path: string): string;
-
 implementation
-
-function ExtractFileDir(const Path: string): string;
-var
-  i : LongInt;
-begin
-  for i := Length(Path) downto 1 do
-    if (Path[i] = '\') or (Path[i] = '/') then
-    begin
-      Result := Copy(Path, 1, i);
-      Exit;
-    end;
-  Result := '';
-end;
 
 end.
