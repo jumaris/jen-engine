@@ -3,12 +3,24 @@
 		<InsCode code="utilityLib/fragDeferredRead.glsl" />
 		<Code>
 			#version 120
+			varying vec4 Color;
 			varying vec2 Texcoord;
-
+			
+			uniform vec4 bb[64]; 
+			uniform vec4 bb2[64]; 
+			attribute float indx;
+			
+			const vec2 v[4] = vec2[](vec2(0.0, 0.0), vec2(1.0, 0.0), 
+									   vec2(1.0, 1.0), vec2(0.0, 1.0));
 			void main( void )
 			{
-				gl_Position = vec4(gl_Vertex.xy * 2.0 - 1.0, 1.0, 1.0);
-				Texcoord    = gl_Vertex.zw;
+				int i = int(indx);
+				Color = bb2[i];
+		  // 	    gl_Position = vec4( (v[i]*bb[i/4].zw+bb[i/4].xy) * 2.0 -  1.0, 1.0, 1.0);
+				gl_Position = vec4( bb[i].xy * 2.0 - 1.0, 1.0, 1.0);
+				//gl_Position = vec4( noise2(3.5), 1.0, 1.0);
+				//gl_Position = vec4(gl_Vertex.xy, 1.0);
+				Texcoord = bb[i].zw;
 			}
 		</Code>
 	</VertexShader>
@@ -18,11 +30,12 @@
 			#version 120
 			uniform sampler2D baseMap;
 
+			varying vec4 Color;
 			varying vec2 Texcoord;
 
 			void main( void )
 			{
-				gl_FragColor = texture2D( baseMap, Texcoord )*vec4(0.7, 0.12, 0.15,1.0);
+				gl_FragColor = texture2D(baseMap, Texcoord.xy)*Color;
 			}
 		</Code> 
 	</FragmentShader>

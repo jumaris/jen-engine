@@ -10,47 +10,54 @@ uses
 type
   IRender = interface(JEN_Header.IRender)
     function GetValid : Boolean;
+    procedure Flush;
     property Valid : Boolean read GetValid;
   end;
 
   TRender = class(TInterfacedObject, IRender)
     procedure Init(DepthBits: Byte; StencilBits: Byte; FSAA: Byte); stdcall;
-    constructor Create;
     destructor Destroy; override;
   private
-      FValid : Boolean;
-      FGL_Context: HGLRC;
-      FViewport: TRecti;
+    FValid: Boolean;
+    FGL_Context: HGLRC;
+    FViewport: TRecti;
 
-      FBlendType: TBlendType;
-      FAlphaTest: Byte;
-      FDepthTest: Boolean;
-      FDepthWrite: Boolean;
-      FCullFace: TCullFace;
+    FBlendType: TBlendType;
+    FAlphaTest: Byte;
+    FDepthTest: Boolean;
+    FDepthWrite: Boolean;
+    FCullFace: TCullFace;
 
-      FDipCount : LongWord;
-      FMatrix: array [TMatrixType] of TMat4f;
-      FCameraPos: TVec3f;
-    procedure SetViewport(Value: TRecti);
-    procedure SetBlendType(Value: TBlendType); stdcall;
-    procedure SetAlphaTest(Value: Byte); stdcall;
-    procedure SetDepthTest(Value: Boolean); stdcall;
-    procedure SetDepthWrite(Value: Boolean); stdcall;
-    procedure SetCullFace(Value: TCullFace); stdcall;
-    procedure SetMatrix(Idx: TMatrixType; Value: TMat4f); stdcall;
-    procedure SetDipCount(Value : LongWord);
+    FDipCount: LongWord;
+    FLastDipCount: LongWord;
+    FMatrix: array [TMatrixType] of TMat4f;
+    FCameraPos: TVec3f;
 
     function GetValid: Boolean;
 
-    function GetMatrix(Idx: TMatrixType): TMat4f; stdcall;
-    function GetDipCount : LongWord;
-    procedure IncDip;
-  public
     procedure Clear(ColorBuff, DepthBuff, StensilBuff: Boolean); stdcall;
 
- {   procedure Quad(const Rect, TexRect: TRecti; Color: TColor; Angle: Single); overload; stdcall;
-    procedure Quad(x1, y1, x2, y2, x3, y3, x4, y4, cx, cy: Single; Color: TColor; PtIdx: Word; Angle: Single); overload; stdcall;
-    }
+    procedure SetViewport(Value: TRecti);
+    function GetBlendType: TBlendType; stdcall;
+    procedure SetBlendType(Value: TBlendType); stdcall;
+    function GetAlphaTest: Byte; stdcall;
+    procedure SetAlphaTest(Value: Byte); stdcall;
+    function GetDepthTest: Boolean; stdcall;
+    procedure SetDepthTest(Value: Boolean); stdcall;
+    function GetDepthWrite: Boolean; stdcall;
+    procedure SetDepthWrite(Value: Boolean); stdcall;
+    function GetCullFace: TCullFace; stdcall;
+    procedure SetCullFace(Value: TCullFace); stdcall;
+
+    function GetLastDipCount: LongWord; stdcall;
+    function GetDipCount : LongWord; stdcall;
+    procedure SetDipCount(Value : LongWord); stdcall;
+    procedure IncDip; stdcall;
+
+    function  GetMatrix(Idx: TMatrixType): TMat4f; stdcall;
+    procedure SetMatrix(Idx: TMatrixType; Value: TMat4f); stdcall;
+
+    procedure Flush;
   end;
 
 implementation
@@ -58,6 +65,15 @@ implementation
 uses
   JEN_OpenGLHeader,
   JEN_Main;
+
+destructor TRender.Destroy;
+begin
+  if not wglDeleteContext(FGL_Context) Then
+    LogOut('Cannot delete OpenGL context.', lmError)
+  else
+    LogOut('Delete OpenGL context.', lmNotify);
+  inherited;
+end;
 
 procedure TRender.Init(DepthBits: Byte; StencilBits: Byte; FSAA: Byte);
 var
@@ -67,6 +83,8 @@ var
 
   PFIdx: LongInt;
   PFCount: LongWord;
+
+  Par: Integer;
 
   PHandle: HWND;
   TDC: HDC;
@@ -178,8 +196,11 @@ begin
     Exit;
   end;
 
+  glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS ,@Par);
+
   LogOut('OpenGL version : ' + glGetString(GL_VERSION) + ' (' + glGetString(GL_VENDOR) + ')', lmInfo);
   LogOut('Video device   : ' + glGetString(GL_RENDERER), lmInfo);
+  LogOut('Texture units  : ' + Utils.IntToStr(Par), lmInfo);
 
   SetBlendType(btNormal);
   SetAlphaTest(0);
@@ -194,7 +215,7 @@ begin
   // glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
 
-  glClearColor(1.0, 0.0, 0.0, 0.0);
+  glClearColor(0.0, 0.0, 0.0, 0.0);
   // glShadeModel(GL_SMOOTH);
   // glHint(GL_SHADE_MODEL,GL_NICEST);
 
@@ -202,27 +223,30 @@ begin
   // glEnable(GL_TEXTURE_2D);
   // glEnable(GL_NORMALIZE);
   // glEnable(GL_COLOR_MATERIAL);
+  Render2d.Init;
 end;
 
-constructor TRender.Create;
+function TRender.GetValid: Boolean;
 begin
-  inherited;
-  FValid := False;
+  Result := FValid;
 end;
 
-destructor TRender.Destroy;
+procedure TRender.Clear(ColorBuff, DepthBuff, StensilBuff: Boolean);
 begin
-  if not wglDeleteContext(FGL_Context) Then
-    LogOut('Cannot delete OpenGL context.', lmError)
-  else
-    LogOut('Delete OpenGL context.', lmNotify);
-  inherited;
+  glClear( (GL_COLOR_BUFFER_BIT * Ord(ColorBuff)) or
+           (GL_DEPTH_BUFFER_BIT * Ord(DepthBuff)) or
+           (GL_STENCIL_BUFFER_BIT * Ord(StensilBuff)) );
 end;
 
 procedure TRender.SetViewport(Value: TRecti);
 begin
   FViewport := Value;
   glViewport(Value.Left, Value.Top, Value.Width, Value.Height);
+end;
+
+function TRender.GetBlendType: TBlendType;
+begin
+  Result := FBlendType;
 end;
 
 procedure TRender.SetBlendType(Value: TBlendType);
@@ -245,6 +269,11 @@ begin
   end;
 end;
 
+function TRender.GetAlphaTest: Byte;
+begin
+  Result := FAlphaTest;
+end;
+
 procedure TRender.SetAlphaTest(Value: Byte);
 begin
   if FAlphaTest <> Value then
@@ -260,6 +289,11 @@ begin
   end;
 end;
 
+function TRender.GetDepthTest: Boolean;
+begin
+  Result := FDepthTest;
+end;
+
 procedure TRender.SetDepthTest(Value: Boolean);
 begin
   if FDepthTest <> Value then
@@ -272,6 +306,11 @@ begin
   end;
 end;
 
+function TRender.GetDepthWrite: Boolean;
+begin
+  Result := FDepthWrite;
+end;
+
 procedure TRender.SetDepthWrite(Value: Boolean);
 begin
   if FDepthWrite <> Value then
@@ -279,6 +318,11 @@ begin
     FDepthWrite := Value;
     glDepthMask(Value);
   end;
+end;
+
+function TRender.GetCullFace: TCullFace;
+begin
+  Result := FCullFace;
 end;
 
 procedure TRender.SetCullFace(Value: TCullFace);
@@ -299,24 +343,14 @@ begin
   end;
 end;
 
-procedure TRender.SetMatrix(Idx: TMatrixType; Value: TMat4f); stdcall;
-begin
-  FMatrix[Idx] := Value;
-end;
-
-function TRender.GetValid: Boolean;
-begin
-  Result := FValid;
-end;
-
-function TRender.GetMatrix(Idx: TMatrixType): TMat4f; stdcall;
+function TRender.GetMatrix(Idx: TMatrixType): TMat4f;
 begin
   Result := FMatrix[Idx];
 end;
 
-procedure TRender.SetDipCount(Value: LongWord);
+procedure TRender.SetMatrix(Idx: TMatrixType; Value: TMat4f);
 begin
-  FDipCount := Value;
+  FMatrix[Idx] := Value;
 end;
 
 function TRender.GetDipCount: LongWord;
@@ -324,128 +358,25 @@ begin
   Result := FDipCount;
 end;
 
+procedure TRender.SetDipCount(Value: LongWord);
+begin
+  FDipCount := Value;
+end;
+
+function TRender.GetLastDipCount: LongWord;
+begin
+  Result := FLastDipCount;
+end;
+
 procedure TRender.IncDip;
 begin
   Inc(FDipCount);
 end;
 
-procedure TRender.Clear(ColorBuff, DepthBuff, StensilBuff: Boolean);
+procedure TRender.Flush;
 begin
-  glClear( (GL_COLOR_BUFFER_BIT * Ord(ColorBuff)) or
-           (GL_DEPTH_BUFFER_BIT * Ord(DepthBuff)) or
-           (GL_STENCIL_BUFFER_BIT * Ord(StensilBuff)) );
+  FLastDipCount := FDipCount;
+  FDipCount := 0;
 end;
-
-                 {
-procedure TRender.DrawQuad(const Texture: N4Header.TTexture; v1, v2, v3, v4: N4Header.TTexVec; cx, cy: Single; Color: N4Header.TColor; Angle, Scale: Single);
-var
-  s, c : Single;
-  tx, ty : Single;
-  qColor   : N4.TVec4f;
-  qTexture : N4.TTexture;
-begin
-  with TRGBA(Color) do
-    qColor := Math.Vec4f(B, G, R, A) * (1 / 255);
-
-  if Texture.Texture <> nil then
-    qTexture := TTexture(Texture.Texture)
-  else
-    qTexture := Render.WhiteTex;
-
-  Render.CheckBatch(qTexture, qColor);
-  Render.SimpleMat.ColorParam.Diffuse := qColor;
-  Render.SimpleMat.DiffuseMap := qTexture;
-  if Render.SimpleMat.Blending = 3 then
-    Render.SimpleMat.ColorParam.Ambient.x := 0
-  else
-    Render.SimpleMat.ColorParam.Ambient.x := 1;
-
-  Render.SimpleMat.Enable;
-  Math.SinCos(Angle * Math.deg2rad, s, c);
-
-  tx := 0.5 / Texture.Width;
-  ty := 0.5 / Texture.Height;
-
-  v1.x := v1.x - cx;
-  v1.y := v1.y - cy;
-  v2.x := v2.x - cx;
-  v2.y := v2.y - cy;
-  v3.x := v3.x - cx;
-  v3.y := v3.y - cy;
-  v4.x := v4.x - cx;
-  v4.y := v4.y - cy;
-
-  with Math do
-    Render.Quad(Vec4f(cx + (v1.x * c - v1.y * s) * Scale, cy + (v1.x * s + v1.y * c) * Scale, v1.s + tx, v1.t + ty),
-                Vec4f(cx + (v2.x * c - v2.y * s) * Scale, cy + (v2.x * s + v2.y * c) * Scale, v2.s + tx, v2.t + ty),
-                Vec4f(cx + (v3.x * c - v3.y * s) * Scale, cy + (v3.x * s + v3.y * c) * Scale, v3.s + tx, v3.t + ty),
-                Vec4f(cx + (v4.x * c - v4.y * s) * Scale, cy + (v4.x * s + v4.y * c) * Scale, v4.s + tx, v4.t + ty));
-//  Render.FlushBatch;
-end;             }
-                 {
-procedure TRender.DrawQuad(v1, v2, v3, v4: N4Header.TTexVec; cx, cy: Single; Color: N4Header.TColor; Angle, Scale: Single);
-var
-  s, c : Single;
-  tx, ty : Single;
-  qColor   : N4.TVec4f;
-  qTexture : N4.TTexture;
-begin
-  with TRGBA(Color) do
-    qColor := Math.Vec4f(B, G, R, A) * (1 / 255);
-
-  Math.SinCos(Angle * Math.deg2rad, s, c);
-
-  tx := 0.5 / Texture.Width;
-  ty := 0.5 / Texture.Height;
-
-  v1.x := v1.x - cx;
-  v1.y := v1.y - cy;
-  v2.x := v2.x - cx;
-  v2.y := v2.y - cy;
-  v3.x := v3.x - cx;
-  v3.y := v3.y - cy;
-  v4.x := v4.x - cx;
-  v4.y := v4.y - cy;
-
-  with Math do
-    Render.Quad(Vec4f(cx + (v1.x * c - v1.y * s) * Scale, cy + (v1.x * s + v1.y * c) * Scale, v1.s + tx, v1.t + ty),
-                Vec4f(cx + (v2.x * c - v2.y * s) * Scale, cy + (v2.x * s + v2.y * c) * Scale, v2.s + tx, v2.t + ty),
-                Vec4f(cx + (v3.x * c - v3.y * s) * Scale, cy + (v3.x * s + v3.y * c) * Scale, v3.s + tx, v3.t + ty),
-                Vec4f(cx + (v4.x * c - v4.y * s) * Scale, cy + (v4.x * s + v4.y * c) * Scale, v4.s + tx, v4.t + ty));
-
-end;
-
-
-procedure TRender.Quad(const v1, v2, v3, v4: TTexVec; Color: TColor; Angle: Single);
-begin
-  DrawQuad(v1, v2, v3, v4, 0, 0, Color, Angle);
-end;
-
-procedure TRender.Quad(const Rect, TexRect: TRecti; Color: TColor; Angle: Single);
-begin
-  Quad(TexVec(Rect.Left, Rect.Top, TexRect.Left, TexRect.Top),
-       TexVec(Rect.Right, Rect.Top, TexRect.Right, TexRect.Top),
-       TexVec(Rect.Right, Rect.Bottom, TexRect.Right, TexRect.Bottom),
-       TexVec(Rect.Left, Rect.Bottom, TexRect.Left, TexRect.Bottom), Color, Angle);
-end;
-
-procedure TRender.Quad(x1, y1, x2, y2, x3, y3, x4, y4, cx, cy: Single; Color: TColor; PtIdx: Word; Angle: Single);
-var
-  s, t, ss, ts : Single;
-begin
-  ss := Texture.PatternWidth / Texture.Width;
-  ts := Texture.PatternHeight / Texture.Height;
-  s := PtIdx mod (Texture.Width div Texture.PatternWidth) * ss;
-  t := PtIdx div (Texture.Height div Texture.PatternHeight) * ts;
-  ss := ss + s;
-  ts := ts + t;
-
-  DrawQuad(Texture,
-           TexVec(x1, y1, s, t),
-           TexVec(x2, y2, ss, t),
-           TexVec(x3, y3, ss, ts),
-           TexVec(x4, y4, s, ts), cx, cy, Color, Angle, Scale);
-end;
-                                                                     }
 
 end.

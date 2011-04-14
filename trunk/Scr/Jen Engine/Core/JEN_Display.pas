@@ -23,7 +23,6 @@ type
   end;
 
   TDisplay = class(TInterfacedObject, IDisplay)
-    constructor Create;
     destructor Destroy; override;
   private
     FValid      : Boolean;
@@ -141,11 +140,6 @@ begin
     Result := DefWindowProcW(hWnd, Msg, wParam, lParam);
   end;
 
-end;
-
-constructor TDisplay.Create;
-begin
-  inherited;
 end;
 
 function TDisplay.Init(Width: LongWord; Height: LongWord; Refresh: Byte; FullScreen: Boolean): Boolean;

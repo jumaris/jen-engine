@@ -36,7 +36,7 @@ begin
 
   glGenBuffers(1, @FID);
   glBindBuffer(FType, FID);
-  glBufferData(FType, Count * Stride, Data, GL_STATIC_DRAW);
+  glBufferData(FType, Count * Stride, Data, GL_STREAM_DRAW);
 end;
 
 destructor TGeomBuffer.Destroy;
@@ -49,10 +49,12 @@ procedure TGeomBuffer.SetData(Offset, Size: LongInt; Data: Pointer);
 var
   p : PByteArray;
 begin
-  Bind;
+  Bind;         {
   P := glMapBuffer(FType, GL_WRITE_ONLY);
   Move(Data^, P[Offset], Size);
   glUnmapBuffer(FType);
+                   }
+  glBufferSubData(FType, offset, size, data);
 end;
 
 procedure TGeomBuffer.Bind;
