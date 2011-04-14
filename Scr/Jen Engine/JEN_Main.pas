@@ -17,7 +17,7 @@ uses
   JEN_Shader,
 
   XSystem;
-
+   {
 const
   lmInfo       = TLogMsg.lmInfo;
   lmNotify     = TLogMsg.lmNotify;
@@ -46,9 +46,16 @@ type
   TFileStream     = JEN_Utils.TFileStream;
 
   TResourceManager= JEN_ResourceManager.TResourceManager;
-  TDDSLoader      = JEN_DDSTexture.TDDSLoader;
-  TTexture        = JEN_ResourceManager.TTexture;
+
   TShaderResource = JEN_Shader.TShaderResource;
+                                               }
+type
+  TTexture        = JEN_ResourceManager.TTexture;
+  TDDSLoader      = JEN_DDSTexture.TDDSLoader;
+
+  IJenEngine = interface(JEN_Header.IJenEngine)
+    procedure Finish;
+  end;
 
   TJenEngine = class(TInterfacedObject, IJenEngine)
     constructor Create;
@@ -57,9 +64,12 @@ type
     class var FisRunnig : Boolean;
     class var FQuit : Boolean;
   public
+    procedure Start(Game: IGame); stdcall;
     procedure GetSubSystem(SubSystemType: TJenSubSystemType; out SubSystem: IJenSubSystem); stdcall;
-    procedure Start(Game : IGame); stdcall;
-    procedure Finish; stdcall;
+  //  procedure OnEvent(Event: TEvent; Proc: Pointer); stdcall;
+    procedure Finish;
+ //   procedure bb;
+
     class property Quit: Boolean read FQuit write FQuit;
   end;
 
@@ -75,7 +85,7 @@ var
   Game         : IGame;
 
 procedure LogOut(const Text: string; MType: TLogMsg);
-procedure pGetEngine(out Eng: IJenEngine); stdcall;
+procedure pGetEngine(out Eng: JEN_Header.IJenEngine); stdcall;
 
 implementation
 
@@ -85,7 +95,7 @@ begin
   Log.Print(Text, MType);
 end;
 
-procedure pGetEngine(out Eng: IJenEngine);
+procedure pGetEngine(out Eng: JEN_Header.IJenEngine);
 begin
    Engine := TJenEngine.Create;
    Eng := Engine;
@@ -129,26 +139,6 @@ begin
   inherited;
 end;
 
-procedure TJenEngine.GetSubSystem(SubSystemType: TJenSubSystemType;out SubSystem: IJenSubSystem);
-begin
-  case SubSystemType of
-    ssUtils : SubSystem :=  IJenSubSystem(Utils);
- //   ssSystemParams : SubSystem := SystemParams;
-    ssLog : SubSystem :=  IJenSubSystem(Log);
-    ssDisplay : SubSystem := IJenSubSystem(Display);
-    ssResMan : SubSystem := IJenSubSystem(ResMan);
-    ssRender : SubSystem := IJenSubSystem(Render);
-    ssRender2d : SubSystem := IJenSubSystem(Render2d);
-  else
-    SubSystem := nil;
-  end;
-end;
-
-procedure TJenEngine.Finish;
-begin
-  FQuit := True;
-end;
-
 procedure TJenEngine.Start(Game : IGame);
 begin
 
@@ -182,12 +172,35 @@ begin
       Display.Update;
       Game.OnUpdate(0);
       Game.OnRender;
-      ResMan.ResChangeCallBack := nil;
-      Render.DipCount := 0;
-     // glfinish;
+      Render.Flush;
       Display.Swap;
     end;
 
+end;
+
+procedure TJenEngine.GetSubSystem(SubSystemType: TJenSubSystemType;out SubSystem: IJenSubSystem);
+begin
+  case SubSystemType of
+    ssUtils : SubSystem :=  IJenSubSystem(Utils);
+ //   ssSystemParams : SubSystem := SystemParams;
+    ssLog : SubSystem :=  IJenSubSystem(Log);
+    ssDisplay : SubSystem := IJenSubSystem(Display);
+    ssResMan : SubSystem := IJenSubSystem(ResMan);
+    ssRender : SubSystem := IJenSubSystem(Render);
+    ssRender2d : SubSystem := IJenSubSystem(Render2d);
+  else
+    SubSystem := nil;
+  end;
+end;
+                        {
+procedure TJenEngine.OnEvent(Event : TEvent; Proc: TProc);
+begin
+
+end;                   }
+
+procedure TJenEngine.Finish;
+begin
+  FQuit := True;
 end;
 
 initialization

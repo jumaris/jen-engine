@@ -10,20 +10,29 @@ type
   HWND  = LongWord;
   HDC   = LongWord;
 
+  TJenSubSystemType = (ssUtils, ssSystemParams, ssLog, ssDisplay, ssResMan, ssRender, ssRender2d);
+  TEvent = (evFrameEnd);
+
   TLogMsg = (lmHeaderMsg, lmInfo, lmNotify, lmCode, lmWarning, lmError);
 
-  TJenSubSystemType = (ssUtils, ssSystemParams, ssLog, ssDisplay, ssResMan, ssRender, ssRender2d);
   TBlendType = (btNone, btNormal, btAdd, btMult, btOne, btNoOverride, btAddAlpha);
   TCullFace = (cfNone, cfFront, cfBack);
   TMatrixType = (mtViewProj, mtModel, mtProj, mtView);
+
   TResourceType = (rtShader, rtTexture, rtTexture1, rtTexture2, rtTexture3, rtTexture4, rtTexture5, rtTexture6,
                   rtTexture7, rtTexture8, rtTexture9, rtTexture10, rtTexture11, rtTexture12,
 	                rtTexture13, rtTexture14, rtTexture15);
+
   TShaderUniformType = (utInt, utVec1, utVec2, utVec3, utVec4, utMat3, utMat4);
+  TShaderAttribType  = (atVec1b, atVec2b, atVec3b, atVec4b,
+                        atVec1s, atVec2s, atVec3s, atVec4s,
+                        atVec1f, atVec2f, atVec3f, atVec4f);
+
   TTextureFilter = (tfNone, tfBilinear, tfTrilinear, tfAniso);
   TSetModeResult = (SM_Successful, SM_SetDefault, SM_Error);
 
   TColor = LongWord;
+  TProc = Procedure;
 
   IGame = interface
     procedure LoadContent; stdcall;
@@ -38,6 +47,7 @@ type
   IJenEngine = interface
     procedure GetSubSystem(SubSustemType: TJenSubSystemType; out SubSystem: IJenSubSystem); stdcall;
     procedure Start(Game : IGame); stdcall;
+   // procedure OnEvent(Event : TEvent; Proc: Pointer); stdcall;
   end;
 
   IUtils = interface(IJenSubSystem)
@@ -136,9 +146,15 @@ type
     procedure Value(const Data; Count: LongInt = 1); stdcall;
   end;
 
+  IShaderAttrib = interface
+    procedure Value(Stride, Offset: LongInt); stdcall;
+    procedure Enable; stdcall;
+    procedure Disable; stdcall;
+  end;
+
   IShaderProgram = interface
     function Uniform(const UName: string; UniformType: TShaderUniformType): IShaderUniform; stdcall;
-    //function Attrib(const AName: string; AttribType: TShaderAttribType; Norm: Boolean = False): TShaderAttrib; stdcall;
+    function Attrib(const AName: string; AttribType: TShaderAttribType; Norm: Boolean = False): IShaderAttrib; stdcall;
     procedure Bind; stdcall;
   end;
 
@@ -162,28 +178,35 @@ type
   IRender = interface(IJenSubSystem)
     procedure Init(DepthBits: Byte = 24; StencilBits: Byte = 8; FSAA: Byte = 0); stdcall;
 
-    procedure SetBlendType(Value: TBlendType); stdcall;
-    procedure SetAlphaTest(Value: Byte); stdcall;
-    procedure SetDepthTest(Value: Boolean); stdcall;
-    procedure SetDepthWrite(Value: Boolean); stdcall;
-    procedure SetCullFace(Value: TCullFace); stdcall;
-
-    procedure SetMatrix(Idx: TMatrixType; Value: TMat4f); stdcall;
-    function  GetMatrix(Idx: TMatrixType): TMat4f; stdcall;
-
-    function GetDipCount : LongWord;
-    procedure SetDipCount(Value : LongWord);
-    procedure IncDip;
-
     procedure Clear(ColorBuff, DepthBuff, StensilBuff: Boolean); stdcall;
 
-    property BlendType: TBlendType write SetBlendType;
-    property AlphaTest: Byte write SetAlphaTest;
-    property DepthTest: Boolean write SetDepthTest;
-    property DepthWrite: Boolean write SetDepthWrite;
-    property CullFace: TCullFace write SetCullFace;
+    function GetBlendType: TBlendType; stdcall;
+    procedure SetBlendType(Value: TBlendType); stdcall;
+    function GetAlphaTest: Byte; stdcall;
+    procedure SetAlphaTest(Value: Byte); stdcall;
+    function GetDepthTest: Boolean; stdcall;
+    procedure SetDepthTest(Value: Boolean); stdcall;
+    function GetDepthWrite: Boolean; stdcall;
+    procedure SetDepthWrite(Value: Boolean); stdcall;
+    function GetCullFace: TCullFace; stdcall;
+    procedure SetCullFace(Value: TCullFace); stdcall;
+
+    function  GetMatrix(Idx: TMatrixType): TMat4f; stdcall;
+    procedure SetMatrix(Idx: TMatrixType; Value: TMat4f); stdcall;
+
+    function GetLastDipCount: LongWord; stdcall;
+    function GetDIPCount: LongWord; stdcall;
+    procedure SetDIPCount(Value: LongWord); stdcall;
+    procedure IncDIP; stdcall;
+
+    property BlendType: TBlendType read GetBlendType write SetBlendType;
+    property AlphaTest: Byte read GetAlphaTest write SetAlphaTest;
+    property DepthTest: Boolean read GetDepthTest write SetDepthTest;
+    property DepthWrite: Boolean read GetDepthWrite write SetDepthWrite;
+    property CullFace: TCullFace read GetCullFace write SetCullFace;
     property Matrix[Idx: TMatrixType]: TMat4f read GetMatrix write SetMatrix;
     property DipCount: LongWord read GetDipCount write SetDipCount;
+    property LastDipCount: LongWord read GetLastDipCount;
   end;
 
   IRender2D = interface(IJenSubSystem)

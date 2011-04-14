@@ -59,7 +59,6 @@ type
     function GetActiveRes(RT: TResourceType): IUnknown;
     procedure SetActiveRes(RT: TResourceType; Value: IUnknown);
 
-    property ResChangeCallBack: Pointer write SetResChangeCallBack;
     property Active[RT :TResourceType]: IUnknown read GetActiveRes write SetActiveRes;
   end;
 
@@ -159,7 +158,7 @@ end;
                  }
 procedure TTexture.Bind(Channel: Byte = 0);
 begin
-  if ResMan.Active[TResourceType(Channel + Ord(rtTexture))] <> IResource(Self) then
+  if ResMan.Active[TResourceType(Channel + Ord(rtTexture))] <> ITexture(Self) then
   begin
     glActiveTexture(GL_TEXTURE0 + Channel);
     glBindTexture(FSampler, FID);
@@ -191,9 +190,10 @@ end;
 
 procedure TResourceManager.SetResChangeCallBack(Proc: Pointer);
 begin
+  FResChangeCallBack := Proc;
+
   if(FResChangeCallBack<>Proc)and(Assigned(FResChangeCallBack)) then
     TProc(FResChangeCallBack);
-  FResChangeCallBack := Proc;
 end;
 
 function TResourceManager.GetActiveRes(RT: TResourceType): IUnknown;
@@ -203,10 +203,10 @@ end;
 
 procedure TResourceManager.SetActiveRes(RT: TResourceType; Value: IUnknown);
 begin
+  FActiveRes[RT] := Value;
+
   if Assigned(FResChangeCallBack) and (Value<>FActiveRes[RT]) then
     TProc(FResChangeCallBack);
-
-  FActiveRes[RT] := Value;
 end;
 
 function TResourceManager.LoadShader(const FileName: string): IShaderResource;

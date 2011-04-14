@@ -16,16 +16,18 @@ type
     destructor Destroy; override;
   private
   public
-    FID: GLEnum;
-    FUniformList: TInterfaceList;
+    FID : GLint;
+    FUniformList : TInterfaceList;
+    FAttribList : TInterfaceList;
     function Uniform(const UName: string; UniformType: TShaderUniformType): IShaderUniform; stdcall;
+    function Attrib(const AName: string; AttribType: TShaderAttribType; Norm: Boolean = False): IShaderAttrib; stdcall;
     procedure Bind; stdcall;
   end;
 
   TShaderUniform = class(TManagedInterfacedObj, IShaderUniform)
     constructor Create(Manager : TInterfaceList);
   private
-    FID    : GLEnum;
+    FID    : GLint;
     FType  : TShaderUniformType;
     FName  : string;
     FValue : array [0..11] of Single;
@@ -33,6 +35,24 @@ type
   public
     procedure Value(const Data; Count: LongInt); stdcall;
     property Name: string read FName;
+  end;
+
+  TShaderAttrib = class(TManagedInterfacedObj, IShaderAttrib)
+    constructor Create(Manager : TInterfaceList);
+  private
+    FID    : GLint;
+    FType  : TShaderAttribType;
+    DType  : GLEnum;
+    FNorm : Boolean;
+    Size   : LongInt;
+    FName  : string;
+    FValue : array [0..11] of Single;
+    procedure Init(ShaderID: GLEnum; const AName: string; AttribType: TShaderAttribType; Norm: Boolean);
+  public
+    procedure Value(Stride, Offset: LongInt); stdcall;
+    property Name: string read FName;
+    procedure Enable; stdcall;
+    procedure Disable; stdcall;
   end;
 
   TShaderResource = class(TManagedInterfacedObj, IResource, IShaderResource)
@@ -58,17 +78,21 @@ implementation
 uses
   JEN_Main;
 
+//ShaderProgram
+{$REGION 'TShaderProgram'}  
 constructor TShaderProgram.Create(Manager: TInterfaceList);
 begin
   inherited;
   FID := glCreateProgram;
   FUniformList := TInterfaceList.Create;
+  FAttribList := TInterfaceList.Create;
 end;
 
 destructor TShaderProgram.Destroy;
 begin
   glDeleteShader(FID);
   FUniformList.Free;
+  FAttribList.Free;
   inherited;
 end;
 
@@ -88,6 +112,23 @@ begin
   Result := U;
 end;
 
+function TShaderProgram.Attrib(const AName: string; AttribType: TShaderAttribType; Norm: Boolean = False): IShaderAttrib;
+var
+  i : LongInt;
+  a : TShaderAttrib;
+begin
+{
+  for i := 0 to Length(FAttrib) - 1 do
+    if FAttrib[i].Name = AName then
+    begin
+      Result := FAttrib[i];
+      Exit;
+    end;               }
+  A := TShaderAttrib.Create(FAttribList);
+  A.Init(FID, AName, AttribType, Norm);
+  Result := A;
+end;
+
 procedure TShaderProgram.Bind;
 begin
   if ResMan.Active[rtShader] <> IUnknown(Self) then
@@ -96,9 +137,12 @@ begin
     ResMan.Active[rtShader] := Self;
   end;
 end;
+{$ENDREGION}
 
+{$REGION 'TShaderUniform'}
 constructor TShaderUniform.Create(Manager: TInterfaceList);
 begin
+  FID := -1;
   inherited;
 end;
 
@@ -116,12 +160,12 @@ end;
 procedure TShaderUniform.Value(const Data; Count: LongInt);
 const
   USize : array [TShaderUniformType] of LongInt = (4, 4, 8, 12, 16, 36, 64);
-begin
-  if Count * USize[FType] <= SizeOf(FValue) then
+begin                        {
+ if Count * USize[FType] <= SizeOf(FValue) then
     if MemCmp(@FValue, @Data, Count * USize[FType]) <> 0 then
       Move(Data, FValue, Count * USize[FType])
     else
-      Exit;
+      Exit;            }
 
   case FType of
     utInt  : glUniform1iv(FID, Count, @Data);
@@ -132,6 +176,45 @@ begin
     utMat3 : glUniformMatrix3fv(FID, Count, False, @Data);
     utMat4 : glUniformMatrix4fv(FID, Count, False, @Data);
   end;
+end;
+{$ENDREGION}
+
+constructor TShaderAttrib.Create(Manager: TInterfaceList);
+begin
+  FID := -1;
+  inherited;
+end;
+
+procedure TShaderAttrib.Init(ShaderID: LongWord; const AName: string; AttribType: TShaderAttribType; Norm: Boolean);
+begin
+  FID   := glGetAttribLocation(ShaderID, PAnsiChar(AnsiString(AName)));
+  FName := AName;
+  FType := AttribType;
+  Size  := Byte(FType) mod 4 + 1;
+  FNorm := Norm;
+  case FType of
+    atVec1b..atVec4b : DType := GL_UNSIGNED_BYTE;
+    atVec1s..atVec4s : DType := GL_SHORT;
+    atVec1f..atVec4f : DType := GL_FLOAT;
+  end;  
+end;
+
+procedure TShaderAttrib.Value(Stride, Offset: LongInt);
+begin
+  if FID <> -1 then
+    glVertexAttribPointer(FID, Size, DType, FNorm, Stride, Pointer(Offset));
+end;
+
+procedure TShaderAttrib.Enable;
+begin
+  if FID <> -1 then
+    glEnableVertexAttribArray(FID);
+end;
+
+procedure TShaderAttrib.Disable;
+begin
+  if FID <> -1 then
+    glDisableVertexAttribArray(FID);
 end;
 
 constructor TShaderResource.Create(const Name: string; Manager: TInterfaceList);

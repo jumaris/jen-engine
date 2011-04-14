@@ -29,8 +29,6 @@ type
   TGame = class(TInterfacedObject, IGame)
   var
   r : ITexture;
-  s : IShaderResource;
-  sp : IShaderProgram;
   public
     procedure LoadContent; stdcall;
     procedure OnUpdate(dt: double); stdcall;
@@ -45,19 +43,19 @@ var
   Game : TGame = nil;
   ResMan : IResourceManager = nil;
 
-procedure TGame.LoadContent; stdcall;
+procedure TGame.LoadContent;
 begin
-  ResMan.Load('Media\asd.dds', r);
-  ResMan.Load('Media\Shader.xml', s);
-  sp := s.Compile;
+  ResMan.Load('Media\123.dds', r);
 end;
 
-procedure TGame.OnUpdate(dt: double); stdcall;
+procedure TGame.OnUpdate(dt: double);
 begin
   Display.Caption := Utils.IntToStr(Display.FPs);
 end;
 
-procedure TGame.OnRender; stdcall;
+procedure TGame.OnRender;
+var
+  i : LongInt;
 begin
   Render.Clear(True,False,False);
   Render.CullFace := cfBack;
@@ -80,13 +78,19 @@ begin
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity;
                       }
-  sp.Bind;
-  r.Bind;
 
-  render2d.DrawSprite(r,0,0,1,1);
-  render2d.DrawSprite(r,0,0,0.5,0.5);
-  render2d.DrawSprite(r,0,0,0.3,0.3);
-  log.Print(Utils.IntToStr(Render.DipCount), lmNotify);
+//  r.Bind;
+
+    Render.BlendType := btNormal;
+
+   //   glEnableClientState( GL_COLOR_ARRAY);
+
+  // glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+  for i := 0 to 25000 do
+  render2d.DrawSprite(r,Frac(i / 500),i/10000,1/25,1/25);
+
+  //log.Print(Utils.IntToStr(Render.LastDipCount), lmNotify);
 end;
 
 procedure pp;
@@ -101,6 +105,7 @@ begin
   Render.Init();
 //  Display.SetVSync(False);
   Display.FullScreen := false;
+  Display.SetVSync(false);
   Game := TGame.Create;
   Engine.Start(Game);
 
