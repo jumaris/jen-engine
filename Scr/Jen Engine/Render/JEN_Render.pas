@@ -377,6 +377,7 @@ procedure TRender.Flush;
 begin
   FLastDipCount := FDipCount;
   FDipCount := 0;
+  Engine.CreateEvent(evFrameEnd);
 end;
 
 end.

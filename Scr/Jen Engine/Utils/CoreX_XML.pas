@@ -178,7 +178,7 @@ var
       Len := t - Start;
 
       k := Start;
-      if (Len > 1) then
+      if (Len > 1) and (t^ <> #0) then
       begin
         while (k - Start < Tab) and (k - Start <= Len) and (k^ in [#9, #32]) do Inc(k);
 
@@ -191,7 +191,7 @@ var
       if t^ = #13 then Inc(t);
       if t^ = #10 then Inc(t);
     end;
-    Result := Trim(Result);
+    Result := Result;
   end;
 
 begin

@@ -10,8 +10,6 @@ uses
   JEN_OpenglHeader;
 
 type
-  TProc = procedure stdcall;
-
   TTexture = class(TManagedInterfacedObj, IResource, ITexture)
     constructor Create(const Name: string; Manager: TInterfaceList);
     destructor Destroy; override;

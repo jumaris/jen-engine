@@ -141,7 +141,7 @@ Type
 //    property Rot: TQuat read GetRot write SetRot;
   end;
 
-Const
+const
   INF     = 1 / 0;
   NAN     = 0 / 0;
   EPS     = 1.E-05;
@@ -1186,3 +1186,4 @@ begin
 end;
 {$ENDREGION}
 end.
+
