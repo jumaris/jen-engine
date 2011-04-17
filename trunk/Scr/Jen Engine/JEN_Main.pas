@@ -55,6 +55,7 @@ type
 
   IJenEngine = interface(JEN_Header.IJenEngine)
     procedure Finish;
+    procedure CreateEvent(Event: TEvent);
   end;
 
   TJenEngine = class(TInterfacedObject, IJenEngine)
@@ -63,13 +64,14 @@ type
   private
     class var FisRunnig : Boolean;
     class var FQuit : Boolean;
+    var FEventsList : array[TEvent] of TList;
   public
     procedure Start(Game: IGame); stdcall;
     procedure GetSubSystem(SubSystemType: TJenSubSystemType; out SubSystem: IJenSubSystem); stdcall;
-  //  procedure OnEvent(Event: TEvent; Proc: Pointer); stdcall;
+    procedure CreateEvent(Event: TEvent);
+    procedure AddEventProc(Event: TEvent; Proc: TProc); stdcall;
+    procedure DelEventProc(Event: TEvent; Proc: TProc); stdcall;
     procedure Finish;
- //   procedure bb;
-
     class property Quit: Boolean read FQuit write FQuit;
   end;
 
@@ -102,9 +104,14 @@ begin
 end;
 
 constructor TJenEngine.Create;
+var
+  Event : TEvent;
 begin
 
   inherited;
+  for Event:=Low(TEvent) to High(TEvent) do
+    FEventsList[Event] := TList.Create;
+
   Utils := TUtils.Create;
   SystemParams := TSystem.Create;
   Log := TLog.Create;
@@ -122,6 +129,8 @@ begin
 end;
 
 destructor TJenEngine.Destroy;
+var
+  Event : TEvent;
 begin
   ResMan       := nil;
   Render2d     := nil;
@@ -135,6 +144,9 @@ begin
   Log          := nil;
   Utils        := nil;
   SystemParams := nil;
+
+  for Event:=Low(TEvent) to High(TEvent) do
+    FEventsList[Event].Free;
 
   inherited;
 end;
@@ -192,11 +204,24 @@ begin
     SubSystem := nil;
   end;
 end;
-                        {
-procedure TJenEngine.OnEvent(Event : TEvent; Proc: TProc);
-begin
 
-end;                   }
+procedure TJenEngine.CreateEvent(Event: TEvent);
+var
+  i : LongInt;
+begin
+  for i:=0 to FEventsList[Event].Count-1 do
+    TProc(FEventsList[Event][i]);
+end;
+
+procedure TJenEngine.AddEventProc(Event : TEvent; Proc: TProc);
+begin
+  FEventsList[Event].Add(@Proc);
+end;
+
+procedure TJenEngine.DelEventProc(Event: TEvent; Proc: TProc);
+begin
+  FEventsList[Event].Del(FEventsList[Event].IndexOf(@Proc));
+end;
 
 procedure TJenEngine.Finish;
 begin

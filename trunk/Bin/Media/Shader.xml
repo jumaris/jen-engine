@@ -3,24 +3,47 @@
 		<InsCode code="utilityLib/fragDeferredRead.glsl" />
 		<Code>
 			#version 120
+			
+			attribute float Indx;
+		</Code>	
+		
+		<ifdef def="VertexColor">
+			<ifdef def="VertexColor">
+				const int ColorAraySize = 64;
+			</ifdef>
+		</ifdef>
+		<ifndef def="VertexColor">
+			const int ColorAraySize = 16;
+		</ifndef>
+		
+		<Code>	
+			uniform vec4 PosTexCoord[64]; 
+			uniform vec4 QuadColor[ColorAraySize]; 
+			
 			varying vec4 Color;
 			varying vec2 Texcoord;
-			
-			uniform vec4 bb[64]; 
-			uniform vec4 bb2[64]; 
-			attribute float indx;
 			
 			const vec2 v[4] = vec2[](vec2(0.0, 0.0), vec2(1.0, 0.0), 
 									   vec2(1.0, 1.0), vec2(0.0, 1.0));
 			void main( void )
 			{
-				int i = int(indx);
-				Color = bb2[i];
+				int i = int(Indx);
+				vec4 PosTex = PosTexCoord[i];
+		</Code>	
+		
+			<ifdef def="VertexColor">
+				Color = QuadColor[i];
+			</ifdef>
+			<ifndef def="VertexColor">
+				Color = QuadColor[i/4];
+			</ifndef>
+			
+		<Code>		
 		  // 	    gl_Position = vec4( (v[i]*bb[i/4].zw+bb[i/4].xy) * 2.0 -  1.0, 1.0, 1.0);
-				gl_Position = vec4( bb[i].xy * 2.0 - 1.0, 1.0, 1.0);
+				gl_Position = vec4( PosTex.xy * 2.0 - 1.0, 1.0, 1.0);
 				//gl_Position = vec4( noise2(3.5), 1.0, 1.0);
 				//gl_Position = vec4(gl_Vertex.xy, 1.0);
-				Texcoord = bb[i].zw;
+				Texcoord = PosTex.zw;
 			}
 		</Code>
 	</VertexShader>
@@ -35,7 +58,17 @@
 
 			void main( void )
 			{
+		</Code>	
+		
+			<ifdef def="VertexColor">
 				gl_FragColor = texture2D(baseMap, Texcoord.xy)*Color;
+			</ifdef>
+			<ifndef def="VertexColor">
+				gl_FragColor = texture2D(baseMap, Texcoord.xy);
+			</ifndef>
+			
+		<Code>		
+				
 			}
 		</Code> 
 	</FragmentShader>

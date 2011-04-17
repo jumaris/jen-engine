@@ -58,7 +58,7 @@ var
   i : LongInt;
 begin
   Render.Clear(True,False,False);
-  Render.CullFace := cfBack;
+
 
 //   glviewport (0,0,1024,768);
   {
@@ -90,7 +90,13 @@ begin
   for i := 0 to 25000 do
   render2d.DrawSprite(r,Frac(i / 500),i/10000,1/25,1/25);
 
+
   //log.Print(Utils.IntToStr(Render.LastDipCount), lmNotify);
+end;
+
+procedure blabla; stdcall;
+begin
+  log.Print('asd',lmNotify);
 end;
 
 procedure pp;
@@ -101,6 +107,7 @@ begin
   Engine.GetSubSystem(ssRender, IJenSubSystem(Render));
   Engine.GetSubSystem(ssResMan, IJenSubSystem(ResMan));
   Engine.GetSubSystem(ssUtils, IJenSubSystem(Utils));
+//  Engine.AddEventProc(evFrameEnd,Blabla);
   Display.Init(1024, 768, 60, false);
   Render.Init();
 //  Display.SetVSync(False);

@@ -55,15 +55,24 @@ type
     procedure Disable; stdcall;
   end;
 
+  TShaderDefine = record
+    Name : String;
+    Value : LongWord;
+  end;
+
   TShaderResource = class(TManagedInterfacedObj, IResource, IShaderResource)
     constructor Create(const Name: string; Manager : TInterfaceList);
     destructor Destroy; override;
   private
     FShaderPrograms : TInterfaceList;
+    FDefines : TList;
     function GetName: string; stdcall;
+    function GetDefineId(const Name: String): LongInt;
   public
     XN_VS, XN_FS, XML: TXML;
     FName: string;
+    function GetDefine(const Name: String): LongInt; stdcall;
+    procedure SetDefine(const Name: String; Value: LongInt); stdcall;
     function Compile: IShaderProgram; stdcall;
   end;
 
@@ -222,13 +231,20 @@ begin
   inherited Create(Manager);
   FName := Name;
   FShaderPrograms := TInterfaceList.Create;
+  FDefines := TList.Create;
 end;
 
 destructor TShaderResource.Destroy;
+var
+  i : LongInt;
 begin
   if Assigned(XML) then
     XML.Free;
+
   FShaderPrograms.Free;
+  for i := 0 to FDefines.Count - 1 do
+    Dispatch(FDefines);
+  FDefines.Free;
   inherited;
 end;
 
@@ -237,12 +253,56 @@ begin
   Result := FName;
 end;
 
+function TShaderResource.GetDefineId(const Name: String): LongInt;
+var
+  I : LongInt;
+begin
+  Result := -1;
+  for I := 0 to FDefines.Count - 1 do
+    if TShaderDefine(FDefines[i]^).Name = Name then
+      Exit(I);
+end;
+
+function TShaderResource.GetDefine(const Name: String): LongInt;
+var
+  Id : LongInt;
+begin
+  Id := GetDefineId(Name);
+  if Id = -1 then
+    Exit(-1);
+
+  Result := TShaderDefine(FDefines[id]^).Value;
+end;
+
+procedure TShaderResource.SetDefine(const Name: String; Value: LongInt);
+var
+  Define : ^TShaderDefine;
+  Id : LongInt;
+begin
+  if Value < 0 then
+  begin
+    LogOut('Can not set the value to define less than zero', lmWarning);
+    Exit;
+  end;
+
+  Id := GetDefineId(Name);
+
+  if Id = -1 then
+  begin
+    New(Define);
+    Define.Name := Name;
+    Define.Value := Value;
+    FDefines.Add(Define);
+  end else
+    TShaderDefine(FDefines[Id]^).Value := Value;
+end;
+
 function TShaderResource.Compile : IShaderProgram;
 var
-  Shader : TShaderProgram;
   Status : LongInt;
   LogBuf : AnsiString;
   LogLen : LongInt;
+  Shader : TShaderProgram;
 
   function IndexStr(const AText: string; const AValues: array of string): LongInt;
   var
@@ -250,26 +310,66 @@ var
   begin
   Result := -1;
   for J := Low(AValues) to High(AValues) do
-    if AText = AValues[J] then
+    if LowerCase(AText) = AValues[J] then
     begin
       Result := J;
       Break;
     end;
   end;
 
-  function MergeCode(const Node:TXML): AnsiString;
+  function MergeCode(const xNode: TXML): AnsiString;
   var
-    i: LongInt;
+    i : LongInt;
+    Param : TXMLParam;
+
+    function GetParam(const Node: TXML; const Name: string): TXMLParam;
+    begin
+      Result := Node.Params[Name];
+      if Result.Name = '' then
+        LogOut('Not defined param def in token: ' + Node.Tag, lmWarning);
+    end;
+
   begin
     Result:='';
-    for i:= 0 to Node.Count - 1  do
-    with Node.NodeI[i] do
+    for i := 0 to xNode.Count - 1  do
+    with xNode.NodeI[i] do
     begin
-      case IndexStr(Tag,['Code']) of
-        0 : begin
-        Result := Result + AnsiString(Content);
-        end;
+      case IndexStr(Tag,['code','define','ifdef','ifndef']) of
+        0 ://code;
+          Result := Result + AnsiString(Content);
+        1 ://define
+          begin
+            Param := GetParam(xNode.NodeI[i],'def');
+            if Param.Name = '' then
+              Continue;
+
+            SetDefine(Param.Value,1);
+          end;
+        2 ://ifdef
+          begin
+            Param := GetParam(xNode.NodeI[i],'def');
+            if Param.Name = '' then
+              Continue;
+
+            case GetDefine(Param.Value) of
+               1 : Result := Result + AnsiString(Content) + MergeCode(xNode.NodeI[i]);
+              -1 : LogOut('Is not set definition: ' + Param.Value, lmWarning);
+            end;
+
+          end;
+        3 ://ifndef
+          begin
+            Param := GetParam(xNode.NodeI[i],'def');
+            if Param.Name = '' then
+              Continue;
+
+            if GetDefine(Param.Value)<= 0 then
+               Result := Result + AnsiString(Content) + MergeCode(xNode.NodeI[i]);
+          end;
+        else
+          LogOut('Uncorrect token: ' + Tag, lmWarning);
       end;
+
     end;
   end;
 
@@ -278,6 +378,8 @@ var
     Obj : GLEnum;
     SourcePtr  : PAnsiChar;
     SourceSize : LongInt;
+    Str : string;
+    i : LongInt;
   begin
     Obj := glCreateShader(ShaderType);
 
@@ -290,6 +392,13 @@ var
     if Status <> 1 then
     begin
       LogOut('Error compiling shader', lmWarning);
+
+      Str := 'Defines:';
+      for I := 0 to FDefines.Count - 1 do
+        with TShaderDefine(FDefines[i]^) do
+          Str := Str + #10 + Name + ' - ' + Utils.IntToStr(Value);
+
+      LogOut(Str, lmNotify);
       LogOut(string(Source), lmCode);
 
       glGetShaderiv(Obj, GL_INFO_LOG_LENGTH, @LogLen);
@@ -306,6 +415,7 @@ begin
 
   if Assigned(XN_VS) and Assigned(XN_FS) then
   begin
+
     Shader := TShaderProgram.Create(FShaderPrograms);
     with Shader do
     begin

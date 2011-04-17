@@ -32,7 +32,7 @@ type
   TSetModeResult = (SM_Successful, SM_SetDefault, SM_Error);
 
   TColor = LongWord;
-  TProc = Procedure;
+  TProc = procedure stdcall;
 
   IGame = interface
     procedure LoadContent; stdcall;
@@ -47,7 +47,8 @@ type
   IJenEngine = interface
     procedure GetSubSystem(SubSustemType: TJenSubSystemType; out SubSystem: IJenSubSystem); stdcall;
     procedure Start(Game : IGame); stdcall;
-   // procedure OnEvent(Event : TEvent; Proc: Pointer); stdcall;
+    procedure AddEventProc(Event: TEvent; Proc: TProc); stdcall;
+    procedure DelEventProc(Event: TEvent; Proc: TProc); stdcall;
   end;
 
   IUtils = interface(IJenSubSystem)
@@ -159,7 +160,12 @@ type
   end;
 
   IShaderResource = interface(IResource)
+    function GetDefine(const Name: String): LongInt; stdcall;
+    procedure SetDefine(const Name: String; Value: LongInt); stdcall;
+
     function Compile: IShaderProgram; stdcall;
+
+    property Define[const Name: String]: LongInt read GetDefine write SetDefine; default;
   end;
 
   ITexture = interface(IResource)
@@ -210,8 +216,7 @@ type
   end;
 
   IRender2D = interface(IJenSubSystem)
-    procedure DrawQuad(const v1, v2, v3, v4: TVec4f; const C: TVec2f; Angle: Single = 0); overload; stdcall;
-    procedure DrawSprite(Tex : ITexture; X, Y, W, H: Single; Angle: Single = 0); stdcall;
+      procedure DrawSprite(Tex : ITexture; X, Y, W, H: Single; Angle: Single = 0); stdcall;
  ///  procedure Quad(const Rect, TexRect: TRecti; Color: TColor; Angle: Single = 0); overload; stdcall;
   //  procedure Quad(x1, y1, x2, y2, x3, y3, x4, y4, cx, cy: Single; Color: TColor; PtIdx: Word = 0; Angle: Single = 0); overload; stdcall;
   end;
@@ -228,3 +233,4 @@ implementation
 
 
 end.
+

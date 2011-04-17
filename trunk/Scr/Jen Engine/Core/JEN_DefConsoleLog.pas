@@ -52,6 +52,28 @@ begin
   if Pointer(Text) = nil then
     Exit;
 
+  h := Trunc(Utils.Time/3600000);
+  m := Trunc(Utils.Time/60000);
+  s := Trunc(Utils.Time/1000) - m*60;
+  m := m - h*60;
+
+  Str := '';
+  if h > 0 then
+    Str := Utils.IntToStr(h) + ':';
+
+  if m < 10 then
+    Str := Str + '0';
+
+  Str := Str + Utils.IntToStr(m) + ':';
+
+  if s < 10 then
+    Str := Str + '0';
+
+  Str := Str + Utils.IntToStr(s) + ' 0000000';
+
+  tstr := Utils.IntToStr(Utils.Time - LastUpdate);
+  Move(tstr[1], str[length(Str)-length(tstr)], length(tstr)*2);
+
   case MType of
     lmHeaderMsg :
       Writeln(Text);
@@ -62,27 +84,7 @@ begin
         tstr := Utils.IntToStr(Round(Utils.Time/1000));
         Move(tstr[1], str[6-length(tstr)], length(tstr)*2);
                  }
-        h := Trunc(Utils.Time/3600000);
-        m := Trunc(Utils.Time/60000);
-        s := Trunc(Utils.Time/1000) - m*60;
-        m := m - h*60;
 
-        Str := '';
-        if h > 0 then
-          Str := Utils.IntToStr(h) + ':';
-
-        if m < 10 then
-          Str := Str + '0';
-
-        Str := Str + Utils.IntToStr(m) + ':';
-
-        if s < 10 then
-          Str := Str + '0';
-
-        Str := Str + Utils.IntToStr(s) + ' 0000000';
-
-        tstr := Utils.IntToStr(Utils.Time - LastUpdate);
-        Move(tstr[1], str[length(Str)-length(tstr)], length(tstr)*2);
         Writeln('[' + str + 'ms] ' + Text);
       end;
 
@@ -122,10 +124,10 @@ begin
       end;
 
     lmWarning :
-      Writeln('WARNING: ' + Text);
+      Writeln('[' + str + 'ms] WARNING: ' + Text);
 
     lmError :
-      Writeln('ERROR: ' + Text);
+      Writeln('[' + str + 'ms] ERROR: ' + Text);
   end;
   LastUpdate := Utils.Time;
 end;
