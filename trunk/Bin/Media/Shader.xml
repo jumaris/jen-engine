@@ -4,7 +4,7 @@
 		<Code>
 			#version 120
 			
-			attribute float Indx;
+			//attribute float Indx;
 		</Code>	
 		
 		<ifdef def="VertexColor">
@@ -27,7 +27,7 @@
 									   vec2(1.0, 1.0), vec2(0.0, 1.0));
 			void main( void )
 			{
-				int i = int(Indx);
+				int i = int(gl_MultiTexCoord0.x);
 				vec4 PosTex = PosTexCoord[i];
 		</Code>	
 		

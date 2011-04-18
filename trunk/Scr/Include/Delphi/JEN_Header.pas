@@ -186,6 +186,7 @@ type
 
     procedure Clear(ColorBuff, DepthBuff, StensilBuff: Boolean); stdcall;
 
+    procedure SetArrayState(Vertex, TextureCoord, Normal, Color : Boolean); stdcall;
     function GetBlendType: TBlendType; stdcall;
     procedure SetBlendType(Value: TBlendType); stdcall;
     function GetAlphaTest: Byte; stdcall;
