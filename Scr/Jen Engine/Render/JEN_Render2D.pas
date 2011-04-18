@@ -43,7 +43,7 @@ type
     FIdx: LongWord;
 
     RenderTechnique : array[boolean] of record
-      FIndxAttrib : IShaderAttrib;
+      //FIndxAttrib : IShaderAttrib;
       FVBUniform : IShaderUniform;
       FCBUniform : IShaderUniform;
       FShaderProgram : IShaderProgram;
@@ -74,7 +74,7 @@ end;
 procedure TRender2D.Init;
 var
   i : ShortInt;
-  IdxBuff : array[1..Batch_Size*4] of Single;
+  IdxBuff : array[1..Batch_Size*4] of Word;
 
   procedure SetupTechnique(Value : Boolean);
   begin
@@ -84,8 +84,8 @@ var
       FShaderProgram := FShader.Compile;
       FVBUniform := FShaderProgram.Uniform('PosTexCoord',utVec4);
       FCBUniform := FShaderProgram.Uniform('QuadColor',utVec4);
-      FIndxAttrib := FShaderProgram.Attrib('Indx',atVec1f);
-      FIndxAttrib.Value(0,0);
+   //   FIndxAttrib := FShaderProgram.Attrib('Indx',atVec1f);
+ //     FIndxAttrib.Value(0,0);
     end;
   end;
 
@@ -93,7 +93,7 @@ begin
   for I:=1  to Batch_Size*4 do
     IdxBuff[i]:=i-1;
 
-  FVrtBuff := TGeomBuffer.Create(gbtVertex, Batch_Size*4, 4, @IdxBuff[1]);
+  FVrtBuff := TGeomBuffer.Create(gbtVertex, Batch_Size*4, 2, @IdxBuff[1]);
 
   ResMan.Load('Media\Shader.xml', FShader);
   SetupTechnique(True);
@@ -114,6 +114,7 @@ var
   I : Byte;
   vc : PSingle;
 begin
+  Render.SetArrayState(false, true, false, false);
 
   with RenderTechnique[FBatchParams.VertexColor] do
   begin
@@ -122,11 +123,10 @@ begin
     FVBUniform.Value(FVertexBuff[1],FIdx*4);
     if FBatchParams.VertexColor then
       FCBUniform.Value(FColorBuff[1],FIdx*4);
-    FIndxAttrib.Enable;
   end;
 
   FVrtBuff.Bind;
-
+  glTexCoordPointer(1, GL_SHORT, 0, 0);
   glDrawArrays(GL_QUADS, 0, FIdx*4);
 
   FIdx := 1;
@@ -137,14 +137,10 @@ procedure TRender2D.BatchQuad(const v1, v2, v3, v4, c1, c2, c3, c4: TVec4f; cons
 begin
   with FVertexBuff[FIdx],FColorBuff[FIdx] do
   begin
-    V[1]:=v1;
-    C[1]:=Vec4f(1  , 0  , 0 ,1);
-    V[2]:=v2;
-    C[2]:=Vec4f(0  , 1  , 0 ,1);
-    V[3]:=v3;
-    C[3]:=Vec4f(0  , 0  , 1 ,1);
-    V[4]:=v4;
-    C[4]:=Vec4f(1 , 1  , 1 ,1);
+    V[1]:=v1; C[1]:=c1;
+    V[2]:=v2; C[2]:=c2;
+    V[3]:=v3; C[3]:=c3;
+    V[4]:=v4; C[4]:=c4;
   end;
 
   if FIdx = Batch_Size then

@@ -37,7 +37,6 @@ type
   PGLvoid     = Pointer;
   PGLPCharArray = ^PAnsiChar;
 
-
 const
 // Boolean
   GL_FALSE                            = 0;
@@ -378,14 +377,14 @@ const
   GL_QUERY_RESULT                     = $8866;
   GL_QUERY_RESULT_AVAILABLE           = $8867;
 
-  GL_CLIENT_PIXEL_STORE_BIT = $00000001;
-  GL_CLIENT_VERTEX_ARRAY_BIT = $00000002;
-  GL_CLIENT_ALL_ATTRIB_BITS = $FFFFFFFF;
-  GL_POLYGON_OFFSET_FACTOR = $8038;
-  GL_POLYGON_OFFSET_UNITS = $2A00;
-  GL_POLYGON_OFFSET_POINT = $2A01;
-  GL_POLYGON_OFFSET_LINE = $2A02;
-  GL_POLYGON_OFFSET_FILL = $8037;
+  GL_CLIENT_PIXEL_STORE_BIT           = $00000001;
+  GL_CLIENT_VERTEX_ARRAY_BIT          = $00000002;
+  GL_CLIENT_ALL_ATTRIB_BITS           = $FFFFFFFF;
+  GL_POLYGON_OFFSET_FACTOR            = $8038;
+  GL_POLYGON_OFFSET_UNITS             = $2A00;
+  GL_POLYGON_OFFSET_POINT             = $2A01;
+  GL_POLYGON_OFFSET_LINE              = $2A02;
+  GL_POLYGON_OFFSET_FILL              = $8037;
 
   procedure glFinish; stdcall; external opengl32;
   procedure glFlush; stdcall; external opengl32;
@@ -404,12 +403,13 @@ const
   procedure glClearDepth(depth: GLdouble); stdcall; external opengl32;
 
   // State
-  procedure glBegin(mode: GLenum); stdcall; external opengl32;
-  procedure glEnd; stdcall; external opengl32;
+//  procedure glBegin(mode: GLenum); stdcall; external opengl32;
+//  procedure glEnd; stdcall; external opengl32;
   procedure glEnable(cap: GLenum); stdcall; external opengl32;
-  procedure glEnableClientState(aarray: GLenum); stdcall; external opengl32;
   procedure glDisable(cap: GLenum); stdcall; external opengl32;
+
   procedure glDisableClientState(aarray: GLenum); stdcall; external opengl32;
+  procedure glEnableClientState(aarray: GLenum); stdcall; external opengl32;
   // Viewport
   procedure glViewport(x, y: GLint; width, height: GLsizei); stdcall; external opengl32;
   procedure glOrtho(left, right, bottom, top, zNear, zFar: GLdouble); stdcall; external opengl32;
@@ -441,18 +441,18 @@ const
    }
 
   // Vertex
-  procedure glVertex2f(x, y: GLfloat); stdcall; external opengl32;
+{ procedure glVertex2f(x, y: GLfloat); stdcall; external opengl32;
   procedure glVertex2fv(v: PGLfloat); stdcall; external opengl32;
   procedure glVertex3f(x, y, z: GLfloat); stdcall; external opengl32;
   procedure glVertex4f(x, y, z, w: GLfloat); stdcall; external opengl32;
-  procedure glVertex4fv(v: PGLfloat); stdcall; external opengl32;
+  procedure glVertex4fv(v: PGLfloat); stdcall; external opengl32;     }
   procedure glVertexPointer(size: GLint; atype: GLenum; stride: GLsizei; const pointer: Pointer); stdcall; external opengl32;
   procedure glColorPointer(size: GLint; atype: GLenum; stride: GLsizei; const pointer: Pointer); stdcall; external opengl32;
 
-   procedure glColor4fv(v: PGLfloat); stdcall; external opengl32;
+ //  procedure glColor4fv(v: PGLfloat); stdcall; external opengl32;
   // TexCoords
-  procedure glTexCoord2f(s, t: GLfloat); stdcall; external opengl32;
-  procedure glTexCoord2fv(v: PGLfloat); stdcall; external opengl32;
+//  procedure glTexCoord2f(s, t: GLfloat); stdcall; external opengl32;
+//  procedure glTexCoord2fv(v: PGLfloat); stdcall; external opengl32;
   procedure glTexCoordPointer(size: GLint; atype: GLenum; stride: GLsizei; const pointer: Pointer); stdcall; external opengl32;
 
   // Texture
@@ -470,11 +470,11 @@ const
   function  gluBuild2DMipmaps(target: GLenum; components, width, height: GLint; format, atype: GLenum; const data: Pointer): LongInt; stdcall; external opengl32;
 
   // Normal
-  procedure glNormal3f(x, y, z: GLfloat); stdcall; external opengl32;
+//  procedure glNormal3f(x, y, z: GLfloat); stdcall; external opengl32;
   procedure glNormalPointer(atype: GLenum; stride: GLsizei; const pointer: Pointer); stdcall; external opengl32;
 
   procedure glDrawElements(mode: GLenum; count: GLsizei; atype: GLenum; const indices: Pointer); stdcall; external opengl32;
-  procedure glPushClientAttrib(mask: GLbitfield ); stdcall; external opengl32;
+  procedure glPushClientAttrib(mask: GLbitfield); stdcall; external opengl32;
   procedure glPopClientAttrib; stdcall; external opengl32;
   procedure glPolygonMode(face: GLenum; mode: GLenum); stdcall; external opengl32;
 

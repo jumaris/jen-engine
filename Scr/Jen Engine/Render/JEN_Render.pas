@@ -22,6 +22,13 @@ type
     FGL_Context: HGLRC;
     FViewport: TRecti;
 
+    FArrayState : record
+      Vertex       : Boolean;
+      TextureCoord : Boolean;
+      Normal       : Boolean;
+      Color        : Boolean;
+    end;
+
     FBlendType: TBlendType;
     FAlphaTest: Byte;
     FDepthTest: Boolean;
@@ -34,10 +41,11 @@ type
     FCameraPos: TVec3f;
 
     function GetValid: Boolean;
-
     procedure Clear(ColorBuff, DepthBuff, StensilBuff: Boolean); stdcall;
 
     procedure SetViewport(Value: TRecti);
+
+    procedure SetArrayState(Vertex, TextureCoord, Normal, Color : Boolean); stdcall;
     function GetBlendType: TBlendType; stdcall;
     procedure SetBlendType(Value: TBlendType); stdcall;
     function GetAlphaTest: Byte; stdcall;
@@ -242,6 +250,35 @@ procedure TRender.SetViewport(Value: TRecti);
 begin
   FViewport := Value;
   glViewport(Value.Left, Value.Top, Value.Width, Value.Height);
+end;
+
+procedure TRender.SetArrayState(Vertex, TextureCoord, Normal, Color : Boolean);
+
+  procedure SetState(State : GLenum; Value : Boolean);
+  begin
+    if Value then
+      glEnableClientState(State)
+    else
+      glDisableClientState(State);
+  end;
+
+begin
+  if(FArrayState.Vertex <> Vertex) then
+    SetState(GL_VERTEX_ARRAY, Vertex);
+
+  if(FArrayState.TextureCoord <> TextureCoord) then
+    SetState(GL_TEXTURE_COORD_ARRAY, TextureCoord);
+
+  if(FArrayState.Normal <> Normal) then
+    SetState(GL_NORMAL_ARRAY, Normal);
+
+  if(FArrayState.Color <> Color) then
+    SetState(GL_COLOR_ARRAY, Color);
+
+  FArrayState.Vertex := Vertex;
+  FArrayState.TextureCoord := TextureCoord;
+  FArrayState.Normal := Normal;
+  FArrayState.Color := Color;
 end;
 
 function TRender.GetBlendType: TBlendType;
