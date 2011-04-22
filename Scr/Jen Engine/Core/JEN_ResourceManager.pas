@@ -160,7 +160,7 @@ begin
   begin
     glActiveTexture(GL_TEXTURE0 + Channel);
     glBindTexture(FSampler, FID);
-    ResMan.Active[TResourceType(Channel + Ord(rtTexture))] := Self;
+    ResMan.Active[TResourceType(Channel + Ord(rtTexture))] := ITexture(Self);
   end;
 end;
 

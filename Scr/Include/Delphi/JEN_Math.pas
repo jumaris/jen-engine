@@ -150,6 +150,7 @@ const
   ZeroPoint : TPoint2i = (x: 0; y: 0;);
   EmptyRect: TRecti = (x: 0; y: 0; Width: 0; Height: 0);
   NullVec3f : TVec3f = (x: 0; y: 0; z: 0);
+  clWhite : TVec4f = (x: 1; y: 1; z: 1; w: 1);
 
 function Max(x, y: Single): Single; overload; inline;
 function Min(x, y: Single): Single; overload; inline;

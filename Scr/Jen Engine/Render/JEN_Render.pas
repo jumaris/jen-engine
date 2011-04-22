@@ -29,6 +29,7 @@ type
       Color        : Boolean;
     end;
 
+    FColorMask: Byte;
     FBlendType: TBlendType;
     FAlphaTest: Byte;
     FDepthTest: Boolean;
@@ -44,8 +45,12 @@ type
     procedure Clear(ColorBuff, DepthBuff, StensilBuff: Boolean); stdcall;
 
     procedure SetViewport(Value: TRecti);
-
     procedure SetArrayState(Vertex, TextureCoord, Normal, Color : Boolean); stdcall;
+
+    function GetColorMask(Channel : TColorChannel): Boolean; overload; stdcall;
+    procedure SetColorMask(Channel : TColorChannel; Value : Boolean); overload; stdcall;
+    function GetColorMask: Byte; overload; stdcall;
+    procedure SetColorMask(Red, Green, Blue, Alpha: Boolean); overload; stdcall;
     function GetBlendType: TBlendType; stdcall;
     procedure SetBlendType(Value: TBlendType); stdcall;
     function GetAlphaTest: Byte; stdcall;
@@ -210,6 +215,7 @@ begin
   LogOut('Video device   : ' + glGetString(GL_RENDERER), lmInfo);
   LogOut('Texture units  : ' + Utils.IntToStr(Par), lmInfo);
 
+  SetColorMask(true, true, true, true);
   SetBlendType(btNormal);
   SetAlphaTest(0);
   SetDepthTest(False);
@@ -279,6 +285,44 @@ begin
   FArrayState.TextureCoord := TextureCoord;
   FArrayState.Normal := Normal;
   FArrayState.Color := Color;
+end;
+
+function TRender.GetColorMask(Channel : TColorChannel): Boolean;
+begin
+  Result := FColorMask and (1 shl (ord(Channel)+1))<> 0;
+end;
+
+procedure TRender.SetColorMask(Channel : TColorChannel; Value : Boolean);
+var
+  Mask: Byte;
+begin
+  Mask := FColorMask or 1 shl (ord(Channel)+1);
+  if not Value then
+    Mask := Mask xor 1 shl (ord(Channel)+1);
+
+  if Mask <> FColorMask then
+  begin
+    FColorMask := Mask;
+    glColorMask(FColorMask and $01 <> 0, FColorMask and $02 <> 0, FColorMask and $04 <> 0, FColorMask and $08 <> 0);
+  end;
+end;
+
+function TRender.GetColorMask: Byte;
+begin
+  Result := FColorMask;
+end;
+
+procedure TRender.SetColorMask(Red, Green, Blue, Alpha: Boolean);
+var
+  Mask: Byte;
+begin
+  Mask := Byte(Red) + Byte(Green) shl 1 + Byte(Blue) shl 2 + Byte(Alpha) shl 3;
+
+  if Mask <> FColorMask then
+  begin
+    FColorMask := Mask;
+    glColorMask(Red, Green, Blue, Alpha);
+  end;
 end;
 
 function TRender.GetBlendType: TBlendType;
@@ -412,9 +456,9 @@ end;
 
 procedure TRender.Flush;
 begin
+  Engine.CreateEvent(evFrameEnd);
   FLastDipCount := FDipCount;
   FDipCount := 0;
-  Engine.CreateEvent(evFrameEnd);
 end;
 
 end.
