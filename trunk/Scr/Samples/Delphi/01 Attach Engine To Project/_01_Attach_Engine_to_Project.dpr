@@ -46,6 +46,8 @@ var
 procedure TGame.LoadContent;
 begin
   ResMan.Load('Media\123.dds', r);
+
+
 end;
 
 procedure TGame.OnUpdate(dt: double);
@@ -56,6 +58,7 @@ end;
 procedure TGame.OnRender;
 var
   i : LongInt;
+const c = 4;
 begin
   Render.Clear(True,False,False);
 
@@ -81,15 +84,27 @@ begin
 
 //  r.Bind;
 
-    Render.BlendType := btNormal;
+   // Render.BlendType := btNormal;
 
    //   glEnableClientState( GL_COLOR_ARRAY);
 
   // glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-  for i := 0 to 25000 do
-  render2d.DrawSprite(r,Frac(i / 500),i/10000,1/25,1/25);
+  Render.BlendType := btNone;
 
+
+ //for i := 0 to 25000 do
+ // render2d.DrawSprite(r ,Frac(i / 500),i/10000,1/25,1/25, vec4f(2,1,1,1), Utils.Time/10000*360,0.5,0.5);
+
+
+
+  for i := 0 to c do
+    render2d.DrawSprite(r ,Frac(i / 50),i/1000,1/25,1/25, vec4f(1.0 - i/c,1,1,1), Utils.Time/10000*360,0.5,0.5);
+
+
+    render2d.DrawSprite(r,0.5,0.5,0.5,0.5, vec4f(1,2,1,1), Utils.Time/10000*360,0.5,0.5);
+
+    render2d.DrawSprite(r,0.0,0.5,0.5,0.5, vec4f(1,0,0,1),vec4f(0,1,0,1),vec4f(0,0,1,1),vec4f(1,1,1,1), Utils.Time/10000*360,0.5,0.5);
 
   //log.Print(Utils.IntToStr(Render.LastDipCount), lmNotify);
 end;
@@ -107,9 +122,11 @@ begin
   Engine.GetSubSystem(ssRender, IJenSubSystem(Render));
   Engine.GetSubSystem(ssResMan, IJenSubSystem(ResMan));
   Engine.GetSubSystem(ssUtils, IJenSubSystem(Utils));
-//  Engine.AddEventProc(evFrameEnd,Blabla);
+
   Display.Init(1024, 768, 60, false);
   Render.Init();
+
+
 //  Display.SetVSync(False);
   Display.FullScreen := false;
   Display.SetVSync(false);

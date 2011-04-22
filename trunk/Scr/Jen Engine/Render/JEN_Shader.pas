@@ -169,12 +169,14 @@ end;
 procedure TShaderUniform.Value(const Data; Count: LongInt);
 const
   USize : array [TShaderUniformType] of LongInt = (4, 4, 8, 12, 16, 36, 64);
-begin                        {
- if Count * USize[FType] <= SizeOf(FValue) then
+begin
+  if Count * USize[FType] <= SizeOf(FValue) then
     if MemCmp(@FValue, @Data, Count * USize[FType]) <> 0 then
       Move(Data, FValue, Count * USize[FType])
     else
-      Exit;            }
+      Exit
+  else
+    Move(Data, FValue, SizeOf(FValue));
 
   case FType of
     utInt  : glUniform1iv(FID, Count, @Data);
@@ -243,8 +245,13 @@ begin
 
   FShaderPrograms.Free;
   for i := 0 to FDefines.Count - 1 do
-    Dispatch(FDefines);
+  begin
+    SetLength(TShaderDefine(FDefines[i]^).Name, 0);
+    Dispose(FDefines[i]);
+  end;
+
   FDefines.Free;
+
   inherited;
 end;
 

@@ -420,8 +420,8 @@ const
   // Color
  { procedure glColor4ub(red, green, blue, alpha: GLubyte); stdcall; external opengl32;
   procedure glColor4ubv(v: PGLubyte); stdcall; external opengl32;
-  procedure glColor4f(red, green, blue, alpha: GLfloat); stdcall; external opengl32;
-  procedure glColorMask(red, green, blue, alpha: GLboolean); stdcall; external opengl32;    }
+  procedure glColor4f(red, green, blue, alpha: GLfloat); stdcall; external opengl32;    }
+  procedure glColorMask(red, green, blue, alpha: GLboolean); stdcall; external opengl32;
   // Alpha
   procedure glAlphaFunc(func: GLenum; ref: GLfloat); stdcall; external opengl32;
   procedure glBlendFunc(sfactor, dfactor: GLenum); stdcall; external opengl32;

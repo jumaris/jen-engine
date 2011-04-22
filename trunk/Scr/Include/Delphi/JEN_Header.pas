@@ -15,6 +15,7 @@ type
 
   TLogMsg = (lmHeaderMsg, lmInfo, lmNotify, lmCode, lmWarning, lmError);
 
+  TColorChannel = (ccRed, ccGreen, ccBlue, ccAlpha);
   TBlendType = (btNone, btNormal, btAdd, btMult, btOne, btNoOverride, btAddAlpha);
   TCullFace = (cfNone, cfFront, cfBack);
   TMatrixType = (mtViewProj, mtModel, mtProj, mtView);
@@ -187,6 +188,11 @@ type
     procedure Clear(ColorBuff, DepthBuff, StensilBuff: Boolean); stdcall;
 
     procedure SetArrayState(Vertex, TextureCoord, Normal, Color : Boolean); stdcall;
+
+    function GetColorMask(Channel : TColorChannel): Boolean; overload; stdcall;
+    procedure SetColorMask(Channel : TColorChannel; Value : Boolean); overload; stdcall;
+    function GetColorMask: Byte; overload; stdcall;
+    procedure SetColorMask(Red, Green, Blue, Alpha: Boolean); overload; stdcall;
     function GetBlendType: TBlendType; stdcall;
     procedure SetBlendType(Value: TBlendType); stdcall;
     function GetAlphaTest: Byte; stdcall;
@@ -206,6 +212,7 @@ type
     procedure SetDIPCount(Value: LongWord); stdcall;
     procedure IncDIP; stdcall;
 
+    property ColorMask[Channel: TColorChannel]: Boolean read GetColorMask write SetColorMask;
     property BlendType: TBlendType read GetBlendType write SetBlendType;
     property AlphaTest: Byte read GetAlphaTest write SetAlphaTest;
     property DepthTest: Boolean read GetDepthTest write SetDepthTest;
@@ -217,7 +224,9 @@ type
   end;
 
   IRender2D = interface(IJenSubSystem)
-      procedure DrawSprite(Tex : ITexture; X, Y, W, H: Single; Angle: Single = 0); stdcall;
+
+    procedure DrawSprite(Tex: ITexture; x, y, w, h: Single; const Color: TVec4f; Angle: Single = 0.0; cx: Single = 0.5; cy: Single = 0.5);overload; stdcall;
+    procedure DrawSprite(Tex: ITexture; x, y, w, h: Single; const c1, c2, c3, c4: TVec4f;  Angle: Single = 0.0; cx: Single = 0.5; cy: Single = 0.5); overload;  stdcall;
  ///  procedure Quad(const Rect, TexRect: TRecti; Color: TColor; Angle: Single = 0); overload; stdcall;
   //  procedure Quad(x1, y1, x2, y2, x3, y3, x4, y4, cx, cy: Single; Color: TColor; PtIdx: Word = 0; Angle: Single = 0); overload; stdcall;
   end;
