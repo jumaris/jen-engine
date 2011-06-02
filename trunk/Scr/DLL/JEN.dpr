@@ -13,7 +13,6 @@ library JEN;
 
 uses
   JEN_Main in '..\Jen Engine\JEN_Main.pas',
-  JEN_Camera3D in '..\Jen Engine\Core\JEN_Camera3D.pas',
   JEN_DDSTexture in '..\Jen Engine\Core\JEN_DDSTexture.pas',
   JEN_DefConsoleLog in '..\Jen Engine\Core\JEN_DefConsoleLog.pas',
   JEN_Display in '..\Jen Engine\Core\JEN_Display.pas',
@@ -29,9 +28,9 @@ uses
   JEN_OpenGLHeader in '..\Jen Engine\Utils\JEN_OpenGLHeader.pas',
   JEN_SystemInfo in '..\Jen Engine\Utils\JEN_SystemInfo.pas',
   JEN_Utils in '..\Jen Engine\Utils\JEN_Utils.pas',
-  XSystem in '..\Jen Engine\Utils\XSystem.pas',
   JEN_Header in '..\Include\Delphi\JEN_Header.pas',
-  JEN_Render2D in '..\Jen Engine\Render\JEN_Render2D.pas';
+  JEN_Render2D in '..\Jen Engine\Render\JEN_Render2D.pas',
+  JEN_Console in '..\Jen Engine\Core\JEN_Console.pas';
 
 exports
   pGetEngine name 'GetJenEngine';

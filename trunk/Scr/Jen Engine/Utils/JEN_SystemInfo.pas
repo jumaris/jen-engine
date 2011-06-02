@@ -4,7 +4,8 @@ interface
 
 uses
   JEN_Header,
-  XSystem;
+  JEN_Math,
+  Windows;
 
 type
   TRefreshRates = record
@@ -56,6 +57,7 @@ type
     function GetHeight : LongInt; stdcall;
     function GetBPS    : Byte; stdcall;
     function GetRefresh: Byte; stdcall;
+    function GetDesktopRect : TRecti; stdcall;
 
     function SetMode(W, H, R: LongInt): TSetModeResult; stdcall;
     procedure ResetMode;
@@ -201,7 +203,7 @@ begin
   FillChar(DevMode, SizeOf(TDeviceMode), 0);
   DevMode.dmSize := SizeOf(TDeviceMode);
 
-  while EnumDisplaySettingsW(nil, i, DevMode) <> FALSE do
+  while EnumDisplaySettings(nil, i, DevMode) <> FALSE do
   with DevMode do
     begin
       INC(i);
@@ -263,7 +265,7 @@ begin
   FillChar(DevMode, SizeOf(TDeviceMode), 0);
   DevMode.dmSize := SizeOf(TDeviceMode);
 
-  EnumDisplaySettingsW(nil, 0, DevMode);
+  EnumDisplaySettings(nil, 0, DevMode);
   with DevMode do
   begin
     dmPelsWidth        := Mode.Width;
@@ -276,7 +278,7 @@ begin
 
   Str := ' ' + Utils.IntToStr(Mode.Width) + 'x' + Utils.IntToStr(Mode.Height) + 'x' + Utils.IntToStr(R);
 
-  case ChangeDisplaySettingsExW( nil, @DevMode, 0, $04, nil ) of
+  case ChangeDisplaySettingsEx( nil, DevMode, 0, $04, nil ) of
     DISP_CHANGE_SUCCESSFUL :
     begin
       LogOut('Successful set display mode ' + Str, lmNotify);
@@ -294,6 +296,8 @@ begin
 end;
 
 procedure TScreen.ResetMode;
+var
+  DevMode : TDeviceMode;
 begin
   if ( (GetWidth = fStartWidth) and
        (GetHeight = fStartHeight) and
@@ -301,7 +305,10 @@ begin
        (GetRefresh = fStartRefresh) ) then
         Exit;
 
-  ChangeDisplaySettingsExW(nil, nil, 0, 0, nil);
+  FillChar(DevMode, SizeOf(TDeviceMode), 0);
+  DevMode.dmSize := SizeOf(TDeviceMode);
+
+  ChangeDisplaySettingsEx(nil, DevMode, 0, 0, nil);
   LogOut('Reset display mode to default', lmNotify);
 end;
 
@@ -324,7 +331,7 @@ begin
   ReleaseDC(0, DC);
 end;
 
-function TScreen.GetRefresh : Byte;
+function TScreen.GetRefresh: Byte;
 var
   DC: HDC;
 begin
@@ -333,9 +340,20 @@ begin
   ReleaseDC(0, DC);
 end;
 
+function TScreen.GetDesktopRect: TRecti;
+var
+  DR: TRect;
+begin
+  SystemParametersInfo(SPI_GETWORKAREA, 0, DR, 0);
+  Result.X := Dr.Left;
+  Result.Y := Dr.Top;
+  Result.Width := Dr.Right - Dr.Left;
+  Result.Height := Dr.Bottom - Dr.Top;
+end;
+
 constructor TSystem.Create;
 var
-  Handle     : LongWord;
+  Handle     : HKEY;
   DataType   : LongWord;
 	DataSize   : LongWord;
   Res        : LongWord;
@@ -346,14 +364,14 @@ begin
   FCPUName  :='Couldn''t get CPU name!';
   DataSize  := 0;
 
-  Res := RegOpenKeyExW(HKEY_LOCAL_MACHINE, 'HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0', 0, KEY_READ, &Handle);
+  Res := RegOpenKeyEx(HKEY_LOCAL_MACHINE, 'HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0', 0, KEY_READ, Handle);
   if Res <> ERROR_SUCCESS then
   begin
     RegCloseKey(Handle);
     Exit;
   end;
 
-	Res := RegQueryValueExW(Handle,	'ProcessorNameString', nil, @DataType, nil,	@DataSize);
+	Res := RegQueryValueEx(Handle,	'ProcessorNameString', nil, @DataType, nil,	@DataSize);
   if (Res <> ERROR_SUCCESS) or (DataType <> REG_SZ) or (DataSize = 0)  then
   begin
     RegCloseKey(Handle);
@@ -361,15 +379,16 @@ begin
   end;
 
   SetLength(FCPUName,DataSize div 2);
-  RegQueryValueExW(Handle, 'ProcessorNameString', nil, @DataType, PByte(@FCPUName[1]), @DataSize);
+  RegQueryValueEx(Handle, 'ProcessorNameString', nil, @DataType, PByte(@FCPUName[1]), @DataSize);
 
 	DataSize := SizeOf(LongWord);
-	RegQueryValueExW(Handle, '~MHz', nil, @DataType, @FCPUSpeed,	@DataSize);
+	RegQueryValueEx(Handle, '~MHz', nil, @DataType, @FCPUSpeed,	@DataSize);
   RegCloseKey(Handle);
 end;
 
 destructor TSystem.Destroy;
 begin
+  fScreen := nil;
   inherited;
 end;
 
@@ -379,7 +398,7 @@ var
 begin
   fillchar(OSVerInfo, SizeOf(TOSVERSIONINFO), 0);
   OSVerInfo.dwOSVersionInfoSize := SizeOf(TOSVERSIONINFO);
-  GetVersionExW(@OSVerInfo);
+  GetVersionEx(OSVerInfo);
   Major := OSVerInfo.dwMajorVersion;
   Minor := OSVerInfo.dwMinorVersion;
   Build := OSVerInfo.dwBuildNumber;

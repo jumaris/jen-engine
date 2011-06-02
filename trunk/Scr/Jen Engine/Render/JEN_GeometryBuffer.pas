@@ -3,7 +3,8 @@ unit JEN_GeometryBuffer;
 interface
 
 uses
-  XSystem,
+  Windows,
+  JEN_Utils,
   JEN_OpenGLHeader;
 
 type

@@ -10,33 +10,6 @@ uses
   JEN_OpenglHeader;
 
 type
-  TTexture = class(TManagedInterfacedObj, IResource, ITexture)
-    constructor Create(const Name: string; Manager: TInterfaceList);
-    destructor Destroy; override;
-  private
-    FName : string;
-    function GetName: string; stdcall;
-  public
-    FID : GLEnum;
-    FSampler : GLEnum;
-    FWidth  : LongInt;
-    FHeight : LongInt;
-    FFilter : TTextureFilter;
-    FClamp  : Boolean;
-    FMipMap : Boolean;
-    procedure SetFilter(Value: TTextureFilter);
-    procedure SetClamp(Value: Boolean);
-//    procedure DataSet(X, Y, Width, Height: LongInt; Data: Pointer; Level: LongInt = 0; CFormat: TGLConst = GL_RGBA; DFormat: TGLConst = GL_UNSIGNED_BYTE);
-  {
-    procedure GenLevels;
-    procedure DataGet(Data: Pointer; Level: LongInt = 0; CFormat: TGLConst = GL_RGBA; DFormat: TGLConst = GL_UNSIGNED_BYTE);
-       procedure DataCopy(XOffset, YOffset, X, Y, Width, Height: LongInt; Level: LongInt = 0);   }
-    procedure Bind(Channel: Byte = 0); stdcall;
-    property Width: LongInt read FWidth;
-    property Height: LongInt read FHeight;
-    property Filter: TTextureFilter read FFilter write SetFilter;
-    property Clamp: Boolean read FClamp write SetClamp;
-  end;
 
   TMipMap = record
     Size : LongWord;
@@ -77,12 +50,12 @@ type
     function GetActiveRes(RT: TResourceType): IUnknown;
     procedure SetActiveRes(RT: TResourceType; Value: IUnknown);
 
-    function Load(const FileName: string; ResType : TResourceType) : IResource; overload; stdcall;
-    procedure Load(const FileName: string; out Resource : IShaderResource); overload; stdcall;
-    procedure Load(const FileName: string; out Resource : ITexture); overload; stdcall;
+    function Load(const FileName: string; ResType: TResourceType): JEN_Header.IResource; overload; stdcall;
+    procedure Load(const FileName: string; out Resource: JEN_Header.IShaderResource); overload; stdcall;
+    procedure Load(const FileName: string; out Resource: JEN_Header.ITexture); overload; stdcall;
 
-    function LoadShader(const FileName: string): IShaderResource; stdcall;
-    function LoadTexture(const FileName: string): ITexture; stdcall;
+    function LoadShader(const FileName: string): JEN_Header.IShaderResource; stdcall;
+    function LoadTexture(const FileName: string): JEN_Header.ITexture; stdcall;
 
     procedure RegisterLoader(Loader: TResLoader);
     function GetRef(const Name: string): IResource;
@@ -95,74 +68,6 @@ implementation
 uses
   JEN_Main;
 
-constructor TTexture.Create;
-begin
-  inherited Create(Manager);
-  FName := Name;
-  glGenTextures(1, @FID);
-end;
-
-destructor TTexture.Destroy;
-begin
-  glDeleteTextures(1, @FID);
-  LogOut('sad',lmNotify);
-  inherited;
-end;
-
-function TTexture.GetName: string;
-begin
-  Result := FName;
-end;
-
-procedure TTexture.SetFilter(Value: TTextureFilter);
-const
-  FilterMode : array [Boolean, TTextureFilter, 0..1] of GLEnum =
-    (((GL_NEAREST, GL_NEAREST), (GL_LINEAR, GL_LINEAR), (GL_LINEAR, GL_LINEAR), (GL_LINEAR, GL_LINEAR)),
-     ((GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST), (GL_LINEAR_MIPMAP_NEAREST, GL_LINEAR), (GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR), (GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR)));
-begin
-  if FFilter <> Value then
-  begin
-    FFilter := Value;
-    Bind;
-    glTexParameteri(FSampler, GL_TEXTURE_MIN_FILTER, FilterMode[FMipMap, FFilter, 0]);
-    glTexParameteri(FSampler, GL_TEXTURE_MAG_FILTER, FilterMode[FMipMap, FFilter, 1]);
-    //if Render.MaxAniso > 0 then
-   {   if FFilter = tfAniso then
-        glTexParameteri(Sampler, GL_TEXTURE_MAX_ANISOTROPY, TGLConst(Render.MaxAniso))
-      else
-        glTexParameteri(Sampler, GL_TEXTURE_MAX_ANISOTROPY, TGLConst(1)); }
-  end;
-end;
-
-procedure TTexture.SetClamp(Value: Boolean);
-const
-  ClampMode : array [Boolean] of GLEnum = (GL_REPEAT, GL_CLAMP_TO_EDGE);
-begin
-  if FClamp <> Value then
-  begin
-    FClamp := Value;
-    Bind;
-    glTexParameteri(FSampler, GL_TEXTURE_WRAP_S, ClampMode[Clamp]);
-    glTexParameteri(FSampler, GL_TEXTURE_WRAP_T, ClampMode[Clamp]);
-    glTexParameteri(FSampler, GL_TEXTURE_WRAP_R, ClampMode[Clamp]);
-  end;
-end;
-                     {
-procedure TTexture.DataSet(X, Y, Width, Height: LongInt; Data: Pointer; Level: LongInt; CFormat, DFormat: TGLConst);
-begin
-  Bind;
-  glTexSubImage2D(Sampler, Level, X, Y, Width, Height, CFormat, DFormat, Data);
-end;
-                 }
-procedure TTexture.Bind(Channel: Byte = 0);
-begin
-  if ResMan.Active[TResourceType(Channel + Ord(rtTexture))] <> ITexture(Self) then
-  begin
-    glActiveTexture(GL_TEXTURE0 + Channel);
-    glBindTexture(FSampler, FID);
-    ResMan.Active[TResourceType(Channel + Ord(rtTexture))] := ITexture(Self);
-  end;
-end;
 
 constructor TResourceManager.Create;
 begin
@@ -207,34 +112,34 @@ begin
     TProc(FResChangeCallBack);
 end;
 
-function TResourceManager.LoadShader(const FileName: string): IShaderResource;
+function TResourceManager.LoadShader(const FileName: string): JEN_Header.IShaderResource;
 begin
   Result := IShaderResource(Load(FileName, rtShader));
 end;
 
-function TResourceManager.LoadTexture(const FileName: string): ITexture;
+function TResourceManager.LoadTexture(const FileName: string): JEN_Header.ITexture;
 begin
   Result := ITexture(Load(FileName, rtTexture));
 end;
 
-procedure TResourceManager.Load(const FileName: string; out Resource: IShaderResource);
+procedure TResourceManager.Load(const FileName: string; out Resource: JEN_Header.IShaderResource);
 begin
   Resource := IShaderResource(Load(FileName, rtShader));
 end;
 
-procedure TResourceManager.Load(const FileName: string; out Resource: ITexture);
+procedure TResourceManager.Load(const FileName: string; out Resource: JEN_Header.ITexture);
 begin
   Resource := ITexture(Load(FileName, rtTexture));
 end;
 
-function TResourceManager.Load(const FileName: string; ResType: TResourceType): IResource;
+function TResourceManager.Load(const FileName: string; ResType: TResourceType): JEN_Header.IResource;
 var
   I : LongInt;
   Ext : String;
   eFileName : String;
   RL : TResLoader;
   Stream : TStream;
-  Resource : IResource;
+  Resource : IUnknown;
 begin
   Result := nil;
   Resource := nil;
@@ -263,8 +168,8 @@ begin
   if Assigned(Stream) then
   begin
     case ResType of
-      rtShader: Resource := TShaderResource.Create(eFileName, FResList);
-      rtTexture: Resource := TTexture.Create(eFileName, FResList);
+      rtShader: Resource := TShaderResource.Create(eFileName);
+      rtTexture: Resource := TTexture.Create(eFileName);
     end;
   end else
   begin
@@ -272,7 +177,7 @@ begin
     Stream.Free;
   end;
 
-  if not RL.Load(Stream, Resource) then
+  if not RL.Load(Stream, IResource(Resource)) then
   begin
     Stream.Free;
     Resource := nil;
@@ -281,7 +186,6 @@ begin
 
      // Resource := DebugTexture;
     end;      }
-
   end;
 
   if not Assigned(Resource) then
@@ -290,8 +194,11 @@ begin
     Exit;
   end;
 
-  LogOut('Loading '+ Resource.Name, lmNotify);
-  Result := Resource;
+//  FResList.Add(Resource);
+  FResList.Add(Resource);
+
+  LogOut('Loading '+ (Resource as IResource).Name, lmNotify);
+  Result := (Resource as IResource);
 end;
 
 procedure TResourceManager.RegisterLoader(Loader : TResLoader);

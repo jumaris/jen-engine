@@ -7,8 +7,6 @@ uses
   JEN_OpenGLHeader in '..\..\..\Jen Engine\Utils\JEN_OpenGLHeader.pas',
   JEN_SystemInfo in '..\..\..\Jen Engine\Utils\JEN_SystemInfo.pas',
   JEN_Utils in '..\..\..\Jen Engine\Utils\JEN_Utils.pas',
-  XSystem in '..\..\..\Jen Engine\Utils\XSystem.pas',
-  JEN_Camera3D in '..\..\..\Jen Engine\Core\JEN_Camera3D.pas',
   JEN_GeometryBuffer in '..\..\..\Jen Engine\Render\JEN_GeometryBuffer.pas',
   JEN_DefConsoleLog in '..\..\..\Jen Engine\Core\JEN_DefConsoleLog.pas',
   JEN_Display in '..\..\..\Jen Engine\Core\JEN_Display.pas',
@@ -20,16 +18,17 @@ uses
   JEN_Resource in '..\..\..\Jen Engine\Core\JEN_Resource.pas',
   JEN_Header in '..\..\..\Include\Delphi\JEN_Header.pas',
   SomeGame in 'SomeGame.pas',
-  JEN_Render2D in '..\..\..\Jen Engine\Render\JEN_Render2D.pas';
+  JEN_Render2D in '..\..\..\Jen Engine\Render\JEN_Render2D.pas',
+  JEN_Console in '..\..\..\Jen Engine\Core\JEN_Console.pas';
 
 {$R ..\..\..\dll\jen.res}
 {$R ..\..\..\icon.RES}
 
 type
   TGame = class(TInterfacedObject, IGame)
-  var
-  r : ITexture;
   public
+    var
+    r,r2 : ITexture;
     procedure LoadContent; stdcall;
     procedure OnUpdate(dt: double); stdcall;
     procedure OnRender; stdcall;
@@ -40,14 +39,14 @@ var
   Display : IDisplay = nil;
   Render : IRender = nil;
   Utils : IUtils = nil;
-  Game : TGame = nil;
+  Game : IGame = nil;
   ResMan : IResourceManager = nil;
 
 procedure TGame.LoadContent;
 begin
+  ResMan.Load('Media\123.dds', r2);
   ResMan.Load('Media\123.dds', r);
-
-
+  r2 := nil;
 end;
 
 procedure TGame.OnUpdate(dt: double);
@@ -58,9 +57,10 @@ end;
 procedure TGame.OnRender;
 var
   i : LongInt;
-const c = 4;
+const c = 4000;
 begin
   Render.Clear(True,False,False);
+  //render.CullFace := cfNone;
 
 
 //   glviewport (0,0,1024,768);
@@ -99,7 +99,7 @@ begin
 
 
   for i := 0 to c do
-    render2d.DrawSprite(r ,Frac(i / 50),i/1000,1/25,1/25, vec4f(1.0 - i/c,1,1,1), Utils.Time/10000*360,0.5,0.5);
+    render2d.DrawSprite(r ,Frac(i / 50),i/4000,1/25,1/25, vec4f(1.0 - i/c,1,1,1), Utils.Time/10000*360,0.5,0.5);
 
 
     render2d.DrawSprite(r,0.5,0.5,0.5,0.5, vec4f(1,2,1,1), Utils.Time/10000*360,0.5,0.5);

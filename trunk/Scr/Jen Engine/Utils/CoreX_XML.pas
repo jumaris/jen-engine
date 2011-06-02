@@ -11,48 +11,38 @@ unit CoreX_XML;
 interface
 
 uses
+  JEN_Header,
   JEN_Utils;
 
 type
- TXMLParam = record
-    Name  : string;
-    Value : string;
-  end;
-
-  TXMLParams = class
+  TXMLParams = class(TInterfacedObject, IXMLParams)
     constructor Create(const Text: string);
   private
     FCount  : LongInt;
     FParams : array of TXMLParam;
-    function GetParam(const Name: string): TXMLParam;
-    function GetParamI(Idx: LongInt): TXMLParam;
-  public
-    property Count: LongInt read FCount;
-    property Param[const Name: string]: TXMLParam read GetParam; default;
-    property ParamI[Idx: LongInt]: TXMLParam read GetParamI;
+    function GetParam(const Name: string): TXMLParam; stdcall;
+    function GetParamI(Idx: LongInt): TXMLParam; stdcall;
+    function GetCount: LongInt; stdcall;
   end;
 
-  TXML = class
-    class function Load(const Stream: TStream): TXML;
+  TXML = class(TInterfacedObject, IXML)
+    class function Load(const Stream: TStream): IXML;
     constructor Create(const Text: string; BeginPos: LongInt);
     destructor Destroy; override;
   private
     FCount   : LongInt;
-    FNode    : array of TXML;
+    FNode    : array of IXML;
     FTag     : string;
     FContent : string;
     FDataLen : LongInt;
-    FParams  : TXMLParams;
-    function GetNode(const TagName: string): TXML;
-    function GetNodeI(Idx: LongInt): TXML;
-  public
-    property Count: LongInt read FCount;
-    property Tag: string read FTag;
-    property Content: string read FContent;
-    property DataLen: LongInt read FDataLen;
-    property Params: TXMLParams read FParams;
-    property Node[const TagName: string]: TXML read GetNode; default;
-    property NodeI[Idx: LongInt]: TXML read GetNodeI;
+    FParams  : IXMLParams;
+    function GetCount: LongInt; stdcall;
+    function GetTag: string; stdcall;
+    function GetContent: string; stdcall;
+    function GetDataLen: LongInt; stdcall;
+    function GetParams: IXMLParams; stdcall;
+    function GetNode(const TagName: string): IXML; stdcall;
+    function GetNodeI(Idx: LongInt): IXML; stdcall;
   end;
 
 implementation
@@ -112,13 +102,18 @@ begin
   FCount := Length(FParams);
 end;
 
+function TXMLParams.GetCount: LongInt;
+begin
+  Result := FCount;
+end;
+
 function TXMLParams.GetParam(const Name: string): TXMLParam;
 const
   NullParam : TXMLParam = (Name: ''; Value: '');
 var
   i : LongInt;
 begin
-  for i := 0 to Count - 1 do
+  for i := 0 to FCount - 1 do
     if FParams[i].Name = Name then
     begin
       Result.Name  := FParams[i].Name;
@@ -134,7 +129,7 @@ begin
   Result.Value := FParams[Idx].Value;
 end;
 
-class function TXML.Load(const Stream: TStream): TXML;
+class function TXML.Load(const Stream: TStream): IXML;
 var
   Text     : string;
   Size     : LongInt;
@@ -290,16 +285,42 @@ destructor TXML.Destroy;
 var
   i : LongInt;
 begin
-  for i := 0 to Count - 1 do
-    NodeI[i].Free;
-  Params.Free;
+  {for i := 0 to Count - 1 do
+    NodeI[i].Free;       }
+  FNode := nil;
+  FParams := nil;
 end;
 
-function TXML.GetNode(const TagName: string): TXML;
+function TXML.GetCount: LongInt;
+begin
+  Result := FCount;
+end;
+
+function TXML.GetTag: string;
+begin
+  Result := FTag;
+end;
+
+function TXML.GetContent: string;
+begin
+  Result := FContent;
+end;
+
+function TXML.GetDataLen: LongInt;
+begin
+  Result := FDataLen;
+end;
+
+function TXML.GetParams: IXMLParams;
+begin
+  Result := FParams;
+end;
+
+function TXML.GetNode(const TagName: string): IXML;
 var
   i : LongInt;
 begin
-  for i := 0 to Count - 1 do
+  for i := 0 to FCount - 1 do
     if FNode[i].Tag = TagName then
     begin
       Result := FNode[i];
@@ -308,7 +329,7 @@ begin
   Result := nil;
 end;
 
-function TXML.GetNodeI(Idx: LongInt): TXML;
+function TXML.GetNodeI(Idx: LongInt): IXML;
 begin
   Result := FNode[Idx];
 end;

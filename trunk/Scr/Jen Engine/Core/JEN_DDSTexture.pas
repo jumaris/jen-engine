@@ -145,7 +145,7 @@ var
   Data    : Pointer;
   Samples : LongInt;
   Size    : LongWord;
-  Texture : TTexture;
+  Texture : ITexture;
 
   function GetLoadFormat(const DDS: TDDSHeader): TLoadFormat;
   begin
@@ -206,7 +206,7 @@ var
 begin
   Result := False;
   if not Assigned(Resource) then Exit;
-  Texture := Resource as TTexture;
+  Texture := Resource as ITexture;
 
   if (Stream.Size < 128) then
   begin
@@ -246,12 +246,12 @@ begin
       end;
 
     // 2D image
-    Texture.FSampler := GL_TEXTURE_2D;
+    Texture.Sampler := GL_TEXTURE_2D;
     Samples := 1;
     // CubeMap image
     if dwCaps2 and DDSCAPS2_CUBEMAP > 0 then
     begin
-      Texture.FSampler := GL_TEXTURE_CUBE_MAP;
+      Texture.Sampler := GL_TEXTURE_CUBE_MAP;
       Samples := 6;
     end;
     // 3D image
@@ -262,11 +262,11 @@ begin
 
     for s := 0 to Samples - 1 do
     begin
-      case Texture.FSampler of
+      case Texture.Sampler of
         GL_TEXTURE_CUBE_MAP :
           st := (GL_TEXTURE_CUBE_MAP_POSITIVE_X) + s;
       else
-        st := Texture.FSampler;
+        st := Texture.Sampler;
       end;
 
       for i := 0 to dwMipMapCount - 1 do
@@ -294,7 +294,7 @@ begin
   Texture.Filter := tfBilinear;
  // glTexParameteri(Texture.FSampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
  // glTexParameteri(Texture.FSampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glTexParameteri(Texture.FSampler, GL_TEXTURE_MAX_LEVEL, Mips - 1);
+  glTexParameteri(Texture.Sampler, GL_TEXTURE_MAX_LEVEL, Mips - 1);
   Result := True;
   Stream.Free;
 end;

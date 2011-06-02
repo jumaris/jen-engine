@@ -6,9 +6,10 @@ interface
 {$IFDEF JEN_LOG}
 uses
   JEN_Header,
+  JEN_Utils,
   JEN_Log;
 
-type TDefConsoleLog = class(TInterfacedObject, ILogOutput)
+type TDefConsoleLog = class(TManagedInterface, ILogOutput)
   private
     LastUpdate : LongInt;
   public

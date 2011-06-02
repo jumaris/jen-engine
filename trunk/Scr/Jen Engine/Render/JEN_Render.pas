@@ -3,7 +3,7 @@ unit JEN_Render;
 interface
 
 uses
-  XSystem,
+  Windows,
   JEN_Header,
   JEN_Math;
 
@@ -125,7 +125,7 @@ begin
    Result := False;
   if FSAA > 0 then
   begin
-    PHandle := CreateWindowExW(0, 'Edit', nil, 0, 0, 0, 0, 0, 0, 0, 0, nil);
+    PHandle := CreateWindowEx(0, 'Edit', nil, 0, 0, 0, 0, 0, 0, 0, 0, nil);
     Result := PHandle <> 0;
     TDC := GetDC(PHandle);
     Result := Result and SetPixelFormat
@@ -166,7 +166,7 @@ begin
       Result := False;
     Result := Result and wglMakeCurrent(0, 0);
     Result := Result and wglDeleteContext(RC);
-    Result := Result and ReleaseDC(PHandle, TDC);
+    Result := Result and (ReleaseDC(PHandle, TDC)=0);
     Result := Result and DestroyWindow(PHandle);
 
     if Result = False then

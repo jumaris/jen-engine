@@ -3,7 +3,7 @@
 			<ProjectGuid>{22E78AA3-D0A0-4A67-8A39-43E440DA6B55}</ProjectGuid>
 			<ProjectVersion>12.0</ProjectVersion>
 			<MainSource>_02_Attach_Engine_from_DDL.dpr</MainSource>
-			<Config Condition="'$(Config)'==''">Release</Config>
+			<Config Condition="'$(Config)'==''">Debug</Config>
 			<DCC_DCCCompiler>DCC32</DCC_DCCCompiler>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Config)'=='Base' or '$(Base)'!=''">
@@ -50,6 +50,7 @@
 			</DelphiCompile>
 			<DCCReference Include="..\..\..\Include\Delphi\JEN_Header.pas"/>
 			<DCCReference Include="..\..\..\Include\Delphi\JEN_Math.pas"/>
+			<DCCReference Include="Unit1.pas"/>
 			<BuildConfiguration Include="Base">
 				<Key>Base</Key>
 			</BuildConfiguration>
