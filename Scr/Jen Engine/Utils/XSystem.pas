@@ -2,7 +2,9 @@ unit XSystem;
 
 interface
 
+
 {$REGION 'CONSTANS'}
+{
 const
   kernel32  = 'kernel32.dll';
   advapi32  = 'advapi32.dll';
@@ -180,7 +182,7 @@ const
   GL_COLOR_BUFFER_BIT     = $00004000;
 {$ENDREGION}
 {$REGION 'TYPES'}
-type
+{type
   HWND  = LongWord;
   HDC   = LongWord;
   HGLRC = LongWord;
@@ -323,10 +325,10 @@ type
     dwButtonNum : LongWord;
     dwPOV       : LongWord;
     dwRes       : array [0..1] of LongWord;
-  end;
+  end;      }
 {$ENDREGION}
 {$REGION 'WINDOWS API'}
-  function ToUnicode(wVirtKey, wScanCode: LongWord; const KeyState: TKeyboardState;  var pwszBuff; cchBuff: LongInt; wFlags: LongWord): LongInt; external user32;
+{  function ToUnicode(wVirtKey, wScanCode: LongWord; const KeyState: TKeyboardState;  var pwszBuff; cchBuff: LongInt; wFlags: LongWord): LongInt; external user32;
 
   function RegisterClassExW(const WndClass: TWndClassEx): Word; stdcall; external user32;
   function UnregisterClassW(lpClassName: PWideChar; hInstance: HINST): LongBool; stdcall; external user32;
@@ -418,7 +420,7 @@ type
 // Joystick
   function joyGetNumDevs: LongWord; stdcall; external winmm;
   function joyGetDevCapsA(uJoyID: LongWord; lpCaps: Pointer; uSize: LongWord): LongWord; stdcall; external winmm;
-  function joyGetPosEx(uJoyID: LongWord; lpInfo: Pointer): LongWord; stdcall; external winmm;
+  function joyGetPosEx(uJoyID: LongWord; lpInfo: Pointer): LongWord; stdcall; external winmm;                      }
 {$ENDREGION}
 
 implementation

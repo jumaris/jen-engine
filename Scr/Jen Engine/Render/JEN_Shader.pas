@@ -4,17 +4,42 @@ interface
 
 uses
   JEN_Header,
+  JEN_Math,
   JEN_Resource,
   JEN_OpenGlHeader,
   JEN_Utils,
-  JEN_Math,
   CoreX_XML;
 
 type
-  TShaderProgram = class(TManagedInterfacedObj, IShaderProgram)
-    constructor Create(Manager : TInterfaceList);
+  IShaderResource = interface(JEN_Header.IShaderResource)
+  ['{CFF16358-641F-4312-A601-08CC9FC3BEA8}']
+    function GetXML: IXML;
+    procedure SetXML(Value: IXML);
+
+    property XML: IXML read GetXML write SetXML;
+  end;
+
+  TShaderResource = class(TManagedInterface, IResource, IShaderResource)
+    constructor Create(const Name: string);
     destructor Destroy; override;
   private
+    FShaderPrograms: TInterfaceList;
+    FDefines: TList;
+    XML: IXML;
+    FName: string;
+    function GetName: string; stdcall;
+    function GetXML: IXML;
+    procedure SetXML(Value: IXML);
+    function GetDefineId(const Name: String): LongInt;
+  public
+    function GetDefine(const Name: String): LongInt; stdcall;
+    procedure SetDefine(const Name: String; Value: LongInt); stdcall;
+    function Compile: IShaderProgram; stdcall;
+  end;
+  
+  TShaderProgram = class(TManagedInterface, IShaderProgram)
+    constructor Create;
+    destructor Destroy; override;
   public
     FID : GLint;
     FUniformList : TInterfaceList;
@@ -24,26 +49,26 @@ type
     procedure Bind; stdcall;
   end;
 
-  TShaderUniform = class(TManagedInterfacedObj, IShaderUniform)
-    constructor Create(Manager : TInterfaceList);
+  TShaderUniform = class(TManagedInterface, IShaderUniform)
+    constructor Create;
   private
     FID    : GLint;
     FType  : TShaderUniformType;
     FName  : string;
     FValue : array [0..11] of Single;
+    function GetName: string; stdcall;
     procedure Init(ShaderID: GLEnum; const UName: string; UniformType: TShaderUniformType);
   public
     procedure Value(const Data; Count: LongInt); stdcall;
-    property Name: string read FName;
   end;
 
-  TShaderAttrib = class(TManagedInterfacedObj, IShaderAttrib)
-    constructor Create(Manager : TInterfaceList);
+  TShaderAttrib = class(TManagedInterface, IShaderAttrib)
+    constructor Create;
   private
     FID    : GLint;
     FType  : TShaderAttribType;
     DType  : GLEnum;
-    FNorm : Boolean;
+    FNorm  : Boolean;
     Size   : LongInt;
     FName  : string;
     FValue : array [0..11] of Single;
@@ -60,22 +85,6 @@ type
     Value : LongWord;
   end;
 
-  TShaderResource = class(TManagedInterfacedObj, IResource, IShaderResource)
-    constructor Create(const Name: string; Manager : TInterfaceList);
-    destructor Destroy; override;
-  private
-    FShaderPrograms : TInterfaceList;
-    FDefines : TList;
-    function GetName: string; stdcall;
-    function GetDefineId(const Name: String): LongInt;
-  public
-    XN_VS, XN_FS, XML: TXML;
-    FName: string;
-    function GetDefine(const Name: String): LongInt; stdcall;
-    procedure SetDefine(const Name: String; Value: LongInt); stdcall;
-    function Compile: IShaderProgram; stdcall;
-  end;
-
   TShaderLoader = class(TResLoader)
     constructor Create;
   public
@@ -84,12 +93,12 @@ type
 
 implementation
 
+
 uses
   JEN_Main;
 
-//ShaderProgram
-{$REGION 'TShaderProgram'}  
-constructor TShaderProgram.Create(Manager: TInterfaceList);
+{$REGION 'TShaderProgram'}
+constructor TShaderProgram.Create;
 begin
   inherited;
   FID := glCreateProgram;
@@ -111,13 +120,14 @@ var
   u : TShaderUniform;
 begin
   for i := 0 to FUniformList.Count - 1 do
-    if TShaderUniform(FUniformList[i]).Name = UName then
+    if ((FUniformList[i] as IShaderUniform).Name = UName) then
     begin
       Result := IShaderUniform(FUniformList[i]);
       Exit;
     end;
-  U := TShaderUniform.Create(FUniformList);
+  U := TShaderUniform.Create;
   U.Init(FID, UName, UniformType);
+  FUniformList.Add(U);
   Result := U;
 end;
 
@@ -133,8 +143,9 @@ begin
       Result := FAttrib[i];
       Exit;
     end;               }
-  A := TShaderAttrib.Create(FAttribList);
+  A := TShaderAttrib.Create;
   A.Init(FID, AName, AttribType, Norm);
+  FAttribList.Add(A);
   Result := A;
 end;
 
@@ -149,10 +160,15 @@ end;
 {$ENDREGION}
 
 {$REGION 'TShaderUniform'}
-constructor TShaderUniform.Create(Manager: TInterfaceList);
+constructor TShaderUniform.Create;
 begin
   FID := -1;
   inherited;
+end;
+
+function TShaderUniform.GetName: string;
+begin
+  Result := FName;
 end;
 
 procedure TShaderUniform.Init(ShaderID: LongWord; const UName: string; UniformType: TShaderUniformType);
@@ -163,7 +179,7 @@ begin
   FName := UName;
   FType := UniformType;
   for i := 0 to Length(FValue) - 1 do
-    FValue[i] := NAN;
+    FValue[i] := NAN;   
 end;
 
 procedure TShaderUniform.Value(const Data; Count: LongInt);
@@ -190,7 +206,8 @@ begin
 end;
 {$ENDREGION}
 
-constructor TShaderAttrib.Create(Manager: TInterfaceList);
+{$REGION 'TShaderArrtib'}
+constructor TShaderAttrib.Create;
 begin
   FID := -1;
   inherited;
@@ -207,7 +224,7 @@ begin
     atVec1b..atVec4b : DType := GL_UNSIGNED_BYTE;
     atVec1s..atVec4s : DType := GL_SHORT;
     atVec1f..atVec4f : DType := GL_FLOAT;
-  end;  
+  end;
 end;
 
 procedure TShaderAttrib.Value(Stride, Offset: LongInt);
@@ -227,10 +244,11 @@ begin
   if FID <> -1 then
     glDisableVertexAttribArray(FID);
 end;
+{$ENDREGION}
 
-constructor TShaderResource.Create(const Name: string; Manager: TInterfaceList);
+constructor TShaderResource.Create;
 begin
-  inherited Create(Manager);
+  inherited Create;
   FName := Name;
   FShaderPrograms := TInterfaceList.Create;
   FDefines := TList.Create;
@@ -240,8 +258,7 @@ destructor TShaderResource.Destroy;
 var
   i : LongInt;
 begin
-  if Assigned(XML) then
-    XML.Free;
+  XML := nil;
 
   FShaderPrograms.Free;
   for i := 0 to FDefines.Count - 1 do
@@ -258,6 +275,16 @@ end;
 function TShaderResource.GetName: string;
 begin
   Result := FName;
+end;
+
+function TShaderResource.GetXML: IXML;
+begin
+  Result := XML;
+end;
+
+procedure TShaderResource.SetXML(Value: IXML);
+begin
+  XML := Value;
 end;
 
 function TShaderResource.GetDefineId(const Name: String): LongInt;
@@ -310,6 +337,7 @@ var
   LogBuf : AnsiString;
   LogLen : LongInt;
   Shader : TShaderProgram;
+  XN_VS, XN_FS : IXML;
 
   function IndexStr(const AText: string; const AValues: array of string): LongInt;
   var
@@ -324,12 +352,12 @@ var
     end;
   end;
 
-  function MergeCode(const xNode: TXML): AnsiString;
+  function MergeCode(const xNode: IXML): AnsiString;
   var
     i : LongInt;
     Param : TXMLParam;
 
-    function GetParam(const Node: TXML; const Name: string): TXMLParam;
+    function GetParam(const Node: IXML; const Name: string): TXMLParam;
     begin
       Result := Node.Params[Name];
       if Result.Name = '' then
@@ -420,10 +448,16 @@ var
 
 begin
 
+  XN_VS := XML.Node['VertexShader'];
+  XN_FS := XML.Node['FragmentShader'];
+
+  if not (Assigned(XN_VS) and Assigned(XN_FS)) then Exit;
+
+
   if Assigned(XN_VS) and Assigned(XN_FS) then
   begin
 
-    Shader := TShaderProgram.Create(FShaderPrograms);
+    Shader := TShaderProgram.Create;
     with Shader do
     begin
       Attach(GL_VERTEX_SHADER, MergeCode(XN_VS));
@@ -439,6 +473,8 @@ begin
         LogOut(string(LogBuf), lmWarning);
       end;
 
+      (Shader as IManagedInterface).SetManager(FUniformList);
+      FShaderPrograms.Add(Shader);
       Result := Shader;
      end;
 
@@ -455,20 +491,21 @@ end;
 
 function TShaderLoader.Load(const Stream : TStream; var Resource : IResource) : Boolean;
 var
-  Shader: TShaderResource;
+  Shader: IShaderResource;
+
+  ss: IXML;
 begin
   Result := False;
-  Shader := Resource as TShaderResource;
+  if not Assigned(Resource) then Exit;
+  Shader := Resource as IShaderResource;
 
   with Shader do
   begin
+    ss:= GetXML;
     XML := TXML.Load(Stream);
     if not Assigned(XML) then Exit;
 
-    XN_VS := XML.Node['VertexShader'];
-    XN_FS := XML.Node['FragmentShader'];
-
-    if not (Assigned(XN_VS) and Assigned(XN_FS)) then Exit;
+    if not (Assigned(XML.Node['VertexShader']) and Assigned(XML.Node['FragmentShader'])) then Exit;
   end;
 
   Result := True;

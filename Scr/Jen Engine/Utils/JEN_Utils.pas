@@ -5,14 +5,15 @@ interface
 uses
   JEN_Header,
   JEN_MATH,
-  XSystem;
+  Windows;
 
 const
   LIST_DELTA = 32;
 
 type
+  PByteArray = ^TByteArray;
+  TByteArray = array [0..1] of Byte;
   TCompareFunc = function (Item1, Item2: Pointer): LongInt;
-
   TItemArray = array of Pointer;
 
   TList = class
@@ -45,23 +46,6 @@ type
     property Items[Idx: LongInt]: TObject read GetItem write SetItem; default;
   end;
 
-  TInterfaceList = class;
-
-  TManagedInterfacedObj = class(TObject, IInterface)
-    constructor Create(Manager: TInterfaceList);
-  protected
-    FRefCount: LongInt;
-    FManager: TInterfaceList;
-    function QueryInterface(const IID: TGUID; out Obj): HResult; stdcall;
-    function _AddRef: LongInt; stdcall;
-    function _Release: LongInt; stdcall;
-  public
-    procedure AfterConstruction; override;
-    procedure BeforeDestruction; override;
-    class function NewInstance: TObject; override;
-    property RefCount: LongInt read FRefCount;
-  end;
-
   TInterfaceList = class
     constructor Create;
     destructor Destroy; override;
@@ -77,6 +61,22 @@ type
     function IndexOf(p: IUnknown): LongInt;
     property Count: LongInt read FCount;
     property Items[Idx: LongInt]: IUnknown read GetItem write SetItem; default;
+  end;
+
+  TManagedInterface = class(TObject, IInterface, IManagedInterface)
+  private
+    procedure SetManager(Value: Pointer) stdcall;
+  protected
+    FRefCount: LongInt;
+    FManager: TInterfaceList;
+    function QueryInterface(const IID: TGUID; out Obj): HResult; stdcall;
+    function _AddRef: LongInt; stdcall;
+    function _Release: LongInt; stdcall;
+  public
+    procedure AfterConstruction; override;
+    procedure BeforeDestruction; override;
+    class function NewInstance: TObject; override;
+    property RefCount: LongInt read FRefCount;
   end;
 
   TUtils = class(TInterfacedObject, IJenSubSystem, IUtils)
@@ -395,31 +395,29 @@ end;
 
 // TManagedInterfacedObj
 {$REGION 'TManagedInterfacedObj'}
-constructor TManagedInterfacedObj.Create;
+procedure TManagedInterface.SetManager(Value: Pointer);
 begin
-  inherited Create;
-  FManager := Manager;
- // FManager.Add(self);
+  FManager := Value;
 end;
 
-procedure TManagedInterfacedObj.AfterConstruction;
+procedure TManagedInterface.AfterConstruction;
 begin
   InterlockedDecrement(FRefCount);
 end;
 
-procedure TManagedInterfacedObj.BeforeDestruction;
+procedure TManagedInterface.BeforeDestruction;
 begin
   if RefCount <> 0 then
-    Error(reInvalidPtr);
+    System.Error(reInvalidPtr);
 end;
 
-class function TManagedInterfacedObj.NewInstance: TObject;
+class function TManagedInterface.NewInstance: TObject;
 begin
   Result := inherited NewInstance;
-  TManagedInterfacedObj(Result).FRefCount := 1;
+  TManagedInterface(Result).FRefCount := 1;
 end;
 
-function TManagedInterfacedObj.QueryInterface(const IID: TGUID; out Obj): HResult;
+function TManagedInterface.QueryInterface(const IID: TGUID; out Obj): HResult;
 begin
   if GetInterface(IID, Obj) then
     Result := 0
@@ -427,12 +425,12 @@ begin
     Result := E_NOINTERFACE;
 end;
 
-function TManagedInterfacedObj._AddRef: LongInt;
+function TManagedInterface._AddRef: LongInt;
 begin
   Result := InterlockedIncrement(FRefCount);
 end;
 
-function TManagedInterfacedObj._Release: LongInt;
+function TManagedInterface._Release: LongInt;
 var
   Manager : TInterfaceList;
 begin
@@ -443,7 +441,7 @@ begin
       begin
         Manager := FManager;
         FManager := nil;
-        Manager.Del(Manager.IndexOf(Self));
+        Manager.Del(Manager.IndexOf(self));
       end;
   end;
 
@@ -470,6 +468,7 @@ begin
     SetLength(FItems, Length(FItems) + LIST_DELTA);
   FItems[FCount] := p;
   Result := p;
+  (p as IManagedInterface).SetManager(self);
   Inc(FCount);
 end;
 
@@ -486,9 +485,12 @@ begin
 end;
 
 procedure TInterfaceList.Clear;
+var
+  i : LongInt;
 begin
+  for i := 0 to FCount - 1 do
+    FItems[i] := nil;
   FCount := 0;
-  FItems := nil;
 end;
 
 function TInterfaceList.IndexOf(p: IUnknown): LongInt;
@@ -497,7 +499,7 @@ var
 begin
   Result := -1;
   for i := 0 to FCount - 1 do
-    if FItems[i] = p then
+    if Pointer(FItems[i]) = Pointer(p) then
       Exit(i);
 end;
 
@@ -508,7 +510,7 @@ end;
 
 procedure TInterfaceList.SetItem(Idx: LongInt; Value: IUnknown);
 begin
-  FItems[Idx] := Value;
+  FItems[Idx] := IUnknown(Value);
 end;
 {$ENDREGION}
 
@@ -529,9 +531,10 @@ begin
 end;
 
 procedure TUtils.Sleep(Value: LongWord);
-var h : THandle;
+var
+  h : THandle;
 begin
-  h := CreateEventW(nil, true, false, '');
+  h := CreateEvent(nil, true, false, '');
   WaitForSingleObject(h, Value);
   CloseHandle(h);
 end;
@@ -649,9 +652,9 @@ begin
   FileMode := 2;
 
   if RW then
-    Result.F := CreateFileW(PChar(FileName), GENERIC_WRITE or GENERIC_READ, FILE_SHARE_READ, nil, CREATE_ALWAYS, 0, 0)
+    Result.F := CreateFile(PChar(FileName), GENERIC_WRITE or GENERIC_READ, FILE_SHARE_READ, nil, CREATE_ALWAYS, 0, 0)
   else
-    Result.F := CreateFileW(PChar(FileName), GENERIC_READ, FILE_SHARE_READ, nil, OPEN_EXISTING, 0, 0);
+    Result.F := CreateFile(PChar(FileName), GENERIC_READ, FILE_SHARE_READ, nil, OPEN_EXISTING, 0, 0);
 
   if Result.F <> INVALID_HANDLE_VALUE then
   begin

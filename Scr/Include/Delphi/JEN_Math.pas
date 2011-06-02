@@ -5,49 +5,49 @@ interface
 Type
   TPoint2i  = record
     x, y : LongInt;
-    class operator Equal(const a, b: TPoint2i): Boolean; inline;
-    class operator NotEqual(const a, b: TPoint2i): Boolean; inline;
+    class operator Equal(const a, b: TPoint2i): Boolean;
+    class operator NotEqual(const a, b: TPoint2i): Boolean;
   end;
 
   TRecti    = record
     x, y          : LongInt;
     Width, Height : LongInt;
     private
-      function  GetLocation: TPoint2i; inline;
-      procedure SetLocation(Location: TPoint2i); inline;
-      function  GetCenter: TPoint2i; inline;
+      function  GetLocation: TPoint2i;
+      procedure SetLocation(Location: TPoint2i);
+      function  GetCenter: TPoint2i;
     public
-      function Left     : LongInt; inline;
-      function Right    : LongInt; inline;
-      function Top      : LongInt; inline;
-      function Bottom   : LongInt; inline;
+      function Left     : LongInt;
+      function Right    : LongInt;
+      function Top      : LongInt;
+      function Bottom   : LongInt;
 
       property Location : TPoint2i read GetLocation write SetLocation;
       property Center   : TPoint2i read GetCenter;
 
-      function IsEmpty  : Boolean; inline;
+      function IsEmpty  : Boolean;
 
-      procedure Offset(const Point: TPoint2i);           overload; inline;
-      procedure Offset(const offsetX, offsetY: LongInt);  overload; inline;
+      procedure Offset(const Point: TPoint2i); overload;
+      procedure Offset(offsetX, offsetY: LongInt); overload;
 
-      procedure Inflate(const HAmount, VAmount: LongInt); overload; inline;
+      procedure Inflate(HAmount, VAmount: LongInt); overload;
 
-      function Contains(const x, y: LongInt): Boolean; overload; inline;
-      function Contains(const Point: TPoint2i): Boolean; overload; inline;
-  //    function Contains(const Point: TPoint2f): Boolean; overload; inline;
-      function Contains(const Rect: TRecti): Boolean; overload; inline;
-//    function Contains(const Rect : TRectf)  : Boolean; overload; inline;
+      function Contains(x, y: LongInt): Boolean; overload;
+      function Contains(const Point: TPoint2i): Boolean; overload;
+//    function Contains(const Point: TPoint2f): Boolean; overload;
+      function Contains(const Rect: TRecti): Boolean; overload;
+//    function Contains(const Rect : TRectf)  : Boolean; overload;
 
-      function Intersects(const Rect: TRecti): Boolean; overload; inline;
-//    function Intersects(const Rect : TRectf)  : Boolean; overload; inline;
-      function Intersect(const Rect1, Rect2: TRecti): TRecti ; overload;  inline;
+      function Intersects(const Rect: TRecti): Boolean; overload;
+//    function Intersects(const Rect : TRectf)  : Boolean; overload;
+      function Intersect(const Rect1, Rect2: TRecti): TRecti ; overload;
 
-  //  function Intersect(const Rect : TRectf)  : TRectf ; inline;
-      function Union(const Rect1, Rect2 : TRecti): TRecti ; overload;  inline;
-  //  function Union(const Rect1, Rect2 : TRectf): TRectf ; overload;  inline;
+//    function Intersect(const Rect : TRectf)  : TRectf ;
+      function Union(const Rect1, Rect2 : TRecti): TRecti ; overload;
+//    function Union(const Rect1, Rect2 : TRectf): TRectf ; overload;
 
-      class operator Equal(const Rect1, Rect2: TRecti): Boolean; inline;
-      class operator NotEqual(const Rect1, Rect2: TRecti): Boolean; inline;
+      class operator Equal(const Rect1, Rect2: TRecti): Boolean;
+      class operator NotEqual(const Rect1, Rect2: TRecti): Boolean;
   end;
 
   TVec2f = record
@@ -169,7 +169,7 @@ function Pow(x, y: Single): Single;
 function ToPow2(x: LongInt): LongInt;
 
 function Point2i(x, y : LongInt) : TPoint2i; inline;
-function Recti(x, y, Width, Height : LongInt) : TRecti; inline;
+function Recti(x, y, Width, Height : LongInt): TRecti; overload; inline;
 function Vec2f(x, y: Single): TVec2f; inline;
 function Vec3f(x, y, z: Single): TVec3f; inline;
 function Vec4f(x, y, z, w: Single): TVec4f; inline;
@@ -462,13 +462,13 @@ begin
   inc(y, Point.y);
 end;
 
-procedure TRecti.Offset(const offsetX, offsetY: LongInt);
+procedure TRecti.Offset(offsetX, offsetY: LongInt);
 begin
   inc(x, offsetX);
   inc(y, offsetY);
 end;
 
-procedure TRecti.Inflate(const HAmount, VAmount: LongInt);
+procedure TRecti.Inflate(HAmount, VAmount: LongInt);
 begin
   dec(x, HAmount);
   dec(y, VAmount);
@@ -476,7 +476,7 @@ begin
   inc(Height, VAmount*2);
 end;
 
-function TRecti.Contains(const x, y:LongInt): Boolean;
+function TRecti.Contains(x, y:LongInt): Boolean;
 begin
   Result := ((((self.x <= x) and (x < (self.x + Width))) and (self.y <= y)) and (y < (self.y + Height)));
 end;

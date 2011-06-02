@@ -4,12 +4,11 @@ unit JEN_Header;
 interface
 
 uses
+  Windows,
   JEN_Math;
 
 type
-  HWND  = LongWord;
-  HDC   = LongWord;
-
+
   TJenSubSystemType = (ssUtils, ssSystemParams, ssLog, ssDisplay, ssResMan, ssRender, ssRender2d);
   TEvent = (evFrameEnd);
 
@@ -35,6 +34,11 @@ type
   TColor = LongWord;
   TProc = procedure stdcall;
 
+  IManagedInterface = interface
+  ['{7B975F52-35F8-4776-B557-7536F9B2C55C}']
+    procedure SetManager(Value: Pointer); stdcall;
+  end;
+
   IGame = interface
     procedure LoadContent; stdcall;
     procedure OnUpdate(dt: double); stdcall;
@@ -50,6 +54,39 @@ type
     procedure Start(Game : IGame); stdcall;
     procedure AddEventProc(Event: TEvent; Proc: TProc); stdcall;
     procedure DelEventProc(Event: TEvent; Proc: TProc); stdcall;
+  end;
+
+  TXMLParam = record
+    Name  : string;
+    Value : string;
+  end;
+
+  IXMLParams = interface
+    function GetParam(const Name: string): TXMLParam; stdcall;
+    function GetParamI(Idx: LongInt): TXMLParam; stdcall;
+    function GetCount: LongInt; stdcall;
+
+    property Count: LongInt read GetCount;
+    property Param[const Name: string]: TXMLParam read GetParam; default;
+    property ParamI[Idx: LongInt]: TXMLParam read GetParamI;
+  end;
+
+  IXML = interface
+    function GetCount: LongInt; stdcall;
+    function GetTag: string; stdcall;
+    function GetContent: string; stdcall;
+    function GetDataLen: LongInt; stdcall;
+    function GetParams: IXMLParams; stdcall;
+    function GetNode(const TagName: string): IXML; stdcall;
+    function GetNodeI(Idx: LongInt): IXML; stdcall;
+
+    property Count: LongInt read GetCount;
+    property Tag: string read GetTag;
+    property Content: string read GetContent;
+    property DataLen: LongInt read GetDataLen;
+    property Params: IXMLParams read GetParams;
+    property Node[const TagName: string]: IXML read GetNode; default;
+    property NodeI[Idx: LongInt]: IXML read GetNodeI;
   end;
 
   IUtils = interface(IJenSubSystem)
@@ -71,9 +108,11 @@ type
     function GetHeight : LongInt; stdcall;
     function GetBPS    : Byte; stdcall;
     function GetRefresh: Byte; stdcall;
+    function GetDesktopRect : TRecti; stdcall;
 
     function SetMode(W, H, R: LongInt): TSetModeResult; stdcall;
 
+    property DesktopRect : TRecti read GetDesktopRect;
     property Width  : LongInt read GetWidth;
     property Height : LongInt read GetHeight;
     property BPS    : Byte read GetBPS;
@@ -94,7 +133,7 @@ type
     property RAMFree: LongWord read GetRAMFree;
   end;
 
-  ILogOutput = interface
+  ILogOutput = interface(IManagedInterface)
     procedure Init; stdcall;
     procedure AddMsg(const Text: String; MType: TLogMsg); stdcall;
   end;
@@ -115,8 +154,8 @@ type
     function GetFullScreen: Boolean; stdcall;
     function GetActive: Boolean; stdcall;
     function GetCursorState: Boolean; stdcall;
-    function GetHDC: HDC; stdcall;
-    function GetHandle: HWND; stdcall;
+    function GetWndDC: HDC; stdcall;
+    function GetWndHandle: HWND; stdcall;
     function GetWidth: LongWord; stdcall;
     function GetHeight: LongWord; stdcall;
     function GetFPS: LongWord; stdcall;
@@ -131,8 +170,8 @@ type
     property Cursor: Boolean read GetCursorState write ShowCursor;
     property FullScreen: Boolean read GetFullScreen write SetFullScreen;
 
-    property Handle: HWND  read GetHandle;
-    property DC: HDC read GetHDC;
+    property Handle: HWND  read GetWndHandle;
+    property DC: HDC read GetWndDC;
     property Width: LongWord read GetWidth;
     property Height: LongWord read GetHeight;
     property Caption: String write SetCaption;
@@ -140,27 +179,35 @@ type
   end;
 
   IResource = interface
+  ['{85CA9B42-E24A-4FA8-BFFA-083B73CCA057}']
     function GetName: string; stdcall;
     property Name: string read GetName;
   end;
 
   IShaderUniform = interface
+  ['{A587E658-8ADD-4928-A985-771AB9E5D562}']
+    function GetName: string; stdcall;
     procedure Value(const Data; Count: LongInt = 1); stdcall;
+
+    property Name: string read GetName;
   end;
 
   IShaderAttrib = interface
+  ['{3BF51C3F-3063-4CAE-9993-12F7A5E11DED}']
     procedure Value(Stride, Offset: LongInt); stdcall;
     procedure Enable; stdcall;
     procedure Disable; stdcall;
   end;
 
   IShaderProgram = interface
+  ['{1F79BB95-C0B0-45AF-AA8D-AF9999CC85C8}']
     function Uniform(const UName: string; UniformType: TShaderUniformType): IShaderUniform; stdcall;
     function Attrib(const AName: string; AttribType: TShaderAttribType; Norm: Boolean = False): IShaderAttrib; stdcall;
     procedure Bind; stdcall;
   end;
 
   IShaderResource = interface(IResource)
+  ['{313C3497-C065-4A29-A970-07B9750D5914}']
     function GetDefine(const Name: String): LongInt; stdcall;
     procedure SetDefine(const Name: String; Value: LongInt); stdcall;
 
@@ -170,7 +217,21 @@ type
   end;
 
   ITexture = interface(IResource)
+  ['{E9EEFA65-F004-4668-9BAD-2FE92D19F050}']
     procedure Bind(Channel: Byte = 0); stdcall;
+
+    function GetSampler: LongWord; stdcall;
+    procedure SetSampler(Value: LongWord); stdcall;
+    function GetFilter: TTextureFilter; stdcall;
+    procedure SetFilter(Value: TTextureFilter); stdcall;
+    function GetClamp: Boolean; stdcall;
+    procedure SetClamp(Value: Boolean); stdcall;
+
+    //property Width: LongInt read FWidth;
+   // property Height: LongInt read FHeight;
+    property Sampler: LongWord read GetSampler write SetSampler;
+    property Filter: TTextureFilter read GetFilter write SetFilter;
+    property Clamp: Boolean read GetClamp write SetClamp;
   end;
 
   IResourceManager = interface(IJenSubSystem)

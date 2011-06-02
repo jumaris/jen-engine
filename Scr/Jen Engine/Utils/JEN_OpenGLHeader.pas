@@ -3,8 +3,8 @@ unit JEN_OpenGLHeader;
 interface
 
 uses
-  JEN_Header,
-  XSystem;
+  Windows,
+  JEN_Header;
 
 type
   GLboolean   = Boolean;
@@ -478,6 +478,12 @@ const
   procedure glPopClientAttrib; stdcall; external opengl32;
   procedure glPolygonMode(face: GLenum; mode: GLenum); stdcall; external opengl32;
 
+
+  function wglCreateContext(DC: HDC): HGLRC; stdcall; external opengl32;
+  function wglDeleteContext(RC: HGLRC): LongBool; stdcall; external opengl32;
+  function wglMakeCurrent(DC: HDC; RC: HGLRC): LongBool; stdcall; external opengl32;
+  function wglGetProcAddress(ProcName: PAnsiChar): Pointer; stdcall; external opengl32;
+
 var
   wglChoosePixelFormatARB: function(hdc: HDC; const piAttribIList: PGLint; const pfAttribFList: PGLfloat; nMaxFormats: GLuint; piFormats: PGLint; nNumFormats: PGLuint): LongBool; stdcall;
   wglSwapIntervalEXT: function(interval: GLint): LongBool; stdcall;
@@ -725,6 +731,6 @@ begin
 end;
       {
 initialization
-  GlModuleH := GetModuleHandleW(Opengl32);
+  GlModuleH := GetModuleHandle(Opengl32);
                          }
 end.

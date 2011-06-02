@@ -3,7 +3,7 @@
 			<ProjectGuid>{E8874A6E-78B2-4D7D-8937-29C2DAC11416}</ProjectGuid>
 			<ProjectVersion>12.0</ProjectVersion>
 			<MainSource>JEN.dpr</MainSource>
-			<Config Condition="'$(Config)'==''">Release</Config>
+			<Config Condition="'$(Config)'==''">Debug</Config>
 			<DCC_DCCCompiler>DCC32</DCC_DCCCompiler>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Config)'=='Base' or '$(Base)'!=''">
@@ -50,7 +50,6 @@
 				<MainSource>MainSource</MainSource>
 			</DelphiCompile>
 			<DCCReference Include="..\Jen Engine\JEN_Main.pas"/>
-			<DCCReference Include="..\Jen Engine\Core\JEN_Camera3D.pas"/>
 			<DCCReference Include="..\Jen Engine\Core\JEN_DDSTexture.pas"/>
 			<DCCReference Include="..\Jen Engine\Core\JEN_DefConsoleLog.pas"/>
 			<DCCReference Include="..\Jen Engine\Core\JEN_Display.pas"/>
@@ -66,9 +65,9 @@
 			<DCCReference Include="..\Jen Engine\Utils\JEN_OpenGLHeader.pas"/>
 			<DCCReference Include="..\Jen Engine\Utils\JEN_SystemInfo.pas"/>
 			<DCCReference Include="..\Jen Engine\Utils\JEN_Utils.pas"/>
-			<DCCReference Include="..\Jen Engine\Utils\XSystem.pas"/>
 			<DCCReference Include="..\Include\Delphi\JEN_Header.pas"/>
 			<DCCReference Include="..\Jen Engine\Render\JEN_Render2D.pas"/>
+			<DCCReference Include="..\Jen Engine\Core\JEN_Console.pas"/>
 			<BuildConfiguration Include="Base">
 				<Key>Base</Key>
 			</BuildConfiguration>
@@ -102,7 +101,7 @@
 						<VersionInfo Name="MajorVer">0</VersionInfo>
 						<VersionInfo Name="MinorVer">0</VersionInfo>
 						<VersionInfo Name="Release">1</VersionInfo>
-						<VersionInfo Name="Build">2021</VersionInfo>
+						<VersionInfo Name="Build">2053</VersionInfo>
 						<VersionInfo Name="Debug">True</VersionInfo>
 						<VersionInfo Name="PreRelease">False</VersionInfo>
 						<VersionInfo Name="Special">False</VersionInfo>
@@ -114,7 +113,7 @@
 					<VersionInfoKeys>
 						<VersionInfoKeys Name="CompanyName"/>
 						<VersionInfoKeys Name="FileDescription"/>
-						<VersionInfoKeys Name="FileVersion">0.0.1.2021</VersionInfoKeys>
+						<VersionInfoKeys Name="FileVersion">0.0.1.2053</VersionInfoKeys>
 						<VersionInfoKeys Name="InternalName"/>
 						<VersionInfoKeys Name="LegalCopyright"/>
 						<VersionInfoKeys Name="LegalTrademarks"/>

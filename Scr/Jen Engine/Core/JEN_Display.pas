@@ -4,7 +4,8 @@ interface
 
 uses
   JEN_Header,
-  XSystem,
+  Windows,
+  messages,
   JEN_SystemInfo,
   JEN_OpenGLHeader;
 
@@ -49,8 +50,8 @@ type
     function GetFullScreen: Boolean; stdcall;
     function GetActive: Boolean; stdcall;
     function GetCursorState: Boolean; stdcall;
-    function GetHDC: HDC; stdcall;
-    function GetHandle: HWND; stdcall;
+    function GetWndDC: HDC; stdcall;
+    function GetWndHandle: HWND; stdcall;
     function GetWidth: LongWord; stdcall;
     function GetHeight: LongWord; stdcall;
     function GetFPS: LongWord; stdcall;
@@ -101,7 +102,7 @@ begin
         if (Display.Active) and (Word(lparam) = 1) and (not Display.Cursor) Then
           SetCursor(0)
         else
-          SetCursor(LoadCursorW(0, PWideChar(32512)));
+          SetCursor(LoadCursor(0, PWideChar(32512)));
       end;
       {
 }
@@ -137,7 +138,7 @@ begin
         if SmallInt(wParam shr 16) < 0 then CInput.Down[KM_WHDN] := True;
       end     }
   else
-    Result := DefWindowProcW(hWnd, Msg, wParam, lParam);
+    Result := DefWindowProc(hWnd, Msg, wParam, lParam);
   end;
 
 end;
@@ -182,14 +183,14 @@ begin
 	  lpszClassName	:= WINDOW_CLASS_NAME;
   end;
 
-  if RegisterClassExW(WinClass) = 0 Then
+  if RegisterClassEx(WinClass) = 0 Then
   begin
     LogOut('Cannot register window class.', lmError);
     Exit;
   end else
     LogOut('Register window class.', lmNotify);
 
-  FHandle := CreateWindowExW(0, WINDOW_CLASS_NAME,@FCaption[1], 0, 0, 0,
+  FHandle := CreateWindowEx(0, WINDOW_CLASS_NAME,@FCaption[1], 0, 0, 0,
                              0, 0, 0, 0, 0, nil);
 
   if FHandle = 0 Then
@@ -199,7 +200,7 @@ begin
     end else
       LogOut('Create window.', lmNotify);
 
-  SendMessageW(FHandle, WM_SETICON, 1, LoadIconW(HInstance, 'MAINICON'));
+  SendMessage(FHandle, WM_SETICON, 1, LoadIconW(HInstance, 'MAINICON'));
   FDC := GetDC(FHandle);
   FValid := true;
   Result := true;
@@ -210,7 +211,7 @@ destructor TDisplay.Destroy;
 begin
   if not FValid then Exit;
 
-  if not ReleaseDC( FHandle, FDC ) Then
+  if ReleaseDC( FHandle, FDC ) <> 0 Then
     LogOut('Cannot release device context.', lmError)
   else
     LogOut('Release device context.', lmNotify);
@@ -222,7 +223,7 @@ begin
   end else
     LogOut('Destroy window.', lmNotify);
 
-  if not UnRegisterClassW(WINDOW_CLASS_NAME, HInstance) Then
+  if not UnRegisterClass(WINDOW_CLASS_NAME, HInstance) Then
     LogOut('Cannot unregister window class.', lmError)
   else
     LogOut('Unregister window class.', lmNotify);
@@ -291,7 +292,7 @@ end;
 procedure TDisplay.SetCaption(const Value: String);
 begin
   FCaption := Value;
-  SetWindowTextW(FHandle, PWideChar(Value));
+  SetWindowText(FHandle, PWideChar(Value));
 end;
 
 procedure TDisplay.Restore;
@@ -324,10 +325,10 @@ procedure TDisplay.Update;
 var
   Msg : TMsg;
 begin
-  while PeekMessageW(Msg, 0, 0, 0, PM_REMOVE) do
+  while PeekMessage(Msg, 0, 0, 0, PM_REMOVE) do
   begin
     TranslateMessage(Msg);
-    DispatchMessageW(Msg);
+    DispatchMessage(Msg);
   end;
 end;
 
@@ -365,12 +366,12 @@ begin
   Result := FCursor;
 end;
 
-function TDisplay.GetHDC: HDC;
+function TDisplay.GetWndDC: HDC;
 begin
   Result := FDC;
 end;
 
-function TDisplay.GetHandle: HWND;
+function TDisplay.GetWndHandle: HWND;
 begin
   Result := FHandle;
 end;

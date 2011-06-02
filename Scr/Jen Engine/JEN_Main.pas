@@ -8,6 +8,7 @@ uses
   JEN_Utils,
   JEN_SystemInfo,
   JEN_Log,
+  JEN_Console,
   JEN_DefConsoleLog,
   JEN_Display,
   JEN_Render,
@@ -15,8 +16,7 @@ uses
   JEN_ResourceManager,
   JEN_DDSTexture,
   JEN_Shader,
-
-  XSystem;
+  Windows;
    {
 const
   lmInfo       = TLogMsg.lmInfo;
@@ -50,7 +50,6 @@ type
   TShaderResource = JEN_Shader.TShaderResource;
                                                }
 type
-  TTexture        = JEN_ResourceManager.TTexture;
   TDDSLoader      = JEN_DDSTexture.TDDSLoader;
 
   IJenEngine = interface(JEN_Header.IJenEngine)
@@ -118,8 +117,9 @@ begin
 
   {$IFDEF DEBUG}
   AllocConsole;
-  SetConsoleTitleW('Jen Console');
+  SetConsoleTitle('Jen Console');
   Log.RegisterOutput(TDefConsoleLog.Create);
+  Log.RegisterOutput(TConsole.Create);
   {$ENDIF}
 
   Render := TRender.Create;
@@ -132,18 +132,6 @@ destructor TJenEngine.Destroy;
 var
   Event : TEvent;
 begin
-  ResMan       := nil;
-  Render2d     := nil;
-  Render       := nil;
-  Display      := nil;
-
-  {$IFDEF DEBUG}
-  Utils.Sleep(1500);
-  {$ENDIF}
-
-  Log          := nil;
-  Utils        := nil;
-  SystemParams := nil;
 
   for Event:=Low(TEvent) to High(TEvent) do
     FEventsList[Event].Free;
@@ -188,6 +176,18 @@ begin
       Display.Swap;
     end;
 
+  ResMan       := nil;
+  Render2d     := nil;
+  Render       := nil;
+  Display      := nil;
+
+  {$IFDEF DEBUG}
+  Utils.Sleep(1500);
+  {$ENDIF}
+
+  Log          := nil;
+  Utils        := nil;
+  SystemParams := nil;
 end;
 
 procedure TJenEngine.GetSubSystem(SubSystemType: TJenSubSystemType;out SubSystem: IJenSubSystem);
@@ -239,6 +239,18 @@ begin
     GetJenEngine := pGetEngine;
   {$ENDIF}
 {$ENDIF}
+end;
+finalization
+begin
+  Engine       := nil;
+  Utils        := nil;
+  SystemParams := nil;
+  Log          := nil;
+  Render       := nil;
+  Render2d     := nil;
+  Display      := nil;
+  ResMan       := nil;
+  Game         := nil;
 end;
 
 end.
