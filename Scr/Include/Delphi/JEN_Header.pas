@@ -43,6 +43,7 @@ type
     procedure LoadContent; stdcall;
     procedure OnUpdate(dt: double); stdcall;
     procedure OnRender; stdcall;
+    procedure Close; stdcall;
   end;
 
   IJenSubSystem = interface(IUnknown)

@@ -116,9 +116,9 @@ begin
   Log := TLog.Create;
 
   {$IFDEF DEBUG}
-  AllocConsole;
-  SetConsoleTitle('Jen Console');
-  Log.RegisterOutput(TDefConsoleLog.Create);
+  //AllocConsole;
+//  SetConsoleTitle('Jen Console');
+  //Log.RegisterOutput(TDefConsoleLog.Create);
   Log.RegisterOutput(TConsole.Create);
   {$ENDIF}
 
@@ -132,14 +132,21 @@ destructor TJenEngine.Destroy;
 var
   Event : TEvent;
 begin
-
   for Event:=Low(TEvent) to High(TEvent) do
     FEventsList[Event].Free;
 
   inherited;
 end;
 
-procedure TJenEngine.Start(Game : IGame);
+procedure TJenEngine.Start(Game: IGame);
+
+  procedure TestRefCount(SubSystem: IUnknown; Name: String);
+  begin
+    if(SubSystem._AddRef>3) then
+      LogOut('Do not all reference to ' + Name + ' released', lmError);
+    SubSystem._Release;
+  end;
+
 begin
 
   if not Assigned(Game) then
@@ -176,10 +183,22 @@ begin
       Display.Swap;
     end;
 
+  Game.Close;
+
+  TestRefCount(ResMan, 'resource manager');
   ResMan       := nil;
+
+  TestRefCount(Render2d, '2D render');
   Render2d     := nil;
+
+  TestRefCount(Render, 'render');
   Render       := nil;
+
+  TestRefCount(Display, 'display');
   Display      := nil;
+
+  TestRefCount(SystemParams, 'system info');
+  SystemParams := nil;
 
   {$IFDEF DEBUG}
   Utils.Sleep(1500);
@@ -187,7 +206,6 @@ begin
 
   Log          := nil;
   Utils        := nil;
-  SystemParams := nil;
 end;
 
 procedure TJenEngine.GetSubSystem(SubSystemType: TJenSubSystemType;out SubSystem: IJenSubSystem);

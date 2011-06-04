@@ -14,6 +14,7 @@ type
     procedure LoadContent; stdcall;
     procedure OnUpdate(dt: double); stdcall;
     procedure OnRender; stdcall;
+    procedure Close; stdcall;
   end;
 
 var
@@ -57,15 +58,23 @@ begin
 
 end;
 
+procedure TGame.Close;
+begin
+  r        := nil;
+  Display  := nil;
+  Utils    := nil;
+  Render   := nil;
+  Render2d := nil;
+  ResMan   := nil;
+end;
+
 procedure p;
 begin
-
-AllocConsole;
   ReportMemoryLeaksOnShutdown := True;
   GetJenEngine(Engine);
 
   Engine.GetSubSystem(ssDisplay, IJenSubSystem(Display));
- Engine.GetSubSystem(ssUtils, IJenSubSystem(Utils));
+  Engine.GetSubSystem(ssUtils, IJenSubSystem(Utils));
   Engine.GetSubSystem(ssRender, IJenSubSystem(Render));
   Engine.GetSubSystem(ssRender2d, IJenSubSystem(Render2d));
   Engine.GetSubSystem(ssResMan, IJenSubSystem(ResMan));

@@ -13,7 +13,7 @@
 			const int ColorAraySize = 16;
 		</ifndef>
 		
-		<Code>	
+		<Code>
 			uniform vec4 PosTexCoord[64]; 
 			uniform vec4 QuadColor[ColorAraySize]; 
 			

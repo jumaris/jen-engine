@@ -8,19 +8,19 @@ uses
   JEN_Header,
   JEN_Utils,
   JEN_Log;
-
+                   {
 type TDefConsoleLog = class(TManagedInterface, ILogOutput)
   private
     LastUpdate : LongInt;
   public
     procedure Init; stdcall;
     procedure AddMsg(const Text: String; MType: TLogMsg); stdcall;
-  end;
+  end;      }
 {$ENDIF}
 
 implementation
 
-{$IFDEF JEN_LOG}
+{$IFDEF JEN_LOG}      {
 uses
   JEN_MAIN;
 
@@ -85,7 +85,7 @@ begin
         tstr := Utils.IntToStr(Round(Utils.Time/1000));
         Move(tstr[1], str[6-length(tstr)], length(tstr)*2);
                  }
-
+      {
         Writeln('[' + str + 'ms] ' + Text);
       end;
 
@@ -131,7 +131,7 @@ begin
       Writeln('[' + str + 'ms] ERROR: ' + Text);
   end;
   LastUpdate := Utils.Time;
-end;
+end;    }
 {$ENDIF}
 
 end.

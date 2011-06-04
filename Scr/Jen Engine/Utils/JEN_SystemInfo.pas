@@ -357,6 +357,7 @@ var
   DataType   : LongWord;
 	DataSize   : LongWord;
   Res        : LongWord;
+  Str        : array of Char;
 begin
   fScreen := TScreen.Create;
 
@@ -378,8 +379,9 @@ begin
     Exit;
   end;
 
-  SetLength(FCPUName,DataSize div 2);
-  RegQueryValueEx(Handle, 'ProcessorNameString', nil, @DataType, PByte(@FCPUName[1]), @DataSize);
+  SetLength(Str,DataSize div 2);
+  RegQueryValueEx(Handle, 'ProcessorNameString', nil, @DataType, PByte(@Str[0]), @DataSize);
+  FCPUName := PChar(@Str[0]);
 
 	DataSize := SizeOf(LongWord);
 	RegQueryValueEx(Handle, '~MHz', nil, @DataType, @FCPUSpeed,	@DataSize);
