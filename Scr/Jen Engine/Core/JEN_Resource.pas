@@ -68,7 +68,7 @@ end;
 destructor TTexture.Destroy;
 begin
   glDeleteTextures(1, @FID);
-  LogOut('sad',lmNotify);
+  LogOut('Texture ' + FName + ' destroyed',lmNotify);
   inherited;
 end;
 
