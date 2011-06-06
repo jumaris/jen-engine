@@ -8,8 +8,7 @@ uses
   JEN_Math;
 
 type
-
-  TJenSubSystemType = (ssUtils, ssSystemParams, ssLog, ssDisplay, ssResMan, ssRender, ssRender2d);
+  TJenSubSystemType = (ssUtils, ssLog, ssDisplay, ssResMan, ssRender, ssRender2d, ssHelpers);
   TEvent = (evFrameEnd);
 
   TLogMsg = (lmHeaderMsg, lmInfo, lmNotify, lmCode, lmWarning, lmError);
@@ -112,26 +111,13 @@ type
     function GetDesktopRect : TRecti; stdcall;
 
     function SetMode(W, H, R: LongInt): TSetModeResult; stdcall;
+    procedure ResetMode; stdcall; //do not use!!!
 
     property DesktopRect : TRecti read GetDesktopRect;
     property Width  : LongInt read GetWidth;
     property Height : LongInt read GetHeight;
     property BPS    : Byte read GetBPS;
     property Refresh: Byte read GetRefresh;
-  end;
-
-  ISystemParams = interface(IJenSubSystem)
-    function GetRAMTotal: LongWord; stdcall;
-    function GetRAMFree: LongWord; stdcall;
-    function GetCPUCount: LongInt; stdcall;
-    function GetCPUName: String; stdcall;
-    function GetCPUSpeed: LongWord; stdcall;
-
-    property CPUCount: LongInt read GetCPUCount;
-    property CPUName: String read GetCPUName;
-    property CPUSpeed: LongWord read GetCPUSpeed;
-    property RAMTotal: LongWord read GetRAMTotal;
-    property RAMFree: LongWord read GetRAMFree;
   end;
 
   ILogOutput = interface(IManagedInterface)
@@ -291,6 +277,55 @@ type
     procedure DrawSprite(Tex: ITexture; x, y, w, h: Single; const c1, c2, c3, c4: TVec4f;  Angle: Single = 0.0; cx: Single = 0.5; cy: Single = 0.5); overload;  stdcall;
  ///  procedure Quad(const Rect, TexRect: TRecti; Color: TColor; Angle: Single = 0); overload; stdcall;
   //  procedure Quad(x1, y1, x2, y2, x3, y3, x4, y4, cx, cy: Single; Color: TColor; PtIdx: Word = 0; Angle: Single = 0); overload; stdcall;
+  end;
+
+  ICamera3d = interface
+    function GetFOV: Single; stdcall;
+    procedure SetFOV(Value: Single); stdcall;
+    function GetPos: TVec3f; stdcall;
+    procedure SetPos(Value: TVec3f); stdcall;
+    function GetAngle: TVec3f; stdcall;
+    procedure SetAngle(Value: TVec3f); stdcall;
+    function GetMaxSpeed: Single; stdcall;
+    procedure SetMaxSpeed(Value: Single); stdcall;
+    function GetZNear: Single; stdcall;
+    procedure SetZNear(Value: Single); stdcall;
+    function GetZFar: Single; stdcall;
+    procedure SetZFar(Value: Single); stdcall;
+
+    property FOV: Single read GetFOV write SetFOV;
+    property Pos: TVec3f read GetPos write SetPos;
+    property Angle: TVec3f read GetAngle write SetAngle;
+    property MaxSpeed: Single read GetMaxSpeed write SetMaxSpeed;
+
+    property ZNear: Single read GetZNear write SetZNear;
+    property ZFar: Single read GetZFar write SetZFar;
+  end;
+
+  ISystemInfo = interface
+    function GetScreen: IScreen; stdcall;
+
+    function GetRAMTotal: LongWord; stdcall;
+    function GetRAMFree: LongWord; stdcall;
+    function GetCPUCount: LongInt; stdcall;
+    function GetCPUName: String; stdcall;
+    function GetCPUSpeed: LongWord; stdcall;
+
+    property CPUCount: LongInt read GetCPUCount;
+    property CPUName: String read GetCPUName;
+    property CPUSpeed: LongWord read GetCPUSpeed;
+    property RAMTotal: LongWord read GetRAMTotal;
+    property RAMFree: LongWord read GetRAMFree;
+
+    procedure WindowsVersion(out Major: LongInt;out Minor: LongInt;out Build: LongInt); stdcall;
+    property Screen: IScreen read GetScreen;
+  end;
+
+  IHelpers = interface(IJenSubSystem)
+    function GetSystemInfo: ISystemInfo; stdcall;
+    function CreateCamera3D: ICamera3d; stdcall;
+
+    property SystemInfo: ISystemInfo read GetSystemInfo;
   end;
 
 {$IFNDEF JEN_CTD}

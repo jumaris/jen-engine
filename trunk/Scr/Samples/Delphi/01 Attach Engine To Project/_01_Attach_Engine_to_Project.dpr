@@ -5,10 +5,9 @@ uses
   JEN_Render in '..\..\..\Jen Engine\Render\JEN_Render.pas',
   JEN_Math in '..\..\..\Include\Delphi\JEN_Math.pas',
   JEN_OpenGLHeader in '..\..\..\Jen Engine\Utils\JEN_OpenGLHeader.pas',
-  JEN_SystemInfo in '..\..\..\Jen Engine\Utils\JEN_SystemInfo.pas',
+  JEN_SystemInfo in '..\..\..\Jen Engine\Helpers\JEN_SystemInfo.pas',
   JEN_Utils in '..\..\..\Jen Engine\Utils\JEN_Utils.pas',
   JEN_GeometryBuffer in '..\..\..\Jen Engine\Render\JEN_GeometryBuffer.pas',
-  JEN_DefConsoleLog in '..\..\..\Jen Engine\Core\JEN_DefConsoleLog.pas',
   JEN_Display in '..\..\..\Jen Engine\Core\JEN_Display.pas',
   JEN_Log in '..\..\..\Jen Engine\Core\JEN_Log.pas',
   JEN_ResourceManager in '..\..\..\Jen Engine\Core\JEN_ResourceManager.pas',
@@ -19,7 +18,9 @@ uses
   JEN_Header in '..\..\..\Include\Delphi\JEN_Header.pas',
   SomeGame in 'SomeGame.pas',
   JEN_Render2D in '..\..\..\Jen Engine\Render\JEN_Render2D.pas',
-  JEN_Console in '..\..\..\Jen Engine\Core\JEN_Console.pas';
+  JEN_Console in '..\..\..\Jen Engine\Core\JEN_Console.pas',
+  JEN_Camera3D in '..\..\..\Jen Engine\Helpers\JEN_Camera3D.pas',
+  JEN_Helpers in '..\..\..\Jen Engine\Helpers\JEN_Helpers.pas';
 
 {$R ..\..\..\dll\jen.res}
 {$R ..\..\..\icon.RES}
@@ -29,9 +30,11 @@ type
   public
     var
     r,r2 : ITexture;
+    Shader : IShaderProgram;
     procedure LoadContent; stdcall;
     procedure OnUpdate(dt: double); stdcall;
     procedure OnRender; stdcall;
+    procedure Close; stdcall;
   end;
 
 var
@@ -43,9 +46,13 @@ var
   ResMan : IResourceManager = nil;
 
 procedure TGame.LoadContent;
+var
+  ShaderRes : IShaderResource;
 begin
   ResMan.Load('Media\123.dds', r2);
   ResMan.Load('Media\123.dds', r);
+  ResMan.Load('Media\Terrain.xml', ShaderRes);
+  Shader := ShaderRes.Compile;
   r2 := nil;
 end;
 
@@ -89,7 +96,7 @@ begin
    //   glEnableClientState( GL_COLOR_ARRAY);
 
   // glBindBuffer(GL_ARRAY_BUFFER, 0);
-
+                  {
   Render.BlendType := btNone;
 
 
@@ -106,12 +113,62 @@ begin
 
     render2d.DrawSprite(r,0.0,0.5,0.5,0.5, vec4f(1,0,0,1),vec4f(0,1,0,1),vec4f(0,0,1,1),vec4f(1,1,1,1), Utils.Time/10000*360,0.5,0.5);
 
-  //log.Print(Utils.IntToStr(Render.LastDipCount), lmNotify);
+  //log.Print(Utils.IntToStr(Render.LastDipCount), lmNotify);    }
+
+  Shader.Bind;
+  glBegin( GL_QUADS );
+  // bottom
+  glNormal3f( 0, -1, 0 );
+  glTexCoord2f( 1, 1 ); glVertex3f( -1 , -1 , -1  );
+  glTexCoord2f( 0, 1 ); glVertex3f(  1 , -1 , -1  );
+  glTexCoord2f( 0, 0 ); glVertex3f(  1 , -1 ,  1  );
+  glTexCoord2f( 1, 0 ); glVertex3f( -1 , -1 ,  1  );
+
+  // top
+  glNormal3f( 0, 1, 0 );
+  glTexCoord2f( 0, 1 ); glVertex3f( -1 ,  1 , -1  );
+  glTexCoord2f( 0, 0 ); glVertex3f( -1 ,  1 ,  1  );
+  glTexCoord2f( 1, 0 ); glVertex3f(  1 ,  1 ,  1  );
+  glTexCoord2f( 1, 1 ); glVertex3f(  1 ,  1 , -1  );
+
+  // back
+  glNormal3f( 0, 0, -1 );
+  glTexCoord2f( 1, 0 ); glVertex3f( -1 , -1 , -1);
+  glTexCoord2f( 1, 1 ); glVertex3f( -1 ,  1 , -1 );
+  glTexCoord2f( 0, 1 ); glVertex3f(  1 ,  1 , -1 );
+  glTexCoord2f( 0, 0 ); glVertex3f(  1 , -1 , -1 );
+
+  // front
+  glNormal3f( 0, 0, 1 );
+  glTexCoord2f( 0, 0 ); glVertex3f( -1 , -1 ,  1  );
+  glTexCoord2f( 1, 0 ); glVertex3f(  1 , -1 ,  1  );
+  glTexCoord2f( 1, 1 ); glVertex3f(  1 ,  1 ,  1  );
+  glTexCoord2f( 0, 1 ); glVertex3f( -1 ,  1 ,  1  );
+
+  // left
+  glNormal3f( -1, 0, 0 );
+  glTexCoord2f( 0, 0 ); glVertex3f( -1 , -1 , -1  );
+  glTexCoord2f( 1, 0 ); glVertex3f( -1 , -1 ,  1  );
+  glTexCoord2f( 1, 1 ); glVertex3f( -1 ,  1 ,  1  );
+  glTexCoord2f( 0, 1 ); glVertex3f( -1 ,  1 , -1  );
+                // right
+  glNormal3f( 1, 0, 0 );
+  glTexCoord2f( 1, 0 ); glVertex3f( 1 , -1 , -1  );
+  glTexCoord2f( 1, 1 ); glVertex3f( 1 ,  1 , -1  );
+  glTexCoord2f( 0, 1 ); glVertex3f( 1 ,  1 ,  1  );
+  glTexCoord2f( 0, 0 ); glVertex3f( 1 , -1 ,  1  );
+glEnd;
+
 end;
 
-procedure blabla; stdcall;
+procedure TGame.Close;
 begin
-  log.Print('asd',lmNotify);
+  r        := nil;
+  Display  := nil;
+  Utils    := nil;
+  Render   := nil;
+  Render2d := nil;
+  ResMan   := nil;
 end;
 
 procedure pp;

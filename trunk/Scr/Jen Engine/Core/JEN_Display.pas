@@ -3,10 +3,10 @@ unit JEN_Display;
 interface
 
 uses
-  JEN_Header,
   Windows,
-  messages,
-  JEN_SystemInfo,
+  Messages,
+  JEN_Header,
+  JEN_Helpers,
   JEN_OpenGLHeader;
 
 const
@@ -147,7 +147,7 @@ function TDisplay.Init(Width: LongWord; Height: LongWord; Refresh: Byte; FullScr
 var
   WinClass: TWndClassEx;
 begin
-  if (Width = SystemParams.Screen.Width) and (Height = SystemParams.Screen.Height) then
+  if (Width = Helpers.SystemInfo.Screen.Width) and (Height = Helpers.SystemInfo.Screen.Height) then
     FullScreen := true;
 
   Result := false;
@@ -162,12 +162,12 @@ begin
   FCursor     := True;
 
   if FullScreen then
-    case SystemParams.Screen.SetMode(Width, Height, Refresh) of
+    case Helpers.SystemInfo.Screen.SetMode(Width, Height, Refresh) of
       SM_SetDefault:
         begin
-          FWidth      := SystemParams.Screen.Width;
-          FHeight     := SystemParams.Screen.Height;
-          FRefresh    := SystemParams.Screen.Refresh;
+          FWidth   := Helpers.SystemInfo.Screen.Width;
+          FHeight  := Helpers.SystemInfo.Screen.Height;
+          FRefresh := Helpers.SystemInfo.Screen.Refresh;
         end;
       SM_Error: Exit;
     end;
@@ -229,7 +229,7 @@ begin
     LogOut('Unregister window class.', lmNotify);
 
   if FFullScreen then
-    SystemParams.Screen.ResetMode;
+    Helpers.SystemInfo.Screen.ResetMode;
 
   inherited;
 end;
@@ -263,9 +263,9 @@ begin
     FFullScreen := Value;
 
     if Value then
-      FValid := FValid and (SystemParams.Screen.SetMode(FWidth, FHeight, FRefresh) <> SM_Error)
+      FValid := FValid and (Helpers.SystemInfo.Screen.SetMode(FWidth, FHeight, FRefresh) <> SM_Error)
     else
-      SystemParams.Screen.ResetMode;
+      Helpers.SystemInfo.Screen.ResetMode;
 
     Restore;
   end;
@@ -280,9 +280,9 @@ begin
     if FFullScreen then
     begin
       if Value then
-        FValid := FValid and (SystemParams.Screen.SetMode(FWidth, FHeight, FRefresh) <> SM_Error)
+        FValid := FValid and (Helpers.SystemInfo.Screen.SetMode(FWidth, FHeight, FRefresh) <> SM_Error)
       else
-        SystemParams.Screen.ResetMode;
+        Helpers.SystemInfo.Screen.ResetMode;
       Restore;
     end;
 
@@ -303,7 +303,7 @@ begin
   FFPSTime  := Utils.Time;
   FFPSCount := 0;
 
-  Rect := Recti((SystemParams.Screen.Width - FWidth) div 2, (SystemParams.Screen.Height - FHeight) div 2, FWidth, FHeight);
+  Rect := Recti((Helpers.SystemInfo.Screen.Width - FWidth) div 2, (Helpers.SystemInfo.Screen.Height - FHeight) div 2, FWidth, FHeight);
 
   if FFullScreen then
   begin
@@ -337,7 +337,7 @@ begin
   FWidth  := W;
   FHeight := H;
   if FFullScreen and FActive then
-    SystemParams.Screen.SetMode(FWidth, FHeight, FRefresh);
+    Helpers.SystemInfo.Screen.SetMode(FWidth, FHeight, FRefresh);
   Restore;
 end;
 

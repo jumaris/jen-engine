@@ -403,8 +403,8 @@ const
   procedure glClearDepth(depth: GLdouble); stdcall; external opengl32;
 
   // State
-//  procedure glBegin(mode: GLenum); stdcall; external opengl32;
-//  procedure glEnd; stdcall; external opengl32;
+  procedure glBegin(mode: GLenum); stdcall; external opengl32;
+  procedure glEnd; stdcall; external opengl32;
   procedure glEnable(cap: GLenum); stdcall; external opengl32;
   procedure glDisable(cap: GLenum); stdcall; external opengl32;
 
@@ -427,7 +427,7 @@ const
   procedure glBlendFunc(sfactor, dfactor: GLenum); stdcall; external opengl32;
   // CullFace
   procedure glCullFace(mode: GLenum); stdcall; external opengl32;
- {
+
   // Matrix
   procedure glPushMatrix; stdcall; external opengl32;
   procedure glPopMatrix; stdcall; external opengl32;
@@ -438,20 +438,20 @@ const
   procedure glRotatef(angle, x, y, z: GLfloat); stdcall; external opengl32;
   procedure glScalef(x, y, z: GLfloat); stdcall; external opengl32;
   procedure glTranslatef(x, y, z: GLfloat); stdcall; external opengl32;
-   }
+
 
   // Vertex
-{ procedure glVertex2f(x, y: GLfloat); stdcall; external opengl32;
+  procedure glVertex2f(x, y: GLfloat); stdcall; external opengl32;
   procedure glVertex2fv(v: PGLfloat); stdcall; external opengl32;
   procedure glVertex3f(x, y, z: GLfloat); stdcall; external opengl32;
   procedure glVertex4f(x, y, z, w: GLfloat); stdcall; external opengl32;
-  procedure glVertex4fv(v: PGLfloat); stdcall; external opengl32;     }
+  procedure glVertex4fv(v: PGLfloat); stdcall; external opengl32;
   procedure glVertexPointer(size: GLint; atype: GLenum; stride: GLsizei; const pointer: Pointer); stdcall; external opengl32;
   procedure glColorPointer(size: GLint; atype: GLenum; stride: GLsizei; const pointer: Pointer); stdcall; external opengl32;
 
  //  procedure glColor4fv(v: PGLfloat); stdcall; external opengl32;
   // TexCoords
-//  procedure glTexCoord2f(s, t: GLfloat); stdcall; external opengl32;
+  procedure glTexCoord2f(s, t: GLfloat); stdcall; external opengl32;
 //  procedure glTexCoord2fv(v: PGLfloat); stdcall; external opengl32;
   procedure glTexCoordPointer(size: GLint; atype: GLenum; stride: GLsizei; const pointer: Pointer); stdcall; external opengl32;
 
@@ -470,7 +470,7 @@ const
   function  gluBuild2DMipmaps(target: GLenum; components, width, height: GLint; format, atype: GLenum; const data: Pointer): LongInt; stdcall; external opengl32;
 
   // Normal
-//  procedure glNormal3f(x, y, z: GLfloat); stdcall; external opengl32;
+  procedure glNormal3f(x, y, z: GLfloat); stdcall; external opengl32;
   procedure glNormalPointer(atype: GLenum; stride: GLsizei; const pointer: Pointer); stdcall; external opengl32;
 
   procedure glDrawElements(mode: GLenum; count: GLsizei; atype: GLenum; const indices: Pointer); stdcall; external opengl32;

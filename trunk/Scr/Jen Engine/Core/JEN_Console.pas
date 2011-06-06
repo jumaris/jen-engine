@@ -94,7 +94,7 @@ begin
     Exit;
   end;
 
-  Rect := SystemParams.Screen.DesktopRect;
+  Rect := Helpers.SystemInfo.Screen.DesktopRect;
   FHandle := CreateWindowEx(WS_EX_TOOLWINDOW or WS_EX_TOPMOST, CONSOLE_WINDOW_CLASS_NAME, 'JEN Console',
   							            WS_OVERLAPPED or WS_CAPTION or WS_SYSMENU or WS_SIZEBOX or WS_VISIBLE,
                             0, Rect.y + Rect.Height - 300 - GetSystemMetrics(SM_CYDLGFRAME), 500, 300, 0, 0, 0, nil);
@@ -157,15 +157,15 @@ var
   Minor : LongInt;
   Build : LongInt;
 begin
-  SystemParams.WindowsVersion(Major, Minor, Build);
+  Helpers.SystemInfo.WindowsVersion(Major, Minor, Build);
   SetLength(S,80);
   FillChar(S[1],80,ord('*'));
   AddMsg(s,lmHeaderMsg);
   AddMsg('JenEngine',lmHeaderMsg);
-  AddMsg('Windows version: '+Utils.IntToStr(Major)+'.'+Utils.IntToStr(Minor)+' (Buid '+Utils.IntToStr(Build)+')'+Utils.IntToStr(SystemParams.CPUCount),lmHeaderMsg);
-  AddMsg('CPU            : '+SystemParams.CPUName+'(~'+Utils.IntToStr(SystemParams.CPUSpeed)+')x',lmHeaderMsg);
-  AddMsg('RAM Available  : '+Utils.IntToStr(SystemParams.RAMFree)+'Mb',lmHeaderMsg);
-  AddMsg('RAM Total      : '+Utils.IntToStr(SystemParams.RAMTotal)+'Mb',lmHeaderMsg);
+  AddMsg('Windows version: '+Utils.IntToStr(Major)+'.'+Utils.IntToStr(Minor)+' (Buid '+Utils.IntToStr(Build)+')'+Utils.IntToStr(Helpers.SystemInfo.CPUCount),lmHeaderMsg);
+  AddMsg('CPU            : '+Helpers.SystemInfo.CPUName+'(~'+Utils.IntToStr(Helpers.SystemInfo.CPUSpeed)+')x',lmHeaderMsg);
+  AddMsg('RAM Available  : '+Utils.IntToStr(Helpers.SystemInfo.RAMFree)+'Mb',lmHeaderMsg);
+  AddMsg('RAM Total      : '+Utils.IntToStr(Helpers.SystemInfo.RAMTotal)+'Mb',lmHeaderMsg);
   AddMsg(s,lmHeaderMsg);
   LastUpdate := Utils.Time;
 end;

@@ -268,7 +268,7 @@ begin
   end;
 
   FDefines.Free;
-
+  LogOut('Shader resource ' + FName + ' destroyed',lmNotify);
   inherited;
 end;
 

@@ -6,10 +6,9 @@ interface
 uses
   JEN_Header,
   JEN_Utils,
-  JEN_SystemInfo,
+  JEN_Helpers,
   JEN_Log,
   JEN_Console,
-  JEN_DefConsoleLog,
   JEN_Display,
   JEN_Render,
   JEN_Render2D,
@@ -77,7 +76,7 @@ type
 var
   Engine       : IJenEngine;
   Utils        : IUtils;
-  SystemParams : ISystemParams;
+  Helpers      : IHelpers;
   Log          : ILog;
   Render       : IRender;
   Render2d     : IRender2D;
@@ -112,7 +111,7 @@ begin
     FEventsList[Event] := TList.Create;
 
   Utils := TUtils.Create;
-  SystemParams := TSystem.Create;
+  Helpers := THelpers.Create;
   Log := TLog.Create;
 
   {$IFDEF DEBUG}
@@ -142,6 +141,12 @@ procedure TJenEngine.Start(Game: IGame);
 
   procedure TestRefCount(SubSystem: IUnknown; Name: String);
   begin
+    if not Assigned(SubSystem) then
+    begin
+      LogOut('OMG all reference to ' + Name + ' released', lmError);
+      Exit;
+    end;
+
     if(SubSystem._AddRef>3) then
       LogOut('Do not all reference to ' + Name + ' released', lmError);
     SubSystem._Release;
@@ -197,8 +202,8 @@ begin
   TestRefCount(Display, 'display');
   Display      := nil;
 
-  TestRefCount(SystemParams, 'system info');
-  SystemParams := nil;
+  TestRefCount(Helpers, 'helpers');
+  Helpers := nil;
 
   {$IFDEF DEBUG}
   Utils.Sleep(1500);
@@ -262,7 +267,7 @@ finalization
 begin
   Engine       := nil;
   Utils        := nil;
-  SystemParams := nil;
+  Helpers      := nil;
   Log          := nil;
   Render       := nil;
   Render2d     := nil;

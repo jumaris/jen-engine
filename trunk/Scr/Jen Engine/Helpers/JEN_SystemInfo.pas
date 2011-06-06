@@ -38,38 +38,26 @@ type
     property Modes[Idx: Integer]: PDisplayMode read GetMode; default;
   end;
 
-  type IScreen = interface(JEN_Header.IScreen)
-    procedure ResetMode;
-  end;
-
   type TScreen = class(TInterfacedObject, IScreen)
     constructor Create;
     destructor Destroy; override;
   private
-    var
-      FModes        : TDisplayModes;
-      FStartWidth   : LongInt;
-      FStartHeight  : LongInt;
-      FStartBPS     : Byte;
-      FStartRefresh : Byte;
-  public
+    FModes        : TDisplayModes;
+    FStartWidth   : LongInt;
+    FStartHeight  : LongInt;
+    FStartBPS     : Byte;
+    FStartRefresh : Byte;
     function GetWidth  : LongInt; stdcall;
     function GetHeight : LongInt; stdcall;
     function GetBPS    : Byte; stdcall;
     function GetRefresh: Byte; stdcall;
     function GetDesktopRect : TRecti; stdcall;
-
+  public
     function SetMode(W, H, R: LongInt): TSetModeResult; stdcall;
-    procedure ResetMode;
+    procedure ResetMode; stdcall;
   end;
 
-  ISystemParams = interface(JEN_Header.ISystemParams)
-    procedure WindowsVersion(var Major: LongInt; var Minor: LongInt; var Build: LongInt);
-    function GetScreen: IScreen; stdcall;
-    property Screen: IScreen read GetScreen;
-  end;
-
-  TSystem = class(TInterfacedObject, ISystemParams)
+  TSystem = class(TInterfacedObject, ISystemInfo)
     constructor Create;
     destructor Destroy; override;
   private
@@ -85,7 +73,7 @@ type
     function GetCPUSpeed: LongWord; stdcall;
     function GetScreen: IScreen; stdcall;
   public
-    procedure WindowsVersion(var Major: LongInt; var Minor: LongInt; var Build: LongInt);
+    procedure WindowsVersion(out Major: LongInt;out Minor: LongInt;out Build: LongInt); stdcall;
   end;
 
 implementation
@@ -394,7 +382,7 @@ begin
   inherited;
 end;
 
-procedure TSystem.WindowsVersion(var Major: LongInt; var Minor: LongInt; var Build: LongInt);
+procedure TSystem.WindowsVersion(out Major: LongInt;out Minor: LongInt;out Build: LongInt);
 var
   OSVerInfo: TOSVERSIONINFO;
 begin
