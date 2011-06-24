@@ -208,15 +208,15 @@ begin
   Engine.GetSubSystem(ssHelpers, IJenSubSystem(Helpers));
 
   Display.Init(1024, 768, 60, false);
-  //Render.Init();
+  Render.Init();
 
-           {
+
 //  Display.SetVSync(False);
   Display.FullScreen := false;
   //Display.SetVSync(false);
   Game := TGame.Create;
   Engine.Start(Game);
-                       }
+
   Game := nil;
   Engine := nil;
 end;
