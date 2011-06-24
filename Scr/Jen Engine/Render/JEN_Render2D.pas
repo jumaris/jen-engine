@@ -8,7 +8,7 @@ uses
   JEN_GeometryBuffer,
   JEN_OpenGlHeader;
 
-const Batch_Size = 8;
+const Batch_Size = 4;
 
 type
   IRender2D = interface(JEN_Header.IRender2D)
@@ -41,7 +41,7 @@ type
     FIdx: LongWord;
 
     RenderTechnique : array[boolean] of record
-      //FIndxAttrib : IShaderAttrib;
+      FIndxAttrib : IShaderAttrib;
       FVBUniform : IShaderUniform;
       FCBUniform : IShaderUniform;
       FShaderProgram : IShaderProgram;
@@ -49,7 +49,7 @@ type
 
     FVrtBuff : TGeomBuffer;
   public
-    class procedure Flush; stdcall; static;
+    class procedure Flush(Param: LongInt = 0); stdcall; static;
     procedure Init;
     procedure BatchQuad(const v1, v2, v3, v4, c1, c2, c3, c4: TVec4f); overload; stdcall;
     procedure BatchQuad(const v1, v2, v3, v4, Color: TVec4f); overload; stdcall;
@@ -70,7 +70,7 @@ end;
 procedure TRender2D.Init;
 var
   i : ShortInt;
-  IdxBuff : array[1..Batch_Size*4] of Word;
+  IdxBuff : array[1..Batch_Size*4] of Single;
 
   procedure SetupTechnique(Value : Boolean);
   begin
@@ -80,8 +80,8 @@ var
       FShaderProgram := FShader.Compile;
       FVBUniform := FShaderProgram.Uniform('PosTexCoord',utVec4);
       FCBUniform := FShaderProgram.Uniform('QuadColor',utVec4);
-    //  FIndxAttrib := FShaderProgram.Attrib('Indx',atVec1f);
-    //  FIndxAttrib.Value(0,0);
+      FIndxAttrib := FShaderProgram.Attrib('Indx', atVec1f);
+      FIndxAttrib.Value(4,0);
     end;
   end;
 
@@ -89,7 +89,7 @@ begin
   for I:=1  to Batch_Size*4 do
     IdxBuff[i] := i-1;
 
-  FVrtBuff := TGeomBuffer.Create(gbtVertex, Batch_Size*4, 2, @IdxBuff[1]);
+  FVrtBuff := TGeomBuffer.Create(gbVertex, Batch_Size*4, 4, @IdxBuff[1]);
 
   ResMan.Load('Media\Shader.xml', FShader);
   SetupTechnique(True);
@@ -109,24 +109,39 @@ class procedure TRender2D.Flush;
 var
   I : Byte;
   vc : PSingle;
+
+  Blend : TBlendType;
+  AlphaTest : Byte;
+
 begin
   if FIdx = 0 then Exit;
-  Render.SetArrayState(false, true, false, false);
+  FBatchParams.BatchTexture.Bind;
+
+  Blend     := Render.BlendType;
+  AlphaTest := Render.AlphaTest;
+
+  Render.BlendType := FBatchParams.Blend;
+  Render.AlphaTest := FBatchParams.AlphaTest;
+
+  FVrtBuff.Bind;
 
   with RenderTechnique[FBatchParams.VertexColor] do
   begin
+    FIndxAttrib.Value(4,0);
+    FIndxAttrib.Enable;
     FShaderProgram.Bind;
 
-    FVBUniform.Value(FVertexBuff[1],FIdx*4);
+    FVBUniform.Value(FVertexBuff[1], FIdx*4);
+
     if FBatchParams.VertexColor then
       FCBUniform.Value(FColorBuff[1],FIdx*4)
     else
       FCBUniform.Value(FColorBuff[1],FIdx);
   end;
-
-  FVrtBuff.Bind;
-  glTexCoordPointer(1, GL_SHORT, 0, 0);
   glDrawArrays(GL_QUADS, 0, FIdx*4);
+
+  Render.BlendType := Blend;
+  Render.AlphaTest := AlphaTest;
 
   FIdx := 0;
   Render.IncDip;
@@ -186,10 +201,10 @@ begin
   v2 := tx2 + ty2 + p;
   v1 := tx1 + ty2 + p;
      }
-  tx1 := -cx*h;
-	ty1 := -cy*w;
-	tx2 := (1.0-cx)*h;
-	ty2 := (1.0-cy)*w;
+  tx1 := -cx*w;
+	ty1 := -cy*h;
+	tx2 := (1.0-cx)*w;
+	ty2 := (1.0-cy)*h;
 
 	v4 := Vec2f(tx1*tcos - ty1*tsin, tx1*tsin + ty1*tcos) + p;
   v3 := Vec2f(tx2*tcos - ty1*tsin, tx2*tsin + ty1*tcos) + p;
@@ -218,7 +233,6 @@ begin
 
   with FBatchParams do
   begin
-    Tex.Bind;
 
     if FIdx = 0 then
       UpdateBathParams
@@ -238,15 +252,15 @@ begin
       Rotate2D(v[1], v[2], v[3], v[4], x, y, w, h, Angle, cx, cy);
 
     if VertexColor then
-      BatchQuad( Vec4f(v[1].x, v[1].y, 0, 0),
-                 Vec4f(v[2].x, v[2].y, 1, 0),
-                 Vec4f(v[3].x, v[3].y, 1, 1),
-                 Vec4f(v[4].x, v[4].y, 0, 1), Color, Color, Color, Color)
+      BatchQuad( Vec4f(v[1].x, v[1].y, 0, 1),
+                 Vec4f(v[2].x, v[2].y, 1, 1),
+                 Vec4f(v[3].x, v[3].y, 1, 0),
+                 Vec4f(v[4].x, v[4].y, 0, 0), Color, Color, Color, Color)
     else
-      BatchQuad( Vec4f(v[1].x, v[1].y, 0, 0),
-                 Vec4f(v[2].x, v[2].y, 1, 0),
-                 Vec4f(v[3].x, v[3].y, 1, 1),
-                 Vec4f(v[4].x, v[4].y, 0, 1), Color);
+      BatchQuad( Vec4f(v[1].x, v[1].y, 0, 1),
+                 Vec4f(v[2].x, v[2].y, 1, 1),
+                 Vec4f(v[3].x, v[3].y, 1, 0),
+                 Vec4f(v[4].x, v[4].y, 0, 0), Color);
   end;
 
 end;
@@ -273,8 +287,6 @@ begin
 
   with FBatchParams do
   begin
-    Tex.Bind;
-
     if FIdx = 0 then
       UpdateBathParams
     else if(BatchTexture <> Tex) or (Blend <> Render.BlendType) or (ColorMask <> Render.GetColorMask) or (AlphaTest <> Render.AlphaTest) or (VertexColor <> True) then
@@ -292,10 +304,10 @@ begin
     end else
       Rotate2D(v[1], v[2], v[3], v[4], x, y, w, h, Angle, cx, cy);
 
-    BatchQuad( Vec4f(v[1].x, v[1].y, 0, 0),
-               Vec4f(v[2].x, v[2].y, 1, 0),
-               Vec4f(v[3].x, v[3].y, 1, 1),
-               Vec4f(v[4].x, v[4].y, 0, 1), c1, c2, c3, c4);
+    BatchQuad( Vec4f(v[1].x, v[1].y, 0, 1),
+               Vec4f(v[2].x, v[2].y, 1, 1),
+               Vec4f(v[3].x, v[3].y, 1, 0),
+               Vec4f(v[4].x, v[4].y, 0, 0), c1, c2, c3, c4);
   end;
 
 end;

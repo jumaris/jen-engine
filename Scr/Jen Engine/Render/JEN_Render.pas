@@ -4,6 +4,7 @@ interface
 
 uses
   Windows,
+  JEN_GeometryBuffer,
   JEN_Header,
   JEN_Math;
 
@@ -21,13 +22,13 @@ type
     FValid: Boolean;
     FGL_Context: HGLRC;
     FViewport: TRecti;
-
+          {
     FArrayState : record
       Vertex       : Boolean;
       TextureCoord : Boolean;
       Normal       : Boolean;
       Color        : Boolean;
-    end;
+    end;       }
 
     FColorMask: Byte;
     FBlendType: TBlendType;
@@ -40,12 +41,12 @@ type
     FLastDipCount: LongWord;
     FMatrix: array [TMatrixType] of TMat4f;
     FCameraPos: TVec3f;
+    FCameraDir: TVec3f;
 
     function GetValid: Boolean;
     procedure Clear(ColorBuff, DepthBuff, StensilBuff: Boolean); stdcall;
-
     procedure SetViewport(Value: TRecti);
-    procedure SetArrayState(Vertex, TextureCoord, Normal, Color : Boolean); stdcall;
+   // procedure SetArrayState(Vertex, TextureCoord, Normal, Color : Boolean); stdcall;
 
     function GetColorMask(Channel : TColorChannel): Boolean; overload; stdcall;
     procedure SetColorMask(Channel : TColorChannel; Value : Boolean); overload; stdcall;
@@ -69,7 +70,12 @@ type
 
     function  GetMatrix(Idx: TMatrixType): TMat4f; stdcall;
     procedure SetMatrix(Idx: TMatrixType; Value: TMat4f); stdcall;
+    function  GetCameraPos: TVec3f; stdcall;
+    procedure SetCameraPos(Value: TVec3f); stdcall;
+    function  GetCameraDir: TVec3f; stdcall;
+    procedure SetCameraDir(Value: TVec3f); stdcall;
 
+    function CreateGeomBuffer(GBufferType: TGBufferType; Count, Stride: LongInt; Data: Pointer): IGeomBuffer; stdcall;
     procedure Flush;
   end;
 
@@ -104,6 +110,8 @@ var
   RC: HGLRC;
   Result: Boolean;
 begin
+  FValid := False;
+
   if not (Assigned(Display) and Display.Valid) then
   begin
     LogOut('Cannot create OpenGL context, display is not correct', lmError);
@@ -122,13 +130,11 @@ begin
     cStencilBits := StencilBits;
   end;
 
-   Result := False;
   if FSAA > 0 then
   begin
     PHandle := CreateWindowEx(0, 'Edit', nil, 0, 0, 0, 0, 0, 0, 0, 0, nil);
-    Result := PHandle <> 0;
     TDC := GetDC(PHandle);
-    Result := Result and SetPixelFormat
+    Result := (PHandle <> 0) and SetPixelFormat
       (TDC, ChoosePixelFormat(TDC, @PFD), @PFD);
     RC := wglCreateContext(TDC);
     Result := Result and wglMakeCurrent(TDC, RC);
@@ -176,8 +182,7 @@ begin
   if Result then
     Result := SetPixelFormat(Display.DC, PFIdx, @PFD)
   else
-    Result := SetPixelFormat(Display.DC, ChoosePixelFormat(Display.DC, @PFD),
-      @PFD);
+    Result := SetPixelFormat(Display.DC, ChoosePixelFormat(Display.DC, @PFD), @PFD);
 
   if not Result then
   begin
@@ -190,25 +195,23 @@ begin
   begin
     LogOut('Cannot create OpenGL context.', lmError);
     Exit;
-  end
-  else
+  end else
     LogOut('Create OpenGL context.', lmNotify);
 
   if not wglMakeCurrent(Display.DC, FGL_Context) Then
   begin
     LogOut('Cannot set current OpenGL context.', lmError);
     Exit;
-  end
-  else
+  end else
     LogOut('Make current OpenGL context.', lmNotify);
 
-  FValid := LoadGLLibraly;
-  if not FValid Then
+  if not LoadGLLibraly Then
   begin
     LogOut('Error when load extensions.', lmError);
     Exit;
   end;
 
+  FValid := True;
   glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS ,@Par);
 
   LogOut('OpenGL version : ' + glGetString(GL_VERSION) + ' (' + glGetString(GL_VENDOR) + ')', lmInfo);
@@ -257,7 +260,7 @@ begin
   FViewport := Value;
   glViewport(Value.Left, Value.Top, Value.Width, Value.Height);
 end;
-
+             {
 procedure TRender.SetArrayState(Vertex, TextureCoord, Normal, Color : Boolean);
 
   procedure SetState(State : GLenum; Value : Boolean);
@@ -285,7 +288,7 @@ begin
   FArrayState.TextureCoord := TextureCoord;
   FArrayState.Normal := Normal;
   FArrayState.Color := Color;
-end;
+end;        }
 
 function TRender.GetColorMask(Channel : TColorChannel): Boolean;
 begin
@@ -334,9 +337,9 @@ procedure TRender.SetBlendType(Value: TBlendType);
 begin
   if FBlendType <> Value then
   begin
-    if FBlendType = btNone then
-      glEnable(GL_BLEND);
     FBlendType := Value;
+    if FBlendType <> btNone then
+      glEnable(GL_BLEND);
     case Value of
       btNormal:
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -434,6 +437,26 @@ begin
   FMatrix[Idx] := Value;
 end;
 
+function TRender.GetCameraPos: TVec3f;
+begin
+  Result := FCameraPos;
+end;
+
+procedure TRender.SetCameraPos(Value: TVec3f);
+begin
+  FCameraPos := Value;
+end;
+
+function TRender.GetCameraDir: TVec3f;
+begin
+  Result := FCameraDir;
+end;
+
+procedure TRender.SetCameraDir(Value: TVec3f);
+begin
+  FCameraDir := Value;
+end;
+
 function TRender.GetDipCount: LongWord;
 begin
   Result := FDipCount;
@@ -452,6 +475,11 @@ end;
 procedure TRender.IncDip;
 begin
   Inc(FDipCount);
+end;
+
+function TRender.CreateGeomBuffer(GBufferType: TGBufferType; Count, Stride: LongInt; Data: Pointer): IGeomBuffer; stdcall;
+begin
+  Result := TGeomBuffer.Create(GBufferType, Count, Stride, Data);
 end;
 
 procedure TRender.Flush;

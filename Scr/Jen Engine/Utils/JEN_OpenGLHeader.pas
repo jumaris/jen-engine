@@ -134,9 +134,6 @@ const
   GL_COLOR_MATERIAL                   = $0B57;
   GL_NORMALIZE                        = $0BA1;
   GL_VIEWPORT                         = $0BA2;
-  GL_MODELVIEW_MATRIX                 = $0BA6;
-  GL_PROJECTION_MATRIX                = $0BA7;
-  GL_TEXTURE_MATRIX                   = $0BA8;
   GL_BLEND                            = $0BE2;
 
 // Data Types
@@ -150,12 +147,10 @@ const
   GL_HALF_FLOAT                       = $140B;
   GL_UNSIGNED_INT_8_8_8_8             = $8035;
 
-              {
-// Matrix Mode
+  // Matrix Mode
   GL_MODELVIEW                        = $1700;
   GL_PROJECTION                       = $1701;
   GL_TEXTURE                          = $1702;
-                         }
 
 // PolygonMode
   GL_POINT                            = $1B00;
@@ -439,7 +434,6 @@ const
   procedure glScalef(x, y, z: GLfloat); stdcall; external opengl32;
   procedure glTranslatef(x, y, z: GLfloat); stdcall; external opengl32;
 
-
   // Vertex
   procedure glVertex2f(x, y: GLfloat); stdcall; external opengl32;
   procedure glVertex2fv(v: PGLfloat); stdcall; external opengl32;
@@ -607,8 +601,8 @@ function LoadGLLibraly: Boolean;
 
 implementation
 
-uses
-  JEN_MAIN;
+//uses
+//  JEN_MAIN;
      {
 var
   GlModuleH : HMODULE;
@@ -637,7 +631,7 @@ begin
 
   if not Assigned(Result) then
   begin
-    LogOut('Cannot load procedure ' + ProcName, lmError);
+    //LogOut('Cannot load procedure ' + ProcName, lmError);
     OldResult := false;
   end;
 end;

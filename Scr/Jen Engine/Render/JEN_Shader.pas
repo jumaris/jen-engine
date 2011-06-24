@@ -72,6 +72,7 @@ type
     Size   : LongInt;
     FName  : string;
     FValue : array [0..11] of Single;
+    function GetName: string; stdcall;
     procedure Init(ShaderID: GLEnum; const AName: string; AttribType: TShaderAttribType; Norm: Boolean);
   public
     procedure Value(Stride, Offset: LongInt); stdcall;
@@ -92,7 +93,6 @@ type
   end;
 
 implementation
-
 
 uses
   JEN_Main;
@@ -136,13 +136,12 @@ var
   i : LongInt;
   a : TShaderAttrib;
 begin
-{
-  for i := 0 to Length(FAttrib) - 1 do
-    if FAttrib[i].Name = AName then
+  for i := 0 to FAttribList.Count - 1 do
+    if ((FAttribList[i] as IShaderAttrib).Name = AName) then
     begin
-      Result := FAttrib[i];
+      Result := IShaderAttrib(FAttribList[i]);
       Exit;
-    end;               }
+    end;
   A := TShaderAttrib.Create;
   A.Init(FID, AName, AttribType, Norm);
   FAttribList.Add(A);
@@ -178,6 +177,8 @@ begin
   FID   := glGetUniformLocation(ShaderID, PAnsiChar(AnsiString(UName)));
   FName := UName;
   FType := UniformType;
+  if FID = -1 then
+    LogOut('Uncorrect uniform name ' +UName, lmWarning);
   for i := 0 to Length(FValue) - 1 do
     FValue[i] := NAN;   
 end;
@@ -213,6 +214,11 @@ begin
   inherited;
 end;
 
+function TShaderAttrib.GetName: string;
+begin
+  Result := FName;
+end;
+
 procedure TShaderAttrib.Init(ShaderID: LongWord; const AName: string; AttribType: TShaderAttribType; Norm: Boolean);
 begin
   FID   := glGetAttribLocation(ShaderID, PAnsiChar(AnsiString(AName)));
@@ -220,6 +226,8 @@ begin
   FType := AttribType;
   Size  := Byte(FType) mod 4 + 1;
   FNorm := Norm;
+  if FID = -1 then
+    LogOut('Uncorrect attrib name ' + AName, lmWarning);
   case FType of
     atVec1b..atVec4b : DType := GL_UNSIGNED_BYTE;
     atVec1s..atVec4s : DType := GL_SHORT;
@@ -447,12 +455,10 @@ var
   end;
 
 begin
-
   XN_VS := XML.Node['VertexShader'];
   XN_FS := XML.Node['FragmentShader'];
 
   if not (Assigned(XN_VS) and Assigned(XN_FS)) then Exit;
-
 
   if Assigned(XN_VS) and Assigned(XN_FS) then
   begin
