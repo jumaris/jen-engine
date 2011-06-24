@@ -31,7 +31,8 @@ uses
   JEN_Console in '..\Jen Engine\Core\JEN_Console.pas',
   JEN_Camera3D in '..\Jen Engine\Helpers\JEN_Camera3D.pas',
   JEN_SystemInfo in '..\Jen Engine\Helpers\JEN_SystemInfo.pas',
-  JEN_Helpers in '..\Jen Engine\Helpers\JEN_Helpers.pas';
+  JEN_Helpers in '..\Jen Engine\Helpers\JEN_Helpers.pas',
+  JEN_Input in '..\Jen Engine\Core\JEN_Input.pas';
 
 exports
   pGetEngine name 'GetJenEngine';

@@ -79,22 +79,21 @@ begin
 // Assert(expr : Boolean [; const msg: string]
 //  LogOut('message');
   Result := 0;
+
   case Msg of
     WM_CLOSE:
       TJenEngine.Quit := True;
 
-    WM_ACTIVATEAPP:
+   WM_ACTIVATE:
       begin
-        Display.Active := Word(wParam) <> 0;
+        Engine.CreateEvent(evActivate, Word(wParam));
+        Display.Active := LOWORD(wParam) <> WA_INACTIVE;
 
         if Display.FullScreen then
           if Display.Active then
             ShowWindow(hWnd, SW_SHOW)
           else
             ShowWindow(hWnd, SW_MINIMIZE);
-         {
-        if CInput <> nil then
-          CInput.Reset;   }
       end;
 
     WM_SETCURSOR:
@@ -104,31 +103,40 @@ begin
         else
           SetCursor(LoadCursor(0, PWideChar(32512)));
       end;
-      {
-}
 
   //  WM_MOVE, WM_SIZE :;
      { GetWindowRect(hWnd, CDisplay.FRect);
          }
-  // Keyboard
- //   WM_KEYUP, WM_SYSKEYUP :;
-     { CInput.Down[Ord2Key(wParam)] := False;   }
- //   WM_KEYDOWN, WM_SYSKEYDOWN : ;
-   {   begin
-        CInput.Down[Ord2Key(wParam)] := True;
-        if (wParam = 13) and (Msg = WM_SYSKEYDOWN) then // Alt + Enter
-          with CDisplay do
-            Mode(not FullScreen, Width, Height, Freq);
-      end;
-                 }
-  // Mouse
 
-    WM_LBUTTONUP   :;// CInput.Down[KM_1] := False;
-    WM_LBUTTONDOWN :;//  CInput.Down[KM_1] := True;
-    WM_RBUTTONUP   :;//  CInput.Down[KM_2] := False;
-    WM_RBUTTONDOWN :;//  CInput.Down[KM_2] := True;
-    WM_MBUTTONUP   :;//  CInput.Down[KM_3] := False;
-    WM_MBUTTONDOWN :;//  CInput.Down[KM_3] := True;
+    WM_SYSKEYUP, WM_KEYUP:
+      Engine.CreateEvent(evKeyUp, WParam);
+
+    WM_SYSKEYDOWN, WM_KEYDOWN:
+    begin
+      Engine.CreateEvent(evKeyDown, WParam);
+      if (Msg = WM_SYSKEYDOWN) and (Wparam = LongInt(ikF4)) Then
+        TJenEngine.Quit := True;
+    end;
+
+  // Mouse
+    WM_LBUTTONUP:
+      Engine.CreateEvent(evKeyUp, LongInt(ikMouseL));
+
+    WM_RBUTTONUP:
+      Engine.CreateEvent(evKeyUp, LongInt(ikMouseR));
+
+    WM_MBUTTONUP:
+      Engine.CreateEvent(evKeyUp, LongInt(ikMouseM));
+
+
+    WM_LBUTTONDOWN:
+      Engine.CreateEvent(evKeyDown, LongInt(ikMouseL));
+
+    WM_RBUTTONDOWN:
+      Engine.CreateEvent(evKeyDown, LongInt(ikMouseR));
+
+    WM_MBUTTONDOWN:
+      Engine.CreateEvent(evKeyDown, LongInt(ikMouseM));
 
     WM_MOUSEWHEEL  :;{
       begin
@@ -190,7 +198,7 @@ begin
   end else
     LogOut('Register window class.', lmNotify);
 
-  FHandle := CreateWindowEx(0, WINDOW_CLASS_NAME,@FCaption[1], 0, 0, 0,
+  FHandle := CreateWindowEx(WS_EX_APPWINDOW, WINDOW_CLASS_NAME, @FCaption[1], WS_SYSMENU or WS_VISIBLE, 0, 0,
                              0, 0, 0, 0, 0, nil);
 
   if FHandle = 0 Then
@@ -211,7 +219,7 @@ destructor TDisplay.Destroy;
 begin
   if not FValid then Exit;
 
-  if ReleaseDC( FHandle, FDC ) <> 0 Then
+  if ReleaseDC(FHandle, FDC) = 0 Then
     LogOut('Cannot release device context.', lmError)
   else
     LogOut('Release device context.', lmNotify);
@@ -223,7 +231,7 @@ begin
   end else
     LogOut('Destroy window.', lmNotify);
 
-  if not UnRegisterClass(WINDOW_CLASS_NAME, HInstance) Then
+  if not UnRegisterClass(WINDOW_CLASS_NAME, 0) Then
     LogOut('Cannot unregister window class.', lmError)
   else
     LogOut('Unregister window class.', lmNotify);
@@ -315,9 +323,12 @@ begin
     Rect.Inflate(GetSystemMetrics(SM_CXDLGFRAME), GetSystemMetrics(SM_CYDLGFRAME) + GetSystemMetrics(SM_CYCAPTION) div 2);
   end;
 
-  SetWindowLongA(FHandle, GWL_STYLE, Style or WS_VISIBLE or WS_SYSMENU);
+  SetWindowLongA(FHandle, GWL_STYLE, Style or WS_SYSMENU);
   SetWindowPos(FHandle, 0, Rect.x, Rect.y, Rect.Width, Rect.Height, $220);
 
+  ShowWindow(FHandle, SW_SHOWNORMAL);
+
+  Update;
   //Render.Viewport := Recti(0, 0, FWidth, FHeight);
 end;
 

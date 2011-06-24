@@ -8,11 +8,27 @@ uses
   JEN_Math;
 
 type
-  TJenSubSystemType = (ssUtils, ssLog, ssDisplay, ssResMan, ssRender, ssRender2d, ssHelpers);
-  TEvent = (evFrameEnd);
+  TJenSubSystemType = (ssUtils, ssLog, ssHelpers, ssInput, ssDisplay, ssResMan, ssRender, ssRender2d);
+  TEvent = (evActivate, evKeyUp, evKeyDown, evFrameEnd);
 
   TLogMsg = (lmHeaderMsg, lmInfo, lmNotify, lmCode, lmWarning, lmError);
 
+  TInputKey = (
+  // Keyboard
+    ikNone = $00, ikPlus = $BB, ikMinus = $BD, ikTilde = $C0,
+    ik0 = $30, ik1, ik2, ik3, ik4, ik5, ik6, ik7, ik8, ik9,
+    ikA = $41, ikB, ikC, ikD, ikE, ikF, ikG, ikH, ikI, ikJ, ikK, ikL, ikM,
+    ikN, ikO, ikP, ikQ, ikR, ikS, ikT, ikU, ikV, ikW, ikX, ikY, ikZ,
+    ikF1 = $70, ikF2, ikF3, ikF4, ikF5, ikF6, ikF7, ikF8, ikF9, ikF10, ikF11, ikF12,
+    ikEsc = $1B, ikEnter = $0D, ikBack = $08, ikTab, ikShift = $10, ikCtrl, ikAlt, ikSpace = $20,
+    ikPgUp, ikPgDown, ikEnd, ikHome, ikLeft, ikUp, ikRight, ikDown, ikIns = $2D, ikDel,
+  // Mouse
+    ikMouseL = $01, ikMouseR, ikMouseM = $04, ikMouseWheelUp, ikMouseWheelDown
+  );
+
+ // TVertexAttrib = (vaPosition, vaNormal, vaColor, vaTexCoord);
+  TGBufferType = (gbIndex, gbVertex);
+  TGeomMode = (gmTrianles = $0004, gmTriangleStrip, gmTriangleFan, gmQuads, gmQuadStrip, gmPolygon);
   TColorChannel = (ccRed, ccGreen, ccBlue, ccAlpha);
   TBlendType = (btNone, btNormal, btAdd, btMult, btOne, btNoOverride, btAddAlpha);
   TCullFace = (cfNone, cfFront, cfBack);
@@ -31,7 +47,7 @@ type
   TSetModeResult = (SM_Successful, SM_SetDefault, SM_Error);
 
   TColor = LongWord;
-  TProc = procedure stdcall;
+  TEventProc = procedure(Param: LongInt); stdcall;
 
   IManagedInterface = interface
   ['{7B975F52-35F8-4776-B557-7536F9B2C55C}']
@@ -40,7 +56,7 @@ type
 
   IGame = interface
     procedure LoadContent; stdcall;
-    procedure OnUpdate(dt: double); stdcall;
+    procedure OnUpdate(dt: LongInt); stdcall;
     procedure OnRender; stdcall;
     procedure Close; stdcall;
   end;
@@ -52,8 +68,9 @@ type
   IJenEngine = interface
     procedure GetSubSystem(SubSustemType: TJenSubSystemType; out SubSystem: IJenSubSystem); stdcall;
     procedure Start(Game : IGame); stdcall;
-    procedure AddEventProc(Event: TEvent; Proc: TProc); stdcall;
-    procedure DelEventProc(Event: TEvent; Proc: TProc); stdcall;
+    procedure Finish; stdcall;
+    procedure AddEventProc(Event: TEvent; Proc: TEventProc); stdcall;
+    procedure DelEventProc(Event: TEvent; Proc: TEventProc); stdcall;
   end;
 
   TXMLParam = record
@@ -130,6 +147,26 @@ type
     procedure Print(const Text: String; MType: TLogMsg); stdcall;
   end;
 
+  TMouse = object
+    Pos   : TPoint2i;
+    Delta : TPoint2i;
+  end;
+
+  IInput = interface(IJenSubSystem)
+    procedure Update; stdcall;
+
+    function GetLastKey: TInputKey; stdcall;
+    function IsKeyDown(Value: TInputKey): Boolean; stdcall;
+    function IsKeyHit(Value: TInputKey): Boolean; stdcall;
+
+    function GetMouse: TMouse; stdcall;
+    procedure SetCapture(Value: Boolean); stdcall;
+
+    property Mouse: TMouse read GetMouse;
+    property Down[Value: TInputKey]: Boolean read IsKeyDown;
+    property Hit[Value: TInputKey]: Boolean read IsKeyHit;
+  end;
+
   IDisplay = interface(IJenSubSystem)
     function Init(Width: LongWord = 800; Height: LongWord = 600; Refresh: Byte = 0; FullScreen: Boolean = False): Boolean; stdcall;
 
@@ -181,9 +218,12 @@ type
 
   IShaderAttrib = interface
   ['{3BF51C3F-3063-4CAE-9993-12F7A5E11DED}']
+    function GetName: string; stdcall;
     procedure Value(Stride, Offset: LongInt); stdcall;
     procedure Enable; stdcall;
     procedure Disable; stdcall;
+
+    property Name: string read GetName;
   end;
 
   IShaderProgram = interface
@@ -223,19 +263,22 @@ type
 
   IResourceManager = interface(IJenSubSystem)
     function Load(const FileName: string; Resource: TResourceType): IResource; overload; stdcall;
-    procedure Load(const FileName: string; out Resource: IShaderResource); overload; stdcall;
-    procedure Load(const FileName: string; out Resource: ITexture); overload; stdcall;
-
+    procedure Load(const FileName: string; out Resource: JEN_Header.IShaderResource); overload; stdcall;
+    procedure Load(const FileName: string; out Resource: JEN_Header.ITexture); overload; stdcall;
+    {
     function LoadShader(const FileName: string): IShaderResource; stdcall;
-    function LoadTexture(const FileName: string): ITexture; stdcall;
+    function LoadTexture(const FileName: string): ITexture; stdcall;    }
+  end;
+
+  IGeomBuffer = Interface
+    procedure SetData(Offset, Size: LongInt; Data: Pointer); stdcall;
+    procedure Bind; stdcall;
+    procedure Draw(mode: TGeomMode; count: LongInt; Indexed: Boolean; first: LongInt = 0); stdcall;
   end;
 
   IRender = interface(IJenSubSystem)
     procedure Init(DepthBits: Byte = 24; StencilBits: Byte = 8; FSAA: Byte = 0); stdcall;
-
     procedure Clear(ColorBuff, DepthBuff, StensilBuff: Boolean); stdcall;
-
-    procedure SetArrayState(Vertex, TextureCoord, Normal, Color : Boolean); stdcall;
 
     function GetColorMask(Channel : TColorChannel): Boolean; overload; stdcall;
     procedure SetColorMask(Channel : TColorChannel; Value : Boolean); overload; stdcall;
@@ -254,11 +297,17 @@ type
 
     function  GetMatrix(Idx: TMatrixType): TMat4f; stdcall;
     procedure SetMatrix(Idx: TMatrixType; Value: TMat4f); stdcall;
+    function  GetCameraPos: TVec3f; stdcall;
+    procedure SetCameraPos(Value: TVec3f); stdcall;
+    function  GetCameraDir: TVec3f; stdcall;
+    procedure SetCameraDir(Value: TVec3f); stdcall;
 
     function GetLastDipCount: LongWord; stdcall;
     function GetDIPCount: LongWord; stdcall;
     procedure SetDIPCount(Value: LongWord); stdcall;
     procedure IncDIP; stdcall;
+
+    function CreateGeomBuffer(GBufferType: TGBufferType; Count, Stride: LongInt; Data: Pointer): IGeomBuffer; stdcall;
 
     property ColorMask[Channel: TColorChannel]: Boolean read GetColorMask write SetColorMask;
     property BlendType: TBlendType read GetBlendType write SetBlendType;
@@ -267,12 +316,13 @@ type
     property DepthWrite: Boolean read GetDepthWrite write SetDepthWrite;
     property CullFace: TCullFace read GetCullFace write SetCullFace;
     property Matrix[Idx: TMatrixType]: TMat4f read GetMatrix write SetMatrix;
+    property CameraPos: TVec3f read GetCameraPos write SetCameraPos;
+    property CameraDir: TVec3f read GetCameraDir write SetCameraDir;
     property DipCount: LongWord read GetDipCount write SetDipCount;
     property LastDipCount: LongWord read GetLastDipCount;
   end;
 
   IRender2D = interface(IJenSubSystem)
-
     procedure DrawSprite(Tex: ITexture; x, y, w, h: Single; const Color: TVec4f; Angle: Single = 0.0; cx: Single = 0.5; cy: Single = 0.5);overload; stdcall;
     procedure DrawSprite(Tex: ITexture; x, y, w, h: Single; const c1, c2, c3, c4: TVec4f;  Angle: Single = 0.0; cx: Single = 0.5; cy: Single = 0.5); overload;  stdcall;
  ///  procedure Quad(const Rect, TexRect: TRecti; Color: TColor; Angle: Single = 0); overload; stdcall;
@@ -286,6 +336,7 @@ type
     procedure SetPos(Value: TVec3f); stdcall;
     function GetAngle: TVec3f; stdcall;
     procedure SetAngle(Value: TVec3f); stdcall;
+    function GetDir: TVec3f; stdcall;
     function GetMaxSpeed: Single; stdcall;
     procedure SetMaxSpeed(Value: Single); stdcall;
     function GetZNear: Single; stdcall;
@@ -293,9 +344,12 @@ type
     function GetZFar: Single; stdcall;
     procedure SetZFar(Value: Single); stdcall;
 
+    procedure onUpdate(DeltaTime: Single); stdcall;
+
     property FOV: Single read GetFOV write SetFOV;
     property Pos: TVec3f read GetPos write SetPos;
     property Angle: TVec3f read GetAngle write SetAngle;
+    property Dir: TVec3f read GetDir;
     property MaxSpeed: Single read GetMaxSpeed write SetMaxSpeed;
 
     property ZNear: Single read GetZNear write SetZNear;
@@ -322,17 +376,18 @@ type
   end;
 
   IHelpers = interface(IJenSubSystem)
-    function GetSystemInfo: ISystemInfo; stdcall;
+    function CreateLogFileOutput(FileName: String): ILogOutput; stdcall;
     function CreateCamera3D: ICamera3d; stdcall;
 
+    function GetSystemInfo: ISystemInfo; stdcall;
     property SystemInfo: ISystemInfo read GetSystemInfo;
   end;
 
 {$IFNDEF JEN_CTD}
   {$IFDEF JEN_ATTACH_DLL}
-    procedure GetJenEngine(out Engine: IJenEngine); stdcall; external 'JEN.dll';
+    procedure GetJenEngine(out Engine: IJenEngine; Debug: Boolean = false); stdcall; external 'JEN.dll';
   {$ELSE}
-    var GetJenEngine : procedure(out Engine: IJenEngine); stdcall;
+    var GetJenEngine : procedure(out Engine: IJenEngine; Debug: Boolean = false); stdcall;
   {$ENDIF}
 {$ENDIF}
 

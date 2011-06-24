@@ -20,7 +20,8 @@ uses
   JEN_Render2D in '..\..\..\Jen Engine\Render\JEN_Render2D.pas',
   JEN_Console in '..\..\..\Jen Engine\Core\JEN_Console.pas',
   JEN_Camera3D in '..\..\..\Jen Engine\Helpers\JEN_Camera3D.pas',
-  JEN_Helpers in '..\..\..\Jen Engine\Helpers\JEN_Helpers.pas';
+  JEN_Helpers in '..\..\..\Jen Engine\Helpers\JEN_Helpers.pas',
+  JEN_Input in '..\..\..\Jen Engine\Core\JEN_Input.pas';
 
 {$R ..\..\..\dll\jen.res}
 {$R ..\..\..\icon.RES}
@@ -32,43 +33,44 @@ type
     r,r2 : ITexture;
     Shader : IShaderProgram;
     procedure LoadContent; stdcall;
-    procedure OnUpdate(dt: double); stdcall;
+    procedure OnUpdate(dt: LongInt); stdcall;
     procedure OnRender; stdcall;
     procedure Close; stdcall;
   end;
 
 var
   Engine : IJenEngine = nil;
+  Input  : IInput = nil;
   Display : IDisplay = nil;
   Render : IRender = nil;
   Utils : IUtils = nil;
   Game : IGame = nil;
   ResMan : IResourceManager = nil;
+  Helpers : IHelpers = nil;
+  Camera : ICamera3d = nil;
 
 procedure TGame.LoadContent;
-var
-  ShaderRes : IShaderResource;
 begin
   ResMan.Load('Media\123.dds', r2);
   ResMan.Load('Media\123.dds', r);
-  ResMan.Load('Media\Terrain.xml', ShaderRes);
-  Shader := ShaderRes.Compile;
   r2 := nil;
+
+  Camera := Helpers.CreateCamera3D;
 end;
 
-procedure TGame.OnUpdate(dt: double);
+procedure TGame.OnUpdate(dt: LongInt);
 begin
   Display.Caption := Utils.IntToStr(Display.FPs);
+  Camera.onUpdate(dt);
 end;
 
 procedure TGame.OnRender;
 var
   i : LongInt;
-const c = 4000;
+  M : TMat4f;
+const c = 20000;
 begin
   Render.Clear(True,False,False);
-  //render.CullFace := cfNone;
-
 
 //   glviewport (0,0,1024,768);
   {
@@ -103,18 +105,40 @@ begin
  //for i := 0 to 25000 do
  // render2d.DrawSprite(r ,Frac(i / 500),i/10000,1/25,1/25, vec4f(2,1,1,1), Utils.Time/10000*360,0.5,0.5);
 
+                                         }
 
-
-  for i := 0 to c do
+  for i := 0 to 10 do
     render2d.DrawSprite(r ,Frac(i / 50),i/4000,1/25,1/25, vec4f(1.0 - i/c,1,1,1), Utils.Time/10000*360,0.5,0.5);
+                      {
+
+    render2d.DrawSprite(r,0.5,0.5,0.5,0.2, vec4f(1,2,1,1), Utils.Time/10000*360,0.5,0.5);
+
+    render2d.DrawSprite(r,0.0,0.5,0.5,0.2, vec4f(1,0,0,1),vec4f(0,1,0,1),vec4f(0,0,1,1),vec4f(1,1,1,1), Utils.Time/10000*360,0.5,0.5);
+                        }
+  //log.Print(Utils.IntToStr(Render.LastDipCount), lmNotify);
+
+             {
+  glMatrixMode(GL_PROJECTION);
+  M := Render.Matrix[mtProj];
+  glLoadMatrixf(@M);
+
+  glMatrixMode(GL_MODELVIEW);
+  M := Render.Matrix[mtView];
+  glLoadMatrixf(@M);
 
 
-    render2d.DrawSprite(r,0.5,0.5,0.5,0.5, vec4f(1,2,1,1), Utils.Time/10000*360,0.5,0.5);
+ // glMatrixMode(GL_MODELVIEW);
+//  M := Render.Matrix[mtModel];
+ // glLoadMatrixf(@M);
+      {
+  glLoadIdentity;
+//  glLoadMatrixf(@Render.Matrix[mtProj]);
+  //glOrtho(0,1,0,1,0,1);// (0,800,
+ // glOrtho(0, 800, 0, 100, -1, 1);
+  glOrtho( 0, 800, 000, 600, -1, 1 );
 
-    render2d.DrawSprite(r,0.0,0.5,0.5,0.5, vec4f(1,0,0,1),vec4f(0,1,0,1),vec4f(0,0,1,1),vec4f(1,1,1,1), Utils.Time/10000*360,0.5,0.5);
-
-  //log.Print(Utils.IntToStr(Render.LastDipCount), lmNotify);    }
-
+  glLoadIdentity;   }
+                {
   Shader.Bind;
   glBegin( GL_QUADS );
   // bottom
@@ -158,7 +182,7 @@ begin
   glTexCoord2f( 0, 1 ); glVertex3f( 1 ,  1 ,  1  );
   glTexCoord2f( 0, 0 ); glVertex3f( 1 , -1 ,  1  );
 glEnd;
-
+                       }
 end;
 
 procedure TGame.Close;
@@ -169,6 +193,7 @@ begin
   Render   := nil;
   Render2d := nil;
   ResMan   := nil;
+  Helpers  := nil;
 end;
 
 procedure pp;
@@ -179,17 +204,19 @@ begin
   Engine.GetSubSystem(ssRender, IJenSubSystem(Render));
   Engine.GetSubSystem(ssResMan, IJenSubSystem(ResMan));
   Engine.GetSubSystem(ssUtils, IJenSubSystem(Utils));
+  Engine.GetSubSystem(ssInput, IJenSubSystem(Input));
+  Engine.GetSubSystem(ssHelpers, IJenSubSystem(Helpers));
 
   Display.Init(1024, 768, 60, false);
-  Render.Init();
+  //Render.Init();
 
-
+           {
 //  Display.SetVSync(False);
   Display.FullScreen := false;
-  Display.SetVSync(false);
+  //Display.SetVSync(false);
   Game := TGame.Create;
   Engine.Start(Game);
-
+                       }
   Game := nil;
   Engine := nil;
 end;

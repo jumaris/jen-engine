@@ -97,6 +97,8 @@ const
   FilterMode : array [Boolean, TTextureFilter, 0..1] of GLEnum =
     (((GL_NEAREST, GL_NEAREST), (GL_LINEAR, GL_LINEAR), (GL_LINEAR, GL_LINEAR), (GL_LINEAR, GL_LINEAR)),
      ((GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST), (GL_LINEAR_MIPMAP_NEAREST, GL_LINEAR), (GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR), (GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR)));
+var
+  FMaxAniso : LongInt;
 begin
   if FFilter <> Value then
   begin
@@ -104,11 +106,14 @@ begin
     Bind;
     glTexParameteri(FSampler, GL_TEXTURE_MIN_FILTER, FilterMode[FMipMap, FFilter, 0]);
     glTexParameteri(FSampler, GL_TEXTURE_MAG_FILTER, FilterMode[FMipMap, FFilter, 1]);
-    //if Render.MaxAniso > 0 then
-   {   if FFilter = tfAniso then
-        glTexParameteri(Sampler, GL_TEXTURE_MAX_ANISOTROPY, TGLConst(Render.MaxAniso))
+   // if Render.MaxAniso > 0 then
+
+    glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY, @FMaxAniso);
+    FMaxAniso := Min(FMaxAniso, 8);
+      if FFilter = tfAniso then
+        glTexParameteri(FSampler, GL_TEXTURE_MAX_ANISOTROPY, FMaxAniso)
       else
-        glTexParameteri(Sampler, GL_TEXTURE_MAX_ANISOTROPY, TGLConst(1)); }
+        glTexParameteri(FSampler, GL_TEXTURE_MAX_ANISOTROPY, FMaxAniso);
   end;
 end;
 

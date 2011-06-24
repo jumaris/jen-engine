@@ -23,6 +23,8 @@ type TConsole = class(TManagedInterface, ILogOutput)
     class var HMemo : HWND;
     class var QuitEvent : THandle;
     class var LoadEvent : THandle;
+    class var Quit : Boolean;
+
     class function CreateWnd(lpParameter : Pointer) : DWord; static; stdcall;
     class function WndProc(hWnd: HWND; Msg: LongWord; wParam: LongInt; lParam: LongInt): LongInt; stdcall; static;
   public
@@ -56,8 +58,6 @@ begin           {
 end;
 
 destructor TConsole.Destroy;
-var
-  str : String;
 begin
   SetEvent(QuitEvent);
   WaitForSingleObject(Thread, INFINITE);
@@ -95,8 +95,9 @@ begin
   end;
 
   Rect := Helpers.SystemInfo.Screen.DesktopRect;
-  FHandle := CreateWindowEx(WS_EX_TOOLWINDOW or WS_EX_TOPMOST, CONSOLE_WINDOW_CLASS_NAME, 'JEN Console',
-  							            WS_OVERLAPPED or WS_CAPTION or WS_SYSMENU or WS_SIZEBOX or WS_VISIBLE,
+
+  FHandle := CreateWindowEx(WS_EX_APPWINDOW{or WS_EX_TOPMOST}, CONSOLE_WINDOW_CLASS_NAME, 'JEN Console',
+  		 	  			            WS_OVERLAPPED or WS_CAPTION or WS_SYSMENU or WS_SIZEBOX,
                             0, Rect.y + Rect.Height - 300 - GetSystemMetrics(SM_CYDLGFRAME), 500, 300, 0, 0, 0, nil);
 
   HMemo := CreateWindow('EDIT','',
@@ -108,24 +109,27 @@ begin
   LF.lfFaceName := 'Consolas';
 
   HFont := CreateFontIndirect(LF);
-  SendMessage(HMemo,WM_SETFONT, hFont, MAKELPARAM(1,0));
+  SendMessage(HMemo, WM_SETFONT, hFont, MAKELPARAM(1,0));
 
+  Quit := false;
   SetEvent(LoadEvent);
-  if ((FHandle = 0) or (HMemo = 0) or (HFont = 0) or(SetTimer(FHandle, HTimer, 20, nil) = 0) ) Then
-    begin
-      LogOut('Cannot create console window.', lmError);
-      Exit;
-    end;
+
+  if ((FHandle = 0) or (HMemo = 0) or (HFont = 0) or (SetTimer(FHandle, HTimer, 40, nil) = 0))  Then
+  begin
+    LogOut('Cannot create console window.', lmError);
+    Exit;
+  end;
 
   SendMessage(FHandle, WM_SETICON, 1, LoadIconW(HInstance, 'MAINICON'));
-  SendMessage(FHandle, WM_SIZE, 0, 0);
+  ShowWindow(FHandle, SW_SHOWNORMAL);
 
-  while GetMessage(Msg, 0, 0, 0) and (WaitForSingleObject(QuitEvent,22) = WAIT_TIMEOUT) do
+  while GetMessage(Msg, 0, 0, 0) and (not Quit) do
   begin
     TranslateMessage(Msg);
     DispatchMessage(Msg);
   end;
 
+  Utils.Sleep(1500);
   KillTimer(FHandle, HTimer);
 
   if  (not (DestroyWindow(HMemo) and DestroyWindow(FHandle) and DeleteObject(HFont))) then
@@ -136,16 +140,23 @@ class function TConsole.WndProc(hWnd: HWND; Msg: LongWord; wParam: LongInt; lPar
 var
   rect : TRect;
 begin
+  Result := 0;
+
   case Msg of
     WM_CLOSE:;{ SetEvent(QuitEvent);  }
 
+    WM_COMMAND:ShowWindow(FHandle, SW_SHOWNA);
+    WM_SHOWWINDOW:;
     WM_SIZE:
     begin
  	     GetClientRect(FHandle, rect);
 	     MoveWindow(HMemo, 0, 0, rect.right, rect.bottom, true);
     end;
 
+    WM_TIMER:
+      Quit := not (WaitForSingleObject(QuitEvent,0) = WAIT_TIMEOUT);
   else
+
     Result := DefWindowProc(hWnd, Msg, wParam, lParam);
   end;
 end;
@@ -182,6 +193,12 @@ begin
     Exit;
 
   StrLength := GetWindowTextLength(HMemo);
+
+  if (StrLength + Length(Text) + 3 >= 30000) then
+  begin
+	  SetWindowText(HMemo, 'Console auto clean.');
+    StrLength := GetWindowTextLength(HMemo);
+  end;
 
   h := Trunc(Utils.Time/3600000);
   m := Trunc(Utils.Time/60000);

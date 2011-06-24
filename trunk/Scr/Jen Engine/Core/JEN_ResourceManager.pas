@@ -53,10 +53,10 @@ type
     function Load(const FileName: string; ResType: TResourceType): JEN_Header.IResource; overload; stdcall;
     procedure Load(const FileName: string; out Resource: JEN_Header.IShaderResource); overload; stdcall;
     procedure Load(const FileName: string; out Resource: JEN_Header.ITexture); overload; stdcall;
-
+    {
     function LoadShader(const FileName: string): JEN_Header.IShaderResource; stdcall;
     function LoadTexture(const FileName: string): JEN_Header.ITexture; stdcall;
-
+             }
     procedure RegisterLoader(Loader: TResLoader);
     function GetRef(const Name: string): IResource;
 
@@ -66,8 +66,8 @@ type
 implementation
 
 uses
+  JEN_DDSTexture,
   JEN_Main;
-
 
 constructor TResourceManager.Create;
 begin
@@ -94,9 +94,6 @@ end;
 procedure TResourceManager.SetResChangeCallBack(Proc: Pointer);
 begin
   FResChangeCallBack := Proc;
-
-  if(FResChangeCallBack<>Proc)and(Assigned(FResChangeCallBack)) then
-    TProc(FResChangeCallBack);
 end;
 
 function TResourceManager.GetActiveRes(RT: TResourceType): IUnknown;
@@ -107,19 +104,6 @@ end;
 procedure TResourceManager.SetActiveRes(RT: TResourceType; Value: IUnknown);
 begin
   FActiveRes[RT] := Value;
-
-  if Assigned(FResChangeCallBack) and (Value<>FActiveRes[RT]) then
-    TProc(FResChangeCallBack);
-end;
-
-function TResourceManager.LoadShader(const FileName: string): JEN_Header.IShaderResource;
-begin
-  Result := IShaderResource(Load(FileName, rtShader));
-end;
-
-function TResourceManager.LoadTexture(const FileName: string): JEN_Header.ITexture;
-begin
-  Result := ITexture(Load(FileName, rtTexture));
 end;
 
 procedure TResourceManager.Load(const FileName: string; out Resource: JEN_Header.IShaderResource);
@@ -145,8 +129,7 @@ begin
   Resource := nil;
   Ext := Utils.ExtractFileExt(FileName);
   eFileName := Utils.ExtractFileName(FileName);
-
-             {
+     {
   if not FileExist(
   begin
     Logout( 'Don''t find loader for file ' + Utils.ExtractFileName(FileName), lmError);

@@ -14,10 +14,14 @@ type
     FSystemInfo: ISystemInfo;
     function GetSystemInfo: ISystemInfo; stdcall;
   public
+    function CreateLogFileOutput(FileName: String): ILogOutput; stdcall;
     function CreateCamera3D: ICamera3d; stdcall;
   end;
 
 implementation
+
+uses
+  JEN_Log;
 
 constructor THelpers.Create;
 begin
@@ -29,10 +33,14 @@ begin
   Result := FSystemInfo;
 end;
 
+function THelpers.CreateLogFileOutput(FileName: String): ILogOutput;
+begin
+  Result := TFileLog.Create(FileName);
+end;
+
 function THelpers.CreateCamera3D: ICamera3d;
 begin
   Result := TCamera3D.Create;
 end;
-
 
 end.

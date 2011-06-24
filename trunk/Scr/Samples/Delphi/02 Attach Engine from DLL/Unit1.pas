@@ -7,12 +7,11 @@ uses
   JEN_Header,
   JEN_Math;
 
-
 type
   TGame = class(TInterfacedObject, IGame)
   public
     procedure LoadContent; stdcall;
-    procedure OnUpdate(dt: double); stdcall;
+    procedure OnUpdate(dt: LongInt); stdcall;
     procedure OnRender; stdcall;
     procedure Close; stdcall;
   end;
@@ -33,10 +32,10 @@ implementation
 
 procedure TGame.LoadContent;
 begin
-  r := ResMan.LoadTexture('Media\123.dds');
+   ResMan.Load('Media\123.dds', r);
 end;
 
-procedure TGame.OnUpdate(dt: double);
+procedure TGame.OnUpdate(dt: LongInt);
 begin
   Display.Caption := Utils.IntToStr(Display.FPs);
 end;
@@ -79,6 +78,7 @@ begin
   Engine.GetSubSystem(ssRender2d, IJenSubSystem(Render2d));
   Engine.GetSubSystem(ssResMan, IJenSubSystem(ResMan));
   Display.Init(1024,768,9,false);
+
   Render.Init();
 
   Game := TGame.Create;
@@ -86,20 +86,6 @@ begin
 
   Game := nil;
   Engine := nil;
-end;
-
-initialization
-
-finalization
-begin
-  Game := nil;
-  Engine := nil;
-  Display := nil;
-  Render := nil;
-  Render2d := nil;
-  Utils := nil;
-  Game := nil;
-  ResMan := nil;
 end;
 
 end.

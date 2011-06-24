@@ -85,6 +85,7 @@ type
   private
     FTimeFreq : Int64;
     FTimeStart : LongInt;
+    HWaitObj : THandle;
     function GetTime : LongInt; stdcall;
   public
     procedure Sleep(Value: LongWord); stdcall;
@@ -520,6 +521,8 @@ constructor TUtils.Create;
 var
   Count : Int64;
 begin
+  HWaitObj := CreateEvent(nil, true, false, '');
+
   QueryPerformanceFrequency(FTimeFreq);
   QueryPerformanceCounter(Count);
   FTimeStart := Trunc(1000 * (Count / FTimeFreq));
@@ -528,15 +531,13 @@ end;
 destructor TUtils.Destroy;
 begin
   inherited;
+  CloseHandle(HWaitObj);
 end;
 
 procedure TUtils.Sleep(Value: LongWord);
-var
-  h : THandle;
 begin
-  h := CreateEvent(nil, true, false, '');
-  WaitForSingleObject(h, Value);
-  CloseHandle(h);
+  if Value > 0 then
+  WaitForSingleObject(HWaitObj, Value);
 end;
 
 function TUtils.GetTime : LongInt;

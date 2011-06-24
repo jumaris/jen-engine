@@ -5,8 +5,10 @@ interface
 
 uses
   JEN_Header,
+  JEN_Math,
   JEN_Utils,
   JEN_Helpers,
+  JEN_Input,
   JEN_Log,
   JEN_Console,
   JEN_Display,
@@ -47,35 +49,33 @@ type
   TResourceManager= JEN_ResourceManager.TResourceManager;
 
   TShaderResource = JEN_Shader.TShaderResource;
-                                               }
-type
-  TDDSLoader      = JEN_DDSTexture.TDDSLoader;
 
-  IJenEngine = interface(JEN_Header.IJenEngine)
-    procedure Finish;
-    procedure CreateEvent(Event: TEvent);
-  end;
+type
+  TDDSLoader      = JEN_DDSTexture.TDDSLoader; }
+type
 
   TJenEngine = class(TInterfacedObject, IJenEngine)
-    constructor Create;
+    constructor Create(Debug : Boolean);
     destructor Destroy; override;
   private
     class var FisRunnig : Boolean;
     class var FQuit : Boolean;
     var FEventsList : array[TEvent] of TList;
+    var FLastUpdate : LongInt;
   public
     procedure Start(Game: IGame); stdcall;
     procedure GetSubSystem(SubSystemType: TJenSubSystemType; out SubSystem: IJenSubSystem); stdcall;
-    procedure CreateEvent(Event: TEvent);
-    procedure AddEventProc(Event: TEvent; Proc: TProc); stdcall;
-    procedure DelEventProc(Event: TEvent; Proc: TProc); stdcall;
-    procedure Finish;
+    procedure CreateEvent(Event: TEvent; Param: LongInt = 0);
+    procedure AddEventProc(Event: TEvent; Proc: TEventProc); stdcall;
+    procedure DelEventProc(Event: TEvent; Proc: TEventProc); stdcall;
+    procedure Finish; stdcall;
     class property Quit: Boolean read FQuit write FQuit;
   end;
 
 var
-  Engine       : IJenEngine;
+  Engine       : TJenEngine;
   Utils        : IUtils;
+  Input        : IInput;
   Helpers      : IHelpers;
   Log          : ILog;
   Render       : IRender;
@@ -85,7 +85,7 @@ var
   Game         : IGame;
 
 procedure LogOut(const Text: string; MType: TLogMsg);
-procedure pGetEngine(out Eng: JEN_Header.IJenEngine); stdcall;
+procedure pGetEngine(out Eng: JEN_Header.IJenEngine; Debug: Boolean); stdcall;
 
 implementation
 
@@ -95,30 +95,29 @@ begin
   Log.Print(Text, MType);
 end;
 
-procedure pGetEngine(out Eng: JEN_Header.IJenEngine);
+procedure pGetEngine(out Eng: JEN_Header.IJenEngine; Debug: Boolean);
 begin
-   Engine := TJenEngine.Create;
-   Eng := Engine;
+   Engine := TJenEngine.Create(Debug);
+   Eng := IJenEngine(Engine);
 end;
 
 constructor TJenEngine.Create;
 var
   Event : TEvent;
 begin
-
-  inherited;
   for Event:=Low(TEvent) to High(TEvent) do
     FEventsList[Event] := TList.Create;
 
   Utils := TUtils.Create;
   Helpers := THelpers.Create;
   Log := TLog.Create;
+  Input := JEN_Input.TInput.Create;
 
   {$IFDEF DEBUG}
-  //AllocConsole;
-//  SetConsoleTitle('Jen Console');
-  //Log.RegisterOutput(TDefConsoleLog.Create);
   Log.RegisterOutput(TConsole.Create);
+  {$ELSE}
+  if Debug then
+    Log.RegisterOutput(TConsole.Create);
   {$ENDIF}
 
   Render := TRender.Create;
@@ -130,14 +129,6 @@ end;
 destructor TJenEngine.Destroy;
 var
   Event : TEvent;
-begin
-  for Event:=Low(TEvent) to High(TEvent) do
-    FEventsList[Event].Free;
-
-  inherited;
-end;
-
-procedure TJenEngine.Start(Game: IGame);
 
   procedure TestRefCount(SubSystem: IUnknown; Name: String);
   begin
@@ -153,42 +144,8 @@ procedure TJenEngine.Start(Game: IGame);
   end;
 
 begin
-
-  if not Assigned(Game) then
-  begin
-    LogOut('Game is not assigned', lmError);
-    Exit;
-  end;
-
-  if(FisRunnig) then
-  begin
-    LogOut('Engine alredy running', lmError);
-    Exit;
-  end;
-
-  if(not( Assigned(Display) and Display.Valid and
-          Assigned(Render) and Render.Valid and
-          Assigned(ResMan) ) )then
-  begin
-    Logout('Error in some subsustem', lmError);
-    Exit;
-  end;
-
-  Logout('Let''s rock!', lmNotify);
-  FisRunnig := true;
-
-  Game.LoadContent;
-
-  while not FQuit do
-    begin
-      Display.Update;
-      Game.OnUpdate(0);
-      Game.OnRender;
-      Render.Flush;
-      Display.Swap;
-    end;
-
-  Game.Close;
+  for Event:=Low(TEvent) to High(TEvent) do
+    FEventsList[Event].Free;
 
   TestRefCount(ResMan, 'resource manager');
   ResMan       := nil;
@@ -205,43 +162,97 @@ begin
   TestRefCount(Helpers, 'helpers');
   Helpers := nil;
 
-  {$IFDEF DEBUG}
-  Utils.Sleep(1500);
-  {$ENDIF}
+  TestRefCount(Input, 'input');
+  Input := nil;
 
   Log          := nil;
   Utils        := nil;
+  inherited;
+end;
+
+procedure TJenEngine.Start(Game: IGame);
+var
+  DeltaTime : LongInt;
+begin
+
+  if not Assigned(Game) then
+  begin
+    LogOut('Game is not assigned', lmError);
+    Exit;
+  end;
+
+  if(FisRunnig) then
+  begin
+    LogOut('Engine alredy running', lmError);
+    Exit;
+  end;
+
+  if(not( Assigned(Display) and Display.Valid and
+          Assigned(Render) and Render.Valid and
+          Assigned(ResMan) and Assigned(Helpers) and
+          Assigned(Render2d) and Assigned(Utils) ))then
+  begin
+    Logout('Error in some subsustem', lmError);
+    Exit;
+  end;
+
+  Logout('Let''s rock!', lmNotify);
+  FisRunnig := true;
+
+  Game.LoadContent;
+  Input.Init;
+
+  FLastUpdate := Utils.Time;
+  DeltaTime := 1;
+  while not FQuit do
+  begin
+    Display.Update;
+    Input.Update;
+    Game.OnUpdate(DeltaTime);
+    Game.OnRender;
+    Render.Flush;
+    Display.Swap;
+
+    Utils.Sleep( Max(1 - (Utils.Time - FLastUpdate), 0) );
+    DeltaTime := Max(Utils.Time - FLastUpdate, 1);
+
+    FLastUpdate := Utils.Time;
+  end;
+
+  Game.Close;
 end;
 
 procedure TJenEngine.GetSubSystem(SubSystemType: TJenSubSystemType;out SubSystem: IJenSubSystem);
 begin
   case SubSystemType of
-    ssUtils : SubSystem :=  IJenSubSystem(Utils);
- //   ssSystemParams : SubSystem := SystemParams;
+    ssUtils : SubSystem := IJenSubSystem(Utils);
+    ssInput : SubSystem := IJenSubSystem(Input);
     ssLog : SubSystem :=  IJenSubSystem(Log);
     ssDisplay : SubSystem := IJenSubSystem(Display);
     ssResMan : SubSystem := IJenSubSystem(ResMan);
     ssRender : SubSystem := IJenSubSystem(Render);
     ssRender2d : SubSystem := IJenSubSystem(Render2d);
+    ssHelpers : SubSystem := IJenSubSystem(Helpers);
   else
     SubSystem := nil;
   end;
+
 end;
 
-procedure TJenEngine.CreateEvent(Event: TEvent);
+procedure TJenEngine.CreateEvent(Event: TEvent; Param: LongInt);
 var
   i : LongInt;
 begin
   for i:=0 to FEventsList[Event].Count-1 do
-    TProc(FEventsList[Event][i]);
+    TEventProc(FEventsList[Event][i])(Param);
 end;
 
-procedure TJenEngine.AddEventProc(Event : TEvent; Proc: TProc);
+procedure TJenEngine.AddEventProc(Event : TEvent; Proc: TEventProc);
 begin
   FEventsList[Event].Add(@Proc);
 end;
 
-procedure TJenEngine.DelEventProc(Event: TEvent; Proc: TProc);
+procedure TJenEngine.DelEventProc(Event: TEvent; Proc: TEventProc);
 begin
   FEventsList[Event].Del(FEventsList[Event].IndexOf(@Proc));
 end;
@@ -265,7 +276,7 @@ begin
 end;
 finalization
 begin
-  Engine       := nil;
+  //Engine       := nil;
   Utils        := nil;
   Helpers      := nil;
   Log          := nil;

@@ -73,6 +73,7 @@ Type
     function Angle(const v: TVec2f): Single;
   end;
 
+  PVec3f = ^TVec3f;
   TVec3f = record
     x, y, z : Single;
     class operator Equal(const a, b: TVec3f): Boolean;
@@ -109,12 +110,27 @@ Type
     function Lerp(const v: TVec4f; t: Single): TVec4f;
   end;
 
+  TQuat = record
+    x, y, z, w : Single;
+    class operator Equal(const q1, q2: TQuat): Boolean;
+    class operator Add(const q1, q2: TQuat): TQuat;
+    class operator Subtract(const q1, q2: TQuat): TQuat;
+    class operator Multiply(const q: TQuat; x: Single): TQuat;
+    class operator Multiply(const q1, q2: TQuat): TQuat;
+    class operator Multiply(const q: TQuat; const v: TVec3f): TVec3f;
+    function Invert: TQuat; inline;
+    function Lerp(const q: TQuat; t: Single): TQuat;
+    function Dot(const q: TQuat): Single; inline;
+    function Normal: TQuat;
+    function Euler: TVec3f;
+  end;
+
   TMat4f = record
   private
     function  GetPos: TVec3f;
     procedure SetPos(const v: TVec3f);
-  //  function  GetRot: TQuat;
-  //  procedure SetRot(const q: TQuat);
+    function  GetRot: TQuat;
+    procedure SetRot(const q: TQuat);
   public
     e00, e10, e20, e30,
     e01, e11, e21, e31,
@@ -137,8 +153,10 @@ Type
     procedure Ortho(Left, Right, Bottom, Top, ZNear, ZFar: Single);
     procedure Frustum(Left, Right, Bottom, Top, ZNear, ZFar: Single);
     procedure Perspective(FOV, Aspect, ZNear, ZFar: Single);
+    function GetRotPart: TMat4f;
+
     property Pos: TVec3f read GetPos write SetPos;
-//    property Rot: TQuat read GetRot write SetRot;
+    property Rot: TQuat read GetRot write SetRot;
   end;
 
 const
@@ -173,6 +191,8 @@ function Recti(x, y, Width, Height : LongInt): TRecti; overload; inline;
 function Vec2f(x, y: Single): TVec2f; inline;
 function Vec3f(x, y, z: Single): TVec3f; inline;
 function Vec4f(x, y, z, w: Single): TVec4f; inline;
+function Quat(x, y, z, w: Single): TQuat; overload; inline;
+function Quat(Angle: Single; const Axis: TVec3f): TQuat; overload;
 function Mat4f(Angle: Single; const Axis: TVec3f): TMat4f; inline;
 
 implementation
@@ -378,6 +398,25 @@ begin
   Result.y := y;
   Result.z := z;
   Result.w := w;
+end;
+
+function Quat(x, y, z, w: Single): TQuat;
+begin
+  Result.x := x;
+  Result.y := y;
+  Result.z := z;
+  Result.w := w;
+end;
+
+function Quat(Angle: Single; const Axis: TVec3f): TQuat;
+var
+  s, c : Single;
+begin
+  SinCos(Angle * 0.5, s, c);
+  Result.x := Axis.x * s;
+  Result.y := Axis.y * s;
+  Result.z := Axis.z * s;
+  Result.w := c;
 end;
 
 function Mat4f(Angle: Single; const Axis: TVec3f): TMat4f;
@@ -882,6 +921,108 @@ begin
 end;
 {$ENDREGION}
 
+{$REGION 'TQuat'}
+class operator TQuat.Equal(const q1, q2: TQuat): Boolean;
+begin
+  Result := (abs(q1.x - q2.x) <= EPS) and
+            (abs(q1.y - q2.y) <= EPS) and
+            (abs(q1.z - q2.z) <= EPS) and
+            (abs(q1.w - q2.w) <= EPS);
+end;
+
+class operator TQuat.Add(const q1, q2: TQuat): TQuat;
+begin
+  Result.x := q1.x + q2.x;
+  Result.y := q1.y + q2.y;
+  Result.z := q1.z + q2.z;
+  Result.w := q1.w + q2.w;
+end;
+
+class operator TQuat.Subtract(const q1, q2: TQuat): TQuat;
+begin
+  Result.x := q1.x - q2.x;
+  Result.y := q1.y - q2.y;
+  Result.z := q1.z - q2.z;
+  Result.w := q1.w - q2.w;
+end;
+
+class operator TQuat.Multiply(const q: TQuat; x: Single): TQuat;
+begin
+  Result.x := q.x * x;
+  Result.y := q.y * x;
+  Result.z := q.z * x;
+  Result.w := q.w * x;
+end;
+
+class operator TQuat.Multiply(const q1, q2: TQuat): TQuat;
+begin
+  Result.x := q1.w * q2.x + q1.x * q2.w + q1.y * q2.z - q1.z * q2.y;
+  Result.y := q1.w * q2.y + q1.y * q2.w + q1.z * q2.x - q1.x * q2.z;
+  Result.z := q1.w * q2.z + q1.z * q2.w + q1.x * q2.y - q1.y * q2.x;
+  Result.w := q1.w * q2.w - q1.x * q2.x - q1.y * q2.y - q1.z * q2.z;
+end;
+
+class operator TQuat.Multiply(const q: TQuat; const v: TVec3f): TVec3f;
+begin
+  with q * Quat(v.x, v.y, v.z, 0) * q.Invert do
+    Result := Vec3f(x, y, z);
+end;
+
+function TQuat.Invert: TQuat;
+begin
+  Result := Quat(-x, -y, -z, w);
+end;
+
+function TQuat.Lerp(const q: TQuat; t: Single): TQuat;
+begin
+  if Dot(q) < 0 then
+    Result := Self - (q + Self) * t
+  else
+    Result := Self + (q - Self) * t;
+end;
+
+function TQuat.Dot(const q: TQuat): Single;
+begin
+  Result := x * q.x + y * q.y + z * q.z + w * q.w;
+end;
+
+function TQuat.Normal: TQuat;
+var
+  Len : Single;
+begin
+  Len := sqrt(sqr(x) + sqr(y) + sqr(z) + sqr(w));
+  if Len > 0 then
+  begin
+    Len := 1 / Len;
+    Result.x := x * Len;
+    Result.y := y * Len;
+    Result.z := z * Len;
+    Result.w := w * Len;
+  end;
+end;
+
+function TQuat.Euler: TVec3f;
+var
+  D : Single;
+begin
+  D := 2 * x * z + y * w;
+  if abs(D) > 1 - EPS then
+  begin
+    Result.x := 0;
+    if D > 0 then
+      Result.y := -pi * 0.5
+    else
+      Result.y :=  pi * 0.5;
+    Result.z := ArcTan2(-2 * (y * z - w * x), 2 * (w * w + y * y) - 1);
+  end else
+  begin
+    Result.x := -ArcTan2(2 * (y * z + w * x), 2 * (w * w + z * z) - 1);
+    Result.y := ArcSin(-d);
+    Result.z := -ArcTan2(2 * (x * y + w * z), 2 * (w * w + x * x) - 1);
+  end;
+end;
+{$ENDREGION}
+
 {$REGION 'TMat4f'}
 function TMat4f.GetPos: TVec3f;
 begin
@@ -896,7 +1037,7 @@ begin
   e13 := v.y;
   e23 := v.z;
 end;
- {
+
 function TMat4f.GetRot: TQuat;
 var
   t, s : Single;
@@ -935,7 +1076,7 @@ begin
           z := 0.25 * s;
         end;
 end;
-}{
+
 procedure TMat4f.SetRot(const q: TQuat);
 var
   sqw, sqx, sqy, sqz, invs : Single;
@@ -969,7 +1110,7 @@ begin
     e12 := 2 * (tmp1 - tmp2) * invs;
   end;
 end;
-      }
+
 class operator TMat4f.Add(const a, b: TMat4f): TMat4f;
 begin
   with Result do
@@ -1184,6 +1325,26 @@ begin
   y := ZNear * Tan(FOV * 0.5 * deg2rad);
   x := y * Aspect;
   Frustum(-x, x, -y, y, ZNear, ZFar);
+end;
+
+function TMat4f.GetRotPart: TMat4f;
+begin
+  Result.e00 := e00;
+  Result.e01 := e01;
+  Result.e02 := e02;
+  Result.e03 := 0;
+  Result.e10 := e10;
+  Result.e11 := e11;
+  Result.e12 := e12;
+  Result.e13 := 0;
+  Result.e20 := e20;
+  Result.e21 := e21;
+  Result.e22 := e22;
+  Result.e23 := 0;
+  Result.e30 := 0;
+  Result.e31 := 0;
+  Result.e32 := 0;
+  Result.e33 := 1;
 end;
 {$ENDREGION}
 end.
