@@ -46,8 +46,8 @@ begin
 end;
 
 procedure TGeomBuffer.SetData(Offset, Size: LongInt; Data: Pointer);
-var
-  p : PByteArray;
+//var
+//  p : PByteArray;
 begin
   Bind;         {
   P := glMapBuffer(FType, GL_WRITE_ONLY);

@@ -25,7 +25,7 @@ type TConsole = class(TManagedInterface, ILogOutput)
     class var LoadEvent : THandle;
     class var Quit : Boolean;
 
-    class function CreateWnd(lpParameter : Pointer) : DWord; static; stdcall;
+    class procedure CreateWnd(lpParameter : Pointer); static; stdcall;
     class function WndProc(hWnd: HWND; Msg: LongWord; wParam: LongInt; lParam: LongInt): LongInt; stdcall; static;
   public
     procedure Init; stdcall;
@@ -66,7 +66,7 @@ begin
   inherited;
 end;
 
-class function TConsole.CreateWnd(lpParameter : Pointer): DWord;
+class procedure TConsole.CreateWnd(lpParameter : Pointer);
 var
   WinClass   : TWndClassEx;
   HTimer     : HWND;
@@ -74,7 +74,6 @@ var
   Msg        : TMsg;
   HFont      : LongWord;
   LF         : LOGFONT;
-  i          : integer;
 begin
   FillChar(WinClass, SizeOf(TWndClassEx), 0);
   with WinClass do
@@ -102,7 +101,7 @@ begin
 
   HMemo := CreateWindow('EDIT','',
                          WS_VISIBLE or WS_CHILD or WS_BORDER or WS_VSCROLL or WS_HSCROLL or
-								         ES_MULTILINE or ES_READONLY, 0, 0, Rect.Width, Rect.Height, FHandle, 0, 0, 0);
+								         ES_MULTILINE or ES_READONLY, 0, 0, Rect.Width, Rect.Height, FHandle, 0, 0, nil);
 
   FillChar(LF, SizeOf(LOGFONT), 0);
   LF.lfHeight := 14;
@@ -113,6 +112,7 @@ begin
 
   Quit := false;
   SetEvent(LoadEvent);
+  HTimer := 1;
 
   if ((FHandle = 0) or (HMemo = 0) or (HFont = 0) or (SetTimer(FHandle, HTimer, 40, nil) = 0))  Then
   begin
@@ -238,7 +238,7 @@ begin
         while Text[i] <> #0 do
         begin
           start := i;
-          while not (Text[i] in [#0, #09, #10, #13]) do Inc(i);
+          while not (AnsiChar(Text[i]) in [#0, #09, #10, #13]) do Inc(i);
 
           if Text[i] = #0 then
             break;

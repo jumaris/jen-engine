@@ -206,6 +206,7 @@ begin
   DeltaTime := 1;
   while not FQuit do
   begin
+    Utils.Update;
     Display.Update;
     Input.Update;
     Game.OnUpdate(DeltaTime);
@@ -213,7 +214,9 @@ begin
     Render.Flush;
     Display.Swap;
 
-    Utils.Sleep( Max(1 - (Utils.Time - FLastUpdate), 0) );
+  //  if Render. then
+
+    Utils.Sleep( Max(2 - (Utils.Time - FLastUpdate), 0));
     DeltaTime := Max(Utils.Time - FLastUpdate, 1);
 
     FLastUpdate := Utils.Time;
@@ -225,14 +228,14 @@ end;
 procedure TJenEngine.GetSubSystem(SubSystemType: TJenSubSystemType;out SubSystem: IJenSubSystem);
 begin
   case SubSystemType of
-    ssUtils : SubSystem := IJenSubSystem(Utils);
-    ssInput : SubSystem := IJenSubSystem(Input);
-    ssLog : SubSystem :=  IJenSubSystem(Log);
-    ssDisplay : SubSystem := IJenSubSystem(Display);
-    ssResMan : SubSystem := IJenSubSystem(ResMan);
-    ssRender : SubSystem := IJenSubSystem(Render);
-    ssRender2d : SubSystem := IJenSubSystem(Render2d);
-    ssHelpers : SubSystem := IJenSubSystem(Helpers);
+    ssUtils     : SubSystem := IJenSubSystem(Utils);
+    ssInput     : SubSystem := IJenSubSystem(Input);
+    ssLog       : SubSystem := IJenSubSystem(Log);
+    ssDisplay   : SubSystem := IJenSubSystem(Display);
+    ssResMan    : SubSystem := IJenSubSystem(ResMan);
+    ssRender    : SubSystem := IJenSubSystem(Render);
+    ssRender2d  : SubSystem := IJenSubSystem(Render2d);
+    ssHelpers   : SubSystem := IJenSubSystem(Helpers);
   else
     SubSystem := nil;
   end;

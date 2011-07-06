@@ -109,6 +109,7 @@ type
   IUtils = interface(IJenSubSystem)
     function GetTime : LongInt; stdcall;
     procedure Sleep(Value: LongWord); stdcall;
+    procedure Update; stdcall;
     function IntToStr(Value: LongInt): string; stdcall;
     function StrToInt(const Str: string; Def: LongInt = 0): LongInt; stdcall;
     function FloatToStr(Value: Single; Digits: LongInt = 8): string; stdcall;
@@ -172,7 +173,6 @@ type
 
     procedure SetActive(Value: Boolean); stdcall;
     procedure SetCaption(const Value: string); stdcall;
-    procedure SetVSync(Value: Boolean); stdcall;
     procedure SetFullScreen(Value: Boolean); stdcall;
 
     function GetFullScreen: Boolean; stdcall;
@@ -280,6 +280,9 @@ type
     procedure Init(DepthBits: Byte = 24; StencilBits: Byte = 8; FSAA: Byte = 0); stdcall;
     procedure Clear(ColorBuff, DepthBuff, StensilBuff: Boolean); stdcall;
 
+    function GetVSync: Boolean; stdcall;
+    procedure SetVSync(Value: Boolean); stdcall;
+
     function GetColorMask(Channel : TColorChannel): Boolean; overload; stdcall;
     procedure SetColorMask(Channel : TColorChannel; Value : Boolean); overload; stdcall;
     function GetColorMask: Byte; overload; stdcall;
@@ -309,6 +312,7 @@ type
 
     function CreateGeomBuffer(GBufferType: TGBufferType; Count, Stride: LongInt; Data: Pointer): IGeomBuffer; stdcall;
 
+    property VSync: Boolean read GetVSync write SetVSync;
     property ColorMask[Channel: TColorChannel]: Boolean read GetColorMask write SetColorMask;
     property BlendType: TBlendType read GetBlendType write SetBlendType;
     property AlphaTest: Byte read GetAlphaTest write SetAlphaTest;

@@ -351,6 +351,8 @@ const
   GL_COMPILE_STATUS                   = $8B81;
   GL_LINK_STATUS                      = $8B82;
   GL_INFO_LOG_LENGTH                  = $8B84;
+  GL_ACTIVE_UNIFORMS                  = $8B86;
+  GL_ACTIVE_ATTRIBUTES                = $8B89;
 
 // VBO
   GL_BUFFER_SIZE                      = $8764;
@@ -514,6 +516,10 @@ const
   glCompileShader: procedure(shaderObj: GLhandle); stdcall;
   glGetShaderInfoLog: procedure(shaderObj: GLHandle; maxLength: glsizei; var length: glint; infoLog: PAnsiChar); stdcall;
   glGetUniformLocation: function(programObj: GLhandle; const name: PAnsiChar ): GLint; stdcall;
+
+  glGetActiveUniform: procedure(programObj: GLhandle; index: GLuint; maxLength: GLsizei; length: PGLsizei; size: PGLint; _type: PGLenum; name: PAnsiChar); stdcall;
+  glGetActiveAttrib: procedure(programObj: GLhandle; index: GLuint; maxLength: GLsizei; length: PGLsizei; size: PGLint; _type: PGLenum; name: PAnsiChar); stdcall;
+
   { glUniform1f: procedure(location: GLint; v0: GLfloat); stdcall;
   glUniform2f: procedure(location: GLint; v0: GLfloat; v1: GLfloat); stdcall;
   glUniform3f: procedure(location: GLint; v0: GLfloat; v1: GLfloat; v2: GLfloat); stdcall;
@@ -541,19 +547,18 @@ const
   glDisableVertexAttribArray: procedure(index: GLuint); stdcall;
   glVertexAttribPointer: procedure(index: GLuint; size: GLint; _type: GLenum; normalized: GLboolean; stride: GLsizei; const _pointer: PGLvoid); stdcall;
 
-               {
+
+              {
   glGetHandle: function(pname: GLenum): GLhandle; stdcall;
   glDetachObject: procedure(containerObj: GLhandle; attachedObj: GLhandle); stdcall;
   glDetachShader: procedure(programObj, shaderObj: GLhandle); stdcall;
 
   glGetAttachedShaders: procedure(programObj: GLhandle; MaxCount: GLsizei; var Count: GLint; shaders: PGLuint); stdcall;
-  glGetActiveUniform: procedure(programObj: GLhandle; index: GLuint; maxLength: GLsizei; length: PGLsizei; size: PGLint; _type: PGLenum; name: PAnsiChar); stdcall;
-  glGetUniformfv: procedure(programObj: GLhandle; location: GLint; params: PGLfloat); stdcall;
+ } { glGetUniformfv: procedure(programObj: GLhandle; location: GLint; params: PGLfloat); stdcall;
   glGetUniformiv: procedure(programObj: GLhandle; location: GLint; params: PGLint); stdcall;
   glGetShaderSource: procedure(obj: GLhandle; maxLength: GLsizei; length: PGLsizei; source: PAnsiChar); stdcall;
      // GL_ARB_vertex_shader
   glBindAttribLocation: procedure(programObj: GLhandle; index: GLuint; const name: PAnsiChar); stdcall;
-  glGetActiveAttrib: procedure(programObj: GLhandle; index: GLuint; maxLength: GLsizei; length: PGLsizei; size: PGLint; _type: PGLenum; name: PAnsiChar); stdcall;
      {
   glVertexAttrib1d: procedure(index: GLuint; x: GLdouble); stdcall;
   glVertexAttrib1dv: procedure(index: GLuint; const v: PGLdouble); stdcall;
@@ -654,46 +659,46 @@ begin
   glUnmapBuffer   := glGetProc('glUnmapBuffer', Result);
   glDrawArrays    := glGetProc('glDrawArrays', Result);
 
-
   glGetBufferParameteriv := glGetProc('glGetBufferParameteriv', Result);
 
   glCompressedTexImage3D := glGetProc('glCompressedTexImage3D', Result);
   glCompressedTexImage2D := glGetProc('glCompressedTexImage2D', Result);
   glCompressedTexImage1D := glGetProc('glCompressedTexImage1D', Result);
 
-
     // GL_ARB_shader_objects
-  glGetProgramiv := glGetProc('glGetProgramiv', Result);
-  glCreateProgram := glGetProc('glCreateProgram', Result);
+  glGetProgramiv          := glGetProc('glGetProgramiv', Result);
+  glCreateProgram         := glGetProc('glCreateProgram', Result);
 
-  glLinkProgram := glGetProc('glLinkProgram', Result);
-  glUseProgram := glGetProc('glUseProgram', Result);
-  glValidateProgram := glGetProc('glValidateProgram', Result);
+  glLinkProgram           := glGetProc('glLinkProgram', Result);
+  glUseProgram            := glGetProc('glUseProgram', Result);
+  glValidateProgram       := glGetProc('glValidateProgram', Result);
 
-  glGetProgramInfoLog := glGetProc('glGetProgramInfoLog', Result);
-  glGetShaderiv := glGetProc('glGetShaderiv', Result);
-  glCreateShader := glGetProc('glCreateShader', Result);
-  glDeleteShader := glGetProc('glDeleteShader', Result);
-  glShaderSource := glGetProc('glShaderSource', Result);
-  glAttachShader := glGetProc('glAttachShader', Result);
-  glCompileShader := glGetProc('glCompileShader', Result);
-  glGetShaderInfoLog := glGetProc('glGetShaderInfoLog', Result);
-  glGetUniformLocation := glGetProc('glGetUniformLocation', Result);
+  glGetProgramInfoLog     := glGetProc('glGetProgramInfoLog', Result);
+  glGetShaderiv           := glGetProc('glGetShaderiv', Result);
+  glCreateShader          := glGetProc('glCreateShader', Result);
+  glDeleteShader          := glGetProc('glDeleteShader', Result);
+  glShaderSource          := glGetProc('glShaderSource', Result);
+  glAttachShader          := glGetProc('glAttachShader', Result);
+  glCompileShader         := glGetProc('glCompileShader', Result);
+  glGetShaderInfoLog      := glGetProc('glGetShaderInfoLog', Result);
+  glGetUniformLocation    := glGetProc('glGetUniformLocation', Result);
 
-  glUniform1iv := glGetProc('glUniform1iv', Result);
-  glUniform1fv := glGetProc('glUniform1fv', Result);
-  glUniform2fv := glGetProc('glUniform2fv', Result);
-  glUniform3fv := glGetProc('glUniform3fv', Result);
-  glUniform4fv := glGetProc('glUniform4fv', Result);
-  glUniformMatrix2fv := glGetProc('glUniformMatrix2fv', Result);
-  glUniformMatrix3fv := glGetProc('glUniformMatrix3fv', Result);
-  glUniformMatrix4fv := glGetProc('glUniformMatrix4fv', Result);
+  glUniform1iv            := glGetProc('glUniform1iv', Result);
+  glUniform1fv            := glGetProc('glUniform1fv', Result);
+  glUniform2fv            := glGetProc('glUniform2fv', Result);
+  glUniform3fv            := glGetProc('glUniform3fv', Result);
+  glUniform4fv            := glGetProc('glUniform4fv', Result);
+  glUniformMatrix2fv      := glGetProc('glUniformMatrix2fv', Result);
+  glUniformMatrix3fv      := glGetProc('glUniformMatrix3fv', Result);
+  glUniformMatrix4fv      := glGetProc('glUniformMatrix4fv', Result);
 
-  glGetAttribLocation := glGetProc('glGetAttribLocation', Result);
-  glEnableVertexAttribArray := glGetProc('glEnableVertexAttribArray', Result);
-  glDisableVertexAttribArray := glGetProc('glDisableVertexAttribArray', Result);
-  glVertexAttribPointer := glGetProc('glVertexAttribPointer', Result);
+  glGetAttribLocation         := glGetProc('glGetAttribLocation', Result);
+  glEnableVertexAttribArray   := glGetProc('glEnableVertexAttribArray', Result);
+  glDisableVertexAttribArray  := glGetProc('glDisableVertexAttribArray', Result);
+  glVertexAttribPointer       := glGetProc('glVertexAttribPointer', Result);
 
+  glGetActiveUniform  := glGetProc('glGetActiveUniform', Result);
+  glGetActiveAttrib   := glGetProc('glGetActiveAttrib', Result);
 
   {glGetHandle := glGetProc('glGetHandle', Result);
   glDetachShader := glGetProc('glDetachShader', Result);
@@ -712,15 +717,14 @@ begin
   glUniform4iv := glGetProc('glUniform4iv', Result);
 
   glGetAttachedShaders := glGetProc('glGetAttachedShaders', Result);
-  glGetActiveUniform := glGetProc('glGetActiveUniform', Result);
+
   glGetUniformfv := glGetProc('glGetUniformfv', Result);
   glGetUniformiv := glGetProc('glGetUniformiv', Result);
   glGetShaderSource := glGetProc('glGetShaderSource', Result);
 
    // GL_ARB_vertex_shader
   glBindAttribLocation := glGetProc('glBindAttribLocation', Result);
-  glGetActiveAttrib := glGetProc('glGetActiveAttrib', Result);     }
-
+                                                                     }
   Set8087CW($133F);
 end;
       {

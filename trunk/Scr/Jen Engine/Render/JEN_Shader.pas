@@ -23,27 +23,27 @@ type
     constructor Create(const Name: string);
     destructor Destroy; override;
   private
-    FShaderPrograms: TInterfaceList;
-    FDefines: TList;
-    XML: IXML;
-    FName: string;
+    FShaderPrograms : TInterfaceList;
+    FDefines  : TList;
+    XML       : IXML;
+    FName     : string;
     function GetName: string; stdcall;
     function GetXML: IXML;
     procedure SetXML(Value: IXML);
-    function GetDefineId(const Name: String): LongInt;
+    function GetDefineId(const Name: string): LongInt;
   public
-    function GetDefine(const Name: String): LongInt; stdcall;
-    procedure SetDefine(const Name: String; Value: LongInt); stdcall;
+    function GetDefine(const Name: string): LongInt; stdcall;
+    procedure SetDefine(const Name: string; Value: LongInt); stdcall;
     function Compile: IShaderProgram; stdcall;
   end;
-  
+
   TShaderProgram = class(TManagedInterface, IShaderProgram)
     constructor Create;
     destructor Destroy; override;
   public
-    FID : GLint;
+    FID          : GLint;
     FUniformList : TInterfaceList;
-    FAttribList : TInterfaceList;
+    FAttribList  : TInterfaceList;
     function Uniform(const UName: string; UniformType: TShaderUniformType): IShaderUniform; stdcall;
     function Attrib(const AName: string; AttribType: TShaderAttribType; Norm: Boolean = False): IShaderAttrib; stdcall;
     procedure Bind; stdcall;
@@ -57,7 +57,7 @@ type
     FName  : string;
     FValue : array [0..11] of Single;
     function GetName: string; stdcall;
-    procedure Init(ShaderID: GLEnum; const UName: string; UniformType: TShaderUniformType);
+    function Init(ShaderID: GLEnum; const UName: string; UniformType: TShaderUniformType): Boolean;
   public
     procedure Value(const Data; Count: LongInt); stdcall;
   end;
@@ -71,9 +71,8 @@ type
     FNorm  : Boolean;
     Size   : LongInt;
     FName  : string;
-    FValue : array [0..11] of Single;
     function GetName: string; stdcall;
-    procedure Init(ShaderID: GLEnum; const AName: string; AttribType: TShaderAttribType; Norm: Boolean);
+    function Init(ShaderID: GLEnum; const AName: string; AttribType: TShaderAttribType; Norm: Boolean): Boolean;
   public
     procedure Value(Stride, Offset: LongInt); stdcall;
     property Name: string read FName;
@@ -82,7 +81,7 @@ type
   end;
 
   TShaderDefine = record
-    Name : String;
+    Name  : String;
     Value : LongWord;
   end;
 
@@ -126,7 +125,7 @@ begin
       Exit;
     end;
   U := TShaderUniform.Create;
-  U.Init(FID, UName, UniformType);
+  if U.Init(FID, UName, UniformType) then
   FUniformList.Add(U);
   Result := U;
 end;
@@ -143,7 +142,7 @@ begin
       Exit;
     end;
   A := TShaderAttrib.Create;
-  A.Init(FID, AName, AttribType, Norm);
+  if A.Init(FID, AName, AttribType, Norm) then
   FAttribList.Add(A);
   Result := A;
 end;
@@ -170,7 +169,7 @@ begin
   Result := FName;
 end;
 
-procedure TShaderUniform.Init(ShaderID: LongWord; const UName: string; UniformType: TShaderUniformType);
+function TShaderUniform.Init(ShaderID: LongWord; const UName: string; UniformType: TShaderUniformType): Boolean;
 var
   i : LongInt;
 begin
@@ -178,32 +177,38 @@ begin
   FName := UName;
   FType := UniformType;
   if FID = -1 then
-    LogOut('Uncorrect uniform name ' +UName, lmWarning);
+    LogOut('Uncorrect uniform name ' + UName, lmWarning);
   for i := 0 to Length(FValue) - 1 do
-    FValue[i] := NAN;   
+    FValue[i] := NAN;
+
+  Result := FID <> -1;
 end;
 
 procedure TShaderUniform.Value(const Data; Count: LongInt);
 const
   USize : array [TShaderUniformType] of LongInt = (4, 4, 8, 12, 16, 36, 64);
 begin
-  if Count * USize[FType] <= SizeOf(FValue) then
-    if MemCmp(@FValue, @Data, Count * USize[FType]) <> 0 then
-      Move(Data, FValue, Count * USize[FType])
+  if FID <> -1 then
+  begin
+    if Count * USize[FType] <= SizeOf(FValue) then
+      if MemCmp(@FValue, @Data, Count * USize[FType]) <> 0 then
+        Move(Data, FValue, Count * USize[FType])
+      else
+        Exit
     else
-      Exit
-  else
-    Move(Data, FValue, SizeOf(FValue));
+      Move(Data, FValue, SizeOf(FValue));
 
-  case FType of
-    utInt  : glUniform1iv(FID, Count, @Data);
-    utVec1 : glUniform1fv(FID, Count, @Data);
-    utVec2 : glUniform2fv(FID, Count, @Data);
-    utVec3 : glUniform3fv(FID, Count, @Data);
-    utVec4 : glUniform4fv(FID, Count, @Data);
-    utMat3 : glUniformMatrix3fv(FID, Count, False, @Data);
-    utMat4 : glUniformMatrix4fv(FID, Count, False, @Data);
-  end;
+    case FType of
+      utInt  : glUniform1iv(FID, Count, @Data);
+      utVec1 : glUniform1fv(FID, Count, @Data);
+      utVec2 : glUniform2fv(FID, Count, @Data);
+      utVec3 : glUniform3fv(FID, Count, @Data);
+      utVec4 : glUniform4fv(FID, Count, @Data);
+      utMat3 : glUniformMatrix3fv(FID, Count, False, @Data);
+      utMat4 : glUniformMatrix4fv(FID, Count, False, @Data);
+    end;
+  end else
+    LogOut('Attempt to use uncorrect shader uniform', lmWarning);
 end;
 {$ENDREGION}
 
@@ -219,7 +224,7 @@ begin
   Result := FName;
 end;
 
-procedure TShaderAttrib.Init(ShaderID: LongWord; const AName: string; AttribType: TShaderAttribType; Norm: Boolean);
+function TShaderAttrib.Init(ShaderID: LongWord; const AName: string; AttribType: TShaderAttribType; Norm: Boolean): Boolean;
 begin
   FID   := glGetAttribLocation(ShaderID, PAnsiChar(AnsiString(AName)));
   FName := AName;
@@ -233,12 +238,16 @@ begin
     atVec1s..atVec4s : DType := GL_SHORT;
     atVec1f..atVec4f : DType := GL_FLOAT;
   end;
+
+  Result := FID <> -1;
 end;
 
 procedure TShaderAttrib.Value(Stride, Offset: LongInt);
 begin
   if FID <> -1 then
-    glVertexAttribPointer(FID, Size, DType, FNorm, Stride, Pointer(Offset));
+    glVertexAttribPointer(FID, Size, DType, FNorm, Stride, Pointer(Offset))
+  else
+    LogOut('Attempt to use uncorrect shader attribute', lmWarning);
 end;
 
 procedure TShaderAttrib.Enable;
@@ -346,6 +355,12 @@ var
   LogLen : LongInt;
   Shader : TShaderProgram;
   XN_VS, XN_FS : IXML;
+ // UniformCount : LongInt;
+ // AttribCount : LongInt;
+ // UniformInfo : LongInt;
+ // Name : array[0..255] of AnsiChar;
+ // Prefix : array[0..3] of AnsiChar;
+ // K : LongInt;
 
   function IndexStr(const AText: string; const AValues: array of string): LongInt;
   var
@@ -478,7 +493,19 @@ begin
         glGetProgramInfoLog(FID, LogLen, LogLen, PAnsiChar(LogBuf));
         LogOut(string(LogBuf), lmWarning);
       end;
+         {
+      glGetProgramiv(FID, GL_ACTIVE_ATTRIBUTES , @AttribCount);
+      glGetProgramiv(FID, GL_ACTIVE_UNIFORMS, @UniformCount);
 
+      Prefix := 'JEN_';
+      for K := 0 to UniformCount-1 do
+      begin
+        glGetActiveUniform (FID, K, 256, @UniformInfo, @UniformInfo, @UniformInfo, @Name[0]);
+        if MemCmp(@Name[0], @Prefix[0], 4) = 0 then
+
+        logout(Name, lmNotify);
+      end;
+               }
       (Shader as IManagedInterface).SetManager(FUniformList);
       FShaderPrograms.Add(Shader);
       Result := Shader;

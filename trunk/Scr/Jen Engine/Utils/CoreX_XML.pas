@@ -169,13 +169,13 @@ var
     while (t^ <> #0) do
     begin
       Start := t;
-      while not (t^ in [#0, #10, #13]) do Inc(t);
+      while not (AnsiChar(t^) in [#0, #10, #13]) do Inc(t);
       Len := t - Start;
 
       k := Start;
       if (Len > 1) and (t^ <> #0) then
       begin
-        while (k - Start < Tab) and (k - Start <= Len) and (k^ in [#9, #32]) do Inc(k);
+        while (k - Start < Tab) and (k - Start <= Len) and (AnsiChar(k^) in [#9, #32]) do Inc(k);
 
         if (Tab = MaxInt) then
           Tab := k - Start;
@@ -282,11 +282,7 @@ begin
 end;
 
 destructor TXML.Destroy;
-var
-  i : LongInt;
 begin
-  {for i := 0 to Count - 1 do
-    NodeI[i].Free;       }
   FNode := nil;
   FParams := nil;
 end;
