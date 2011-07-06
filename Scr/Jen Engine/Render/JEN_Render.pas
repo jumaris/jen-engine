@@ -19,35 +19,29 @@ type
     procedure Init(DepthBits: Byte; StencilBits: Byte; FSAA: Byte); stdcall;
     destructor Destroy; override;
   private
-    FValid: Boolean;
-    FGL_Context: HGLRC;
-    FViewport: TRecti;
-          {
-    FArrayState : record
-      Vertex       : Boolean;
-      TextureCoord : Boolean;
-      Normal       : Boolean;
-      Color        : Boolean;
-    end;       }
-
-    FColorMask: Byte;
-    FBlendType: TBlendType;
-    FAlphaTest: Byte;
-    FDepthTest: Boolean;
-    FDepthWrite: Boolean;
-    FCullFace: TCullFace;
-
-    FDipCount: LongWord;
-    FLastDipCount: LongWord;
-    FMatrix: array [TMatrixType] of TMat4f;
-    FCameraPos: TVec3f;
-    FCameraDir: TVec3f;
+    FValid      : Boolean;
+    FVSync      : Boolean;
+    FGL_Context : HGLRC;
+    FViewport   : TRecti;
+    FColorMask  : Byte;
+    FBlendType  : TBlendType;
+    FAlphaTest  : Byte;
+    FDepthTest  : Boolean;
+    FDepthWrite : Boolean;
+    FCullFace   : TCullFace;
+    FDipCount   : LongWord;
+    FLastDipCount : LongWord;
+    FMatrix     : array [TMatrixType] of TMat4f;
+    FCameraPos  : TVec3f;
+    FCameraDir  : TVec3f;
 
     function GetValid: Boolean;
     procedure Clear(ColorBuff, DepthBuff, StensilBuff: Boolean); stdcall;
     procedure SetViewport(Value: TRecti);
    // procedure SetArrayState(Vertex, TextureCoord, Normal, Color : Boolean); stdcall;
 
+    function GetVSync: Boolean; stdcall;
+    procedure SetVSync(Value: Boolean); stdcall;
     function GetColorMask(Channel : TColorChannel): Boolean; overload; stdcall;
     procedure SetColorMask(Channel : TColorChannel; Value : Boolean); overload; stdcall;
     function GetColorMask: Byte; overload; stdcall;
@@ -96,19 +90,18 @@ end;
 
 procedure TRender.Init(DepthBits: Byte; StencilBits: Byte; FSAA: Byte);
 var
-  PFD: TPixelFormatDescriptor;
-  PFAttrf: array [0 .. 1] of Single;
-  PFAttri: array [0 .. 21] of LongInt;
+  PFD     : TPixelFormatDescriptor;
+  PFAttrf : array [0 .. 1] of Single;
+  PFAttri : array [0 .. 21] of LongInt;
 
-  PFIdx: LongInt;
-  PFCount: LongWord;
+  PFIdx   : LongInt;
+  PFCount : LongWord;
 
-  Par: Integer;
-
-  PHandle: HWND;
-  TDC: HDC;
-  RC: HGLRC;
-  Result: Boolean;
+  Par     : Integer;
+  PHandle : HWND;
+  TDC     : HDC;
+  RC      : HGLRC;
+  Result  : Boolean;
 begin
   FValid := False;
 
@@ -289,6 +282,20 @@ begin
   FArrayState.Normal := Normal;
   FArrayState.Color := Color;
 end;        }
+
+function TRender.GetVSync: Boolean;
+begin
+  Result := FVSync;
+end;
+
+procedure TRender.SetVSync(Value: Boolean);
+begin
+  FVSync := Value;
+  if Display.FullScreen then
+    wglSwapIntervalEXT(Ord(FVSync))
+  else
+    wglSwapIntervalEXT(0);
+end;
 
 function TRender.GetColorMask(Channel : TColorChannel): Boolean;
 begin

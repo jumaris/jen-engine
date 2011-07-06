@@ -67,8 +67,8 @@ type
   private
     procedure SetManager(Value: Pointer) stdcall;
   protected
-    FRefCount: LongInt;
-    FManager: TInterfaceList;
+    FRefCount : LongInt;
+    FManager  : TInterfaceList;
     function QueryInterface(const IID: TGUID; out Obj): HResult; stdcall;
     function _AddRef: LongInt; stdcall;
     function _Release: LongInt; stdcall;
@@ -83,12 +83,14 @@ type
     constructor Create;
     destructor Destroy; override;
   private
-    FTimeFreq : Int64;
-    FTimeStart : LongInt;
-    HWaitObj : THandle;
+    FTimeFreq   : Int64;
+    FTimeStart  : LongInt;
+    HWaitObj    : THandle;
+    FTime       : LongInt;
     function GetTime : LongInt; stdcall;
   public
     procedure Sleep(Value: LongWord); stdcall;
+    procedure Update; stdcall;
     function IntToStr(Value: LongInt): string; stdcall;
     function StrToInt(const Str: string; Def: LongInt = 0): LongInt; stdcall;
     function FloatToStr(Value: Single; Digits: LongInt = 8): string; stdcall;
@@ -540,12 +542,17 @@ begin
   WaitForSingleObject(HWaitObj, Value);
 end;
 
-function TUtils.GetTime : LongInt;
+function TUtils.GetTime: LongInt;
+begin
+  Result := FTime;
+end;
+
+procedure TUtils.Update; stdcall;
 var
   Count : Int64;
 begin
   QueryPerformanceCounter(Count);
-  Result := Trunc(1000 * (Count / FTimeFreq)) - FTimeStart;
+  FTime := Trunc(1000 * (Count / FTimeFreq)) - FTimeStart;
 end;
 
 function TUtils.IntToStr(Value: LongInt): String;

@@ -27,7 +27,6 @@ type
     destructor Destroy; override;
   private
     FValid      : Boolean;
-    FVSync      : Boolean;
     FFPS        : LongInt;
     FFPSTime    : LongInt;
     FFPSCount   : LongInt;
@@ -43,7 +42,6 @@ type
 
     procedure SetActive(Value: Boolean); stdcall;
     procedure SetCaption(const Value: string); stdcall;
-    procedure SetVSync(Value: Boolean); stdcall;
     procedure SetFullScreen(Value: Boolean); stdcall;
 
     function GetValid : Boolean;
@@ -253,15 +251,6 @@ begin
     FFPSCount := 0;
     FFPSTime  := Utils.Time;
   end;
-end;
-
-procedure TDisplay.SetVSync(Value: Boolean);
-begin
-  FVSync := Value;
-  if FFullScreen then
-    wglSwapIntervalEXT(Ord(FVSync))
-  else
-    wglSwapIntervalEXT(0);
 end;
 
 procedure TDisplay.SetFullScreen(Value: Boolean);

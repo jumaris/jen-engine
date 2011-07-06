@@ -54,7 +54,7 @@ type
     dwCaps2     : LongWord;
     dwReserved2 : array [0..2] of LongWord;
   end;
-  
+
 {$REGION 'CONSTANS'}
 const
   Magic                = $20534444;
@@ -136,12 +136,12 @@ const
 {$ENDREGION}  
 
 var
-  Header : TDDSHeader;
-  Format : TLoadFormat;
-  st     : GLEnum;
-  i,s    : LongInt;
-  w,h    : LongInt;
-  Mips   : Byte;
+  Header  : TDDSHeader;
+  Format  : TLoadFormat;
+  st      : GLEnum;
+  i,s     : LongInt;
+  w,h     : LongInt;
+  Mips    : Byte;
   Data    : Pointer;
   Samples : LongInt;
   Size    : LongWord;

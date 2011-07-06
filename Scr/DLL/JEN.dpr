@@ -10,12 +10,10 @@ library JEN;
   with your DLL. To avoid using BORLNDMM.DLL, pass string information
   using PChar or ShortString parameters. }
 
-
 uses
   JEN_Main in '..\Jen Engine\JEN_Main.pas',
   JEN_DDSTexture in '..\Jen Engine\Core\JEN_DDSTexture.pas',
   JEN_Display in '..\Jen Engine\Core\JEN_Display.pas',
-  JEN_Game in '..\Jen Engine\Core\JEN_Game.pas',
   JEN_Log in '..\Jen Engine\Core\JEN_Log.pas',
   JEN_Resource in '..\Jen Engine\Core\JEN_Resource.pas',
   JEN_ResourceManager in '..\Jen Engine\Core\JEN_ResourceManager.pas',

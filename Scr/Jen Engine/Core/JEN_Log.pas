@@ -88,13 +88,13 @@ begin
   Helpers.SystemInfo.WindowsVersion(Major, Minor, Build);
   SetLength(S,80);
   FillChar(S[1],80,ord('*'));
-  AddMsg(s,lmHeaderMsg);
+  AddMsg(String(s),lmHeaderMsg);
   AddMsg('JenEngine',lmHeaderMsg);
   AddMsg('Windows version: '+Utils.IntToStr(Major)+'.'+Utils.IntToStr(Minor)+' (Buid '+Utils.IntToStr(Build)+')'+Utils.IntToStr(Helpers.SystemInfo.CPUCount),lmHeaderMsg);
   AddMsg('CPU            : '+Helpers.SystemInfo.CPUName+'(~'+Utils.IntToStr(Helpers.SystemInfo.CPUSpeed)+')x',lmHeaderMsg);
   AddMsg('RAM Available  : '+Utils.IntToStr(Helpers.SystemInfo.RAMFree)+'Mb',lmHeaderMsg);
   AddMsg('RAM Total      : '+Utils.IntToStr(Helpers.SystemInfo.RAMTotal)+'Mb',lmHeaderMsg);
-  AddMsg(s,lmHeaderMsg);
+  AddMsg(String(s),lmHeaderMsg);
   LastUpdate := Utils.Time;
 end;
 
@@ -104,7 +104,6 @@ var
   tstr : String;
   TimeStr : String;
   h,m,s,start,i,j : LongInt;
-  StrLength : LongInt;
 begin
   if Pointer(Text) = nil then
     Exit;
@@ -147,7 +146,7 @@ begin
         while Text[i] <> #0 do
         begin
           start := i;
-          while not (Text[i] in [#0, #09, #10, #13]) do Inc(i);
+          while not (AnsiChar(Text[i]) in [#0, #09, #10, #13]) do Inc(i);
 
           if Text[i] = #0 then
             break;
@@ -179,7 +178,6 @@ begin
   LastUpdate := Utils.Time;
 
   Stream.Write(str[1], Length(str)*2);
-
 end;
 
 end.
