@@ -146,6 +146,25 @@ const
   GL_FLOAT                            = $1406;
   GL_HALF_FLOAT                       = $140B;
   GL_UNSIGNED_INT_8_8_8_8             = $8035;
+  GL_FLOAT_VEC2                       = $8B50;
+  GL_FLOAT_VEC3                       = $8B51;
+  GL_FLOAT_VEC4                       = $8B52;
+  GL_INT_VEC2                         = $8B53;
+  GL_INT_VEC3                         = $8B54;
+  GL_INT_VEC4                         = $8B55;
+  GL_BOOL                             = $8B56;
+  GL_BOOL_VEC2                        = $8B57;
+  GL_BOOL_VEC3                        = $8B58;
+  GL_BOOL_VEC4                        = $8B59;
+  GL_FLOAT_MAT2                       = $8B5A;
+  GL_FLOAT_MAT3                       = $8B5B;
+  GL_FLOAT_MAT4                       = $8B5C;
+  GL_SAMPLER_1D                       = $8B5D;
+  GL_SAMPLER_2D                       = $8B5E;
+  GL_SAMPLER_3D                       = $8B5F;
+  GL_SAMPLER_CUBE                     = $8B60;
+  GL_SAMPLER_1D_SHADOW                = $8B61;
+  GL_SAMPLER_2D_SHADOW                = $8B62;
 
   // Matrix Mode
   GL_MODELVIEW                        = $1700;
@@ -501,6 +520,8 @@ const
   // GL_shader_objects
   glGetProgramiv: procedure(programObj: GLhandle; pname: GLenum; params: PGLInt); stdcall;
   glCreateProgram: function(): GLhandle; stdcall;
+  glDeleteProgram: procedure(programObj: GLhandle); stdcall;
+  glIsProgram: function(programObj: GLhandle): GLboolean; stdcall;
 //  &
   glLinkProgram: procedure(programObj: GLhandle); stdcall;
   glUseProgram: procedure(programObj: GLhandle); stdcall;
@@ -637,13 +658,13 @@ begin
   if not Assigned(Result) then
   begin
     //LogOut('Cannot load procedure ' + ProcName, lmError);
-    OldResult := false;
+    OldResult := False;
   end;
 end;
 
 function LoadGLLibraly : Boolean;
 begin
-  Result := true;
+  Result := True;
 
   wglSwapIntervalEXT := glGetProc('wglSwapInterval', Result);
 
@@ -668,6 +689,8 @@ begin
     // GL_ARB_shader_objects
   glGetProgramiv          := glGetProc('glGetProgramiv', Result);
   glCreateProgram         := glGetProc('glCreateProgram', Result);
+  glDeleteProgram         := glGetProc('glDeleteProgram', Result);
+  glIsProgram             := glGetProc('glIsProgram', Result);
 
   glLinkProgram           := glGetProc('glLinkProgram', Result);
   glUseProgram            := glGetProc('glUseProgram', Result);

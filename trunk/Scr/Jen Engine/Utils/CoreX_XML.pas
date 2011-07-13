@@ -250,20 +250,22 @@ begin
             '<' :
               if not TextFlag then
               begin
-                FContent := FContent + TrimCode(Copy(Text, BeginIndex, i - BeginIndex));
+                FContent := TrimCode(Copy(Text, BeginIndex, i - BeginIndex));
 
               // is new tag or my tag closing?
                 for j := i to Length(Text) do
                   if Text[j] = '>' then
                   begin
-                    if Trim(Copy(Text, i + 1, j - i - 1)) <> '/' + FTag then
+                    if Trim(Copy(Text, i + 1, j - i - 1)) = '/' + FTag then
+                      Flag := F_END
+                    else if Length(FContent) = 0 then
                     begin
                       SetLength(FNode, Length(FNode) + 1);
                       FNode[Length(FNode) - 1] := TXML.Create(Text, i - 1);
                       i := i + FNode[Length(FNode) - 1].DataLen;
                       BeginIndex := i + 1;
-                    end else
-                      Flag := F_END;
+                    end;
+
                     break;
                   end;
               end

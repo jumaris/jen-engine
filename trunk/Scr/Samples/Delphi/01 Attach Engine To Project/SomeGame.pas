@@ -27,14 +27,14 @@ var
 constructor TSomeGame.Create;
 begin
   inherited;       {
-  Display := TDisplayWindow.Create(1024, 768, 60, false);
+  Display := TDisplayWindow.Create(1024, 768, 60, False);
   Render := TGLRender.Create(24, 8, 8);
   ResMan := TResourceManager.Create;
 
                   }
- // Display.VSync := false;
-{ Display.FullScreen := true;
-  Display.FullScreen := false;
+ // Display.VSync := False;
+{ Display.FullScreen := True;
+  Display.FullScreen := False;
   Display.resize(800, 600);
   Display.ShowCursor(False);
   Display.ShowCursor(True);

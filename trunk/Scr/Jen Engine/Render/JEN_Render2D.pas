@@ -5,25 +5,25 @@ interface
 uses
   JEN_Header,
   JEN_Math,
-  JEN_GeometryBuffer,
-  JEN_OpenGlHeader;
+  JEN_GeometryBuffer;
 
-const Batch_Size = 4;
+const Batch_Size = 8;
 
 type
   IRender2D = interface(JEN_Header.IRender2D)
     procedure Init;
-    procedure BatchQuad(const v1, v2, v3, v4, c1, c2, c3, c4: TVec4f); stdcall;
+    procedure BatchQuad(const v1, v2, v3, v4, Data1, Data2, Data3, Data4: TVec4f); stdcall;
   end;
   TByteArray = array [0..1] of Byte;
 
-  TTehniqueType = (ttNormal, ttVertexColor, ttAdvanced);
+  TTehniqueType = (ttNormal, ttAdvanced, ttAdvanced1, ttAdvanced2, ttAdvanced3, ttAdvancedLast);
 
   TTehnique = record
-    FIndxAttrib    : IShaderAttrib;
-    FVBUniform     : IShaderUniform;
-    FCBUniform     : IShaderUniform;
-    FShaderProgram : IShaderProgram;
+    IndxAttrib    : IShaderAttrib;
+    VBUniform     : IShaderUniform;
+    DBUniform     : IShaderUniform;
+    ShaderProgram : IShaderProgram;
+    LastUsed      : LongInt;
   end;
 
   TRender2D = class(TInterfacedObject, IRender2D)
@@ -33,19 +33,22 @@ type
     FShader : IShaderResource;
   class var
     FIdx     : LongWord;
-    FVrtBuff : TGeomBuffer;
+    FVrtBuff : IGeomBuffer;
     RenderTechnique : array[TTehniqueType] of TTehnique;
 
     FBatchParams : record
-      Shader       : IShaderProgram;
-      BatchTexture : ITexture;
-      Blend        : TBlendType;
-      ColorMask    : Byte;
-      AlphaTest    : Byte;
-      VertexColor  : Boolean;
+      Tehnique        : TTehniqueType;
+      BatchShader     : IShaderProgram;
+      UniformsVersion : LongWord;
+      BatchTexture1   : ITexture;
+      BatchTexture2   : ITexture;
+      BatchTexture3   : ITexture;
+      Blend           : TBlendType;
+      ColorMask       : Byte;
+      AlphaTest       : Byte;
     end;
 
-    FColorBuff  : array[1..Batch_Size*4] of TVec4f;
+    FDataBuff : array[1..Batch_Size*4] of TVec4f;
     FVertexBuff : array[1..Batch_Size] of record
       v : array[1..4] of TVec4f;
     end;
@@ -53,9 +56,11 @@ type
   public
     class procedure Flush(Param: LongInt = 0); stdcall; static;
     procedure Init;
-    procedure BatchQuad(const v1, v2, v3, v4, c1, c2, c3, c4: TVec4f); stdcall;
-    procedure DrawSprite(Tex: ITexture; x, y, w, h: Single; const Color: TVec4f; Angle, cx, cy: Single); overload; stdcall;
-    procedure DrawSprite(Tex: ITexture; x, y, w, h: Single; const c1, c2, c3, c4: TVec4f; Angle, cx, cy: Single); overload;  stdcall;
+    procedure BatchQuad(const v1, v2, v3, v4, Data1, Data2, Data3, Data4: TVec4f); stdcall;
+    procedure DrawSpriteAdv(Shader: IShaderProgram; Tex1, Tex2, Tex3: ITexture; x, y, w, h: Single; const Data1, Data2, Data3, Data4: TVec4f; Angle, cx, cy: Single); stdcall;
+
+    procedure DrawSprite(Tex : ITexture; x, y, w, h: Single; const Color: TVec4f; Angle, cx, cy: Single); overload; stdcall;
+    procedure DrawSprite(Tex : ITexture; x, y, w, h: Single; const c1, c2, c3, c4: TVec4f; Angle, cx, cy: Single); overload;  stdcall;
   end;
 
 implementation
@@ -63,16 +68,28 @@ implementation
 uses
   JEN_Main;
 
-function TehniqueInit(Shader: IShaderProgram): TTehnique; inline;
+function TehniqueInit(Shader: IShaderProgram): TTehnique;
+var
+  i : LongInt;
+  Uniform : IShaderUniform;
 begin
   if Assigned(Shader) then
     with Result do
     begin
-      FShaderProgram := Shader;
-      FVBUniform := FShaderProgram.Uniform('PosTexCoord', utVec4);
-      FCBUniform := FShaderProgram.Uniform('QuadColor', utVec4);
-      FIndxAttrib := FShaderProgram.Attrib('Indx', atVec1f);
-      FIndxAttrib.Value(4,0);
+      LastUsed := Utils.Time;
+      ShaderProgram := Shader;
+      VBUniform := ShaderProgram.Uniform('PosTexCoord');
+      DBUniform := ShaderProgram.Uniform('QuadData', False);
+
+      for I := 0 to 3 do
+      begin
+        Uniform := ShaderProgram.Uniform('QuadData', False);
+        if Assigned(Uniform) then
+          Uniform.Value(i);
+      end;
+
+      IndxAttrib := ShaderProgram.Attrib('IndxAttrib');
+      IndxAttrib.Value(4,0, atVec1f);
     end;
 end;
 
@@ -89,22 +106,16 @@ begin
   for I:=1  to Batch_Size*4 do
     IdxBuff[i] := i-1;
 
-  FVrtBuff := TGeomBuffer.Create(gbVertex, Batch_Size*4, 4, @IdxBuff[1]);
+  FVrtBuff := Render.CreateGeomBuffer(gbVertex, Batch_Size*4, 4, @IdxBuff[1]);
 
   ResMan.Load('Media\Shader.xml', FShader);
-
-  FShader['VertexColor'] := 0;
   RenderTechnique[ttNormal] := TehniqueInit(FShader.Compile);
-  FShader['VertexColor'] := 1;
-  RenderTechnique[ttVertexColor] := TehniqueInit(FShader.Compile);
 
   Engine.AddEventProc(evFrameEnd, @TRender2D.Flush);
 end;
 
 destructor TRender2D.Destroy;
 begin
-  if Assigned(FVrtBuff) then
-    FVrtBuff.Free;
   inherited;
 end;
 
@@ -112,10 +123,18 @@ class procedure TRender2D.Flush;
 var
   Blend     : TBlendType;
   AlphaTest : Byte;
-  Tehnique  : TTehniqueType;
 begin
   if FIdx = 0 then Exit;
-  FBatchParams.BatchTexture.Bind;
+
+  with FBatchParams do
+  begin
+    if Assigned(BatchTexture1) then
+      BatchTexture1.Bind(0);
+    if Assigned(BatchTexture2) then
+      BatchTexture1.Bind(1);
+    if Assigned(BatchTexture3) then
+      BatchTexture1.Bind(2);
+  end;
 
   Blend     := Render.BlendType;
   AlphaTest := Render.AlphaTest;
@@ -125,25 +144,16 @@ begin
 
   FVrtBuff.Bind;
 
-  if FBatchParams.VertexColor then
-    Tehnique := ttVertexColor
-  else
-    Tehnique := ttNormal;
-
-  with RenderTechnique[Tehnique] do
+  with RenderTechnique[FBatchParams.Tehnique] do
   begin
-    FIndxAttrib.Value(4,0);
-    FIndxAttrib.Enable;
-    FShaderProgram.Bind;
+    IndxAttrib.Enable;
+    ShaderProgram.Bind;
 
-    FVBUniform.Value(FVertexBuff[1], FIdx*4);
-
-    if FBatchParams.VertexColor then
-      FCBUniform.Value(FColorBuff[1],FIdx*4)
-    else
-      FCBUniform.Value(FColorBuff[1],FIdx);
+    VBUniform.Value(FVertexBuff[1], FIdx*4);
+    if Assigned(DBUniform) then
+      DBUniform.Value(FDataBuff[1], FIdx*4);
   end;
-  glDrawArrays(GL_QUADS, 0, FIdx*4);
+  FVrtBuff.Draw(gmQuads, FIdx*4, false);
 
   Render.BlendType := Blend;
   Render.AlphaTest := AlphaTest;
@@ -152,7 +162,7 @@ begin
   Render.IncDip;
 end;
 
-procedure TRender2D.BatchQuad(const v1, v2, v3, v4, c1, c2, c3, c4: TVec4f);
+procedure TRender2D.BatchQuad(const v1, v2, v3, v4, Data1, Data2, Data3, Data4: TVec4f);
 begin
   inc(FIdx);
 
@@ -164,14 +174,10 @@ begin
     V[4]:=v4;
   end;
 
-  if FBatchParams.VertexColor then
-  begin
-    FColorBuff[(FIdx-1)*4+1] := c1;
-    FColorBuff[(FIdx-1)*4+2] := c2;
-    FColorBuff[(FIdx-1)*4+3] := c3;
-    FColorBuff[(FIdx-1)*4+4] := c4;
-  end else
-    FColorBuff[FIdx] := c1;
+  FDataBuff[(FIdx-1)*4+1] := Data1;
+  FDataBuff[(FIdx-1)*4+2] := Data2;
+  FDataBuff[(FIdx-1)*4+3] := Data3;
+  FDataBuff[(FIdx-1)*4+4] := Data4;
 
   if FIdx = Batch_Size then
     Flush;
@@ -219,31 +225,61 @@ begin
   v1 := Vec2f(tx1*tcos - ty2*tsin, tx1*tsin + ty2*tcos) + p;
 end;
 
-procedure TRender2D.DrawSprite(Tex: ITexture; X, Y, W, H: Single; const Color: TVec4f; Angle, Cx, Cy: Single);
+procedure TRender2D.DrawSpriteAdv(Shader: IShaderProgram; Tex1, Tex2, Tex3: ITexture; x, y, w, h: Single; const Data1, Data2, Data3, Data4: TVec4f; Angle, cx, cy: Single);
 var
   v : array[1..4] of TVec2f;
 
   procedure UpdateBathParams;
+  var
+    Teh : TTehniqueType;
+    OlderTime : LongInt;
+    OlderTeh : TTehniqueType;
   begin
     with FBatchParams do
     begin
-      BatchTexture := Tex;
-      Blend := Render.BlendType;
-      ColorMask := Render.GetColorMask;
-      AlphaTest := Render.AlphaTest;
-      VertexColor := false;
+      BatchShader     := Shader;
+      UniformsVersion := Shader.UniformsVersion;
+      BatchTexture1   := Tex1;
+      BatchTexture2   := Tex2;
+      BatchTexture3   := Tex3;
+      Blend           := Render.BlendType;
+      ColorMask       := Render.GetColorMask;
+      AlphaTest       := Render.AlphaTest;
+
+      OlderTeh        := ttAdvanced;
+      OlderTime       := RenderTechnique[ttAdvanced].LastUsed;
+
+      for Teh := ttNormal to ttAdvancedLast do
+        with RenderTechnique[Teh] do
+        if ShaderProgram = Shader then
+        begin
+          LastUsed := Utils.Time;
+          Tehnique := Teh;
+          Exit;
+        end else
+          if (OlderTime>LastUsed) and (Teh >= ttAdvanced) then
+          begin
+            OlderTime := LastUsed;
+            OlderTeh  := Teh;
+          end;
+
+      RenderTechnique[OlderTeh] := TehniqueInit(Shader);
+      Tehnique := OlderTeh;
     end;
   end;
 
 begin
-  if not Assigned(Tex) then Exit;
+  if not Assigned(Shader) then Exit;
 
   with FBatchParams do
   begin
 
     if FIdx = 0 then
       UpdateBathParams
-    else if(BatchTexture <> Tex) or (Blend <> Render.BlendType) or (ColorMask <> Render.GetColorMask) or (AlphaTest <> Render.AlphaTest) then
+    else if(BatchShader <> Shader) or
+           (BatchTexture1 <> Tex1) or (BatchTexture2 <> Tex2) or (BatchTexture3 <> Tex3) or
+           (Blend <> Render.BlendType) or (ColorMask <> Render.GetColorMask) or (AlphaTest <> Render.AlphaTest) or
+           (UniformsVersion <> Shader.UniformsVersion) then
     begin
       Flush;
       UpdateBathParams;
@@ -254,47 +290,19 @@ begin
     BatchQuad( Vec4f(v[1].x, v[1].y, 0, 1),
                Vec4f(v[2].x, v[2].y, 1, 1),
                Vec4f(v[3].x, v[3].y, 1, 0),
-               Vec4f(v[4].x, v[4].y, 0, 0), Color, Color, Color, Color);
+               Vec4f(v[4].x, v[4].y, 0, 0), Data1, Data2, Data3, Data4);
   end;
 
 end;
 
-procedure TRender2D.DrawSprite(Tex: ITexture; X, Y, W, H: Single; const c1, c2, c3, c4: TVec4f; Angle, Cx, Cy: Single);
-var
-  v : array[1..4] of TVec2f;
-
-  procedure UpdateBathParams;
-  begin
-    with FBatchParams do
-    begin
-      BatchTexture := Tex;
-      Blend := Render.BlendType;
-      ColorMask := Render.GetColorMask;
-      AlphaTest := Render.AlphaTest;
-      VertexColor := True;
-    end;
-  end;
-
+procedure TRender2D.DrawSprite(Tex : ITexture; x, y, w, h: Single; const Color: TVec4f; Angle, cx, cy: Single);
 begin
-  if not Assigned(Tex) then Exit;
+  DrawSpriteAdv(RenderTechnique[ttNormal].ShaderProgram, Tex, nil, nil, x, y, w, h, Color, Color, Color, Color, Angle, cx, cy);
+end;
 
-  with FBatchParams do
-  begin
-    if FIdx = 0 then
-      UpdateBathParams
-    else if(BatchTexture <> Tex) or (Blend <> Render.BlendType) or (ColorMask <> Render.GetColorMask) or (AlphaTest <> Render.AlphaTest) or (VertexColor <> True) then
-    begin
-      Flush;
-      UpdateBathParams;
-    end;
-
-    Rotate2D(v[1], v[2], v[3], v[4], x, y, w, h, Angle, cx, cy);
-
-    BatchQuad( Vec4f(v[1].x, v[1].y, 0, 1),
-               Vec4f(v[2].x, v[2].y, 1, 1),
-               Vec4f(v[3].x, v[3].y, 1, 0),
-               Vec4f(v[4].x, v[4].y, 0, 0), c1, c2, c3, c4);
-  end;
+procedure TRender2D.DrawSprite(Tex: ITexture; X, Y, W, H: Single; const c1, c2, c3, c4: TVec4f; Angle, Cx, Cy: Single);
+begin
+  DrawSpriteAdv(RenderTechnique[ttNormal].ShaderProgram, Tex, nil, nil, x, y, w, h, c1, c2, c3, c4, Angle, cx, cy);
 end;
 
 end.

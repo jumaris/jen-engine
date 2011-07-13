@@ -1,43 +1,35 @@
 ﻿<Shader>
 	<VertexShader>
-		<InsCode code="utilityLib/fragDeferredRead.glsl" />
 		<Code>
 			#version 120
-			attribute float Indx;
-		</Code>	
-		
-		<ifdef def="VertexColor">
-			const int ColorAraySize = 64;
-		</ifdef>
-		<ifndef def="VertexColor">
-			const int ColorAraySize = 16;
-		</ifndef>
-		
-		<Code>
+			attribute float IndxAttrib;
+
 			uniform vec4 PosTexCoord[64]; 
-			uniform vec4 QuadColor[ColorAraySize]; 
+			uniform vec4 QuadData[64]; 
 			
-			varying vec4 Color;
+			varying vec4 InterpolatedData;
+			varying vec4 Data1;
+			varying vec4 Data2;
+			varying vec4 Data3;
+			varying vec4 Data4;
 			varying vec2 Texcoord;
 		
-			const vec2 v[4] = vec2[](vec2(0.0, 0.0), vec2(1.0, 0.0), 
-									   vec2(1.0, 1.0), vec2(0.0, 1.0));
 			void main( void )
 			{
-				int i = int(Indx);
-				vec4 PosTex = PosTexCoord[i];
-		</Code>	
-			<ifdef def="VertexColor">
-				Color = QuadColor[i];
-			</ifdef>
-			<ifndef def="VertexColor">
-				Color = QuadColor[int(floor(Indx/4.0))];
-			</ifndef>
-		<Code>		
+				int QuadId = int(floor(IndxAttrib/4.0));
+				int VertexId = int(IndxAttrib);
+				vec4 PosTex = PosTexCoord[VertexId];
+				InterpolatedData = QuadData[VertexId];
+
+				Data1 = QuadData[QuadId+0];
+				Data2 = QuadData[QuadId+1];
+				Data3 = QuadData[QuadId+2];
+				Data4 = QuadData[QuadId+3];
+
 				PosTex.xy = PosTex.xy * 2.0 -1.0;
 				PosTex.y = -PosTex.y;
 
-				gl_Position = vec4( PosTex.xy, 1.0, 1.0);
+				gl_Position = vec4(PosTex.xy, 1.0, 1.0);
 				Texcoord = PosTex.zw;
 			}
 		</Code>
@@ -46,14 +38,14 @@
 	<FragmentShader>
 		<Code>
 			#version 120
-			uniform sampler2D baseMap;
+			uniform sampler2D Map0;
 
-			varying vec4 Color;
+			varying vec4 InterpolatedData;
 			varying vec2 Texcoord;
 
 			void main( void )
 			{
-				gl_FragColor = texture2D(baseMap, Texcoord.xy)*Color;
+				gl_FragColor = texture2D(Map0, Texcoord.xy)*InterpolatedData;
 			}
 		</Code> 
 	</FragmentShader>

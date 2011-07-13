@@ -25,19 +25,25 @@ var
   Game : IGame;
   ResMan : IResourceManager;
   r : ITexture;
+  s : IShaderProgram;
+
 
   procedure p;
 
 implementation
 
 procedure TGame.LoadContent;
+var
+  sr : IShaderResource;
 begin
    ResMan.Load('Media\123.dds', r);
+   ResMan.Load('Media\Shader2.xml', sr);
+   s := sr.Compile;
 end;
 
 procedure TGame.OnUpdate(dt: LongInt);
 begin
-  Display.Caption := Utils.IntToStr(Display.FPs);
+  Display.Caption := Utils.IntToStr(Render.LastDipCount);
 end;
 
 procedure TGame.OnRender;
@@ -51,9 +57,10 @@ begin
     render2d.DrawSprite(r ,Frac(i / 50),i/1000,1/25,1/25, vec4f(1.0 - i/c,1,1,1), Utils.Time/10000*360,0.5,0.5);
 
 
-    render2d.DrawSprite(r,0.5,0.5,0.7,0.5, vec4f(1,2,1,1), Utils.Time/10000*360,0.5,0.5);
+    render2d.DrawSpriteAdv(s,nil,nil,nil,0.35,0.2,0.3,0.3, clWhite, clWhite, clWhite, clWhite, Utils.Time/10000*360,0.5,0.5);
 
-    render2d.DrawSprite(r,0.0,0.5,0.7,0.5, vec4f(1,0,0,1),vec4f(0,1,0,1),vec4f(0,0,1,1),vec4f(1,1,1,1), Utils.Time/10000*360,0.5,0.5);
+
+        render2d.DrawSprite(r,0.25,0.6,0.5,0.3, vec4f(1,0,0,1),vec4f(0,1,0,1),vec4f(0,0,1,1),vec4f(1,1,1,1), Utils.Time/10000*360,0.5,0.5);
 
 end;
 
@@ -77,10 +84,10 @@ begin
   Engine.GetSubSystem(ssRender, IJenSubSystem(Render));
   Engine.GetSubSystem(ssRender2d, IJenSubSystem(Render2d));
   Engine.GetSubSystem(ssResMan, IJenSubSystem(ResMan));
-  Display.Init(1024,768,9,false);
+  Display.Init(1024,768,9,False);
   Render.Init();
 
-  Render.SetVSync(false);
+  Render.SetVSync(False);
   Game := TGame.Create;
   Engine.Start(Game);
 

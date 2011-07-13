@@ -38,8 +38,8 @@ type
                   rtTexture7, rtTexture8, rtTexture9, rtTexture10, rtTexture11, rtTexture12,
 	                rtTexture13, rtTexture14, rtTexture15);
 
-  TShaderUniformType = (utInt, utVec1, utVec2, utVec3, utVec4, utMat3, utMat4);
-  TShaderAttribType  = (atVec1b, atVec2b, atVec3b, atVec4b,
+  TShaderUniformType = (utNone, utInt, utVec1, utVec2, utVec3, utVec4, utMat3, utMat4);
+  TShaderAttribType  = (atNone, atVec1b, atVec2b, atVec3b, atVec4b,
                         atVec1s, atVec2s, atVec3s, atVec4s,
                         atVec1f, atVec2f, atVec3f, atVec4f);
 
@@ -211,15 +211,19 @@ type
   IShaderUniform = interface
   ['{A587E658-8ADD-4928-A985-771AB9E5D562}']
     function GetName: string; stdcall;
+    function GetVersion: Word; stdcall;
+
     procedure Value(const Data; Count: LongInt = 1); stdcall;
+    procedure SetType(Value: TShaderUniformType);
 
     property Name: string read GetName;
+    property Version: Word read GetVersion;
   end;
 
   IShaderAttrib = interface
   ['{3BF51C3F-3063-4CAE-9993-12F7A5E11DED}']
     function GetName: string; stdcall;
-    procedure Value(Stride, Offset: LongInt); stdcall;
+    procedure Value(Stride, Offset: LongInt; AttribType: TShaderAttribType; Norm: Boolean = False); stdcall;
     procedure Enable; stdcall;
     procedure Disable; stdcall;
 
@@ -228,9 +232,12 @@ type
 
   IShaderProgram = interface
   ['{1F79BB95-C0B0-45AF-AA8D-AF9999CC85C8}']
-    function Uniform(const UName: string; UniformType: TShaderUniformType): IShaderUniform; stdcall;
-    function Attrib(const AName: string; AttribType: TShaderAttribType; Norm: Boolean = False): IShaderAttrib; stdcall;
+    function Uniform(const UName: String; CreateDebug: Boolean = True): IShaderUniform; overload; stdcall;
+    function Attrib(const AName: string; CreateDebug: Boolean = True): IShaderAttrib; stdcall;
+    function GetUniformsVersion: LongWord; stdcall;
+
     procedure Bind; stdcall;
+    property UniformsVersion: LongWord read GetUniformsVersion;
   end;
 
   IShaderResource = interface(IResource)
@@ -327,10 +334,10 @@ type
   end;
 
   IRender2D = interface(IJenSubSystem)
-    procedure DrawSprite(Tex: ITexture; x, y, w, h: Single; const Color: TVec4f; Angle: Single = 0.0; cx: Single = 0.5; cy: Single = 0.5);overload; stdcall;
-    procedure DrawSprite(Tex: ITexture; x, y, w, h: Single; const c1, c2, c3, c4: TVec4f;  Angle: Single = 0.0; cx: Single = 0.5; cy: Single = 0.5); overload;  stdcall;
- ///  procedure Quad(const Rect, TexRect: TRecti; Color: TColor; Angle: Single = 0); overload; stdcall;
-  //  procedure Quad(x1, y1, x2, y2, x3, y3, x4, y4, cx, cy: Single; Color: TColor; PtIdx: Word = 0; Angle: Single = 0); overload; stdcall;
+    procedure DrawSpriteAdv(Shader: IShaderProgram; Tex1, Tex2, Tex3: ITexture; x, y, w, h: Single; const Data1, Data2, Data3, Data4: TVec4f; Angle, cx, cy: Single); stdcall;
+
+    procedure DrawSprite(Tex : ITexture; x, y, w, h: Single; const Color: TVec4f; Angle, cx, cy: Single); overload; stdcall;
+    procedure DrawSprite(Tex : ITexture; x, y, w, h: Single; const c1, c2, c3, c4: TVec4f; Angle, cx, cy: Single); overload;  stdcall;
   end;
 
   ICamera3d = interface
@@ -389,9 +396,9 @@ type
 
 {$IFNDEF JEN_CTD}
   {$IFDEF JEN_ATTACH_DLL}
-    procedure GetJenEngine(out Engine: IJenEngine; Debug: Boolean = false); stdcall; external 'JEN.dll';
+    procedure GetJenEngine(out Engine: IJenEngine; Debug: Boolean = False); stdcall; external 'JEN.dll';
   {$ELSE}
-    var GetJenEngine : procedure(out Engine: IJenEngine; Debug: Boolean = false); stdcall;
+    var GetJenEngine : procedure(out Engine: IJenEngine; Debug: Boolean = False); stdcall;
   {$ENDIF}
 {$ENDIF}
 

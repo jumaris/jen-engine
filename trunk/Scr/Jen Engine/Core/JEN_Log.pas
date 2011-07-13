@@ -19,7 +19,7 @@ type
     class property LogOutputs : TInterfaceList read fLogOutputs;
   end;
 
-  type TFileLog = class(TManagedInterface, ILogOutput)
+  TFileLog = class(TManagedInterface, ILogOutput)
   constructor Create(FileName : String);
   destructor Destroy; override;
   private
@@ -69,7 +69,7 @@ end;
 
 constructor TFileLog.Create(FileName : String);
 begin
-  Stream := TFileStream.Open(FileName, true);
+  Stream := TFileStream.Open(FileName, True);
 end;
 
 destructor TFileLog.Destroy;

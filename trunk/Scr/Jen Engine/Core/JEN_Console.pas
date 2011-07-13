@@ -40,18 +40,9 @@ uses
 constructor TConsole.Create;
 var
   lpThreadId : DWORD;
-begin           {
-  FCaption    := 'JEN Engine application';
-  FWidth      := Width;
-  FHeight     := Height;
-  FRefresh    := Refresh;
-  FFullScreen := FullScreen;
-  FValid      := False;
-  FActive     := True;
-  FCursor     := True;
-                       }
-  QuitEvent := CreateEvent(nil, true, false, '');
-  LoadEvent := CreateEvent(nil, true, false, '');
+begin
+  QuitEvent := CreateEvent(nil, True, False, '');
+  LoadEvent := CreateEvent(nil, True, False, '');
   Thread := CreateThread(nil, 0, @TConsole.CreateWnd, nil, 0, lpThreadId);
   WaitForSingleObject(LoadEvent, INFINITE);
   CloseHandle(LoadEvent);
@@ -106,22 +97,22 @@ begin
   FillChar(LF, SizeOf(LOGFONT), 0);
   LF.lfHeight := 14;
   LF.lfFaceName := 'Consolas';
-
   HFont := CreateFontIndirect(LF);
-  SendMessage(HMemo, WM_SETFONT, hFont, MAKELPARAM(1,0));
 
-  Quit := false;
-  SetEvent(LoadEvent);
   HTimer := 1;
-
   if ((FHandle = 0) or (HMemo = 0) or (HFont = 0) or (SetTimer(FHandle, HTimer, 40, nil) = 0))  Then
   begin
+    SetEvent(LoadEvent);
     LogOut('Cannot create console window.', lmError);
     Exit;
   end;
 
   SendMessage(FHandle, WM_SETICON, 1, LoadIconW(HInstance, 'MAINICON'));
   ShowWindow(FHandle, SW_SHOWNORMAL);
+  SendMessage(HMemo, WM_SETFONT, WPARAM(hFont), 1);
+
+  Quit := False;
+  SetEvent(LoadEvent);
 
   while GetMessage(Msg, 0, 0, 0) and (not Quit) do
   begin
@@ -140,23 +131,20 @@ class function TConsole.WndProc(hWnd: HWND; Msg: LongWord; wParam: LongInt; lPar
 var
   rect : TRect;
 begin
-  Result := 0;
-
   case Msg of
-    WM_CLOSE:;{ SetEvent(QuitEvent);  }
+    WM_CLOSE:;{ SetEvent(QuitEvent);   }
 
     WM_COMMAND:ShowWindow(FHandle, SW_SHOWNA);
     WM_SHOWWINDOW:;
     WM_SIZE:
     begin
  	     GetClientRect(FHandle, rect);
-	     MoveWindow(HMemo, 0, 0, rect.right, rect.bottom, true);
+	     MoveWindow(HMemo, 0, 0, rect.right, rect.bottom, True);
     end;
 
     WM_TIMER:
       Quit := not (WaitForSingleObject(QuitEvent,0) = WAIT_TIMEOUT);
   else
-
     Result := DefWindowProc(hWnd, Msg, wParam, lParam);
   end;
 end;
@@ -183,21 +171,23 @@ end;
 
 procedure TConsole.AddMsg(const Text: String; MType: TLogMsg);
 var
-  str,line : String;
-  tstr : String;
-  TimeStr : String;
+  str ,line       : String;
+  tstr            : String;
+  TimeStr         : String;
   h,m,s,start,i,j : LongInt;
-  StrLength : LongInt;
+  TextLength      : LongInt;
+  WndTextLength   : LongInt;
 begin
   if Pointer(Text) = nil then
     Exit;
 
-  StrLength := GetWindowTextLength(HMemo);
+  WndTextLength := GetWindowTextLength(HMemo);
+  TextLength := Length(Text);
 
-  if (StrLength + Length(Text) + 3 >= 30000) then
+  if (WndTextLength + TextLength + 3 >= 30000) then
   begin
 	  SetWindowText(HMemo, 'Console auto clean.');
-    StrLength := GetWindowTextLength(HMemo);
+    WndTextLength := GetWindowTextLength(HMemo);
   end;
 
   h := Trunc(Utils.Time/3600000);
@@ -235,7 +225,7 @@ begin
         j := 1;
         str := 'Source code:'+#13#10;
 
-        while Text[i] <> #0 do
+        while i <= TextLength do
         begin
           start := i;
           while not (AnsiChar(Text[i]) in [#0, #09, #10, #13]) do Inc(i);
@@ -262,16 +252,16 @@ begin
       end;
 
     lmWarning :
-      str := '[' + TimeStr + 'ms] WARNING: ' + Text+#13#10;
+      str := '[' + TimeStr + 'ms] WARNING: ' + Text + #13#10;
 
     lmError :
-      str := '[' + TimeStr + 'ms] ERROR: ' + Text+#13#10;
+      str := '[' + TimeStr + 'ms] ERROR: ' + Text + #13#10;
   end;
   LastUpdate := Utils.Time;
 
-  SendMessage(HMemo,EM_SETSEL,StrLength,StrLength);
-  SendMessage(HMemo,EM_REPLACESEL,0,LongInt(PChar(str)));
-  SendMessage(HMemo,EM_SCROLL,SB_BOTTOM,0);
+  SendMessage(HMemo, EM_SETSEL, WndTextLength, WndTextLength);
+  SendMessage(HMemo, EM_REPLACESEL, 0, LongInt(PChar(str)));
+  SendMessage(HMemo, EM_SCROLL, SB_BOTTOM, 0);
 end;
 
 end.
