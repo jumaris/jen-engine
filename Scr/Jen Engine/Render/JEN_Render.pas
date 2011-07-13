@@ -211,7 +211,7 @@ begin
   LogOut('Video device   : ' + glGetString(GL_RENDERER), lmInfo);
   LogOut('Texture units  : ' + Utils.IntToStr(Par), lmInfo);
 
-  SetColorMask(true, true, true, true);
+  SetColorMask(True, True, True, True);
   SetBlendType(btNormal);
   SetAlphaTest(0);
   SetDepthTest(False);

@@ -12,6 +12,9 @@
 			<Projects Include="Samples\Delphi\02 Attach Engine from DLL\_02_Attach_Engine_from_DDL.dproj">
 				<Dependencies/>
 			</Projects>
+			<Projects Include="digcraft\digcraft.dproj">
+				<Dependencies/>
+			</Projects>
 		</ItemGroup>
 		<ProjectExtensions>
 			<Borland.Personality>Default.Personality.12</Borland.Personality>
@@ -47,14 +50,23 @@
 		<Target Name="_02_Attach_Engine_from_DDL:Make">
 			<MSBuild Targets="Make" Projects="Samples\Delphi\02 Attach Engine from DLL\_02_Attach_Engine_from_DDL.dproj"/>
 		</Target>
+		<Target Name="digcraft">
+			<MSBuild Projects="digcraft\digcraft.dproj"/>
+		</Target>
+		<Target Name="digcraft:Clean">
+			<MSBuild Targets="Clean" Projects="digcraft\digcraft.dproj"/>
+		</Target>
+		<Target Name="digcraft:Make">
+			<MSBuild Targets="Make" Projects="digcraft\digcraft.dproj"/>
+		</Target>
 		<Target Name="Build">
-			<CallTarget Targets="JEN;_01_Attach_Engine_to_Project;_02_Attach_Engine_from_DDL"/>
+			<CallTarget Targets="JEN;_01_Attach_Engine_to_Project;_02_Attach_Engine_from_DDL;digcraft"/>
 		</Target>
 		<Target Name="Clean">
-			<CallTarget Targets="JEN:Clean;_01_Attach_Engine_to_Project:Clean;_02_Attach_Engine_from_DDL:Clean"/>
+			<CallTarget Targets="JEN:Clean;_01_Attach_Engine_to_Project:Clean;_02_Attach_Engine_from_DDL:Clean;digcraft:Clean"/>
 		</Target>
 		<Target Name="Make">
-			<CallTarget Targets="JEN:Make;_01_Attach_Engine_to_Project:Make;_02_Attach_Engine_from_DDL:Make"/>
+			<CallTarget Targets="JEN:Make;_01_Attach_Engine_to_Project:Make;_02_Attach_Engine_from_DDL:Make;digcraft:Make"/>
 		</Target>
 		<Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
 	</Project>

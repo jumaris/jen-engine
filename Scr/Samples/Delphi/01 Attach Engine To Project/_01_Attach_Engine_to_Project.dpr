@@ -207,13 +207,13 @@ begin
   Engine.GetSubSystem(ssInput, IJenSubSystem(Input));
   Engine.GetSubSystem(ssHelpers, IJenSubSystem(Helpers));
 
-  Display.Init(1024, 768, 60, false);
+  Display.Init(1024, 768, 60, False);
   Render.Init();
 
 
 //  Display.SetVSync(False);
-  Display.FullScreen := false;
-  //Display.SetVSync(false);
+  Display.FullScreen := False;
+  //Display.SetVSync(False);
   Game := TGame.Create;
   Engine.Start(Game);
 

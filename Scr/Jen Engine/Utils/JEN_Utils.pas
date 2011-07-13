@@ -64,14 +64,13 @@ type
   end;
 
   TManagedInterface = class(TObject, IInterface, IManagedInterface)
-  private
-    procedure SetManager(Value: Pointer) stdcall;
   protected
     FRefCount : LongInt;
     FManager  : TInterfaceList;
     function QueryInterface(const IID: TGUID; out Obj): HResult; stdcall;
     function _AddRef: LongInt; stdcall;
     function _Release: LongInt; stdcall;
+    procedure SetManager(Value: Pointer); stdcall;
   public
     procedure AfterConstruction; override;
     procedure BeforeDestruction; override;
@@ -523,7 +522,7 @@ constructor TUtils.Create;
 var
   Count : Int64;
 begin
-  HWaitObj := CreateEvent(nil, true, false, '');
+  HWaitObj := CreateEvent(nil, True, False, '');
 
   QueryPerformanceFrequency(FTimeFreq);
   QueryPerformanceCounter(Count);
@@ -592,9 +591,9 @@ end;
 function TUtils.BoolToStr(Value: Boolean): string;
 begin
   if Value then
-    Result := 'true'
+    Result := 'True'
   else
-    Result := 'false';
+    Result := 'False';
 end;
 
 function TUtils.StrToBool(const Str: string; Def: Boolean = False): Boolean;
@@ -602,10 +601,10 @@ var
   LStr : string;
 begin
   LStr := LowerCase(Str);
-  if LStr = 'true' then
+  if LStr = 'True' then
     Result := True
   else
-    if LStr = 'false' then
+    if LStr = 'False' then
       Result := False
     else
       Result := Def;

@@ -65,12 +65,12 @@ end;
 
 class procedure TInput.OnKeyUp(Param: LongInt); stdcall;
 begin
-  Input.SetState(TInputKey(Param), false);
+  Input.SetState(TInputKey(Param), False);
 end;
 
 class procedure TInput.OnKeyDown(Param: LongInt); stdcall;
 begin
-  Input.SetState(TInputKey(Param), true);
+  Input.SetState(TInputKey(Param), True);
 end;
 
 class procedure TInput.onActivate(Param: LongInt); stdcall;

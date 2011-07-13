@@ -154,9 +154,9 @@ var
   WinClass: TWndClassEx;
 begin
   if (Width = Helpers.SystemInfo.Screen.Width) and (Height = Helpers.SystemInfo.Screen.Height) then
-    FullScreen := true;
+    FullScreen := True;
 
-  Result := false;
+  Result := False;
 
   FCaption    := 'JEN Engine application';
   FWidth      := Width;
@@ -208,8 +208,8 @@ begin
 
   SendMessage(FHandle, WM_SETICON, 1, LoadIconW(HInstance, 'MAINICON'));
   FDC := GetDC(FHandle);
-  FValid := true;
-  Result := true;
+  FValid := True;
+  Result := True;
   Restore;
 end;
 

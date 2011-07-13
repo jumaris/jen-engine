@@ -18,7 +18,7 @@ type
   public
     ExtString : string;
     ResType : TResourceType;
-    function Load(const Stream : TStream;var Resource : IResource) : Boolean; virtual; abstract;
+    function Load(const Stream : TStream; var Resource : IResource) : Boolean; virtual; abstract;
   end;
 
   ITexture = interface(JEN_Header.ITexture)

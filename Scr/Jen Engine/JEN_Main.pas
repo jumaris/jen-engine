@@ -17,7 +17,7 @@ uses
   JEN_ResourceManager,
   JEN_DDSTexture,
   JEN_Shader,
-  Windows;
+  Windows, messages;
    {
 const
   lmInfo       = TLogMsg.lmInfo;
@@ -73,16 +73,16 @@ type
   end;
 
 var
-  Engine       : TJenEngine;
-  Utils        : IUtils;
-  Input        : IInput;
-  Helpers      : IHelpers;
-  Log          : ILog;
-  Render       : IRender;
-  Render2d     : IRender2D;
-  Display      : IDisplay;
-  ResMan       : IResourceManager;
-  Game         : IGame;
+  Engine     : TJenEngine;
+  Utils      : IUtils;
+  Input      : IInput;
+  Helpers    : IHelpers;
+  Log        : ILog;
+  Render     : IRender;
+  Render2d   : IRender2D;
+  Display    : IDisplay;
+  ResMan     : IResourceManager;
+  Game       : IGame;
 
 procedure LogOut(const Text: string; MType: TLogMsg);
 procedure pGetEngine(out Eng: JEN_Header.IJenEngine; Debug: Boolean); stdcall;
@@ -92,7 +92,7 @@ implementation
 procedure LogOut(const Text: string; MType: TLogMsg);
 begin
   if Assigned(Log) then
-  Log.Print(Text, MType);
+    Log.Print(Text, MType);
 end;
 
 procedure pGetEngine(out Eng: JEN_Header.IJenEngine; Debug: Boolean);
@@ -174,7 +174,6 @@ procedure TJenEngine.Start(Game: IGame);
 var
   DeltaTime : LongInt;
 begin
-
   if not Assigned(Game) then
   begin
     LogOut('Game is not assigned', lmError);
@@ -197,7 +196,7 @@ begin
   end;
 
   Logout('Let''s rock!', lmNotify);
-  FisRunnig := true;
+  FisRunnig := True;
 
   Game.LoadContent;
   Input.Init;
@@ -267,7 +266,7 @@ end;
 
 initialization
 begin
-  TJenEngine.FisRunnig := false;
+  TJenEngine.FisRunnig := False;
 {$IFDEF DEBUG}
   ReportMemoryLeaksOnShutdown := True;
 {$ENDIF}
