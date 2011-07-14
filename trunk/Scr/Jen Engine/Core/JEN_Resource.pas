@@ -6,8 +6,7 @@ uses
   JEN_Header,
   JEN_OpenglHeader,
   JEN_Utils,
-  JEN_Math,
-  CoreX_XML;
+  JEN_Math;
 
 
 const

@@ -14,10 +14,7 @@ uses
   JEN_Display,
   JEN_Render,
   JEN_Render2D,
-  JEN_ResourceManager,
-  JEN_DDSTexture,
-  JEN_Shader,
-  Windows, messages;
+  JEN_ResourceManager;
    {
 const
   lmInfo       = TLogMsg.lmInfo;

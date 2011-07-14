@@ -5,7 +5,7 @@ interface
 uses
   Windows,
   Messages,
-  JEN_Utils,
+
   JEN_Math,
   JEN_Header;
 
