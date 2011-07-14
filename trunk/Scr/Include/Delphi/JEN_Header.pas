@@ -49,11 +49,6 @@ type
   TColor = LongWord;
   TEventProc = procedure(Param: LongInt); stdcall;
 
-  IManagedInterface = interface
-  ['{7B975F52-35F8-4776-B557-7536F9B2C55C}']
-    procedure SetManager(Value: Pointer); stdcall;
-  end;
-
   IGame = interface
     procedure LoadContent; stdcall;
     procedure OnUpdate(dt: LongInt); stdcall;
@@ -138,7 +133,7 @@ type
     property Refresh: Byte read GetRefresh;
   end;
 
-  ILogOutput = interface(IManagedInterface)
+  ILogOutput = interface
     procedure Init; stdcall;
     procedure AddMsg(const Text: String; MType: TLogMsg); stdcall;
   end;
@@ -283,12 +278,16 @@ type
     procedure Draw(mode: TGeomMode; count: LongInt; Indexed: Boolean; first: LongInt = 0); stdcall;
   end;
 
+  TRenderSupport = (rsNVXmemoryinfo, rsAMDAssociation);
+
   IRender = interface(IJenSubSystem)
     procedure Init(DepthBits: Byte = 24; StencilBits: Byte = 8; FSAA: Byte = 0); stdcall;
     procedure Clear(ColorBuff, DepthBuff, StensilBuff: Boolean); stdcall;
 
     function GetVSync: Boolean; stdcall;
     procedure SetVSync(Value: Boolean); stdcall;
+
+    function Support(RenderSupport: TRenderSupport): Boolean;
 
     function GetColorMask(Channel : TColorChannel): Boolean; overload; stdcall;
     procedure SetColorMask(Channel : TColorChannel; Value : Boolean); overload; stdcall;
