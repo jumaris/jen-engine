@@ -4,8 +4,7 @@ interface
 
 uses
   JEN_Header,
-  JEN_Math,
-  JEN_GeometryBuffer;
+  JEN_Math;
 
 const Batch_Size = 8;
 

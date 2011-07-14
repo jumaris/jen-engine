@@ -4,7 +4,7 @@ interface
 
 uses
   JEN_Header,
-  JEN_Utils,
+
   JEN_OpenGLHeader;
 
 type

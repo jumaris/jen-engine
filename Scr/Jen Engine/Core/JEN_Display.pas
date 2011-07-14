@@ -5,9 +5,7 @@ interface
 uses
   Windows,
   Messages,
-  JEN_Header,
-  JEN_Helpers,
-  JEN_OpenGLHeader;
+  JEN_Header;
 
 const
   WINDOW_CLASS_NAME = 'JEngineWindowClass';

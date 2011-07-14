@@ -41,8 +41,7 @@ type
 implementation
 
 uses
-  JEN_MAIN,
-  JEN_RENDER;
+  JEN_MAIN;
 
 { TCamera }
 constructor TCamera3D.Create;

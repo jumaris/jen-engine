@@ -6,8 +6,7 @@ uses
   JEN_Header,
   JEN_Utils,
   JEN_Shader,
-  JEN_Resource,
-  JEN_OpenglHeader;
+  JEN_Resource;
 
 type
 
