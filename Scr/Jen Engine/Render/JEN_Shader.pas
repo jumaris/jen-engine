@@ -8,7 +8,6 @@ uses
   JEN_Resource,
   JEN_OpenGlHeader,
   JEN_Utils,
-  sysutils,
   CoreX_XML;
 
 type

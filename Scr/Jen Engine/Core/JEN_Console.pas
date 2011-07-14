@@ -3,7 +3,6 @@ unit JEN_Console;
 interface
 
 uses
-  SysUtils,
   Windows,
   Messages,
   JEN_Utils,
