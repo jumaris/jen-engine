@@ -402,6 +402,11 @@ const
   GL_POLYGON_OFFSET_LINE              = $2A02;
   GL_POLYGON_OFFSET_FILL              = $8037;
 
+  GL_GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX   = $9048;
+  GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX = $9049;
+
+  WGL_GPU_RAM_AMD                     = $21A3;
+
   procedure glFinish; stdcall; external opengl32;
   procedure glFlush; stdcall; external opengl32;
 
@@ -500,6 +505,11 @@ const
   function wglGetProcAddress(ProcName: PAnsiChar): Pointer; stdcall; external opengl32;
 
 var
+  // WGL_EXT_extensions_string
+  wglGetExtensionsStringEXT: function(): PAnsiChar; stdcall;
+  // WGL_ARB_extensions_string
+  wglGetExtensionsStringARB: function(hdc: HDC): PAnsiChar; stdcall;
+
   wglChoosePixelFormatARB: function(hdc: HDC; const piAttribIList: PGLint; const pfAttribFList: PGLfloat; nMaxFormats: GLuint; piFormats: PGLint; nNumFormats: PGLuint): LongBool; stdcall;
   wglSwapIntervalEXT: function(interval: GLint): LongBool; stdcall;
 
@@ -622,26 +632,43 @@ const
   glCompressedTexImage2D: procedure(target: GLenum; level: GLint; internalformat: GLenum; width: GLsizei; height: GLsizei; border: GLint; imageSize: GLsizei; const data: PGLvoid); stdcall;
   glCompressedTexImage1D: procedure(target: GLenum; level: GLint; internalformat: GLenum; width: GLsizei; border: GLint; imageSize: GLsizei; const data: PGLvoid); stdcall;
 
-function glGetProc(const ProcName: PAnsiChar; var OldResult: Boolean): Pointer;
+  wglGetGPUIDsAMD: function(maxCount: GLuint; ids: PGLuint): GLuint; stdcall;
+  wglGetGPUInfoAMD: function(id: GLuint; prop: GLint; dataType: GLenum; size: GLuint; data: PGLvoid): GLint; stdcall;
+
+function glIsSupported(Extension: AnsiString): Boolean;
+function glGetProc(const ProcName: PAnsiChar; var OldResult: Boolean; Required: Boolean = True): Pointer;
 function LoadGLLibraly: Boolean;
 
 implementation
 
-//uses
-//  JEN_MAIN;
-     {
+uses
+  JEN_Main;
+
 var
-  GlModuleH : HMODULE;
-      }
-function glGetProc(const ProcName: PAnsiChar; var OldResult: Boolean): Pointer;
+  ExtString : AnsiString;
+  //GlModuleH : HMODULE;
+
+function glIsSupported(Extension: AnsiString): Boolean;
 var
- S : AnsiString;
+  ExtPos: Integer;
+begin
+  ExtPos := Pos(Extension, ExtString);
+  Result := ExtPos > 0;
+  if Result Then
+    Result := ((ExtPos + Length(Extension) - 1) = Length(ExtString)) or
+                (ExtString[ExtPos + Length(Extension)] = ' ');
+end;
+
+
+function glGetProc(const ProcName: PAnsiChar; var OldResult: Boolean; Required: Boolean): Pointer;
+var
+  S : AnsiString;
 begin
   if not OldResult then Exit(nil);
 
- // Result := GetProcAddress(GlModuleH,ProcName);
+  //Result := GetProcAddress(GlModuleH,ProcName);
 
- // if not Assigned(Result) then
+  //if not Assigned(Result) then
     Result := wglGetProcAddress(ProcName);
 
   if not Assigned(Result) then
@@ -649,15 +676,16 @@ begin
     S := ProcName + AnsiString('ARB');
     Result := wglGetProcAddress(@S[1]);
   end;
+
   if not Assigned(Result) then
   begin
     S := ProcName + AnsiString('EXT');
     Result := wglGetProcAddress(@S[1]);
   end;
 
-  if not Assigned(Result) then
+  if (not Assigned(Result)) and (Required) then
   begin
-    //LogOut('Cannot load procedure ' + ProcName, lmError);
+    LogOut('Cannot load procedure ' + ProcName, lmError);
     OldResult := False;
   end;
 end;
@@ -665,6 +693,17 @@ end;
 function LoadGLLibraly : Boolean;
 begin
   Result := True;
+  ExtString := glGetString(GL_EXTENSIONS);
+
+  wglGetExtensionsStringEXT := glGetProc('wglGetExtensionsStringEXT', Result, False);
+  if Assigned(@wglGetExtensionsStringEXT) then
+    ExtString := ExtString + ' ' + wglGetExtensionsStringEXT
+  else
+  begin
+    wglGetExtensionsStringARB := glGetProc('wglGetExtensionsStringARB', Result, False);
+    if Assigned(@wglGetExtensionsStringARB) then
+    ExtString := ExtString + ' ' + wglGetExtensionsStringARB(wglGetCurrentDC);
+  end;
 
   wglSwapIntervalEXT := glGetProc('wglSwapInterval', Result);
 
@@ -723,6 +762,10 @@ begin
   glGetActiveUniform  := glGetProc('glGetActiveUniform', Result);
   glGetActiveAttrib   := glGetProc('glGetActiveAttrib', Result);
 
+  wglGetGPUIDsAMD := glGetProc('wglGetGPUIDsAMD', Result, False);
+  wglGetGPUInfoAMD := glGetProc('wglGetGPUInfoAMD', Result, False);
+
+
   {glGetHandle := glGetProc('glGetHandle', Result);
   glDetachShader := glGetProc('glDetachShader', Result);
 
@@ -750,8 +793,8 @@ begin
                                                                      }
   Set8087CW($133F);
 end;
-      {
+        {
 initialization
   GlModuleH := GetModuleHandle(Opengl32);
-                         }
+         }
 end.

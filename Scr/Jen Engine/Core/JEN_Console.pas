@@ -13,7 +13,7 @@ uses
 const
   CONSOLE_WINDOW_CLASS_NAME = 'JENConsoleWnd';
 
-type TConsole = class(TManagedInterface, ILogOutput)
+type TConsole = class(TInterfacedObject, ILogOutput)
   constructor Create;
   destructor Destroy; override;
   private

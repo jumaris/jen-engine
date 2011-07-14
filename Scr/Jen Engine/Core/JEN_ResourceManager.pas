@@ -123,7 +123,7 @@ var
   eFileName : String;
   RL : TResLoader;
   Stream : TStream;
-  Resource : IUnknown;
+  Resource : IResource;
 begin
   Result := nil;
   Resource := nil;
@@ -147,41 +147,36 @@ begin
     Exit;
   end;
 
+  case ResType of
+    rtShader:  Resource := TShaderResource.Create(eFileName);
+    rtTexture: Resource := TTexture.Create(eFileName);
+  end;
+
+  Result := Resource;
+
   Stream := TFileStream.Open(FileName);
-  if Assigned(Stream) then
-  begin
-    case ResType of
-      rtShader: Resource := TShaderResource.Create(eFileName);
-      rtTexture: Resource := TTexture.Create(eFileName);
-    end;
-  end else
+  if not Assigned(Stream) then
   begin
     Logout('Can''t open file ' + eFileName, lmWarning);
     Stream.Free;
+    Exit;
   end;
 
   if not RL.Load(Stream, IResource(Resource)) then
   begin
     Stream.Free;
-    Resource := nil;
+   { Resource := nil;
    { if ResType = ResType then
     begin
 
      // Resource := DebugTexture;
     end;      }
-  end;
-
-  if not Assigned(Resource) then
-  begin
     Logout('Error while loading file ' + eFileName, lmWarning);
     Exit;
   end;
 
-//  FResList.Add(Resource);
   FResList.Add(Resource);
-
   LogOut('Loading '+ (Resource as IResource).Name, lmNotify);
-  Result := (Resource as IResource);
 end;
 
 procedure TResourceManager.RegisterLoader(Loader : TResLoader);

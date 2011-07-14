@@ -1,0 +1,66 @@
+﻿<Shader>
+	<VertexShader>
+	<Code>
+			#version 120
+			attribute float IndxAttrib;
+
+			uniform vec4 PosTexCoord[64]; 
+			uniform vec4 QuadData[64]; 
+			
+			varying vec4 InterpolatedData;
+			varying vec4 Data1;
+			varying vec4 Data2;
+			varying vec4 Data3;
+			varying vec4 Data4;
+			varying vec2 Texcoord;
+		
+			void main( void )
+			{
+				int QuadId = int(floor(IndxAttrib/4.0));
+				int VertexId = int(IndxAttrib);
+				vec4 PosTex = PosTexCoord[VertexId];
+				InterpolatedData = QuadData[VertexId];
+
+				Data1 = QuadData[QuadId+0];
+				Data2 = QuadData[QuadId+1];
+				Data3 = QuadData[QuadId+2];
+				Data4 = QuadData[QuadId+3];
+
+				PosTex.xy = PosTex.xy * 2.0 -1.0;
+				PosTex.y = -PosTex.y;
+
+				gl_Position = vec4(PosTex.xy, 1.0, 1.0);
+				Texcoord = PosTex.zw;
+			}
+		</Code>
+	</VertexShader>
+	
+	<FragmentShader>
+		<Code>
+			#version 120
+			varying vec2 Texcoord;
+
+			// mandel.frag: Fragment shader for drawing the Mandelbrot set
+			void main(void)
+			{
+				vec2 tmp = (Texcoord - 0.5) * 2.5;
+				float   real  = tmp.x - 0.8;
+				float   imag  = tmp.y - 0.2;
+				float   cReal = real;   // Change this line...
+				float   cImag = imag;   // ...and this one to get a Julia set
+				float   r2    = 0.0;
+				// perform procedural mandelbrot
+				for (int iter = 0; iter < 15; ++iter)
+				{	
+				float tempreal = real;
+
+				real = (tempreal * tempreal) - (imag * imag) + cReal;
+				imag = 2.0 * tempreal * imag + cImag;
+				r2   = (real * real) + (imag * imag);
+				}
+
+				gl_FragColor = vec4(clamp(vec3(mix(1.0,0.0,(r2 - 4.0)*0.001)), 0.0, 1.0), 1.0);
+			}
+		</Code> 
+	</FragmentShader>
+</Shader>

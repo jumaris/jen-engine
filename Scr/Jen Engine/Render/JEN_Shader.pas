@@ -14,10 +14,12 @@ uses
 type
   IShaderResource = interface(JEN_Header.IShaderResource)
   ['{CFF16358-641F-4312-A601-08CC9FC3BEA8}']
-    function GetXML: IXML;
-    procedure SetXML(Value: IXML);
+    procedure Init(XML : IXML);
+  end;
 
-    property XML: IXML read GetXML write SetXML;
+  IShaderProgram = interface(JEN_Header.IShaderProgram)
+  ['{6A27461E-FA18-4B20-86AC-6BE9A830E3F5}']
+    function Init(const VertexShader, FragmentShader: AnsiString): Boolean;
   end;
 
   TShaderResource = class(TManagedInterface, IManagedInterface, IResource, IShaderResource)
@@ -26,20 +28,16 @@ type
   private
     FShaderPrograms : TInterfaceList;
     FDefines        : TList;
-    XML             : IXML;
+    FXML            : IXML;
     FName           : string;
+    procedure Init(XML: IXML);
     function GetName: string; stdcall;
-    function GetXML: IXML;
-    procedure SetXML(Value: IXML);
     function GetDefineId(const Name: string): LongInt;
   public
     function GetDefine(const Name: string): LongInt; stdcall;
     procedure SetDefine(const Name: string; Value: LongInt); stdcall;
-    function Compile: JEN_Header.IShaderProgram; stdcall;
-  end;
-
-  IShaderProgram = interface(JEN_Header.IShaderProgram)
-    function Init(const VertexShader, FragmentShader: AnsiString): Boolean;
+    procedure Compile(var Shader: IShaderProgram); overload;
+    function Compile: JEN_Header.IShaderProgram; overload; stdcall;
   end;
 
   TShaderProgram = class(TManagedInterface, IShaderProgram)
@@ -420,8 +418,6 @@ destructor TShaderResource.Destroy;
 var
   i : LongInt;
 begin
-  XML := nil;
-
   FShaderPrograms.Free;
   for i := 0 to FDefines.Count - 1 do
   begin
@@ -439,14 +435,18 @@ begin
   Result := FName;
 end;
 
-function TShaderResource.GetXML: IXML;
+procedure TShaderResource.Init(XML: IXML);
+var
+  I       : LongInt;
+  Shader  : IShaderProgram;
 begin
-  Result := XML;
-end;
+  FXML := XML;
+  for I := 0 to FShaderPrograms.Count - 1 do
+  begin
+    Shader := FShaderPrograms[i] as IShaderProgram;
+    Compile(Shader);
+  end;
 
-procedure TShaderResource.SetXML(Value: IXML);
-begin
-  XML := Value;
 end;
 
 function TShaderResource.GetDefineId(const Name: String): LongInt;
@@ -493,13 +493,12 @@ begin
     TShaderDefine(FDefines[Id]^).Value := Value;
 end;
 
-function TShaderResource.Compile: JEN_Header.IShaderProgram;
+procedure TShaderResource.Compile(var Shader : IShaderProgram);
 var
   XN_VS   : IXML;
   XN_FS   : IXML;
   i       : LongInt;
   Str     : string;
-  Shader  : IShaderProgram;
 
   function IndexStr(const AText: string; const AValues: array of string): LongInt;
   var
@@ -571,11 +570,10 @@ var
   end;
 
 begin
-  XN_VS := XML.Node['VertexShader'];
-  XN_FS := XML.Node['FragmentShader'];
+  if not (Assigned(FXML) and Assigned(Shader)) then Exit;
 
-  Shader := TShaderProgram.Create;
-  Result := Shader;
+  XN_VS := FXML.Node['VertexShader'];
+  XN_FS := FXML.Node['FragmentShader'];
 
   if not (Assigned(XN_VS) and Assigned(XN_FS)) then Exit;
 
@@ -588,7 +586,16 @@ begin
 
     LogOut(Str, lmNotify);
   end;
+end;
 
+function TShaderResource.Compile : JEN_Header.IShaderProgram;
+var
+  Shader : IShaderProgram;
+begin
+  Shader := IShaderProgram(TShaderProgram.Create);
+  Compile(Shader);
+  FShaderPrograms.Add(Shader);
+  Result := Shader;
 end;
 
 constructor TShaderLoader.Create;
@@ -601,22 +608,11 @@ end;
 function TShaderLoader.Load(const Stream : TStream; var Resource : IResource) : Boolean;
 var
   Shader: IShaderResource;
-
-  ss: IXML;
 begin
   Result := False;
   if not Assigned(Resource) then Exit;
   Shader := Resource as IShaderResource;
-
-  with Shader do
-  begin
-    ss:= GetXML;
-    XML := TXML.Load(Stream);
-    if not Assigned(XML) then Exit;
-
-    if not (Assigned(XML.Node['VertexShader']) and Assigned(XML.Node['FragmentShader'])) then Exit;
-  end;
-
+  Shader.Init(TXML.Load(Stream));
   Result := True;
 end;
 

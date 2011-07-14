@@ -55,12 +55,17 @@ type
     function GetItem(idx: LongInt): IUnknown; inline;
     procedure SetItem(idx: LongInt; Value: IUnknown); inline;
   public
-    function Add(p: IUnknown): IUnknown;
+    function Add(p: IUnknown; Manage: Boolean = True): IUnknown;
     procedure Del(idx: LongInt);
     procedure Clear; virtual;
     function IndexOf(p: IUnknown): LongInt;
     property Count: LongInt read FCount;
     property Items[Idx: LongInt]: IUnknown read GetItem write SetItem; default;
+  end;
+
+  IManagedInterface = interface
+    ['{7B975F52-35F8-4776-B557-7536F9B2C55C}']
+    procedure SetManager(Value: Pointer); stdcall;
   end;
 
   TManagedInterface = class(TObject, IInterface, IManagedInterface)
@@ -464,13 +469,19 @@ begin
   inherited;
 end;
 
-function TInterfaceList.Add(p: IUnknown): IUnknown;
+function TInterfaceList.Add(p: IUnknown; Manage: Boolean = True): IUnknown;
 begin
+  if not Assigned(p) then Exit;
+
   if FCount mod LIST_DELTA = 0 then
     SetLength(FItems, Length(FItems) + LIST_DELTA);
+
   FItems[FCount] := p;
   Result := p;
-  (p as IManagedInterface).SetManager(self);
+
+  if Manage then
+    (p as IManagedInterface).SetManager(self);
+
   Inc(FCount);
 end;
 

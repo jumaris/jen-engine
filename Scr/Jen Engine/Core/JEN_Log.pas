@@ -12,14 +12,14 @@ type
   constructor Create;
   destructor Destroy; Override;
   protected
-    class var {$IFDEF JEN_LOG}fLogOutputs : TInterfaceList;{$ENDIF}
+    class var FLogOutputs : TInterfaceList;
   public
     procedure RegisterOutput(Value : ILogOutput); stdcall;
     procedure Print(const Text: String; MType: TLogMsg); stdcall;
     class property LogOutputs : TInterfaceList read fLogOutputs;
   end;
 
-  TFileLog = class(TManagedInterface, ILogOutput)
+  TFileLog = class(TInterfacedObject, ILogOutput)
   constructor Create(FileName : String);
   destructor Destroy; override;
   private
@@ -55,7 +55,7 @@ begin
     Exit;
   end;
 
-  fLogOutputs.Add(Value);
+  FLogOutputs.Add(Value, False);
   Value.Init;
 end;
 

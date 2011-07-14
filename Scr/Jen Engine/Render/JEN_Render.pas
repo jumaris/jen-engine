@@ -23,6 +23,7 @@ type
     FVSync      : Boolean;
     FGL_Context : HGLRC;
     FViewport   : TRecti;
+    SBuffer     : array[TRenderSupport] of Boolean;
     FColorMask  : Byte;
     FBlendType  : TBlendType;
     FAlphaTest  : Byte;
@@ -39,6 +40,9 @@ type
     procedure Clear(ColorBuff, DepthBuff, StensilBuff: Boolean); stdcall;
     procedure SetViewport(Value: TRecti);
    // procedure SetArrayState(Vertex, TextureCoord, Normal, Color : Boolean); stdcall;
+
+    function Support(RenderSupport: TRenderSupport): Boolean;
+    function GPUMemorySize: LongInt;
 
     function GetVSync: Boolean; stdcall;
     procedure SetVSync(Value: Boolean); stdcall;
@@ -204,11 +208,16 @@ begin
     Exit;
   end;
 
+  SBuffer[rsNVXmemoryinfo]  := glIsSupported('GL_NVX_gpu_memory_info');
+  SBuffer[rsAMDAssociation] := glIsSupported('WGL_AMD_gpu_association');
+
   FValid := True;
   glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS ,@Par);
 
   LogOut('OpenGL version : ' + glGetString(GL_VERSION) + ' (' + glGetString(GL_VENDOR) + ')', lmInfo);
   LogOut('Video device   : ' + glGetString(GL_RENDERER), lmInfo);
+  if GPUMemorySize <> -1  then
+    LogOut('Video memory   : ' + Utils.IntToStr(GPUMemorySize) +'Mb', lmInfo);
   LogOut('Texture units  : ' + Utils.IntToStr(Par), lmInfo);
 
   SetColorMask(True, True, True, True);
@@ -282,6 +291,33 @@ begin
   FArrayState.Normal := Normal;
   FArrayState.Color := Color;
 end;        }
+
+function TRender.Support(RenderSupport: TRenderSupport): Boolean;
+begin
+  Result := SBuffer[RenderSupport];
+end;
+
+function TRender.GPUMemorySize: LongInt;
+var
+  IDS   : array of LongWord;
+  Count : LongWord;
+begin
+  Result := -1;
+  if Support(rsNVXmemoryinfo) then
+  begin
+    glGetIntegerv(GL_GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX, @result);
+    Result := Round(Result / 1024);
+  end;
+  if Support(rsAMDAssociation) then
+  begin
+    if Assigned(wglGetGPUIDsAMD) then
+
+    Count := wglGetGPUIDsAMD(0, nil);
+    SetLength(IDS, Count);
+    wglGetGPUIDsAMD(Count, @IDS[0]);
+    wglGetGPUInfoAMD(ids[0], WGL_GPU_RAM_AMD, GL_INT, 4, @result);
+  end;
+end;
 
 function TRender.GetVSync: Boolean;
 begin
