@@ -1,0 +1,66 @@
+﻿<Shader>
+	<VertexShader>
+		<Code>
+			#version 120
+			attribute float IndxAttrib;
+
+			uniform vec4 PosTexCoord[64]; 
+			uniform vec4 QuadData[64]; 
+			
+			varying vec4 InterpolatedData;
+			varying vec4 Data1;
+			varying vec4 Data2;
+			varying vec4 Data3;
+			varying vec4 Data4;
+			varying vec2 Texcoord;
+			
+			varying float Grade;
+		
+			void main( void )
+			{
+				int VertexId = int(IndxAttrib);
+				int QuadId = ((VertexId)/4)*4;
+				vec4 PosTex = PosTexCoord[VertexId];
+				InterpolatedData = QuadData[VertexId];
+
+				Data1 = QuadData[QuadId+0];
+				Data2 = QuadData[QuadId+1];
+				Data3 = QuadData[QuadId+2];
+				Data4 = QuadData[QuadId+3];
+
+				PosTex.xy = PosTex.xy * 2.0 -1.0;
+				PosTex.y = -PosTex.y;
+
+				gl_Position = vec4(PosTex.xy, 1.0, 1.0);
+				Texcoord = PosTex.zw;
+				Grade = (PosTex.w-PosTexCoord[QuadId+2].w-Data1.z)/(PosTexCoord[QuadId+0].w-PosTexCoord[QuadId+2].w-Data1.z*2); 
+			}
+		</Code>
+	</VertexShader>
+	
+	<FragmentShader>
+		<Code>
+			#version 120
+			uniform sampler2D Map0;
+
+			varying vec2 Texcoord;
+			varying vec4 InterpolatedData;
+			varying vec4 Data1;
+			varying vec4 Data2;
+			varying vec4 Data3;
+			varying vec4 Data4;
+			
+			varying float Grade;
+			
+			void main( void )
+			{
+				float dist = texture2D(Map0, Texcoord.xy).r;
+				float k = min(Data1.y,Data1.x);
+				vec3 Color = mix(Data2.xyz, Data3.xyz, Grade); 
+				Color = mix(Color, Data4.xyz, smoothstep(0.5 - k - Data1.y,0.5 - k - Data1.y, dist)*(1-smoothstep(0.5 - k,0.5 + k, dist)));
+				gl_FragColor = vec4(Color,Data2.w*smoothstep(0.5 - Data1.x - Data1.y,0.5 + Data1.x - Data1.y, dist));
+	
+			}
+		</Code> 
+	</FragmentShader>
+</Shader>

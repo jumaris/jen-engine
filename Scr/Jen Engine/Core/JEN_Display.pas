@@ -22,7 +22,7 @@ type
   end;
 
   TDisplay = class(TInterfacedObject, IDisplay)
-    destructor Destroy; override;
+    procedure Free; stdcall;
   private
     FValid      : Boolean;
     FFPS        : LongInt;
@@ -72,8 +72,6 @@ uses
 
 class function TDisplay.WndProc(hWnd: HWND; Msg: LongWord; wParam: LongInt; lParam: LongInt): LongInt; stdcall;
 begin
-// Assert(expr : Boolean [; const msg: string]
-//  LogOut('message');
   Result := 0;
 
   case Msg of
@@ -187,31 +185,30 @@ begin
 	  lpszClassName	:= WINDOW_CLASS_NAME;
   end;
 
+  LogOut('Register window class.', lmNotify);
   if RegisterClassEx(WinClass) = 0 Then
   begin
     LogOut('Cannot register window class.', lmError);
     Exit;
-  end else
-    LogOut('Register window class.', lmNotify);
+  end;
 
-  FHandle := CreateWindowEx(WS_EX_APPWINDOW, WINDOW_CLASS_NAME, @FCaption[1], WS_SYSMENU or WS_VISIBLE, 0, 0,
-                             0, 0, 0, 0, 0, nil);
+  FHandle := CreateWindowEx(WS_EX_APPWINDOW, WINDOW_CLASS_NAME, @FCaption[1], 0, 0, 0, 0, 0, 0, 0, 0, nil);
 
+  LogOut('Create window.', lmNotify);
   if FHandle = 0 Then
     begin
       LogOut('Cannot create window.', lmError);
       Exit;
-    end else
-      LogOut('Create window.', lmNotify);
+    end;
 
-  SendMessage(FHandle, WM_SETICON, 1, LoadIconW(HInstance, 'MAINICON'));
+  SendMessage(FHandle, WM_SETICON, 1, LPARAM(LoadIconW(HInstance, 'MAINICON')));
   FDC := GetDC(FHandle);
   FValid := True;
   Result := True;
   Restore;
 end;
 
-destructor TDisplay.Destroy;
+procedure TDisplay.Free;
 begin
   if not FValid then Exit;
 
@@ -235,7 +232,6 @@ begin
   if FFullScreen then
     Helpers.SystemInfo.Screen.ResetMode;
 
-  inherited;
 end;
 
 procedure TDisplay.Swap;
@@ -310,7 +306,7 @@ begin
     Rect.Inflate(GetSystemMetrics(SM_CXDLGFRAME), GetSystemMetrics(SM_CYDLGFRAME) + GetSystemMetrics(SM_CYCAPTION) div 2);
   end;
 
-  SetWindowLongA(FHandle, GWL_STYLE, Style or WS_SYSMENU);
+  SetWindowLongA(FHandle, GWL_STYLE, Style or WS_SYSMENU or WS_VISIBLE);
   SetWindowPos(FHandle, 0, Rect.x, Rect.y, Rect.Width, Rect.Height, $220);
 
   ShowWindow(FHandle, SW_SHOWNORMAL);

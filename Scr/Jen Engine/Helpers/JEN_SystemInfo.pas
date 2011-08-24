@@ -266,7 +266,7 @@ begin
 
   Str := ' ' + Utils.IntToStr(Mode.Width) + 'x' + Utils.IntToStr(Mode.Height) + 'x' + Utils.IntToStr(R);
 
-  case ChangeDisplaySettingsEx( nil, DevMode, 0, $04, nil ) of
+  case ChangeDisplaySettingsEx(nil, DevMode, 0, $04, nil) of
     DISP_CHANGE_SUCCESSFUL :
     begin
       LogOut('Successful set display mode ' + Str, lmNotify);

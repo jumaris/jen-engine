@@ -5,7 +5,6 @@ interface
 uses
   Windows,
   Messages,
-
   JEN_Math,
   JEN_Header;
 
@@ -60,6 +59,7 @@ class procedure TConsole.CreateWnd(lpParameter : Pointer);
 var
   WinClass   : TWndClassEx;
   HTimer     : HWND;
+  DC         : HDC;
   Rect       : TRecti;
   Msg        : TMsg;
   HFont      : LongWord;
@@ -93,10 +93,12 @@ begin
                          WS_VISIBLE or WS_CHILD or WS_BORDER or WS_VSCROLL or WS_HSCROLL or
 								         ES_MULTILINE or ES_READONLY, 0, 0, Rect.Width, Rect.Height, FHandle, 0, 0, nil);
 
+  DC := GetDC(HMemo);
   FillChar(LF, SizeOf(LOGFONT), 0);
-  LF.lfHeight := 14;
+  LF.lfHeight := -MulDiv(10, GetDeviceCaps(DC, LOGPIXELSY), 72);
   LF.lfFaceName := 'Consolas';
   HFont := CreateFontIndirect(LF);
+  ReleaseDC(HMemo, DC);
 
   HTimer := 1;
   if ((FHandle = 0) or (HMemo = 0) or (HFont = 0) or (SetTimer(FHandle, HTimer, 40, nil) = 0))  Then
@@ -106,7 +108,7 @@ begin
     Exit;
   end;
 
-  SendMessage(FHandle, WM_SETICON, 1, LoadIconW(HInstance, 'MAINICON'));
+  SendMessage(FHandle, WM_SETICON, 1, WPARAM(LoadIconW(HInstance, 'MAINICON')));
   ShowWindow(FHandle, SW_SHOWNORMAL);
   SendMessage(HMemo, WM_SETFONT, WPARAM(hFont), 1);
 
@@ -119,7 +121,7 @@ begin
     DispatchMessage(Msg);
   end;
 
-  Utils.Sleep(1500);
+  Utils.Sleep(2500);
   KillTimer(FHandle, HTimer);
 
   if  (not (DestroyWindow(HMemo) and DestroyWindow(FHandle) and DeleteObject(HFont))) then

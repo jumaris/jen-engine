@@ -7,11 +7,12 @@ uses
   JEN_OpenGlHeader,
   JEN_Utils,
   JEN_Math,
-  JEN_Resource;
+  JEN_Resource,
+  JEN_Texture;
 
 type
   TDDSLoader = class(TResLoader)
-  constructor Create;
+    constructor Create;
   public
     function Load(const Stream: TStream; var Resource: IResource): Boolean; override;
   end;
@@ -30,8 +31,6 @@ end;
 
 function TDDSLoader.Load(const Stream: TStream; var Resource: IResource): Boolean;
 type
-  TloadFormat = (lfNULL, lfDXT1c, lfDXT1a, lfDXT3, lfDXT5, lfA8, lfL8, lfAL8, lfBGRA8, lfBGR8, lfBGR5A1, lfBGR565, lfBGRA4, lfR16F, lfR32F, lfGR16F, lfGR32F, lfBGRA16F, lfBGRA32F);
-
   TDDSHeader = record
     dwMagic       : LongWord;
     dwSize        : LongInt;
@@ -103,41 +102,11 @@ const
   DDPF_LUMINANCE   = $020000;
   DDSD_MIPMAPCOUNT = $020000;
   DDSCAPS2_CUBEMAP = $0200;
-
-  DDSLoadFormat : array[TloadFormat] of record
-    Compressed : boolean;
-    Swap : boolean;
-    DivSize : Byte;
-    BlockBytes : Byte;
-    InternalFormat : GLenum;
-    ExternalFormat : GLenum;
-    DataType : GLenum;
-  end = (
-    (Compressed: False; Swap : False; DivSize: 1; BlockBytes:  1; InternalFormat: GL_FALSE; ExternalFormat: GL_FALSE; DataType: GL_FALSE),
-    (Compressed: True;  Swap : False; DivSize: 4; BlockBytes:  8; InternalFormat: GL_COMPRESSED_RGB_S3TC_DXT1; ExternalFormat: GL_FALSE; DataType: GL_FALSE),
-    (Compressed: True;  Swap : False; DivSize: 4; BlockBytes:  8; InternalFormat: GL_COMPRESSED_RGBA_S3TC_DXT1; ExternalFormat: GL_FALSE; DataType: GL_FALSE),
-    (Compressed: True;  Swap : False; DivSize: 4; BlockBytes: 16; InternalFormat: GL_COMPRESSED_RGBA_S3TC_DXT3; ExternalFormat: GL_FALSE; DataType: GL_FALSE),
-    (Compressed: True;  Swap : False; DivSize: 4; BlockBytes: 16; InternalFormat: GL_COMPRESSED_RGBA_S3TC_DXT5; ExternalFormat: GL_FALSE; DataType: GL_FALSE),
-    (Compressed: False; Swap : False; DivSize: 1; BlockBytes:  1; InternalFormat: GL_ALPHA8; ExternalFormat: GL_ALPHA; DataType: GL_UNSIGNED_BYTE),
-    (Compressed: False; Swap : False; DivSize: 1; BlockBytes:  1; InternalFormat: GL_LUMINANCE8; ExternalFormat: GL_LUMINANCE; DataType: GL_UNSIGNED_BYTE),
-    (Compressed: False; Swap : False; DivSize: 1; BlockBytes:  2; InternalFormat: GL_LUMINANCE8_ALPHA8; ExternalFormat: GL_LUMINANCE_ALPHA; DataType: GL_UNSIGNED_BYTE),
-    (Compressed: False; Swap : False; DivSize: 1; BlockBytes:  4; InternalFormat: GL_RGBA8; ExternalFormat: GL_BGRA; DataType: GL_UNSIGNED_BYTE),
-    (Compressed: False; Swap : False; DivSize: 1; BlockBytes:  3; InternalFormat: GL_RGB8; ExternalFormat: GL_BGR; DataType: GL_UNSIGNED_BYTE),
-    (Compressed: False; Swap : True;  DivSize: 1; BlockBytes:  2; InternalFormat: GL_RGB5_A1; ExternalFormat: GL_BGRA; DataType: GL_UNSIGNED_SHORT_1_5_5_5_REV),
-    (Compressed: False; Swap : True;  DivSize: 1; BlockBytes:  2; InternalFormat: GL_RGB5; ExternalFormat: GL_RGB; DataType: GL_UNSIGNED_SHORT_5_6_5),
-    (Compressed: False; Swap : False; DivSize: 1; BlockBytes:  2; InternalFormat: GL_RGBA4; ExternalFormat: GL_BGRA; DataType: GL_UNSIGNED_SHORT_4_4_4_4_REV),
-    (Compressed: False; Swap : False; DivSize: 1; BlockBytes:  2; InternalFormat: GL_R16F; ExternalFormat: GL_RED; DataType: GL_HALF_FLOAT),
-    (Compressed: False; Swap : False; DivSize: 1; BlockBytes:  4; InternalFormat: GL_R32F; ExternalFormat: GL_RED; DataType: GL_FLOAT),
-    (Compressed: False; Swap : False; DivSize: 1; BlockBytes:  4; InternalFormat: GL_RG16F; ExternalFormat: GL_RG; DataType: GL_HALF_FLOAT),
-    (Compressed: False; Swap : False; DivSize: 1; BlockBytes:  8; InternalFormat: GL_RG32F; ExternalFormat: GL_RG; DataType: GL_FLOAT),
-    (Compressed: False; Swap : False; DivSize: 1; BlockBytes:  8; InternalFormat: GL_RGBA16F; ExternalFormat: GL_RGBA; DataType: GL_HALF_FLOAT),
-    (Compressed: False; Swap : False; DivSize: 1; BlockBytes: 16; InternalFormat: GL_RGBA32F; ExternalFormat: GL_RGBA; DataType: GL_FLOAT)
-  );
-{$ENDREGION}  
+{$ENDREGION}
 
 var
   Header  : TDDSHeader;
-  Format  : TLoadFormat;
+  Format  : TTextureFormat;
   st      : GLEnum;
   i,s     : LongInt;
   w,h     : LongInt;
@@ -147,9 +116,9 @@ var
   Size    : LongWord;
   Texture : ITexture;
 
-  function GetLoadFormat(const DDS: TDDSHeader): TLoadFormat;
+  function GetLoadFormat(const DDS: TDDSHeader): TTextureFormat;
   begin
-    Result := lfNULL;
+    Result := tfoNone;
     with DDS do
       if pfFlags and DDPF_FOURCC = DDPF_FOURCC then
       begin
@@ -157,49 +126,49 @@ var
         // Compressed
           FOURCC_DXT1 :
            if pfFlags xor DDPF_ALPHAPIXELS > 0 then
-             Result := lfDXT1a
+             Result := tfoDXT1a
            else
-             Result := lfDXT1c;
-          FOURCC_DXT3 : Result := lfDXT3;
-          FOURCC_DXT5 : Result := lfDXT5;
+             Result := tfoDXT1c;
+          FOURCC_DXT3 : Result := tfoDXT3;
+          FOURCC_DXT5 : Result := tfoDXT5;
         // Float
-          FOURCC_R16F          : Result := lfR16F;
-          FOURCC_G16R16F       : Result := lfGR16F;
-          FOURCC_A16B16G16R16F : Result := lfBGRA16F;
-          FOURCC_R32F          : Result := lfR32F;
-          FOURCC_G32R32F       : Result := lfGR32F;
-          FOURCC_A32B32G32R32F : Result := lfBGRA32F;
+          FOURCC_R16F          : Result := tfoR16F;
+          FOURCC_G16R16F       : Result := tfoGR16F;
+          FOURCC_A16B16G16R16F : Result := tfoBGRA16F;
+          FOURCC_R32F          : Result := tfoR32F;
+          FOURCC_G32R32F       : Result := tfoGR32F;
+          FOURCC_A32B32G32R32F : Result := tfoBGRA32F;
         end
       end else
         case pfRGBbpp of
            8 :
             if (pfFlags and DDPF_LUMINANCE > 0) and (pfRBitMask xor $FF = 0) then
-              Result := lfL8
+              Result := tfoL8
             else
               if (pfFlags and DDPF_ALPHA > 0) and (pfABitMask xor $FF = 0) then
-                Result := lfA8;
+                Result := tfoA8;
           16 :
               if pfFlags and DDPF_ALPHAPIXELS > 0 then
               begin
                 if (pfFlags and DDPF_LUMINANCE > 0) and (pfRBitMask xor $FF + pfABitMask xor $FF00 = 0) then
-                  Result := lfAL8
+                  Result := tfoAL8
                 else
                   if pfFlags and DDPF_RGB > 0 then
                     if pfRBitMask xor $0F00 + pfGBitMask xor $00F0 + pfBBitMask xor $0F + pfABitMask xor $F000 = 0 then
-                      Result := lfBGRA4
+                      Result := tfoBGRA4
                     else
                       if pfRBitMask xor $7C00 + pfGBitMask xor $03E0 + pfBBitMask xor $1F + pfABitMask xor $8000 = 0 then
-                        Result := lfBGR5A1;
+                        Result := tfoBGR5A1;
               end else
                 if pfFlags and DDPF_RGB > 0 then
                   if pfRBitMask xor $F800 + pfGBitMask xor $07E0 + pfBBitMask xor $1F = 0 then
-                    Result := lfBGR565;
+                    Result := tfoBGR565;
           24 :
             if pfRBitMask xor $FF0000 + pfGBitMask xor $FF00 + pfBBitMask xor $FF = 0 then
-              Result := lfBGR8;
+              Result := tfoBGR8;
           32 :
-            if pfRBitMask xor $FF0000 + pfGBitMask xor $FF00 + pfBBitMask xor $FF + pfABitMask xor $FF000000 = 0 then
-              Result := lfBGRA8;
+            if pfRBitMask xor $00FF0000 + pfGBitMask xor $FF00 + pfBBitMask xor $FF + pfABitMask xor $FF000000 = 0 then
+              Result := tfoBGRA8;
         end;
   end;
 
@@ -226,16 +195,17 @@ begin
         end;
 
   Format := GetLoadFormat(Header);
-  if Format = lfNULL then
+  if Format = tfoNone then
   begin
     LogOut('Not supported texture format: ' + Stream.Name, lmWarning);
     Exit;
   end;
 
-  with Header, DDSLoadFormat[Format] do
+  with Header, TextureFormatInfo[Format] do
   begin
     if dwFlags and DDSD_MIPMAPCOUNT = 0 then
        dwMipMapCount := 1;
+
     Mips := dwMipMapCount;
 
     for i := 0 to dwMipMapCount - 1 do
@@ -258,6 +228,7 @@ begin
     ///...
 
     Data := GetMemory((dwWidth div DivSize) * (dwHeight div DivSize) * BlockBytes);
+    Texture.Format := Format;
     Texture.Bind;
 
     for s := 0 to Samples - 1 do
@@ -281,17 +252,14 @@ begin
         end;
 
         Stream.Read(Data^, Size);
-        if Compressed then
-          glCompressedTexImage2D(st, i, InternalFormat, w, h, 0, Size, Data)
-        else
-          glTexImage2D(st, i, InternalFormat, w, h, 0, ExternalFormat, DataType, Data);
+        Texture.DataSet(w, h, Size, Data, i);
       end;
     end;
 
     FreeMemory(Data);
   end;
 
-  Texture.Filter := tfAniso;
+  Texture.Filter := tfiAniso;
    // glTexParameteri(Texture.Sampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
  // glTexParameteri(Texture.Sampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(Texture.Sampler, GL_TEXTURE_MAX_LEVEL, Mips - 1);

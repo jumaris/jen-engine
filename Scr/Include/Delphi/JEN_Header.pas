@@ -1,5 +1,4 @@
 unit JEN_Header;
-{$I Jen_config.INC}
 
 interface
 
@@ -34,7 +33,7 @@ type
   TCullFace = (cfNone, cfFront, cfBack);
   TMatrixType = (mtViewProj, mtModel, mtProj, mtView);
 
-  TResourceType = (rtShader, rtTexture, rtTexture1, rtTexture2, rtTexture3, rtTexture4, rtTexture5, rtTexture6,
+  TResourceType = (rtShaderRes, rtFont, rtTexture, rtTexture1, rtTexture2, rtTexture3, rtTexture4, rtTexture5, rtTexture6,
                   rtTexture7, rtTexture8, rtTexture9, rtTexture10, rtTexture11, rtTexture12,
 	                rtTexture13, rtTexture14, rtTexture15);
 
@@ -43,10 +42,10 @@ type
                         atVec1s, atVec2s, atVec3s, atVec4s,
                         atVec1f, atVec2f, atVec3f, atVec4f);
 
-  TTextureFilter = (tfNone, tfBilinear, tfTrilinear, tfAniso);
-  TSetModeResult = (SM_Successful, SM_SetDefault, SM_Error);
+  TTextureFormat = (tfoNone, tfoDXT1c, tfoDXT1a, tfoDXT3, tfoDXT5, tfoA8, tfoL8, tfoAL8, tfoBGRA8, tfoBGR8, tfoBGR5A1, tfoBGR565, tfoBGRA4, tfoR16F, tfoR32F, tfoGR16F, tfoGR32F, tfoBGRA16F, tfoBGRA32F);
+  TTextureFilter = (tfiNone, tfiBilinear, tfiTrilinear, tfiAniso);
 
-  TColor = LongWord;
+  TSetModeResult = (SM_Successful, SM_SetDefault, SM_Error);
   TEventProc = procedure(Param: LongInt); stdcall;
 
   IGame = interface
@@ -57,7 +56,7 @@ type
   end;
 
   IJenSubSystem = interface(IUnknown)
-
+    procedure Free; stdcall;
   end;
 
   IJenEngine = interface
@@ -104,7 +103,6 @@ type
   IUtils = interface(IJenSubSystem)
     function GetTime : LongInt; stdcall;
     procedure Sleep(Value: LongWord); stdcall;
-    procedure Update; stdcall;
     function IntToStr(Value: LongInt): string; stdcall;
     function StrToInt(const Str: string; Def: LongInt = 0): LongInt; stdcall;
     function FloatToStr(Value: Single; Digits: LongInt = 8): string; stdcall;
@@ -199,8 +197,14 @@ type
 
   IResource = interface
   ['{85CA9B42-E24A-4FA8-BFFA-083B73CCA057}']
+    procedure Reload; stdcall;
     function GetName: string; stdcall;
+    function GetFilePath: string; stdcall;
+    function GetResType: TResourceType; stdcall;
+
     property Name: string read GetName;
+    property FilePath: string read GetFilePath;
+    property ResType: TResourceType read GetResType;
   end;
 
   IShaderUniform = interface
@@ -249,6 +253,8 @@ type
   ['{E9EEFA65-F004-4668-9BAD-2FE92D19F050}']
     procedure Bind(Channel: Byte = 0); stdcall;
 
+    function GetFormat: TTextureFormat; stdcall;
+    procedure SetFormat(Value: TTextureFormat); stdcall;
     function GetSampler: LongWord; stdcall;
     procedure SetSampler(Value: LongWord); stdcall;
     function GetFilter: TTextureFilter; stdcall;
@@ -256,17 +262,45 @@ type
     function GetClamp: Boolean; stdcall;
     procedure SetClamp(Value: Boolean); stdcall;
 
+    procedure DataSet(Width, Height, Size: LongInt; Data: Pointer; Level: LongInt); stdcall;
+
     //property Width: LongInt read FWidth;
    // property Height: LongInt read FHeight;
+    property Format: TTextureFormat read GetFormat write SetFormat;
     property Sampler: LongWord read GetSampler write SetSampler;
     property Filter: TTextureFilter read GetFilter write SetFilter;
     property Clamp: Boolean read GetClamp write SetClamp;
   end;
 
+  IFont = interface(IResource)
+  ['{9057EA67-509A-4D17-AFC8-8B96481A6BCF}']
+    function GetTextWidth(const Text: String): Single; stdcall;
+    procedure Print(const Text: String; X, Y: Single);stdcall;
+
+    function GetScale: Single; stdcall;
+    procedure SetScale(Value: Single); stdcall;
+    function GetColor: TVec4f; stdcall;
+    procedure SetColor(const Value: TVec4f); stdcall;
+    procedure SetGradColors(const Value1, Value2: TVec4f); stdcall;
+    function GetOutlineColor: TVec3f; stdcall;
+    procedure SetOutlineColor(Value: TVec3f); stdcall;
+    function GetOutlineSize: Single; stdcall;
+    procedure SetOutlineSize(const Value: Single); stdcall;
+    function GetEdgeSmooth: Single; stdcall;
+    procedure SetEdgeSmooth(Value: Single); stdcall;
+
+    property Scale: Single read GetScale write SetScale;
+    property Color: TVec4f read GetColor write SetColor;
+    property OutlineColor: TVec3f read GetOutlineColor write SetOutlineColor;
+    property OutlineSize: Single read GetOutlineSize write SetOutlineSize;
+    property EdgeSmooth: Single read GetEdgeSmooth write SetEdgeSmooth;
+  end;
+
   IResourceManager = interface(IJenSubSystem)
-    function Load(const FileName: string; Resource: TResourceType): IResource; overload; stdcall;
-    procedure Load(const FileName: string; out Resource: JEN_Header.IShaderResource); overload; stdcall;
-    procedure Load(const FileName: string; out Resource: JEN_Header.ITexture); overload; stdcall;
+    function Load(const FilePath: string; Resource: TResourceType): IResource; overload; stdcall;
+    procedure Load(const FilePath: string; out Resource: JEN_Header.IShaderResource); overload; stdcall;
+    procedure Load(const FilePath: string; out Resource: JEN_Header.ITexture); overload; stdcall;
+    procedure Load(const FilePath: string; out Resource: JEN_Header.IFont); overload; stdcall;
     {
     function LoadShader(const FileName: string): IShaderResource; stdcall;
     function LoadTexture(const FileName: string): ITexture; stdcall;    }
@@ -278,7 +312,7 @@ type
     procedure Draw(mode: TGeomMode; count: LongInt; Indexed: Boolean; first: LongInt = 0); stdcall;
   end;
 
-  TRenderSupport = (rsNVXmemoryinfo, rsAMDAssociation);
+  TRenderSupport = (rsWGLEXTswapcontrol, rsNVXmemoryinfo, rsAMDAssociation);
 
   IRender = interface(IJenSubSystem)
     procedure Init(DepthBits: Byte = 24; StencilBits: Byte = 8; FSAA: Byte = 0); stdcall;
@@ -333,10 +367,10 @@ type
   end;
 
   IRender2D = interface(IJenSubSystem)
-    procedure DrawSpriteAdv(Shader: IShaderProgram; Tex1, Tex2, Tex3: ITexture; x, y, w, h: Single; const Data1, Data2, Data3, Data4: TVec4f; Angle, cx, cy: Single); stdcall;
+    procedure DrawSpriteAdv(Shader: IShaderProgram; Tex1, Tex2, Tex3: ITexture; const v1, v2, v3, v4, Data1, Data2, Data3, Data4: TVec4f; const Center: TVec2f; Angle: Single); stdcall;
 
-    procedure DrawSprite(Tex : ITexture; x, y, w, h: Single; const Color: TVec4f; Angle, cx, cy: Single); overload; stdcall;
-    procedure DrawSprite(Tex : ITexture; x, y, w, h: Single; const c1, c2, c3, c4: TVec4f; Angle, cx, cy: Single); overload;  stdcall;
+    procedure DrawSprite(Tex : ITexture; x, y, w, h: Single; const Color: TVec4f; Angle: Single = 0.0; cx: Single = 0.5; cy: Single = 0.5); overload; stdcall;
+    procedure DrawSprite(Tex : ITexture; x, y, w, h: Single; const c1, c2, c3, c4: TVec4f; Angle: Single = 0.0; cx: Single = 0.5; cy: Single = 0.5); overload;  stdcall;
   end;
 
   ICamera3d = interface
@@ -393,13 +427,7 @@ type
     property SystemInfo: ISystemInfo read GetSystemInfo;
   end;
 
-{$IFNDEF JEN_CTD}
-  {$IFDEF JEN_ATTACH_DLL}
-    procedure GetJenEngine(out Engine: IJenEngine; Debug: Boolean = False); stdcall; external 'JEN.dll';
-  {$ELSE}
-    var GetJenEngine : procedure(out Engine: IJenEngine; Debug: Boolean = False); stdcall;
-  {$ENDIF}
-{$ENDIF}
+  procedure GetJenEngine(out Engine: IJenEngine; Debug: Boolean = False); stdcall; external 'JEN.dll';
 
 implementation
 

@@ -6,10 +6,10 @@ uses
   JEN_Header,
   JEN_Utils,
   JEN_Shader,
+  JEN_Texture,
   JEN_Resource;
 
 type
-
   TMipMap = record
     Size : LongWord;
     Data : Pointer;
@@ -22,8 +22,10 @@ type
   end;
 
   IResourceManager = interface(JEN_Header.IResourceManager)
-    procedure RegisterLoader(Loader: TResLoader);
+    procedure Load(const FilePath: string; var Resource: IResource); overload;
+
     function GetRef(const Name: string): IResource;
+    procedure RegisterLoader(Loader: TResLoader);
     procedure SetResChangeCallBack(Proc: Pointer);
 
     function GetActiveRes(RT: TResourceType): IUnknown;
@@ -34,7 +36,7 @@ type
 
   TResourceManager = class(TInterfacedObject, IResourceManager)
   constructor Create;
-  destructor Destroy; override;
+  procedure Free; stdcall;
   private
     FResList : TInterfaceList;
     FLoaderList : TList;
@@ -49,13 +51,12 @@ type
     function GetActiveRes(RT: TResourceType): IUnknown;
     procedure SetActiveRes(RT: TResourceType; Value: IUnknown);
 
-    function Load(const FileName: string; ResType: TResourceType): JEN_Header.IResource; overload; stdcall;
-    procedure Load(const FileName: string; out Resource: JEN_Header.IShaderResource); overload; stdcall;
-    procedure Load(const FileName: string; out Resource: JEN_Header.ITexture); overload; stdcall;
-    {
-    function LoadShader(const FileName: string): JEN_Header.IShaderResource; stdcall;
-    function LoadTexture(const FileName: string): JEN_Header.ITexture; stdcall;
-             }
+    function Load(const FilePath: string; ResType: TResourceType): IResource; overload; stdcall;
+    procedure Load(const FilePath: string; out Resource: JEN_Header.IShaderResource); overload; stdcall;
+    procedure Load(const FilePath: string; out Resource: JEN_Header.ITexture); overload; stdcall;
+    procedure Load(const FilePath: string; out Resource: JEN_Header.IFont); overload; stdcall;
+    procedure Load(const FilePath: string; var Resource: IResource); overload;
+
     procedure RegisterLoader(Loader: TResLoader);
     function GetRef(const Name: string): IResource;
 
@@ -66,6 +67,7 @@ implementation
 
 uses
   JEN_DDSTexture,
+  JEN_Font,
   JEN_Main;
 
 constructor TResourceManager.Create;
@@ -75,10 +77,11 @@ begin
 
   RegisterLoader(TShaderLoader.Create);
   RegisterLoader(TDDSLoader.Create);
+  RegisterLoader(TFontLoader.Create);
   //DebugTexture := TTexture.Create('DEBUG');
 end;
 
-destructor TResourceManager.Destroy;
+procedure TResourceManager.Free;
 var
   i : LongInt;
 begin
@@ -87,7 +90,6 @@ begin
 
   FResList.Free;
   FLoaderList.Free;
-  inherited;
 end;
 
 procedure TResourceManager.SetResChangeCallBack(Proc: Pointer);
@@ -105,63 +107,62 @@ begin
   FActiveRes[RT] := Value;
 end;
 
-procedure TResourceManager.Load(const FileName: string; out Resource: JEN_Header.IShaderResource);
+procedure TResourceManager.Load(const FilePath: string; out Resource: JEN_Header.IShaderResource);
 begin
-  Resource := IShaderResource(Load(FileName, rtShader));
+  Resource := IShaderResource(Load(FilePath, rtShaderRes));
 end;
 
-procedure TResourceManager.Load(const FileName: string; out Resource: JEN_Header.ITexture);
+procedure TResourceManager.Load(const FilePath: string; out Resource: JEN_Header.ITexture);
 begin
-  Resource := ITexture(Load(FileName, rtTexture));
+  Resource := ITexture(Load(FilePath, rtTexture));
 end;
 
-function TResourceManager.Load(const FileName: string; ResType: TResourceType): JEN_Header.IResource;
+procedure TResourceManager.Load(const FilePath: string; out Resource: JEN_Header.IFont);
+begin
+  Resource := IFont(Load(FilePath, rtFont));
+end;
+
+procedure TResourceManager.Load(const FilePath: string; var Resource: IResource);
 var
-  I : LongInt;
-  Ext : String;
-  eFileName : String;
-  RL : TResLoader;
-  Stream : TStream;
-  Resource : IResource;
+  I         : LongInt;
+  FileExt   : String;
+  FileName  : String;
+  Loader    : TResLoader;
+  Stream    : TStream;
 begin
-  Result := nil;
-  Resource := nil;
-  Ext := Utils.ExtractFileExt(FileName);
-  eFileName := Utils.ExtractFileName(FileName);
-     {
+  if not Assigned(Resource) then
+    Exit;
+
+  FileExt := Utils.ExtractFileExt(FilePath);
+  FileName := Utils.ExtractFileName(FilePath);
+
+       {
   if not FileExist(
   begin
     Logout( 'Don''t find loader for file ' + Utils.ExtractFileName(FileName), lmError);
     Exit;
   end;    }
 
-  RL := nil;
+  Loader := nil;
   for I := 0 to FLoaderList.Count - 1 do
-    if(TResLoader(FLoaderList[i]).ExtString = Ext) and (TResLoader(FLoaderList[i]).ResType = ResType) then
-       RL := TResLoader(FLoaderList[i]);
+    if(TResLoader(FLoaderList[i]).ExtString = FileExt) and (TResLoader(FLoaderList[i]).ResType = Resource.ResType) then
+       Loader := TResLoader(FLoaderList[i]);
 
-  if not Assigned(RL) then
+  if not Assigned(Loader) then
   begin
-    Logout('Don''t find loader for file ' + eFileName, lmWarning);
+    Logout('Don''t find loader for file ' + FileName, lmWarning);
     Exit;
   end;
 
-  case ResType of
-    rtShader:  Resource := TShaderResource.Create(eFileName);
-    rtTexture: Resource := TTexture.Create(eFileName);
-  end;
-
-  Result := Resource;
-
-  Stream := TFileStream.Open(FileName);
+  Stream := TFileStream.Open(FilePath);
   if not Assigned(Stream) then
   begin
-    Logout('Can''t open file ' + eFileName, lmWarning);
+    Logout('Can''t open file ' + FileName, lmWarning);
     Stream.Free;
     Exit;
   end;
 
-  if not RL.Load(Stream, IResource(Resource)) then
+  if not Loader.Load(Stream, Resource) then
   begin
     Stream.Free;
    { Resource := nil;
@@ -170,12 +171,26 @@ begin
 
      // Resource := DebugTexture;
     end;      }
-    Logout('Error while loading file ' + eFileName, lmWarning);
+    Logout('Error while loading file ' + FileName, lmWarning);
     Exit;
   end;
 
   FResList.Add(Resource);
   LogOut('Loading '+ (Resource as IResource).Name, lmNotify);
+end;
+
+function TResourceManager.Load(const FilePath: string; ResType: TResourceType): JEN_Header.IResource;
+var
+  Resource : IResource;
+begin
+  case ResType of
+    rtShaderRes : Resource := TShaderResource.Create(Utils.ExtractFileName(FilePath), Utils.ExtractFileDir(FilePath));
+    rtTexture   : Resource := TTexture.Create(Utils.ExtractFileName(FilePath), Utils.ExtractFileDir(FilePath), tfoNone, 0, 0);
+    rtFont      : Resource := TFont.Create(Utils.ExtractFileName(FilePath), Utils.ExtractFileDir(FilePath));
+  end;
+
+  Load(FilePath, Resource);
+  Result := Resource;
 end;
 
 procedure TResourceManager.RegisterLoader(Loader : TResLoader);
@@ -188,6 +203,5 @@ function TResourceManager.GetRef(const Name: string): IResource;
 begin
 
 end;
-
 
 end.

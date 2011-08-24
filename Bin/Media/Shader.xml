@@ -16,8 +16,8 @@
 		
 			void main( void )
 			{
-				int QuadId = int(floor(IndxAttrib/4.0));
 				int VertexId = int(IndxAttrib);
+				int QuadId = ((VertexId)/4)*4;
 				vec4 PosTex = PosTexCoord[VertexId];
 				InterpolatedData = QuadData[VertexId];
 

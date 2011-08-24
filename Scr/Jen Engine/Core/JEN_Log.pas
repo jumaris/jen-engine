@@ -1,5 +1,4 @@
 unit JEN_Log;
-{$I Jen_config.INC}
 
 interface
 
@@ -10,7 +9,7 @@ uses
 type
   TLog = class(TInterfacedObject, ILog)
   constructor Create;
-  destructor Destroy; Override;
+  procedure Free; stdcall;
   protected
     class var FLogOutputs : TInterfaceList;
   public
@@ -41,10 +40,9 @@ begin
   fLogOutputs := TInterfaceList.Create;
 end;
 
-destructor TLog.Destroy;
+procedure TLog.Free;
 begin
-  fLogOutputs.Free;
-  inherited;
+  FLogOutputs.Free;
 end;
 
 procedure TLog.RegisterOutput(Value : ILogOutput); stdcall;
