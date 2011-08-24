@@ -83,18 +83,25 @@ type
     property RefCount: LongInt read FRefCount;
   end;
 
+  IUtils = interface(JEN_Header.IUtils)
+    procedure Update;
+    procedure AutoUpdate(Value : Boolean);
+  end;
+
   TUtils = class(TInterfacedObject, IJenSubSystem, IUtils)
     constructor Create;
-    destructor Destroy; override;
+    procedure Free; stdcall;
   private
     FTimeFreq   : Int64;
     FTimeStart  : LongInt;
     HWaitObj    : THandle;
+    FAutoUpdate : Boolean;
     FTime       : LongInt;
     function GetTime : LongInt; stdcall;
   public
     procedure Sleep(Value: LongWord); stdcall;
-    procedure Update; stdcall;
+    procedure Update;
+    procedure AutoUpdate(Value: Boolean);
     function IntToStr(Value: LongInt): string; stdcall;
     function StrToInt(const Str: string; Def: LongInt = 0): LongInt; stdcall;
     function FloatToStr(Value: Single; Digits: LongInt = 8): string; stdcall;
@@ -103,7 +110,6 @@ type
     function ExtractFileName(const FileName: string): string; stdcall;
     function ExtractFileExt(const FileName: string): string; stdcall;
     function ExtractFileNameNoExt(const FileName: string): string; stdcall;
-    property Time : LongInt read GetTime;
   end;
 
   TStream = class
@@ -538,11 +544,11 @@ begin
   QueryPerformanceFrequency(FTimeFreq);
   QueryPerformanceCounter(Count);
   FTimeStart := Trunc(1000 * (Count / FTimeFreq));
+  FAutoUpdate := True;
 end;
 
-destructor TUtils.Destroy;
+procedure TUtils.Free;
 begin
-  inherited;
   CloseHandle(HWaitObj);
 end;
 
@@ -554,10 +560,17 @@ end;
 
 function TUtils.GetTime: LongInt;
 begin
+  if FAutoUpdate then
+    Update;
   Result := FTime;
 end;
 
-procedure TUtils.Update; stdcall;
+procedure TUtils.AutoUpdate(Value: Boolean);
+begin
+  FAutoUpdate := Value;
+end;
+
+procedure TUtils.Update;
 var
   Count : Int64;
 begin

@@ -1,9 +1,9 @@
 unit JEN_Main;
-{$I Jen_config.INC}
 
 interface
 
 uses
+  SysUtils, opengl, windows,
   JEN_Header,
   JEN_Math,
   JEN_Utils,
@@ -81,6 +81,12 @@ var
   ResMan     : IResourceManager;
   Game       : IGame;
 
+  var
+   TDC : HDC;
+   PFD :  TPixelFormatDescriptor;
+   pixelFormat  : Integer;
+
+
 procedure LogOut(const Text: string; MType: TLogMsg);
 procedure pGetEngine(out Eng: JEN_Header.IJenEngine; Debug: Boolean); stdcall;
 
@@ -94,33 +100,36 @@ end;
 
 procedure pGetEngine(out Eng: JEN_Header.IJenEngine; Debug: Boolean);
 begin
-   Engine := TJenEngine.Create(Debug);
-   Eng := IJenEngine(Engine);
+  if not Assigned(Engine) then
+    Engine := TJenEngine.Create(Debug);
+  Eng := IJenEngine(Engine);
 end;
 
 constructor TJenEngine.Create;
 var
   Event : TEvent;
 begin
-  for Event:=Low(TEvent) to High(TEvent) do
+  FisRunnig := False;
+  for Event := Low(TEvent) to High(TEvent) do
     FEventsList[Event] := TList.Create;
 
-  Utils := TUtils.Create;
+  Utils   := TUtils.Create;
   Helpers := THelpers.Create;
-  Log := TLog.Create;
-  Input := JEN_Input.TInput.Create;
+  Log     := TLog.Create;
+  Input   := JEN_Input.TInput.Create;
 
+  Log.RegisterOutput(TFileLog.Create('log.txt'));
   {$IFDEF DEBUG}
-  Log.RegisterOutput(TConsole.Create);
+    Log.RegisterOutput(TConsole.Create);
   {$ELSE}
   if Debug then
     Log.RegisterOutput(TConsole.Create);
   {$ENDIF}
 
-  Render := TRender.Create;
-  Render2d := TRender2D.Create;
-  Display := TDisplay.Create;
-  ResMan := TResourceManager.Create;
+  Render    := TRender.Create;
+  Render2d  := TRender2D.Create;
+  Display   := TDisplay.Create;
+  ResMan    := TResourceManager.Create;
 end;
 
 destructor TJenEngine.Destroy;
@@ -198,31 +207,44 @@ begin
   Game.LoadContent;
   Input.Init;
 
+  Utils.AutoUpdate(False);
+  Utils.Update;
   FLastUpdate := Utils.Time;
   DeltaTime := 1;
   while not FQuit do
   begin
-    Utils.Update;
-    Display.Update;
     Input.Update;
+    Display.Update;
     Game.OnUpdate(DeltaTime);
     Game.OnRender;
     Render.Flush;
     Display.Swap;
 
-  //  if Render. then
-
+   { if Render. then           }
+    Utils.Update;
     Utils.Sleep( Max(2 - (Utils.Time - FLastUpdate), 0));
+    Utils.Update;
     DeltaTime := Max(Utils.Time - FLastUpdate, 1);
 
     FLastUpdate := Utils.Time;
   end;
 
   Game.Close;
+  Game := nil;
+
+  ResMan.Free;
+  Render2d.Free;
+  Render.Free;
+  Display.Free;
+  Helpers.Free;
+  Input.Free;
+  Log.Free;
+  Utils.Free;
 end;
 
 procedure TJenEngine.GetSubSystem(SubSystemType: TJenSubSystemType;out SubSystem: IJenSubSystem);
 begin
+
   case SubSystemType of
     ssUtils     : SubSystem := IJenSubSystem(Utils);
     ssInput     : SubSystem := IJenSubSystem(Input);
@@ -235,7 +257,6 @@ begin
   else
     SubSystem := nil;
   end;
-
 end;
 
 procedure TJenEngine.CreateEvent(Event: TEvent; Param: LongInt);
@@ -262,17 +283,7 @@ begin
 end;
 
 initialization
-begin
-  TJenEngine.FisRunnig := False;
-{$IFDEF DEBUG}
-  ReportMemoryLeaksOnShutdown := True;
-{$ENDIF}
-{$IFNDEF JEN_CTD}
-  {$IFNDEF JEN_ATTACH_DLL}
-    GetJenEngine := pGetEngine;
-  {$ENDIF}
-{$ENDIF}
-end;
+
 finalization
 begin
   //Engine       := nil;

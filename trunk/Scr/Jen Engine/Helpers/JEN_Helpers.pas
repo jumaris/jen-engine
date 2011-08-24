@@ -10,6 +10,7 @@ uses
 type
   THelpers = class(TInterfacedObject, IHelpers)
     constructor Create;
+    procedure Free; stdcall;
   private
     FSystemInfo: ISystemInfo;
     function GetSystemInfo: ISystemInfo; stdcall;
@@ -26,6 +27,11 @@ uses
 constructor THelpers.Create;
 begin
   FSystemInfo := TSystem.Create;
+end;
+
+procedure THelpers.Free;
+begin
+
 end;
 
 function THelpers.GetSystemInfo: ISystemInfo;

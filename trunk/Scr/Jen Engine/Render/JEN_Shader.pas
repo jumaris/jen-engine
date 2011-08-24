@@ -21,20 +21,35 @@ type
     function Init(const VertexShader, FragmentShader: AnsiString): Boolean;
   end;
 
+  IShaderUniform = interface(JEN_Header.IShaderUniform)
+  ['{4AB4AE0B-7FBC-4838-87B0-4A9BEA508ED4}']
+    procedure Init(ShaderID: GLEnum; const UName: string; UniformType: TShaderUniformType);
+  end;
+
+  IShaderAttrib = interface(JEN_Header.IShaderAttrib)
+  ['{CB9EEB22-8256-46BB-B7B1-372E0D4CD624}']
+    function Init(ShaderID: GLEnum; const AName: string): Boolean;
+  end;
+
   TShaderResource = class(TManagedInterface, IManagedInterface, IResource, IShaderResource)
-    constructor Create(const Name: string);
+    constructor Create(const Name, FilePath: string);
     destructor Destroy; override;
   private
+    FName           : string;
+    FFilePath       : string;
     FShaderPrograms : TInterfaceList;
     FDefines        : TList;
     FXML            : IXML;
-    FName           : string;
-    procedure Init(XML: IXML);
     function GetName: string; stdcall;
+    function GetFilePath: string; stdcall;
+    function GetResType: TResourceType; stdcall;
+
     function GetDefineId(const Name: string): LongInt;
-  public
     function GetDefine(const Name: string): LongInt; stdcall;
     procedure SetDefine(const Name: string; Value: LongInt); stdcall;
+  public
+    procedure Init(XML: IXML);
+    procedure Reload; stdcall;
     procedure Compile(var Shader: IShaderProgram); overload;
     function Compile: JEN_Header.IShaderProgram; overload; stdcall;
   end;
@@ -49,8 +64,8 @@ type
     FAttribList      : TInterfaceList;
   public
     function Init(const VertexShader, FragmentShader: AnsiString): Boolean;
-    function Uniform(const UName: String; CreateDebug: Boolean): IShaderUniform; overload; stdcall;
-    function Attrib(const AName: string; CreateDebug: Boolean): IShaderAttrib; stdcall;
+    function Uniform(const UName: String; CreateDebug: Boolean): JEN_Header.IShaderUniform; overload; stdcall;
+    function Attrib(const AName: string; CreateDebug: Boolean): JEN_Header.IShaderAttrib; stdcall;
     function GetUniformsVersion: LongWord; stdcall;
 
     procedure Bind; stdcall;
@@ -121,26 +136,25 @@ end;
 
 function TShaderProgram.Init(const VertexShader, FragmentShader: AnsiString): Boolean;
 var
+  i,j         : LongInt;
   Status      : LongInt;
   LogBuf      : AnsiString;
   LogLen      : LongInt;
-  I           : LongInt;
   Count       : LongInt;
   Info        : LongInt;
   GLType      : LongInt;
   NameBuff    : array[0..255] of AnsiChar;
   UniformType : TShaderUniformType;
   Name        : String;
-  U           : TShaderUniform;
-  A           : TShaderAttrib;
+  u           : IShaderUniform;
+  a           : IShaderAttrib;
 
   procedure Attach(ShaderType: GLenum; const Source: AnsiString);
   var
-    Obj : GLEnum;
-    SourcePtr  : PAnsiChar;
-    SourceSize : LongInt;
-    Str : string;
-    i : LongInt;
+    Obj         : GLEnum;
+    SourcePtr   : PAnsiChar;
+    SourceSize  : LongInt;
+    Str         : string;
   begin
     Obj := glCreateShader(ShaderType);
 
@@ -193,7 +207,7 @@ begin
   end;
 
   glGetProgramiv(FID, GL_ACTIVE_UNIFORMS, @Count);
-  for I := 0 to Count-1 do
+  for i := 0 to Count-1 do
   begin
     glGetActiveUniform(FID, I, 255, @Info, @Info, @GLType, @NameBuff[0]);
     case GLType of
@@ -210,9 +224,18 @@ begin
     Name := String(NameBuff);
     Delete(Name, Pos('[', Name), 3);
 
-    U:= TShaderUniform.Create;
-    U.Init(FID,  Name, UniformType);
-    FUniformList.Add(IShaderUniform(U));
+    u := nil;
+    for j := 0 to FUniformList.Count -1 do
+      if(FUniformList[j] as IShaderUniform).Name = Name then
+        u := FUniformList[j] as IShaderUniform;
+
+    if not Assigned(u) then
+    begin
+      u := TShaderUniform.Create;
+      FUniformList.Add(u);
+    end;
+
+    u.Init(FID,  Name, UniformType);
   end;
 
   glGetProgramiv(FID, GL_ACTIVE_ATTRIBUTES, @Count);
@@ -221,18 +244,30 @@ begin
     glGetActiveAttrib(FID, I, 255, @Info, @Info, @GLType, @NameBuff[0]);
 
     Name := String(NameBuff);
-    A:= TShaderAttrib.Create;
-    A.Init(FID, Name);
-    FAttribList.Add(IShaderAttrib(A));
+    a    := nil;
+
+    for j := 0 to FAttribList.Count -1 do
+      if(FAttribList[j] as IShaderAttrib).Name = Name then
+        a := FAttribList[j] as IShaderAttrib;
+
+    if not Assigned(a) then
+    begin
+      a := TShaderAttrib.Create;
+      FAttribList.Add(IShaderAttrib(a));
+    end;
+
+    a.Init(FID, Name);
   end;
 
+  Bind();
+  glUseProgram(FID);
   Result := True;
 end;
 
-function TShaderProgram.Uniform(const UName: string; CreateDebug: Boolean): IShaderUniform;
+function TShaderProgram.Uniform(const UName: string; CreateDebug: Boolean): JEN_Header.IShaderUniform;
 var
   i : LongInt;
-  u : TShaderUniform;
+  u : IShaderUniform;
 begin
   for i := 0 to FUniformList.Count - 1 do
     if ((FUniformList[i] as IShaderUniform).Name = UName) then
@@ -240,17 +275,18 @@ begin
 
   if CreateDebug then
   begin
-    U := TShaderUniform.Create;
-    U.Init(FID, UName, utNone);
-    Result := U;
+    u := TShaderUniform.Create;
+    u.Init(FID, UName, utNone);
+    FUniformList.Add(u);
+    Result := u;
   end else
     Result := nil;
 end;
 
-function TShaderProgram.Attrib(const AName: string; CreateDebug: Boolean): IShaderAttrib;
+function TShaderProgram.Attrib(const AName: string; CreateDebug: Boolean): JEN_Header.IShaderAttrib;
 var
   i : LongInt;
-  a : TShaderAttrib;
+  a : IShaderAttrib;
 begin
   for i := 0 to FAttribList.Count - 1 do
     if ((FAttribList[i] as IShaderAttrib).Name = AName) then
@@ -258,9 +294,10 @@ begin
 
   if CreateDebug then
   begin
-    A := TShaderAttrib.Create;
-    A.Init(FID, AName);
-    Result := A;
+    a := TShaderAttrib.Create;
+    a.Init(FID, AName);
+    FAttribList.Add(IShaderAttrib(a));
+    Result := a;
   end else
     Result := nil;
 end;
@@ -276,10 +313,10 @@ end;
 
 procedure TShaderProgram.Bind;
 begin
-  if ResMan.Active[rtShader] <> IUnknown(Self) then
+  if ResMan.Active[rtShaderRes] <> IUnknown(Self) then
   begin
     glUseProgram(FID);
-    ResMan.Active[rtShader] := Self;
+    ResMan.Active[rtShaderRes] := Self;
   end;
 end;
 {$ENDREGION}
@@ -328,11 +365,12 @@ begin
   if FID <> -1 then
   begin
     if Count * USize[FType] <= SizeOf(FValue) then
+    begin
       if MemCmp(@FValue, @Data, Count * USize[FType]) <> 0 then
         Move(Data, FValue, Count * USize[FType])
       else
         Exit
-    else
+    end else
       Move(Data, FValue, SizeOf(FValue));
 
     inc(FVersion);
@@ -409,6 +447,7 @@ constructor TShaderResource.Create;
 begin
   inherited Create;
   FName := Name;
+  FFilePath := FilePath;
   FShaderPrograms := TInterfaceList.Create;
   FDefines := TList.Create;
 end;
@@ -434,18 +473,14 @@ begin
   Result := FName;
 end;
 
-procedure TShaderResource.Init(XML: IXML);
-var
-  I       : LongInt;
-  Shader  : IShaderProgram;
+function TShaderResource.GetFilePath: string;
 begin
-  FXML := XML;
-  for I := 0 to FShaderPrograms.Count - 1 do
-  begin
-    Shader := FShaderPrograms[i] as IShaderProgram;
-    Compile(Shader);
-  end;
+  Result := FFilePath;
+end;
 
+function TShaderResource.GetResType: TResourceType; stdcall;
+begin
+  Result := rtShaderRes;
 end;
 
 function TShaderResource.GetDefineId(const Name: String): LongInt;
@@ -490,6 +525,27 @@ begin
     FDefines.Add(Define);
   end else
     TShaderDefine(FDefines[Id]^).Value := Value;
+end;
+
+procedure TShaderResource.Init(XML: IXML);
+var
+  I       : LongInt;
+  Shader  : IShaderProgram;
+begin
+  FXML := XML;
+  for I := 0 to FShaderPrograms.Count - 1 do
+  begin
+    Shader := FShaderPrograms[i] as IShaderProgram;
+    Compile(Shader);
+  end;
+end;
+
+procedure TShaderResource.Reload; stdcall;
+var
+  i : IResource;
+begin
+  i := self;
+  ResMan.Load(FFilePath, i);
 end;
 
 procedure TShaderResource.Compile(var Shader : IShaderProgram);
@@ -601,7 +657,7 @@ constructor TShaderLoader.Create;
 begin
   inherited;
   ExtString := 'xml';
-  ResType := rtShader;
+  ResType := rtShaderRes;
 end;
 
 function TShaderLoader.Load(const Stream : TStream; var Resource : IResource) : Boolean;

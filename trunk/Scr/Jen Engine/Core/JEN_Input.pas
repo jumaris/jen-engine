@@ -15,6 +15,7 @@ type
 
   TInput = class(TInterfacedObject, IInput)
   constructor Create;
+  procedure Free; stdcall;
   private
     FCapture    : Boolean;
     FMouse      : TMouse;
@@ -46,6 +47,11 @@ uses
 constructor TInput.Create;
 begin
   inherited;
+end;
+
+procedure TInput.Free;
+begin
+
 end;
 
 procedure TInput.Init;
@@ -120,6 +126,7 @@ var
   Pos  : TPoint;
   CPos : TPoint;
 begin
+  FillChar(FHit, SizeOf(FHit), False);
   GetWindowRect(Display.Handle, Rect);
   GetCursorPos(Pos);
 

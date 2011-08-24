@@ -39,27 +39,25 @@
 		<Code>
 			#version 120
 			varying vec2 Texcoord;
-
+			
 			// mandel.frag: Fragment shader for drawing the Mandelbrot set
 			void main(void)
 			{
-				vec2 tmp = (Texcoord - 0.5) * 2.5;
-				float   real  = tmp.x - 0.8;
-				float   imag  = tmp.y - 0.2;
-				float   cReal = real;   // Change this line...
-				float   cImag = imag;   // ...and this one to get a Julia set
-				float   r2    = 0.0;
+				vec2 Coff= (Texcoord - 0.5) * 2.5 - vec2(0.8, 0.0);
+				vec2 cCoff=Coff, tmp;
+				
 				// perform procedural mandelbrot
-				for (int iter = 0; iter < 15; ++iter)
+				for (int iter = 0; iter < 13; ++iter)
 				{	
-				float tempreal = real;
-
-				real = (tempreal * tempreal) - (imag * imag) + cReal;
-				imag = 2.0 * tempreal * imag + cImag;
-				r2   = (real * real) + (imag * imag);
+				tmp      = Coff*Coff;
+				Coff.y  *= 2.0 * Coff.x;
+				Coff.x   = tmp.x - tmp.y;
+				Coff    += cCoff;
+				tmp.x    = tmp.x + tmp.y;
 				}
 
-				gl_FragColor = vec4(clamp(vec3(mix(1.0,0.0,(r2 - 4.0)*0.001)), 0.0, 1.0), 1.0);
+				//gl_FragColor = vec4(clamp(vec3(mix(1.0,0.0,(r2 - 4.0)*0.001)), 0.0, 1.0), 1.0);
+				gl_FragColor = sin(13./18.+log(tmp.x)/28+vec4(5, 3.5, 5, 5))/2.0+0.5;
 			}
 		</Code> 
 	</FragmentShader>

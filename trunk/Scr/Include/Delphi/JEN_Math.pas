@@ -9,7 +9,7 @@ Type
     class operator NotEqual(const a, b: TPoint2i): Boolean;
   end;
 
-  TRecti    = record
+  TRecti = record
     x, y          : LongInt;
     Width, Height : LongInt;
     private

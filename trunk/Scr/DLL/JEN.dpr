@@ -30,7 +30,10 @@ uses
   JEN_Camera3D in '..\Jen Engine\Helpers\JEN_Camera3D.pas',
   JEN_SystemInfo in '..\Jen Engine\Helpers\JEN_SystemInfo.pas',
   JEN_Helpers in '..\Jen Engine\Helpers\JEN_Helpers.pas',
-  JEN_Input in '..\Jen Engine\Core\JEN_Input.pas';
+  JEN_Input in '..\Jen Engine\Core\JEN_Input.pas',
+  JEN_Font in '..\Jen Engine\Core\JEN_Font.pas',
+  JEN_RenderTarget in '..\Jen Engine\Render\JEN_RenderTarget.pas',
+  JEN_Texture in '..\Jen Engine\Render\JEN_Texture.pas';
 
 exports
   pGetEngine name 'GetJenEngine';
@@ -39,7 +42,10 @@ exports
 {$R ..\icon.RES}
 
 begin
-
+  Engine := nil;
+  {$IFDEF DEBUG}
+  ReportMemoryLeaksOnShutdown := True;
+  {$ENDIF}
 end.
 
 

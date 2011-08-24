@@ -17,7 +17,7 @@ type
 
   TRender = class(TInterfacedObject, IRender)
     procedure Init(DepthBits: Byte; StencilBits: Byte; FSAA: Byte); stdcall;
-    destructor Destroy; override;
+    procedure Free; stdcall;
   private
     FValid      : Boolean;
     FVSync      : Boolean;
@@ -83,13 +83,12 @@ uses
   JEN_OpenGLHeader,
   JEN_Main;
 
-destructor TRender.Destroy;
+
+procedure TRender.Free;
 begin
+  LogOut('Delete OpenGL context.', lmNotify);
   if not wglDeleteContext(FGL_Context) Then
     LogOut('Cannot delete OpenGL context.', lmError)
-  else
-    LogOut('Delete OpenGL context.', lmNotify);
-  inherited;
 end;
 
 procedure TRender.Init(DepthBits: Byte; StencilBits: Byte; FSAA: Byte);
@@ -108,6 +107,7 @@ var
   Result  : Boolean;
 begin
   FValid := False;
+  Set8087CW($133F);
 
   if not (Assigned(Display) and Display.Valid) then
   begin
@@ -115,10 +115,10 @@ begin
     Exit;
   end;
 
-  FillChar(PFD, SizeOf(PFD), 0);
+  FillChar(PFD, SizeOf(TPixelFormatDescriptor), 0);
   with PFD do
   begin
-    nSize := SizeOf(PFD);
+    nSize := SizeOf(TPixelFormatDescriptor);
     nVersion := 1;
     dwFlags := PFD_DRAW_TO_WINDOW or PFD_SUPPORT_OPENGL or PFD_DOUBLEBUFFER;
     cColorBits := 24;
@@ -176,6 +176,8 @@ begin
       LogOut('Cannot set FSAA', lmWarning);
   end;
 
+  LogOut('Set pixel format.', lmNotify);
+
   if Result then
     Result := SetPixelFormat(Display.DC, PFIdx, @PFD)
   else
@@ -187,38 +189,42 @@ begin
     Exit;
   end;
 
+  LogOut('Create OpenGL context.', lmNotify);
   FGL_Context := wglCreateContext(Display.DC);
   if (FGL_Context = 0) Then
   begin
     LogOut('Cannot create OpenGL context.', lmError);
     Exit;
-  end else
-    LogOut('Create OpenGL context.', lmNotify);
+  end;
 
+  LogOut('Make current OpenGL context.', lmNotify);
   if not wglMakeCurrent(Display.DC, FGL_Context) Then
   begin
     LogOut('Cannot set current OpenGL context.', lmError);
     Exit;
-  end else
-    LogOut('Make current OpenGL context.', lmNotify);
-
-  if not LoadGLLibraly Then
-  begin
-    LogOut('Error when load extensions.', lmError);
-    Exit;
   end;
 
+  ReadGlExt;
+  glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS ,@Par);
+
+  SBuffer[rsWGLEXTswapcontrol] := glIsSupported('WGL_EXT_swap_control');
   SBuffer[rsNVXmemoryinfo]  := glIsSupported('GL_NVX_gpu_memory_info');
   SBuffer[rsAMDAssociation] := glIsSupported('WGL_AMD_gpu_association');
-
-  FValid := True;
-  glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS ,@Par);
 
   LogOut('OpenGL version : ' + glGetString(GL_VERSION) + ' (' + glGetString(GL_VENDOR) + ')', lmInfo);
   LogOut('Video device   : ' + glGetString(GL_RENDERER), lmInfo);
   if GPUMemorySize <> -1  then
     LogOut('Video memory   : ' + Utils.IntToStr(GPUMemorySize) +'Mb', lmInfo);
   LogOut('Texture units  : ' + Utils.IntToStr(Par), lmInfo);
+
+  LogOut('Load opengl extensions.', lmNotify);
+  if not LoadGLLibraly Then
+  begin
+    LogOut('Error when load extensions.', lmError);
+    Exit;
+  end;
+
+  FValid := True;
 
   SetColorMask(True, True, True, True);
   SetBlendType(btNormal);
@@ -327,6 +333,7 @@ end;
 procedure TRender.SetVSync(Value: Boolean);
 begin
   FVSync := Value;
+  if Support(rsWGLEXTswapcontrol) then
   if Display.FullScreen then
     wglSwapIntervalEXT(Ord(FVSync))
   else

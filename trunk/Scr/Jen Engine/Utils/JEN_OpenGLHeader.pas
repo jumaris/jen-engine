@@ -638,6 +638,7 @@ const
 function glIsSupported(Extension: AnsiString): Boolean;
 function glGetProc(const ProcName: PAnsiChar; var OldResult: Boolean; Required: Boolean = True): Pointer;
 function LoadGLLibraly: Boolean;
+procedure ReadGlExt;
 
 implementation
 
@@ -690,22 +691,26 @@ begin
   end;
 end;
 
-function LoadGLLibraly : Boolean;
+procedure ReadGlExt;
 begin
-  Result := True;
   ExtString := glGetString(GL_EXTENSIONS);
 
-  wglGetExtensionsStringEXT := glGetProc('wglGetExtensionsStringEXT', Result, False);
+  wglGetExtensionsStringEXT := wglGetProcAddress('wglGetExtensionsStringEXT');
   if Assigned(@wglGetExtensionsStringEXT) then
     ExtString := ExtString + ' ' + wglGetExtensionsStringEXT
   else
   begin
-    wglGetExtensionsStringARB := glGetProc('wglGetExtensionsStringARB', Result, False);
+    wglGetExtensionsStringARB := wglGetProcAddress('wglGetExtensionsStringEXT');
     if Assigned(@wglGetExtensionsStringARB) then
     ExtString := ExtString + ' ' + wglGetExtensionsStringARB(wglGetCurrentDC);
   end;
+end;
 
-  wglSwapIntervalEXT := glGetProc('wglSwapInterval', Result);
+function LoadGLLibraly : Boolean;
+begin
+  Result := True;
+
+  wglSwapIntervalEXT := glGetProc('wglSwapInterval', Result, False);
 
   glActiveTexture := glGetProc('glActiveTexture', Result);
 
