@@ -402,10 +402,6 @@ const
   GL_POLYGON_OFFSET_LINE              = $2A02;
   GL_POLYGON_OFFSET_FILL              = $8037;
 
-  GL_GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX   = $9048;
-  GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX = $9049;
-
-  WGL_GPU_RAM_AMD                     = $21A3;
 
   procedure glFinish; stdcall; external opengl32;
   procedure glFlush; stdcall; external opengl32;
@@ -493,6 +489,7 @@ const
   procedure glNormal3f(x, y, z: GLfloat); stdcall; external opengl32;
   procedure glNormalPointer(atype: GLenum; stride: GLsizei; const pointer: Pointer); stdcall; external opengl32;
 
+  procedure glDrawArrays(mode: GLenum; first: GLint; count: GLsizei); stdcall; external opengl32;
   procedure glDrawElements(mode: GLenum; count: GLsizei; atype: GLenum; const indices: Pointer); stdcall; external opengl32;
   procedure glPushClientAttrib(mask: GLbitfield); stdcall; external opengl32;
   procedure glPopClientAttrib; stdcall; external opengl32;
@@ -519,13 +516,14 @@ const
   glDeleteBuffers: procedure(n: GLsizei; buffers : PGLuint); stdcall;
   glGenBuffers: procedure(n: GLsizei; buffers : PGLuint); stdcall;
   glIsBuffer: function (buffer: GLuint): GLboolean; stdcall;
+
   glBufferData: procedure(target: GLenum; size: GLsizei; data: PGLvoid; usage: GLenum); stdcall;
   glBufferSubData: procedure(target: GLenum; offset: GLint; size: GLsizei; data: PGLvoid); stdcall;
   glMapBuffer: function(target: GLenum; access: GLenum): PGLvoid; stdcall;
   glUnmapBuffer: function(target: GLenum) :GLboolean; stdcall;
   glGetBufferParameteriv: procedure(target: GLenum; pname: GLenum; params: PGLint); stdcall;
 
-  glDrawArrays: procedure(mode: GLenum; first: GLint; count: GLsizei); stdcall;
+ // glDrawArrays: procedure(mode: GLenum; first: GLint; count: GLsizei); stdcall;
 
   // GL_shader_objects
   glGetProgramiv: procedure(programObj: GLhandle; pname: GLenum; params: PGLInt); stdcall;
@@ -577,8 +575,6 @@ const
   glEnableVertexAttribArray: procedure(index: GLuint); stdcall;
   glDisableVertexAttribArray: procedure(index: GLuint); stdcall;
   glVertexAttribPointer: procedure(index: GLuint; size: GLint; _type: GLenum; normalized: GLboolean; stride: GLsizei; const _pointer: PGLvoid); stdcall;
-
-
               {
   glGetHandle: function(pname: GLenum): GLhandle; stdcall;
   glDetachObject: procedure(containerObj: GLhandle; attachedObj: GLhandle); stdcall;
@@ -632,9 +628,6 @@ const
   glCompressedTexImage2D: procedure(target: GLenum; level: GLint; internalformat: GLenum; width: GLsizei; height: GLsizei; border: GLint; imageSize: GLsizei; const data: PGLvoid); stdcall;
   glCompressedTexImage1D: procedure(target: GLenum; level: GLint; internalformat: GLenum; width: GLsizei; border: GLint; imageSize: GLsizei; const data: PGLvoid); stdcall;
 
-  wglGetGPUIDsAMD: function(maxCount: GLuint; ids: PGLuint): GLuint; stdcall;
-  wglGetGPUInfoAMD: function(id: GLuint; prop: GLint; dataType: GLenum; size: GLuint; data: PGLvoid): GLint; stdcall;
-
 function glIsSupported(Extension: AnsiString): Boolean;
 function glGetProc(const ProcName: PAnsiChar; var OldResult: Boolean; Required: Boolean = True): Pointer;
 function LoadGLLibraly: Boolean;
@@ -647,7 +640,7 @@ uses
 
 var
   ExtString : AnsiString;
-  //GlModuleH : HMODULE;
+  GlModuleH : HMODULE;
 
 function glIsSupported(Extension: AnsiString): Boolean;
 var
@@ -667,9 +660,9 @@ var
 begin
   if not OldResult then Exit(nil);
 
-  //Result := GetProcAddress(GlModuleH,ProcName);
+ // Result := GetProcAddress(GlModuleH, ProcName);
 
-  //if not Assigned(Result) then
+ // if not Assigned(Result) then
     Result := wglGetProcAddress(ProcName);
 
   if not Assigned(Result) then
@@ -684,9 +677,12 @@ begin
     Result := wglGetProcAddress(@S[1]);
   end;
 
-  if (not Assigned(Result)) and (Required) then
+  if (not Assigned(Result)) then
   begin
+
     LogOut('Cannot load procedure ' + ProcName, lmError);
+    if  (Required) then
+
     OldResult := False;
   end;
 end;
@@ -710,6 +706,8 @@ function LoadGLLibraly : Boolean;
 begin
   Result := True;
 
+  if(glIsSupported('GL_ARB_vertex_buffer_object')) then
+    LogOut('glIsSupported', lmNotify);
   wglSwapIntervalEXT := glGetProc('wglSwapInterval', Result, False);
 
   glActiveTexture := glGetProc('glActiveTexture', Result);
@@ -722,7 +720,7 @@ begin
   glBufferSubData := glGetProc('glBufferSubData', Result);
   glMapBuffer     := glGetProc('glMapBuffer', Result);
   glUnmapBuffer   := glGetProc('glUnmapBuffer', Result);
-  glDrawArrays    := glGetProc('glDrawArrays', Result);
+ // glDrawArrays    := glGetProc('glDrawArraysARB', Result);
 
   glGetBufferParameteriv := glGetProc('glGetBufferParameteriv', Result);
 
@@ -767,10 +765,6 @@ begin
   glGetActiveUniform  := glGetProc('glGetActiveUniform', Result);
   glGetActiveAttrib   := glGetProc('glGetActiveAttrib', Result);
 
-  wglGetGPUIDsAMD := glGetProc('wglGetGPUIDsAMD', Result, False);
-  wglGetGPUInfoAMD := glGetProc('wglGetGPUInfoAMD', Result, False);
-
-
   {glGetHandle := glGetProc('glGetHandle', Result);
   glDetachShader := glGetProc('glDetachShader', Result);
 
@@ -798,8 +792,8 @@ begin
                                                                      }
   Set8087CW($133F);
 end;
-        {
+
 initialization
   GlModuleH := GetModuleHandle(Opengl32);
-         }
+
 end.

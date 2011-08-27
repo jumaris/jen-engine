@@ -154,25 +154,36 @@ begin
     FEventsList[Event].Free;
 
   TestRefCount(ResMan, 'resource manager');
-  ResMan       := nil;
+  ResMan.Free;
+  ResMan := nil;
 
   TestRefCount(Render2d, '2D render');
-  Render2d     := nil;
+  Render2d.Free;
+  Render2d := nil;
 
   TestRefCount(Render, 'render');
-  Render       := nil;
+  Render.Free;
+  Render := nil;
 
   TestRefCount(Display, 'display');
-  Display      := nil;
+  Display.Free;
+  Display := nil;
 
   TestRefCount(Helpers, 'helpers');
+  Helpers.Free;
   Helpers := nil;
 
   TestRefCount(Input, 'input');
+  Input.Free;
   Input := nil;
 
-  Log          := nil;
-  Utils        := nil;
+  TestRefCount(Log, 'log');
+  Log.Free;
+  Log := nil;
+
+  TestRefCount(Utils, 'utils');
+  Utils.Free;
+  Utils := nil;
   inherited;
 end;
 
@@ -220,7 +231,6 @@ begin
     Render.Flush;
     Display.Swap;
 
-   { if Render. then           }
     Utils.Update;
     Utils.Sleep( Max(2 - (Utils.Time - FLastUpdate), 0));
     Utils.Update;
@@ -231,20 +241,10 @@ begin
 
   Game.Close;
   Game := nil;
-
-  ResMan.Free;
-  Render2d.Free;
-  Render.Free;
-  Display.Free;
-  Helpers.Free;
-  Input.Free;
-  Log.Free;
-  Utils.Free;
 end;
 
 procedure TJenEngine.GetSubSystem(SubSystemType: TJenSubSystemType;out SubSystem: IJenSubSystem);
 begin
-
   case SubSystemType of
     ssUtils     : SubSystem := IJenSubSystem(Utils);
     ssInput     : SubSystem := IJenSubSystem(Input);

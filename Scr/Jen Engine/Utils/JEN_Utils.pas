@@ -13,37 +13,25 @@ const
 type
   PByteArray = ^TByteArray;
   TByteArray = array [0..1] of Byte;
-  TCompareFunc = function (Item1, Item2: Pointer): LongInt;
   TItemArray = array of Pointer;
 
-  TList = class
+  TList = class(TInterfacedObject, IList)
     constructor Create;
     destructor Destroy; override;
   protected
     FCount : LongInt;
     FItems : TItemArray;
-    function GetItem(idx: LongInt): Pointer; inline;
-    procedure SetItem(idx: LongInt; Value: Pointer); inline;
+    function GetCount: LongInt; stdcall;
+    function GetItem(idx: LongInt): Pointer; inline; stdcall;
+    procedure SetItem(idx: LongInt; Value: Pointer); inline; stdcall;
   public
-    function Add(p: Pointer): Pointer;
-    procedure Del(idx: LongInt);
-    procedure Clear; virtual;
-    procedure Sort(CompareFunc: TCompareFunc);
-    function IndexOf(p: Pointer): LongInt;
+    function Add(p: Pointer): Pointer; stdcall;
+    procedure Del(idx: LongInt); stdcall;
+    procedure Clear; virtual; stdcall;
+    procedure Sort(CompareFunc: TCompareFunc); stdcall;
+    function IndexOf(p: Pointer): LongInt; stdcall;
     property Count: LongInt read FCount;
     property Items[Idx: LongInt]: Pointer read GetItem write SetItem; default;
-  end;
-
-  TObjectList = class(TList)
-  protected
-    function GetItem(Idx: LongInt): TObject; inline;
-    procedure SetItem(Idx: LongInt; Value: TObject); inline;
-  public
-    function Add(Obj: TObject): TObject;
-    procedure Del(Idx: LongInt);
-    procedure Clear; override;
-    function IndexOf(Obj: TObject): LongInt;
-    property Items[Idx: LongInt]: TObject read GetItem write SetItem; default;
   end;
 
   TInterfaceList = class
@@ -357,6 +345,11 @@ begin
   Result := -1;
 end;
 
+function TList.GetCount: LongInt;
+begin
+  Result := FCount;
+end;
+
 function TList.GetItem(Idx: LongInt): Pointer;
 begin
   Result := FItems[Idx];
@@ -365,44 +358,6 @@ end;
 procedure TList.SetItem(Idx: LongInt; Value: Pointer);
 begin
   FItems[Idx] := Value;
-end;
-{$ENDREGION}
-
-// TObjectList
-{$REGION 'TObjectList'}
-function TObjectList.Add(Obj: TObject): TObject;
-begin
-  Result := TObject(inherited Add(Pointer(Obj)));
-end;
-
-procedure TObjectList.Del(Idx: LongInt);
-begin
-  TObject(FItems[Idx]).Free;
-  inherited;
-end;
-
-procedure TObjectList.Clear;
-var
-  i : LongInt;
-begin
-  for i := 0 to Count - 1 do
-    TObject(FItems[i]).Free;
-  inherited;
-end;
-
-function TObjectList.IndexOf(Obj: TObject): LongInt;
-begin
-  Result := inherited IndexOf(Pointer(Obj));
-end;
-
-function TObjectList.GetItem(Idx: LongInt): TObject;
-begin
-  Result := TObject(FItems[Idx]);
-end;
-
-procedure TObjectList.SetItem(Idx: LongInt; Value: TObject);
-begin
-  TObject(FItems[Idx]) := Value;
 end;
 {$ENDREGION}
 

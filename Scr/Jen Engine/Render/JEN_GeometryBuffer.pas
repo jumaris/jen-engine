@@ -25,8 +25,12 @@ type
 
 implementation
 
+uses
+  JEN_Main;
+
 constructor TGeomBuffer.Create(GBufferType: TGBufferType; Count, Stride: LongInt; Data: Pointer);
 begin
+  inherited Create;
   Self.Count  := Count;
   Self.Stride := Stride;
   if GBufferType = gbIndex then
@@ -54,7 +58,7 @@ begin
   Move(Data^, P[Offset], Size);
   glUnmapBuffer(FType);
                    }
-  glBufferSubData(FType, offset, size, data);
+//  glBufferSubData(FType, offset, size, data);
 end;
 
 procedure TGeomBuffer.Bind;
