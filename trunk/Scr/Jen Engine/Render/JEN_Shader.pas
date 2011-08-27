@@ -423,9 +423,9 @@ begin
       atVec1b..atVec4b: DType := GL_UNSIGNED_BYTE;
       atVec1s..atVec4s: DType := GL_SHORT;
       atVec1f..atVec4f: DType := GL_FLOAT;
-      else DType := 0;
+      else Exit;
     end;
-    Size := Byte(AttribType) mod 4 + 1;
+    Size := (Byte(AttribType) - 1) mod 4 + 1;
     glVertexAttribPointer(FID, Size, DType, Norm, Stride, Pointer(Offset));
   end;
 end;

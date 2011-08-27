@@ -48,6 +48,21 @@ type
   TSetModeResult = (SM_Successful, SM_SetDefault, SM_Error);
   TEventProc = procedure(Param: LongInt); stdcall;
 
+  TCompareFunc = function (Item1, Item2: Pointer): LongInt;
+  IList = interface
+    function GetCount: LongInt; stdcall;
+    function GetItem(idx: LongInt): Pointer; stdcall;
+    procedure SetItem(idx: LongInt; Value: Pointer); stdcall;
+    function IndexOf(p: Pointer): LongInt; stdcall;
+    function Add(p: Pointer): Pointer; stdcall;
+    procedure Del(idx: LongInt); stdcall;
+    procedure Clear; stdcall;
+    procedure Sort(CompareFunc: TCompareFunc); stdcall;
+
+    property Count: LongInt read GetCount;
+    property Items[Idx: LongInt]: Pointer read GetItem write SetItem; default;
+  end;
+
   IGame = interface
     procedure LoadContent; stdcall;
     procedure OnUpdate(dt: LongInt); stdcall;
@@ -312,7 +327,7 @@ type
     procedure Draw(mode: TGeomMode; count: LongInt; Indexed: Boolean; first: LongInt = 0); stdcall;
   end;
 
-  TRenderSupport = (rsWGLEXTswapcontrol, rsNVXmemoryinfo, rsAMDAssociation);
+  TRenderSupport = (rsWGLEXTswapcontrol);
 
   IRender = interface(IJenSubSystem)
     procedure Init(DepthBits: Byte = 24; StencilBits: Byte = 8; FSAA: Byte = 0); stdcall;
@@ -400,8 +415,18 @@ type
     property ZFar: Single read GetZFar write SetZFar;
   end;
 
+  TGPUInfo = record
+    Description   : PWideChar;
+    ChipType      : PWideChar;
+    MemorySize    : LongWord;
+    DriverVersion : PWideChar;
+    DriverDate    : PWideChar;
+  end;
+  PGPUInfo = ^TGPUInfo;
+
   ISystemInfo = interface
     function GetScreen: IScreen; stdcall;
+    function GetGpuList: IList; stdcall;
 
     function GetRAMTotal: LongWord; stdcall;
     function GetRAMFree: LongWord; stdcall;
@@ -409,6 +434,7 @@ type
     function GetCPUName: String; stdcall;
     function GetCPUSpeed: LongWord; stdcall;
 
+    property GPUList: IList read GetGpuList;
     property CPUCount: LongInt read GetCPUCount;
     property CPUName: String read GetCPUName;
     property CPUSpeed: LongWord read GetCPUSpeed;

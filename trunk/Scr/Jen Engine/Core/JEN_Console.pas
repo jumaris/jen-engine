@@ -95,8 +95,8 @@ begin
 
   DC := GetDC(HMemo);
   FillChar(LF, SizeOf(LOGFONT), 0);
-  LF.lfHeight := -MulDiv(10, GetDeviceCaps(DC, LOGPIXELSY), 72);
-  LF.lfFaceName := 'Consolas';
+  LF.lfHeight := -MulDiv(9, GetDeviceCaps(DC, LOGPIXELSY), 72);
+  LF.lfFaceName := 'Lucida Console';
   HFont := CreateFontIndirect(LF);
   ReleaseDC(HMemo, DC);
 
@@ -152,10 +152,11 @@ end;
 
 procedure TConsole.Init;
 var
-  S : AnsiString;
+  S     : AnsiString;
   Major : LongInt;
   Minor : LongInt;
   Build : LongInt;
+  i     : LongInt;
 begin
   Helpers.SystemInfo.WindowsVersion(Major, Minor, Build);
   SetLength(S,80);
@@ -164,8 +165,20 @@ begin
   AddMsg('JenEngine',lmHeaderMsg);
   AddMsg('Windows version: '+Utils.IntToStr(Major)+'.'+Utils.IntToStr(Minor)+' (Buid '+Utils.IntToStr(Build)+')'+Utils.IntToStr(Helpers.SystemInfo.CPUCount),lmHeaderMsg);
   AddMsg('CPU            : '+Helpers.SystemInfo.CPUName+'(~'+Utils.IntToStr(Helpers.SystemInfo.CPUSpeed)+')x',lmHeaderMsg);
-  AddMsg('RAM Available  : '+Utils.IntToStr(Helpers.SystemInfo.RAMFree)+'Mb',lmHeaderMsg);
   AddMsg('RAM Total      : '+Utils.IntToStr(Helpers.SystemInfo.RAMTotal)+'Mb',lmHeaderMsg);
+  AddMsg('RAM Available  : '+Utils.IntToStr(Helpers.SystemInfo.RAMFree)+'Mb',lmHeaderMsg);
+
+  with Helpers.SystemInfo do
+  for i := 0 to GPUList.Count - 1 do
+    with PGPUInfo(GPUList[i])^ do
+    begin
+      AddMsg('GPU' + Utils.IntToStr(i) +'           : ' + Description, lmHeaderMsg);
+      AddMsg('Chip           : ' + ChipType, lmHeaderMsg);
+      AddMsg('MemorySize     : ' + Utils.IntToStr(MemorySize), lmHeaderMsg);
+      AddMsg('DriverVersion  : ' + DriverVersion, lmHeaderMsg);
+      AddMsg('DriverDate     : ' + DriverDate, lmHeaderMsg);
+    end;
+
   AddMsg(s,lmHeaderMsg);
   LastUpdate := Utils.Time;
 end;

@@ -5,6 +5,7 @@ interface
 uses
   JEN_Header,
   JEN_Math,
+  JEN_Utils,
   Windows;
 
 type
@@ -62,10 +63,12 @@ type
     destructor Destroy; override;
   private
   var
-    fCPUName  : String;
-    fCPUSpeed : LongWord;
-    fScreen   : IScreen;
+    FCPUName  : String;
+    FCPUSpeed : LongWord;
+    FScreen   : IScreen;
+    FGPUList  : IList;
 
+    function GetGpuList: IList; stdcall;
     function GetRAMTotal: LongWord; stdcall;
     function GetRAMFree: LongWord; stdcall;
     function GetCPUCount: LongInt; stdcall;
@@ -178,7 +181,7 @@ end;
 constructor TScreen.Create;
 var
   DevMode : TDeviceMode;
-  i  : LongInt;
+  i : LongInt;
 begin
   i := 0;
   SetLength(FModes.FModes, 0);
@@ -341,44 +344,173 @@ end;
 
 constructor TSystem.Create;
 var
-  Handle     : HKEY;
-  DataType   : LongWord;
-	DataSize   : LongWord;
-  Res        : LongWord;
-  Str        : array of Char;
+  i           : Integer;
+  Handle      : HKEY;
+  Driver      : string;
+  Str         : string;
+  DeviceList  : IList;
+  Path        : string;
+  GPUInfo     : PGPUInfo;
+
+  procedure RegReadString(Handle: HKEY; const Name: string; var Value: string);
+  var
+    DataType : DWORD;
+	  DataSize : DWORD;
+  begin
+    Value := #0;
+    DataSize := 0;
+    if (RegQueryValueEx(Handle,	@Name[1], nil, @DataType, nil,	@DataSize) <> ERROR_SUCCESS){ or (DataType <> REG_SZ) }or (DataSize = 0) then
+      Exit;
+
+    SetLength(Value, DataSize div 2 - 1);
+    RegQueryValueEx(Handle, @Name[1], nil, @DataType, @Value[1], @DataSize);
+  end;
+
+  procedure RegReadWord(Handle: HKEY; const Name: String; var Value: LongWord);
+  var
+    DataType : DWORD;
+	  DataSize : DWORD;
+  begin
+    Value := 0;
+    DataSize := SizeOf(LongWord);
+    RegQueryValueEx(Handle, @Name[1], nil, @DataType, @Value, @DataSize);
+  end;
+
+  procedure EnumAllDevice(List: IList; const Path: string; Depth: Byte = 1);
+  var
+    i        : Integer;
+    p        : Pointer;
+    Handle   : HKEY;
+    Count    : DWORD;
+    Str      : String;
+    DataSize : DWORD;
+  begin
+    DataSize := 0;
+    if RegOpenKeyEx(HKEY_LOCAL_MACHINE, @Path[1], 0, KEY_READ, Handle) = ERROR_SUCCESS then
+    if RegQueryInfoKey(Handle, nil, nil, nil, @Count, @DataSize, nil, nil, nil, nil, nil, nil) = ERROR_SUCCESS then
+      for i := 0 to Count-1 do
+      begin
+        Inc(DataSize);
+        GetMem(p, DataSize*2);
+        if RegEnumKeyEx(Handle, i, p, DataSize, nil, nil, nil, nil) = ERROR_SUCCESS then
+        begin
+          Str := Path + '\' + pchar(p);
+          FreeMem(p);
+          if Depth = 3 then
+          begin
+            GetMem(p, (Length(Str)+1)*2);
+            CopyMemory(p, @Str[1], (Length(Str)+1)*2);
+            List.Add(p);
+          end else
+            EnumAllDevice(List, Str, Depth + 1);
+        end else
+          FreeMem(p);
+      end;
+    RegCloseKey(Handle);
+  end;
+
 begin
-  fScreen := TScreen.Create;
+  FScreen := TScreen.Create;
+  FGPUList := TList.Create;
 
   FCPUSpeed := 0;
   FCPUName  :='Couldn''t get CPU name!';
-  DataSize  := 0;
 
-  Res := RegOpenKeyEx(HKEY_LOCAL_MACHINE, 'HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0', 0, KEY_READ, Handle);
-  if Res <> ERROR_SUCCESS then
+  if RegOpenKeyEx(HKEY_LOCAL_MACHINE, 'HARDWARE\DESCRIPTION\System\CentralProcessor\0', 0, KEY_READ, Handle) = ERROR_SUCCESS then
   begin
-    RegCloseKey(Handle);
-    Exit;
+    RegReadString(Handle, 'ProcessorNameString', FCPUName);
+    RegReadWord(Handle, '~MHz', FCPUSpeed);
   end;
-
-	Res := RegQueryValueEx(Handle,	'ProcessorNameString', nil, @DataType, nil,	@DataSize);
-  if (Res <> ERROR_SUCCESS) or (DataType <> REG_SZ) or (DataSize = 0)  then
-  begin
-    RegCloseKey(Handle);
-    Exit;
-  end;
-
-  SetLength(Str,DataSize div 2);
-  RegQueryValueEx(Handle, 'ProcessorNameString', nil, @DataType, PByte(@Str[0]), @DataSize);
-  FCPUName := PChar(@Str[0]);
-
-	DataSize := SizeOf(LongWord);
-	RegQueryValueEx(Handle, '~MHz', nil, @DataType, @FCPUSpeed,	@DataSize);
   RegCloseKey(Handle);
+
+  DeviceList := TList.Create;
+  EnumAllDevice(DeviceList, 'SYSTEM\CurrentControlSet\Enum');
+  for i := 0 to DeviceList.Count - 1 do
+  begin
+    RegOpenKeyEx(HKEY_LOCAL_MACHINE, DeviceList[i], 0, KEY_READ, Handle);
+    RegReadString(Handle, 'Class', Str);
+    RegCloseKey(Handle);
+
+    if LowerCase(Str) = 'display' then
+    begin
+      RegOpenKeyEx(HKEY_LOCAL_MACHINE, DeviceList[i], 0, KEY_READ, Handle);
+      RegReadString(Handle, 'Service', Str);
+      RegReadString(Handle, 'Driver', Driver);
+      RegCloseKey(Handle);
+
+      Path := 'SYSTEM\CurrentControlSet\Services\' + Str + '\Device0';
+      if RegOpenKeyEx(HKEY_LOCAL_MACHINE, @Path[1], 0, KEY_READ, Handle) = ERROR_SUCCESS then
+      begin
+        RegReadString(Handle, 'HardwareInformation.DacType', Str);
+        if Str = #0 then
+        begin
+          Path := PChar(DeviceList[i]) + '\Device Parameters';
+          RegCloseKey(Handle);
+          if RegOpenKeyEx(HKEY_LOCAL_MACHINE, @Path[1], 0, KEY_READ, Handle) = ERROR_SUCCESS then
+            RegReadString(Handle, 'VideoID', Str);
+          Path := 'SYSTEM\CurrentControlSet\Control\Video\' + Str + '\0000';
+        end;
+      end;
+      RegCloseKey(Handle);
+
+      GetMem(GPUInfo, SizeOf(TGPUInfo));
+      GPUInfo^.Description:=nil;
+
+      if RegOpenKeyEx(HKEY_LOCAL_MACHINE, @Path[1], 0, KEY_READ, Handle) = ERROR_SUCCESS then
+      with GPUInfo^ do
+        begin
+          RegReadString(Handle, 'Device Description', Str);
+          GetMem(Description, (Length(Str)+1)*2);
+          CopyMemory(Description, @Str[1], (Length(Str)+1)*2);
+
+          RegReadString(Handle, 'HardwareInformation.ChipType', Str);
+          GetMem(ChipType, (Length(Str)+1)*2);
+          CopyMemory(ChipType, @Str[1], (Length(Str)+1)*2);
+
+          RegReadWord(Handle, 'HardwareInformation.MemorySize', MemorySize);
+          MemorySize := MemorySize div (1024*1024);
+        end;
+      RegCloseKey(Handle);
+
+      Path := 'SYSTEM\CurrentControlSet\Control\Class\' + Driver;
+      if RegOpenKeyEx(HKEY_LOCAL_MACHINE, @Path[1], 0, KEY_READ, Handle) = ERROR_SUCCESS then
+      with GPUInfo^ do
+      begin
+        RegReadString(Handle, 'DriverVersion', Str);
+        GetMem(DriverVersion, (Length(Str)+1)*2);
+        CopyMemory(DriverVersion, @Str[1], (Length(Str)+1)*2);
+
+        RegReadString(Handle, 'DriverDate', Str);
+        GetMem(DriverDate, (Length(Str)+1)*2);
+        CopyMemory(DriverDate, @Str[1], (Length(Str)+1)*2);
+      end;
+      RegCloseKey(Handle);
+
+      FGPUList.Add(GPUInfo);
+    end;
+
+    FreeMem(DeviceList[i]);
+  end;
+
 end;
 
 destructor TSystem.Destroy;
+var
+  i : Integer;
 begin
-  fScreen := nil;
+  for i := 0 to FGPUList.Count - 1 do
+  begin
+    with PGPUInfo(FGPUList[i])^ do
+    begin
+      FreeMem(Description);
+      FreeMem(ChipType);
+      FreeMem(DriverVersion);
+      FreeMem(DriverDate);
+    end;
+    FreeMem(FGPUList[i]);
+  end;
+
+  FScreen := nil;
   inherited;
 end;
 
@@ -401,17 +533,22 @@ end;
 
 function TSystem.GetCPUName: String;
 begin
-  Result := fCPUName;
+  Result := FCPUName;
 end;
 
 function TSystem.GetCPUSpeed: LongWord;
 begin
-  Result := fCPUSpeed;
+  Result := FCPUSpeed;
 end;
 
 function TSystem.GetScreen: IScreen;
 begin
-  Result := fScreen;
+  Result := FScreen;
+end;
+
+function TSystem.GetGpuList: IList; stdcall;
+begin
+  Result := FGPUList;
 end;
 
 function TSystem.GetRAMTotal: LongWord;

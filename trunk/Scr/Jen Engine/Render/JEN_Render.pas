@@ -42,7 +42,6 @@ type
    // procedure SetArrayState(Vertex, TextureCoord, Normal, Color : Boolean); stdcall;
 
     function Support(RenderSupport: TRenderSupport): Boolean;
-    function GPUMemorySize: LongInt;
 
     function GetVSync: Boolean; stdcall;
     procedure SetVSync(Value: Boolean); stdcall;
@@ -105,6 +104,8 @@ var
   TDC     : HDC;
   RC      : HGLRC;
   Result  : Boolean;
+
+  FID     : LongWord;
 begin
   FValid := False;
   Set8087CW($133F);
@@ -208,21 +209,15 @@ begin
   glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS ,@Par);
 
   SBuffer[rsWGLEXTswapcontrol] := glIsSupported('WGL_EXT_swap_control');
-  SBuffer[rsNVXmemoryinfo]  := glIsSupported('GL_NVX_gpu_memory_info');
-  SBuffer[rsAMDAssociation] := glIsSupported('WGL_AMD_gpu_association');
-
-  LogOut('OpenGL version : ' + glGetString(GL_VERSION) + ' (' + glGetString(GL_VENDOR) + ')', lmInfo);
-  LogOut('Video device   : ' + glGetString(GL_RENDERER), lmInfo);
-  if GPUMemorySize <> -1  then
-    LogOut('Video memory   : ' + Utils.IntToStr(GPUMemorySize) +'Mb', lmInfo);
-  LogOut('Texture units  : ' + Utils.IntToStr(Par), lmInfo);
-
-  LogOut('Load opengl extensions.', lmNotify);
   if not LoadGLLibraly Then
   begin
     LogOut('Error when load extensions.', lmError);
     Exit;
   end;
+
+  LogOut('OpenGL version : ' + glGetString(GL_VERSION) + ' (' + glGetString(GL_VENDOR) + ')', lmInfo);
+  LogOut('Video device   : ' + glGetString(GL_RENDERER), lmInfo);
+  LogOut('Texture units  : ' + Utils.IntToStr(Par), lmInfo);
 
   FValid := True;
 
@@ -235,13 +230,11 @@ begin
 
   glDepthFunc(GL_LEQUAL);
   glClearDepth(1.0);
-
- // Display.Restore;
-  // glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-
-
   glClearColor(0.0, 0.0, 0.0, 0.0);
+   // Display.Restore;
+  // glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
   // glShadeModel(GL_SMOOTH);
+
   // glHint(GL_SHADE_MODEL,GL_NICEST);
 
   // glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
@@ -249,6 +242,7 @@ begin
   // glEnable(GL_NORMALIZE);
   // glEnable(GL_COLOR_MATERIAL);
   Render2d.Init;
+  FValid := true;
 end;
 
 function TRender.GetValid: Boolean;
@@ -301,28 +295,6 @@ end;        }
 function TRender.Support(RenderSupport: TRenderSupport): Boolean;
 begin
   Result := SBuffer[RenderSupport];
-end;
-
-function TRender.GPUMemorySize: LongInt;
-var
-  IDS   : array of LongWord;
-  Count : LongWord;
-begin
-  Result := -1;
-  if Support(rsNVXmemoryinfo) then
-  begin
-    glGetIntegerv(GL_GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX, @result);
-    Result := Round(Result / 1024);
-  end;
-  if Support(rsAMDAssociation) then
-  begin
-    if Assigned(wglGetGPUIDsAMD) then
-
-    Count := wglGetGPUIDsAMD(0, nil);
-    SetLength(IDS, Count);
-    wglGetGPUIDsAMD(Count, @IDS[0]);
-    wglGetGPUInfoAMD(ids[0], WGL_GPU_RAM_AMD, GL_INT, 4, @result);
-  end;
 end;
 
 function TRender.GetVSync: Boolean;

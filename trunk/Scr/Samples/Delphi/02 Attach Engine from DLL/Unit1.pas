@@ -38,7 +38,7 @@ implementation
 procedure TGame.LoadContent;
 
 begin
-   ResMan.Load('Media\Text.dds', r);
+   ResMan.Load('Media\123.dds', r);
  //  ResMan.Load('Media\Text.xml', sr);
  //  s := sr.Compile;
   // r.Filter := tfNone;
@@ -53,7 +53,7 @@ begin
 end;
 
 procedure TGame.OnRender;
-const c =4;
+const c =40;
 var
   i : integer;
 begin
@@ -65,7 +65,7 @@ begin
 
 
     for i := 0 to c do
-    render2d.DrawSprite(r ,Frac(i / 50)*1000,i,100,100, vec4f(1.0 - i/c,1,1,1), Utils.Time/10000*360,0.5,0.5);
+    render2d.DrawSprite(r ,Frac(i / 20)*1000,(i div 20)*100,100,100, vec4f(1.0 - i/c,1,1,1), Utils.Time/10000*360,0.5,0.5);
 
 
     //render2d.DrawSpriteAdv(s,nil,nil,nil,0.35,0.2,0.3,0.3, clWhite, clWhite, clWhite, clWhite, Utils.Time/10000*360,0.5,0.5);

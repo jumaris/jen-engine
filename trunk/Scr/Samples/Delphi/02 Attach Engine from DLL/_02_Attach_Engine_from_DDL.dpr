@@ -8,8 +8,6 @@ uses
 {$R *.res}
 {$R ..\..\..\icon.RES}
 
-
-
 begin
   p;
 end.

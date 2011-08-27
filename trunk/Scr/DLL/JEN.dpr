@@ -1,5 +1,8 @@
 library JEN;
 
+{.$WEAKLINKRTTI ON}
+{.$RTTI EXPLICIT METHODS([]) PROPERTIES([]) FIELDS([])}
+
 { Important note about DLL memory management: ShareMem must be the
   first unit in your library's USES clause AND your project's (select
   Project-View Source) USES clause if your DLL exports any procedures or

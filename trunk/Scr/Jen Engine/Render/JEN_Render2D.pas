@@ -3,6 +3,7 @@ unit JEN_Render2D;
 interface
 
 uses
+  JEN_GeometryBuffer,
   JEN_Header,
   JEN_Math,
   JEN_Font;
@@ -12,6 +13,7 @@ const Batch_Size = 15;
 type
   IRender2D = interface(JEN_Header.IRender2D)
     procedure Init;
+    procedure Flush;
     function  GetTextShader: IShaderProgram;
     procedure BatchQuad(const v1, v2, v3, v4, Data1, Data2, Data3, Data4: TVec4f); stdcall;
   end;
@@ -32,10 +34,9 @@ type
     procedure Free; stdcall;
   private
     FNormalShader : IShaderResource;
-    FTextShader : IShaderResource;
-  class var
-    FIdx     : LongWord;
-    FVrtBuff : IGeomBuffer;
+    FTextShader   : IShaderResource;
+    FIdx          : LongWord;
+    FVrtBuff      : IGeomBuffer;
     RenderTechnique : array[TTehniqueType] of TTehnique;
 
     FBatchParams : record
@@ -54,9 +55,10 @@ type
     FVertexBuff : array[1..Batch_Size*4] of TVec4f;
   public
     procedure Init;
+    procedure Flush;
     function GetTextShader: IShaderProgram;
 
-    class procedure Flush(Param: LongInt = 0); stdcall; static;
+    class procedure FlushProc(Param: LongInt); stdcall; static;
 
     procedure BatchQuad(const v1, v2, v3, v4, Data1, Data2, Data3, Data4: TVec4f); stdcall;
     procedure DrawSpriteAdv(Shader: IShaderProgram; Tex1, Tex2, Tex3: ITexture; const v1, v2, v3, v4, Data1, Data2, Data3, Data4: TVec4f; const Center: TVec2f; Angle: Single); stdcall;
@@ -112,18 +114,18 @@ begin
   for I := 1 to Batch_Size*4 do
     IdxBuff[i] := i-1;
 
-  FVrtBuff := Render.CreateGeomBuffer(gbVertex, Batch_Size*4, 4, @IdxBuff[1]);
-
+  FVrtBuff := TGeomBuffer.Create(gbVertex, Batch_Size*4, 4, @IdxBuff[1]);//Render.CreateGeomBuffer(gbVertex, Batch_Size*4, 4, @IdxBuff[1]);
   ResMan.Load('Media\Shader.xml', FNormalShader);
   ResMan.Load('Media\Text.xml', FTextShader);
   RenderTechnique[ttNormal] := TehniqueInit(FNormalShader.Compile);
   RenderTechnique[ttText] := TehniqueInit(FTextShader.Compile);
 
-  Engine.AddEventProc(evFrameEnd, @TRender2D.Flush);
+  Engine.AddEventProc(evFrameEnd, @TRender2D.FlushProc);
 end;
 
 procedure TRender2D.Free;
 begin
+  FVrtBuff := nil;
 end;
 
 function TRender2D.GetTextShader: IShaderProgram;
@@ -131,7 +133,12 @@ begin
   Result := RenderTechnique[ttText].ShaderProgram;
 end;
 
-class procedure TRender2D.Flush;
+class procedure TRender2D.FlushProc;
+begin
+  Render2d.Flush;
+end;
+
+procedure TRender2D.Flush;
 var
   Blend     : TBlendType;
   AlphaTest : Byte;
