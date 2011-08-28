@@ -31,7 +31,7 @@ type
     function Init(ShaderID: GLEnum; const AName: string): Boolean;
   end;
 
-  TShaderResource = class(TManagedInterface, IManagedInterface, IResource, IShaderResource)
+  TShaderResource = class(TResource, IManagedInterface, IResource, IShaderResource)
     constructor Create(const Name, FilePath: string);
     destructor Destroy; override;
   private
@@ -40,10 +40,6 @@ type
     FShaderPrograms : TInterfaceList;
     FDefines        : TList;
     FXML            : IXML;
-    function GetName: string; stdcall;
-    function GetFilePath: string; stdcall;
-    function GetResType: TResourceType; stdcall;
-
     function GetDefineId(const Name: string): LongInt;
     function GetDefine(const Name: string): LongInt; stdcall;
     procedure SetDefine(const Name: string; Value: LongInt); stdcall;
@@ -445,9 +441,7 @@ end;
 
 constructor TShaderResource.Create;
 begin
-  inherited Create;
-  FName := Name;
-  FFilePath := FilePath;
+  inherited Create(Name, FilePath, rtShaderRes);
   FShaderPrograms := TInterfaceList.Create;
   FDefines := TList.Create;
 end;
@@ -466,21 +460,6 @@ begin
   FDefines.Free;
   LogOut('Shader resource ' + FName + ' destroyed',lmNotify);
   inherited;
-end;
-
-function TShaderResource.GetName: string;
-begin
-  Result := FName;
-end;
-
-function TShaderResource.GetFilePath: string;
-begin
-  Result := FFilePath;
-end;
-
-function TShaderResource.GetResType: TResourceType; stdcall;
-begin
-  Result := rtShaderRes;
 end;
 
 function TShaderResource.GetDefineId(const Name: String): LongInt;

@@ -139,7 +139,6 @@ type
 
   TCharSet = set of AnsiChar;
 
-procedure FreeAndNil(var Obj); inline;
 function MemCmp(p1, p2: Pointer; Size: LongInt): LongInt;
 
 function LowerCase(const Str: string): string;
@@ -168,15 +167,6 @@ asm
       XCHG  EAX,EDX
  LOCK XADD  [EDX],EAX
       DEC   EAX
-end;
-
-procedure FreeAndNil(var Obj);
-var
-  Temp: TObject;
-begin
-  Temp := TObject(Obj);
-  Pointer(Obj) := nil;
-  Temp.Free;
 end;
 
 function MemCmp(p1, p2: Pointer; Size: LongInt): LongInt;

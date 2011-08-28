@@ -51,7 +51,6 @@ end;
 
 procedure TInput.Free;
 begin
-
 end;
 
 procedure TInput.Init;

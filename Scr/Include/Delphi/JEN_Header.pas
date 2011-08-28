@@ -25,17 +25,18 @@ type
     ikMouseL = $01, ikMouseR, ikMouseM = $04, ikMouseWheelUp, ikMouseWheelDown
   );
 
- // TVertexAttrib = (vaPosition, vaNormal, vaColor, vaTexCoord);
-  TGBufferType = (gbIndex, gbVertex);
-  TGeomMode = (gmTrianles = $0004, gmTriangleStrip, gmTriangleFan, gmQuads, gmQuadStrip, gmPolygon);
-  TColorChannel = (ccRed, ccGreen, ccBlue, ccAlpha);
-  TBlendType = (btNone, btNormal, btAdd, btMult, btOne, btNoOverride, btAddAlpha);
-  TCullFace = (cfNone, cfFront, cfBack);
-  TMatrixType = (mtViewProj, mtModel, mtProj, mtView);
-
   TResourceType = (rtShaderRes, rtFont, rtTexture, rtTexture1, rtTexture2, rtTexture3, rtTexture4, rtTexture5, rtTexture6,
                   rtTexture7, rtTexture8, rtTexture9, rtTexture10, rtTexture11, rtTexture12,
 	                rtTexture13, rtTexture14, rtTexture15);
+
+  // TVertexAttrib = (vaPosition, vaNormal, vaColor, vaTexCoord);
+  TGBufferType = (gbIndex, gbVertex);
+  TGeomMode = (gmTrianles = $0004, gmTriangleStrip, gmTriangleFan, gmQuads, gmQuadStrip, gmPolygon);
+  TBlendType = (btNone, btNormal, btAdd, btMult, btOne, btNoOverride, btAddAlpha);
+  TCullFace = (cfNone, cfFront, cfBack);
+  TColorChannel = (ccRed, ccGreen, ccBlue, ccAlpha);
+  TRenderChannel = (rcDepth, rcColor0, rcColor1, rcColor2, rcColor3, rcColor4, rcColor5, rcColor6, rcColor7);
+  TMatrixType = (mtViewProj, mtModel, mtProj, mtView);
 
   TShaderUniformType = (utNone, utInt, utVec1, utVec2, utVec3, utVec4, utMat3, utMat4);
   TShaderAttribType  = (atNone, atVec1b, atVec2b, atVec3b, atVec4b,
@@ -46,6 +47,7 @@ type
   TTextureFilter = (tfiNone, tfiBilinear, tfiTrilinear, tfiAniso);
 
   TSetModeResult = (SM_Successful, SM_SetDefault, SM_Error);
+
   TEventProc = procedure(Param: LongInt); stdcall;
 
   TCompareFunc = function (Item1, Item2: Pointer): LongInt;
@@ -287,6 +289,12 @@ type
     property Clamp: Boolean read GetClamp write SetClamp;
   end;
 
+  IGeomBuffer = Interface
+    procedure SetData(Offset, Size: LongInt; Data: Pointer); stdcall;
+    procedure Bind; stdcall;
+    procedure Draw(mode: TGeomMode; count: LongInt; Indexed: Boolean; first: LongInt = 0); stdcall;
+  end;
+
   IFont = interface(IResource)
   ['{9057EA67-509A-4D17-AFC8-8B96481A6BCF}']
     function GetTextWidth(const Text: String): Single; stdcall;
@@ -319,12 +327,8 @@ type
     {
     function LoadShader(const FileName: string): IShaderResource; stdcall;
     function LoadTexture(const FileName: string): ITexture; stdcall;    }
-  end;
 
-  IGeomBuffer = Interface
-    procedure SetData(Offset, Size: LongInt; Data: Pointer); stdcall;
-    procedure Bind; stdcall;
-    procedure Draw(mode: TGeomMode; count: LongInt; Indexed: Boolean; first: LongInt = 0); stdcall;
+    function CreateGeomBuffer(GBufferType: TGBufferType; Count, Stride: LongInt; Data: Pointer): IGeomBuffer; stdcall;
   end;
 
   TRenderSupport = (rsWGLEXTswapcontrol);
@@ -364,8 +368,6 @@ type
     function GetDIPCount: LongWord; stdcall;
     procedure SetDIPCount(Value: LongWord); stdcall;
     procedure IncDIP; stdcall;
-
-    function CreateGeomBuffer(GBufferType: TGBufferType; Count, Stride: LongInt; Data: Pointer): IGeomBuffer; stdcall;
 
     property VSync: Boolean read GetVSync write SetVSync;
     property ColorMask[Channel: TColorChannel]: Boolean read GetColorMask write SetColorMask;

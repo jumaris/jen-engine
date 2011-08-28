@@ -3,7 +3,7 @@ unit JEN_Main;
 interface
 
 uses
-  SysUtils, opengl, windows,
+  windows,
   JEN_Header,
   JEN_Math,
   JEN_Utils,

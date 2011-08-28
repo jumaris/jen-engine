@@ -29,7 +29,7 @@ type
     procedure AddChar(Char: WideChar;const Info: TCharInfo);
   end;
 
-  TFont = class(TManagedInterface, IManagedInterface, IResource, IFont)
+  TFont = class(TResource, IManagedInterface, IResource, IFont)
     constructor Create(const Name, FilePath: string);
     destructor Destroy; override;
   private
@@ -48,10 +48,6 @@ type
     FOutlineColor : TVec4f;
     FOutlineSize  : Single;
     FEdgeSmooth   : Single;
-    function GetName: string; stdcall;
-    function GetFilePath: string; stdcall;
-    function GetResType: TResourceType; stdcall;
-
     function GetScale: Single; stdcall;
     procedure SetScale(Value: Single); stdcall;
     function GetColor: TVec4f; stdcall;
@@ -89,10 +85,7 @@ const
 
 constructor TFont.Create;
 begin
-  inherited Create;
-  FName := Name;
-  FFilePath := FilePath;
-
+  inherited Create(Name, FilePath, rtFont);
   FScale        := 1.0;
   FColor1       := clWhite;
   FColor2       := clWhite;
@@ -112,21 +105,6 @@ begin
       FreeMem(FChars[i]);
 
   inherited;
-end;
-
-function TFont.GetName: string;
-begin
-  Result := FName;
-end;
-
-function TFont.GetFilePath: string;
-begin
-  Result := FFilePath;
-end;
-
-function TFont.GetResType: TResourceType;
-begin
-  Result := rtFont;
 end;
 
 function TFont.GetScale: Single;
