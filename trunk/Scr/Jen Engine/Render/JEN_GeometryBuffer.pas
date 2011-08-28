@@ -25,8 +25,7 @@ type
 
 implementation
 
-uses
-  JEN_Main;
+
 
 constructor TGeomBuffer.Create(GBufferType: TGBufferType; Count, Stride: LongInt; Data: Pointer);
 begin

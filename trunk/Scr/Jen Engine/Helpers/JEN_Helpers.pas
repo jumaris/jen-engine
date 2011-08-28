@@ -31,7 +31,6 @@ end;
 
 procedure THelpers.Free;
 begin
-
 end;
 
 function THelpers.GetSystemInfo: ISystemInfo;

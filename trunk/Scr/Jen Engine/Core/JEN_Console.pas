@@ -174,9 +174,8 @@ begin
     begin
       AddMsg('GPU' + Utils.IntToStr(i) +'           : ' + Description, lmHeaderMsg);
       AddMsg('Chip           : ' + ChipType, lmHeaderMsg);
-      AddMsg('MemorySize     : ' + Utils.IntToStr(MemorySize), lmHeaderMsg);
-      AddMsg('DriverVersion  : ' + DriverVersion, lmHeaderMsg);
-      AddMsg('DriverDate     : ' + DriverDate, lmHeaderMsg);
+      AddMsg('MemorySize     : ' + Utils.IntToStr(MemorySize)+'Mb', lmHeaderMsg);
+      AddMsg('DriverVersion  : ' + DriverVersion + '(' + DriverDate + ')', lmHeaderMsg);
     end;
 
   AddMsg(s,lmHeaderMsg);

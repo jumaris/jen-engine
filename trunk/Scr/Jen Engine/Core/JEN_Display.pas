@@ -231,7 +231,6 @@ begin
 
   if FFullScreen then
     Helpers.SystemInfo.Screen.ResetMode;
-
 end;
 
 procedure TDisplay.Swap;

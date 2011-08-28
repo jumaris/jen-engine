@@ -4,6 +4,7 @@ interface
 
 uses
   JEN_Header,
+  JEN_Resource,
   JEN_OpenglHeader,
   JEN_Utils,
   JEN_Math;
@@ -15,12 +16,10 @@ type
 
   end;                                     }
 
-  TTexture = class(TManagedInterface, IManagedInterface, IResource, ITexture)
+  TTexture = class(TResource, IManagedInterface, IResource, ITexture)
     constructor Create(const Name, FilePath: string; Format: TTextureFormat; Width, Height: Cardinal);
     destructor Destroy; override;
   private
-    FName     : string;
-    FFilePath : string;
     FID       : GLEnum;
     FFormat   : TTextureFormat;
     FSampler  : GLEnum;
@@ -29,10 +28,7 @@ type
     FFilter   : TTextureFilter;
     FClamp    : Boolean;
     FMipMap   : Boolean;
-    function GetName: string; stdcall;
-    function GetFilePath: string; stdcall;
-    function GetResType: TResourceType; stdcall;
-
+    FMipMapLevels : LongInt;
     function GetFormat: TTextureFormat; stdcall;
     procedure SetFormat(Value: TTextureFormat); stdcall;
     function GetSampler: LongWord; stdcall;
@@ -90,13 +86,7 @@ uses
 
 constructor TTexture.Create;
 begin
-  inherited Create;
-  FFilePath := FilePath;
-  if Name <> '' then
-    FName := Name
-  else
-    FName := '$' + Utils.IntToStr(LongInt(Self));
-
+  inherited Create(Name, FilePath, rtTexture);
   FWidth  := Width;
   FHeight := Height;
   glGenTextures(1, @FID);
@@ -120,21 +110,6 @@ begin
   glDeleteTextures(1, @FID);
   LogOut('Texture ' + FName + ' destroyed',lmNotify);
   inherited;
-end;
-
-function TTexture.GetName: string;
-begin
-  Result := FName;
-end;
-
-function TTexture.GetFilePath: string;
-begin
-  Result := FFilePath;
-end;
-
-function TTexture.GetResType: TResourceType;
-begin
-  Result := rtTexture;
 end;
 
 function TTexture.GetFormat: TTextureFormat; stdcall;
@@ -220,6 +195,8 @@ begin
     glCompressedTexImage2D(FSampler, Level, InternalFormat, Width, Height, 0, Size, Data)
   else
     glTexImage2D(FSampler, Level, InternalFormat, Width, Height, 0, ExternalFormat, DataType, Data);
+  FMipMapLevels := Max(FMipMapLevels, Level);
+  glTexParameteri(FSampler, GL_TEXTURE_MAX_LEVEL, FMipMapLevels);
 end;
                        {
 procedure TTexture.DataSet(X, Y, Width, Height: LongInt; Data: Pointer; Level: LongInt; CFormat, DFormat: TGLConst);

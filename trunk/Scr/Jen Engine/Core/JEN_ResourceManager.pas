@@ -7,6 +7,7 @@ uses
   JEN_Utils,
   JEN_Shader,
   JEN_Texture,
+  JEN_GeometryBuffer,
   JEN_Resource;
 
 type
@@ -26,7 +27,6 @@ type
 
     function GetRef(const Name: string): IResource;
     procedure RegisterLoader(Loader: TResLoader);
-    procedure SetResChangeCallBack(Proc: Pointer);
 
     function GetActiveRes(RT: TResourceType): IUnknown;
     procedure SetActiveRes(RT: TResourceType; Value: IUnknown);
@@ -51,11 +51,16 @@ type
     function GetActiveRes(RT: TResourceType): IUnknown;
     procedure SetActiveRes(RT: TResourceType; Value: IUnknown);
 
+//    function CreateTexture(Width, Height: LongWord; Format: TTextureFormat);
+ //   function CreateGeomBuffer(GBufferType: TGBufferType; Count, Stride: LongInt; Data: Pointer): IGeomBuffer; stdcall;
+
     function Load(const FilePath: string; ResType: TResourceType): IResource; overload; stdcall;
     procedure Load(const FilePath: string; out Resource: JEN_Header.IShaderResource); overload; stdcall;
     procedure Load(const FilePath: string; out Resource: JEN_Header.ITexture); overload; stdcall;
     procedure Load(const FilePath: string; out Resource: JEN_Header.IFont); overload; stdcall;
     procedure Load(const FilePath: string; var Resource: IResource); overload;
+
+    function CreateGeomBuffer(GBufferType: TGBufferType; Count, Stride: LongInt; Data: Pointer): IGeomBuffer; stdcall;
 
     procedure RegisterLoader(Loader: TResLoader);
     function GetRef(const Name: string): IResource;
@@ -191,6 +196,11 @@ begin
 
   Load(FilePath, Resource);
   Result := Resource;
+end;
+
+function TResourceManager.CreateGeomBuffer(GBufferType: TGBufferType; Count, Stride: LongInt; Data: Pointer): IGeomBuffer; stdcall;
+begin
+  Result := TGeomBuffer.Create(GBufferType, Count, Stride, Data);
 end;
 
 procedure TResourceManager.RegisterLoader(Loader : TResLoader);

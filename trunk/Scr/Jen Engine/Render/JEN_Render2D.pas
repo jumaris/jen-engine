@@ -5,8 +5,7 @@ interface
 uses
   JEN_GeometryBuffer,
   JEN_Header,
-  JEN_Math,
-  JEN_Font;
+  JEN_Math;
 
 const Batch_Size = 15;
 
@@ -125,7 +124,6 @@ end;
 
 procedure TRender2D.Free;
 begin
-  FVrtBuff := nil;
 end;
 
 function TRender2D.GetTextShader: IShaderProgram;

@@ -4,7 +4,7 @@ interface
 
 uses
   Windows,
-  JEN_GeometryBuffer,
+
   JEN_Header,
   JEN_Math;
 
@@ -12,6 +12,7 @@ type
   IRender = interface(JEN_Header.IRender)
     function GetValid : Boolean;
     procedure Flush;
+
     property Valid : Boolean read GetValid;
   end;
 
@@ -20,23 +21,27 @@ type
     procedure Free; stdcall;
   private
     FValid      : Boolean;
-    FVSync      : Boolean;
     FGL_Context : HGLRC;
     FViewport   : TRecti;
+    FVSync      : Boolean;
+
     SBuffer     : array[TRenderSupport] of Boolean;
+
     FColorMask  : Byte;
     FBlendType  : TBlendType;
     FAlphaTest  : Byte;
     FDepthTest  : Boolean;
     FDepthWrite : Boolean;
     FCullFace   : TCullFace;
+
     FDipCount   : LongWord;
     FLastDipCount : LongWord;
+
     FMatrix     : array [TMatrixType] of TMat4f;
     FCameraPos  : TVec3f;
     FCameraDir  : TVec3f;
-
     function GetValid: Boolean;
+  public
     procedure Clear(ColorBuff, DepthBuff, StensilBuff: Boolean); stdcall;
     procedure SetViewport(Value: TRecti);
    // procedure SetArrayState(Vertex, TextureCoord, Normal, Color : Boolean); stdcall;
@@ -72,7 +77,6 @@ type
     function  GetCameraDir: TVec3f; stdcall;
     procedure SetCameraDir(Value: TVec3f); stdcall;
 
-    function CreateGeomBuffer(GBufferType: TGBufferType; Count, Stride: LongInt; Data: Pointer): IGeomBuffer; stdcall;
     procedure Flush;
   end;
 
@@ -497,11 +501,6 @@ end;
 procedure TRender.IncDip;
 begin
   Inc(FDipCount);
-end;
-
-function TRender.CreateGeomBuffer(GBufferType: TGBufferType; Count, Stride: LongInt; Data: Pointer): IGeomBuffer; stdcall;
-begin
-  Result := TGeomBuffer.Create(GBufferType, Count, Stride, Data);
 end;
 
 procedure TRender.Flush;
