@@ -355,6 +355,9 @@ const
   GL_PROXY_TEXTURE_CUBE_MAP           = $851B;
   GL_MAX_CUBE_MAP_TEXTURE_SIZE        = $851C;
 
+   // buffers
+  GL_NONE                             = 0;
+
 // FBO
   GL_FRAMEBUFFER                      = $8D40;
   GL_RENDERBUFFER                     = $8D41;
@@ -402,9 +405,13 @@ const
   GL_POLYGON_OFFSET_LINE              = $2A02;
   GL_POLYGON_OFFSET_FILL              = $8037;
 
-
   procedure glFinish; stdcall; external opengl32;
   procedure glFlush; stdcall; external opengl32;
+
+  // Viewport
+  procedure glViewport(x, y: GLint; width, height: GLsizei); stdcall; external opengl32;
+  procedure glOrtho(left, right, bottom, top, zNear, zFar: GLdouble); stdcall; external opengl32;
+  procedure glScissor(x, y: GLint; width, height: GLsizei); stdcall; external opengl32;
 
     // Get
   function  glGetString(name: GLenum): PAnsiChar; stdcall; external opengl32;
@@ -420,56 +427,22 @@ const
   procedure glClearDepth(depth: GLdouble); stdcall; external opengl32;
 
   // State
-  procedure glBegin(mode: GLenum); stdcall; external opengl32;
-  procedure glEnd; stdcall; external opengl32;
   procedure glEnable(cap: GLenum); stdcall; external opengl32;
   procedure glDisable(cap: GLenum); stdcall; external opengl32;
 
-  procedure glDisableClientState(aarray: GLenum); stdcall; external opengl32;
-  procedure glEnableClientState(aarray: GLenum); stdcall; external opengl32;
-  // Viewport
-  procedure glViewport(x, y: GLint; width, height: GLsizei); stdcall; external opengl32;
-  procedure glOrtho(left, right, bottom, top, zNear, zFar: GLdouble); stdcall; external opengl32;
-  procedure glScissor(x, y: GLint; width, height: GLsizei); stdcall; external opengl32;
   // Depth
   procedure glDepthFunc(func: GLenum); stdcall; external opengl32;
   procedure glDepthMask(flag: GLboolean); stdcall; external opengl32;
+
   // Color
- { procedure glColor4ub(red, green, blue, alpha: GLubyte); stdcall; external opengl32;
-  procedure glColor4ubv(v: PGLubyte); stdcall; external opengl32;
-  procedure glColor4f(red, green, blue, alpha: GLfloat); stdcall; external opengl32;    }
   procedure glColorMask(red, green, blue, alpha: GLboolean); stdcall; external opengl32;
+
   // Alpha
   procedure glAlphaFunc(func: GLenum; ref: GLfloat); stdcall; external opengl32;
   procedure glBlendFunc(sfactor, dfactor: GLenum); stdcall; external opengl32;
+
   // CullFace
   procedure glCullFace(mode: GLenum); stdcall; external opengl32;
-
-  // Matrix
-  procedure glPushMatrix; stdcall; external opengl32;
-  procedure glPopMatrix; stdcall; external opengl32;
-  procedure glMatrixMode(mode: GLenum); stdcall; external opengl32;
-  procedure glLoadIdentity; stdcall; external opengl32;
-  procedure glLoadMatrixf(const m: PGLfloat); stdcall; external opengl32;
-  procedure glMultMatrixf(const m: PGLfloat); stdcall; external opengl32;
-  procedure glRotatef(angle, x, y, z: GLfloat); stdcall; external opengl32;
-  procedure glScalef(x, y, z: GLfloat); stdcall; external opengl32;
-  procedure glTranslatef(x, y, z: GLfloat); stdcall; external opengl32;
-
-  // Vertex
-  procedure glVertex2f(x, y: GLfloat); stdcall; external opengl32;
-  procedure glVertex2fv(v: PGLfloat); stdcall; external opengl32;
-  procedure glVertex3f(x, y, z: GLfloat); stdcall; external opengl32;
-  procedure glVertex4f(x, y, z, w: GLfloat); stdcall; external opengl32;
-  procedure glVertex4fv(v: PGLfloat); stdcall; external opengl32;
-  procedure glVertexPointer(size: GLint; atype: GLenum; stride: GLsizei; const pointer: Pointer); stdcall; external opengl32;
-  procedure glColorPointer(size: GLint; atype: GLenum; stride: GLsizei; const pointer: Pointer); stdcall; external opengl32;
-
- //  procedure glColor4fv(v: PGLfloat); stdcall; external opengl32;
-  // TexCoords
-  procedure glTexCoord2f(s, t: GLfloat); stdcall; external opengl32;
-//  procedure glTexCoord2fv(v: PGLfloat); stdcall; external opengl32;
-  procedure glTexCoordPointer(size: GLint; atype: GLenum; stride: GLsizei; const pointer: Pointer); stdcall; external opengl32;
 
   // Texture
   procedure glBindTexture(target: GLenum; texture: GLuint); stdcall; external opengl32;
@@ -485,16 +458,11 @@ const
   procedure glTexEnvi(target: GLenum; pname: GLenum; param: GLint); stdcall; external opengl32;
   function  gluBuild2DMipmaps(target: GLenum; components, width, height: GLint; format, atype: GLenum; const data: Pointer): LongInt; stdcall; external opengl32;
 
-  // Normal
-  procedure glNormal3f(x, y, z: GLfloat); stdcall; external opengl32;
-  procedure glNormalPointer(atype: GLenum; stride: GLsizei; const pointer: Pointer); stdcall; external opengl32;
-
   procedure glDrawArrays(mode: GLenum; first: GLint; count: GLsizei); stdcall; external opengl32;
+  procedure glDrawBuffer(mode: GLEnum); stdcall; external opengl32;
+  procedure glReadBuffer(mode: GLEnum); stdcall; external opengl32;
   procedure glDrawElements(mode: GLenum; count: GLsizei; atype: GLenum; const indices: Pointer); stdcall; external opengl32;
-  procedure glPushClientAttrib(mask: GLbitfield); stdcall; external opengl32;
-  procedure glPopClientAttrib; stdcall; external opengl32;
   procedure glPolygonMode(face: GLenum; mode: GLenum); stdcall; external opengl32;
-
 
   function wglCreateContext(DC: HDC): HGLRC; stdcall; external opengl32;
   function wglDeleteContext(RC: HGLRC): LongBool; stdcall; external opengl32;
@@ -502,52 +470,60 @@ const
   function wglGetProcAddress(ProcName: PAnsiChar): Pointer; stdcall; external opengl32;
 
 var
-  // WGL_EXT_extensions_string
   wglGetExtensionsStringEXT: function(): PAnsiChar; stdcall;
-  // WGL_ARB_extensions_string
-  wglGetExtensionsStringARB: function(hdc: HDC): PAnsiChar; stdcall;
+  wglGetExtensionsStringARB: function(hdc: HDC): PAnsiChar; stdcall;
 
   wglChoosePixelFormatARB: function(hdc: HDC; const piAttribIList: PGLint; const pfAttribFList: PGLfloat; nMaxFormats: GLuint; piFormats: PGLint; nNumFormats: PGLuint): LongBool; stdcall;
   wglSwapIntervalEXT: function(interval: GLint): LongBool; stdcall;
 
-  glActiveTexture: procedure(texture: GLenum); stdcall;
+  glGenRenderbuffers        : procedure (n: GLsizei; renderbuffers: PGLuint); stdcall;
+  glDeleteRenderbuffers     : procedure (n: GLsizei; const renderbuffers: PGLuint); stdcall;
+  glBindRenderbuffer        : procedure (target: GLenum; renderbuffer: GLuint); stdcall;
+  glRenderbufferStorage     : procedure (target: GLenum; internalformat: GLenum; width: GLsizei; height: GLsizei); stdcall;
+  glGenFramebuffers         : procedure (n: GLsizei; framebuffers: PGLuint); stdcall;
+  glDeleteFramebuffers      : procedure (n: GLsizei; const framebuffers: PGLuint); stdcall;
+  glBindFramebuffer         : procedure (target: GLenum; framebuffer: GLuint); stdcall;
+  glFramebufferTexture2D    : procedure (target: GLenum; attachment: GLenum; textarget: GLenum; texture: GLuint; level: GLint); stdcall;
+  glFramebufferRenderbuffer : procedure (target: GLenum; attachment: GLenum; renderbuffertarget: GLenum; renderbuffer: GLuint); stdcall;
+  glCheckFramebufferStatus  : function (target: GLenum): GLenum; stdcall;
+  glDrawBuffers             : procedure(n: GLsizei; const bufs: PGLenum); stdcall;
 
-  glBindBuffer: procedure(target: GLenum; buffer: GLuint); stdcall;
-  glDeleteBuffers: procedure(n: GLsizei; buffers : PGLuint); stdcall;
-  glGenBuffers: procedure(n: GLsizei; buffers : PGLuint); stdcall;
-  glIsBuffer: function (buffer: GLuint): GLboolean; stdcall;
+  glActiveTexture   : procedure(texture: GLenum); stdcall;
+  glMultiTexCoord4f : procedure(target: GLenum; s: GLfloat; t: GLfloat; r: GLfloat; q: GLfloat); stdcall;
 
-  glBufferData: procedure(target: GLenum; size: GLsizei; data: PGLvoid; usage: GLenum); stdcall;
-  glBufferSubData: procedure(target: GLenum; offset: GLint; size: GLsizei; data: PGLvoid); stdcall;
-  glMapBuffer: function(target: GLenum; access: GLenum): PGLvoid; stdcall;
-  glUnmapBuffer: function(target: GLenum) :GLboolean; stdcall;
+  glBindBuffer      : procedure(target: GLenum; buffer: GLuint); stdcall;
+  glDeleteBuffers   : procedure(n: GLsizei; buffers : PGLuint); stdcall;
+  glGenBuffers      : procedure(n: GLsizei; buffers : PGLuint); stdcall;
+  glIsBuffer        : function (buffer: GLuint): GLboolean; stdcall;
+
+  glBufferData      : procedure(target: GLenum; size: GLsizei; data: PGLvoid; usage: GLenum); stdcall;
+  glBufferSubData   : procedure(target: GLenum; offset: GLint; size: GLsizei; data: PGLvoid); stdcall;
+  glMapBuffer       : function(target: GLenum; access: GLenum): PGLvoid; stdcall;
+  glUnmapBuffer     : function(target: GLenum) :GLboolean; stdcall;
   glGetBufferParameteriv: procedure(target: GLenum; pname: GLenum; params: PGLint); stdcall;
 
- // glDrawArrays: procedure(mode: GLenum; first: GLint; count: GLsizei); stdcall;
-
   // GL_shader_objects
-  glGetProgramiv: procedure(programObj: GLhandle; pname: GLenum; params: PGLInt); stdcall;
-  glCreateProgram: function(): GLhandle; stdcall;
-  glDeleteProgram: procedure(programObj: GLhandle); stdcall;
-  glIsProgram: function(programObj: GLhandle): GLboolean; stdcall;
-//  &
-  glLinkProgram: procedure(programObj: GLhandle); stdcall;
-  glUseProgram: procedure(programObj: GLhandle); stdcall;
-  glValidateProgram: procedure(programObj: GLhandle); stdcall;
-//   &
-  glGetProgramInfoLog: procedure(programObj: GLHandle; maxLength: glsizei; var length: GLint; infoLog: PAnsiChar); stdcall;
-  glGetShaderiv: procedure(shaderObj: GLhandle; pname: GLenum; params: PGLInt); stdcall;
+  glGetProgramiv    : procedure(programObj: GLhandle; pname: GLenum; params: PGLInt); stdcall;
+  glCreateProgram   : function(): GLhandle; stdcall;
+  glDeleteProgram   : procedure(programObj: GLhandle); stdcall;
+  glIsProgram       : function(programObj: GLhandle): GLboolean; stdcall;
+  glLinkProgram     : procedure(programObj: GLhandle); stdcall;
+  glUseProgram      : procedure(programObj: GLhandle); stdcall;
+  glValidateProgram : procedure(programObj: GLhandle); stdcall;
 
-  glCreateShader: function(shaderType: GLenum): GLhandle; stdcall;
-  glDeleteShader: procedure(shaderObj: GLhandle); stdcall;
-  glShaderSource: procedure(shaderObj: GLhandle; count: GLsizei; const _string: PGLPCharArray; const length: PGLint); stdcall;
-  glAttachShader: procedure(programObj, shaderObj: GLhandle); stdcall;
-  glCompileShader: procedure(shaderObj: GLhandle); stdcall;
-  glGetShaderInfoLog: procedure(shaderObj: GLHandle; maxLength: glsizei; var length: glint; infoLog: PAnsiChar); stdcall;
+  glGetProgramInfoLog : procedure(programObj: GLHandle; maxLength: glsizei; var length: GLint; infoLog: PAnsiChar); stdcall;
+  glGetShaderiv       : procedure(shaderObj: GLhandle; pname: GLenum; params: PGLInt); stdcall;
+
+  glCreateShader      : function(shaderType: GLenum): GLhandle; stdcall;
+  glDeleteShader      : procedure(shaderObj: GLhandle); stdcall;
+  glShaderSource      : procedure(shaderObj: GLhandle; count: GLsizei; const _string: PGLPCharArray; const length: PGLint); stdcall;
+  glAttachShader      : procedure(programObj, shaderObj: GLhandle); stdcall;
+  glCompileShader     : procedure(shaderObj: GLhandle); stdcall;
+  glGetShaderInfoLog  : procedure(shaderObj: GLHandle; maxLength: glsizei; var length: glint; infoLog: PAnsiChar); stdcall;
   glGetUniformLocation: function(programObj: GLhandle; const name: PAnsiChar ): GLint; stdcall;
 
-  glGetActiveUniform: procedure(programObj: GLhandle; index: GLuint; maxLength: GLsizei; length: PGLsizei; size: PGLint; _type: PGLenum; name: PAnsiChar); stdcall;
-  glGetActiveAttrib: procedure(programObj: GLhandle; index: GLuint; maxLength: GLsizei; length: PGLsizei; size: PGLint; _type: PGLenum; name: PAnsiChar); stdcall;
+  glGetActiveUniform  : procedure(programObj: GLhandle; index: GLuint; maxLength: GLsizei; length: PGLsizei; size: PGLint; _type: PGLenum; name: PAnsiChar); stdcall;
+  glGetActiveAttrib   : procedure(programObj: GLhandle; index: GLuint; maxLength: GLsizei; length: PGLsizei; size: PGLint; _type: PGLenum; name: PAnsiChar); stdcall;
 
   { glUniform1f: procedure(location: GLint; v0: GLfloat); stdcall;
   glUniform2f: procedure(location: GLint; v0: GLfloat; v1: GLfloat); stdcall;
@@ -663,8 +639,8 @@ begin
  // Result := GetProcAddress(GlModuleH, ProcName);
 
  // if not Assigned(Result) then
-    Result := wglGetProcAddress(ProcName);
-
+  Result := wglGetProcAddress(ProcName);
+                       {
   if not Assigned(Result) then
   begin
     S := ProcName + AnsiString('ARB');
@@ -675,7 +651,7 @@ begin
   begin
     S := ProcName + AnsiString('EXT');
     Result := wglGetProcAddress(@S[1]);
-  end;
+  end;             }
 
   if (not Assigned(Result)) then
   begin
@@ -696,7 +672,7 @@ begin
     ExtString := ExtString + ' ' + wglGetExtensionsStringEXT
   else
   begin
-    wglGetExtensionsStringARB := wglGetProcAddress('wglGetExtensionsStringEXT');
+    wglGetExtensionsStringARB := wglGetProcAddress('wglGetExtensionsStringARB');
     if Assigned(@wglGetExtensionsStringARB) then
     ExtString := ExtString + ' ' + wglGetExtensionsStringARB(wglGetCurrentDC);
   end;
@@ -706,11 +682,20 @@ function LoadGLLibraly : Boolean;
 begin
   Result := True;
 
-  if(glIsSupported('GL_ARB_vertex_buffer_object')) then
-    LogOut('glIsSupported', lmNotify);
-  wglSwapIntervalEXT := glGetProc('wglSwapInterval', Result, False);
-
+  wglSwapIntervalEXT := glGetProc('wglSwapIntervalEXT', Result, False);
   glActiveTexture := glGetProc('glActiveTexture', Result);
+  glMultiTexCoord4f := glGetProc('glMultiTexCoord4f', Result);
+
+  glGenRenderbuffers        := glGetProc('glGenRenderbuffersEXT', Result);
+  glBindRenderbuffer        := glGetProc('glBindRenderbufferEXT', Result);
+  glRenderbufferStorage     := glGetProc('glRenderbufferStorageEXT', Result);
+  glGenFramebuffers         := glGetProc('glGenFramebuffersEXT', Result);
+  glDeleteFramebuffers      := glGetProc('glDeleteFramebuffersEXT', Result);
+  glBindFramebuffer         := glGetProc('glBindFramebufferEXT', Result);
+  glFramebufferTexture2D    := glGetProc('glFramebufferTexture2DEXT', Result);
+  glFramebufferRenderbuffer := glGetProc('glFramebufferRenderbufferEXT', Result);
+  glCheckFramebufferStatus  := glGetProc('glCheckFramebufferStatusEXT', Result);
+  glDrawBuffers             := glGetProc('glDrawBuffers', Result);
 
   glBindBuffer    := glGetProc('glBindBuffer', Result);
   glDeleteBuffers := glGetProc('glDeleteBuffers', Result);
@@ -720,7 +705,6 @@ begin
   glBufferSubData := glGetProc('glBufferSubData', Result);
   glMapBuffer     := glGetProc('glMapBuffer', Result);
   glUnmapBuffer   := glGetProc('glUnmapBuffer', Result);
- // glDrawArrays    := glGetProc('glDrawArraysARB', Result);
 
   glGetBufferParameteriv := glGetProc('glGetBufferParameteriv', Result);
 
@@ -728,7 +712,6 @@ begin
   glCompressedTexImage2D := glGetProc('glCompressedTexImage2D', Result);
   glCompressedTexImage1D := glGetProc('glCompressedTexImage1D', Result);
 
-    // GL_ARB_shader_objects
   glGetProgramiv          := glGetProc('glGetProgramiv', Result);
   glCreateProgram         := glGetProc('glCreateProgram', Result);
   glDeleteProgram         := glGetProc('glDeleteProgram', Result);
@@ -788,9 +771,7 @@ begin
   glGetShaderSource := glGetProc('glGetShaderSource', Result);
 
    // GL_ARB_vertex_shader
-  glBindAttribLocation := glGetProc('glBindAttribLocation', Result);
-                                                                     }
-  Set8087CW($133F);
+  glBindAttribLocation := glGetProc('glBindAttribLocation', Result);}
 end;
 
 initialization

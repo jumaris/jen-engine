@@ -17,7 +17,7 @@ type
   end;                                     }
 
   TTexture = class(TResource, IManagedInterface, IResource, ITexture)
-    constructor Create(const Name, FilePath: string; Format: TTextureFormat; Width, Height: Cardinal);
+    constructor Create(const Name, FilePath: string; Width, Height: LongWord; Format: TTextureFormat);
     destructor Destroy; override;
   private
     FID       : GLEnum;
@@ -25,10 +25,14 @@ type
     FSampler  : GLEnum;
     FWidth    : LongInt;
     FHeight   : LongInt;
+    FS, FT    : Single;
+    FSW, FTH  : Single;
     FFilter   : TTextureFilter;
     FClamp    : Boolean;
     FMipMap   : Boolean;
     FMipMapLevels : LongInt;
+    function GetID: LongWord; stdcall;
+    function GetCoordParams: TVec4f; stdcall;
     function GetFormat: TTextureFormat; stdcall;
     procedure SetFormat(Value: TTextureFormat); stdcall;
     function GetSampler: LongWord; stdcall;
@@ -39,8 +43,8 @@ type
     procedure SetClamp(Value: Boolean); stdcall;
   public
     procedure Reload; stdcall;
+    procedure Flip(Vertical, Horizontal: Boolean); stdcall;
     procedure DataSet(Width, Height, Size: LongInt; Data: Pointer; Level: LongInt); stdcall;
-
   {
     procedure GenLevels;
     procedure DataGet(Data: Pointer; Level: LongInt = 0; CFormat: TGLConst = GL_RGBA; DFormat: TGLConst = GL_UNSIGNED_BYTE);
@@ -89,8 +93,13 @@ begin
   inherited Create(Name, FilePath, rtTexture);
   FWidth  := Width;
   FHeight := Height;
+  FS      := 0;
+  FT      := 0;
+  FSW     := 1;
+  FTH     := 1;
+  FSampler := GL_TEXTURE_2D;
   glGenTextures(1, @FID);
-  glBindTexture(GL_TEXTURE_2D, FID);
+  Bind;
 
   if Format <> tfoNone then
     with TextureFormatInfo[Format] do
@@ -99,7 +108,6 @@ begin
     else
       glTexImage2D(GL_TEXTURE_2D, 0, InternalFormat, Width, Height, 0, ExternalFormat, DataType, 0);
 
-  SetSampler(GL_TEXTURE_2D);
   FMipMap := False;
   FFilter := tfiBilinear;
   SetFilter(tfiNone);
@@ -112,12 +120,25 @@ begin
   inherited;
 end;
 
-function TTexture.GetFormat: TTextureFormat; stdcall;
+function TTexture.GetID: LongWord;
+begin
+  Result := FID;
+end;
+
+function TTexture.GetCoordParams: TVec4f;
+begin
+  Result.x := FS;
+  Result.y := FT;
+  Result.z := FSW;
+  Result.w := FTH;
+end;
+
+function TTexture.GetFormat: TTextureFormat;
 begin
   Result := FFormat;
 end;
 
-procedure TTexture.SetFormat(Value: TTextureFormat); stdcall;
+procedure TTexture.SetFormat(Value: TTextureFormat);
 begin
   FFormat := Value;
 end;
@@ -184,6 +205,24 @@ end;
 procedure TTexture.Reload;
 begin
 
+end;
+
+procedure TTexture.Flip(Vertical, Horizontal: Boolean); stdcall;
+var
+  tc : Single;
+begin
+  if Vertical then
+  begin
+    tc  := FT;
+    FT  := FT + FTH;
+    FTH := tc - FTH;
+  end;
+  if Horizontal then
+  begin
+    tc  := FS;
+    FS  := FS + FSW;
+    FSW := tc - FSW;
+  end;
 end;
 
 procedure TTexture.DataSet(Width, Height, Size: LongInt; Data: Pointer; Level: LongInt);

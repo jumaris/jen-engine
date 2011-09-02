@@ -3,9 +3,9 @@ unit JEN_Render2D;
 interface
 
 uses
-  JEN_GeometryBuffer,
   JEN_Header,
-  JEN_Math;
+  JEN_Math,
+  JEN_GeometryBuffer;
 
 const Batch_Size = 15;
 
@@ -24,6 +24,9 @@ type
     IndxAttrib    : IShaderAttrib;
     VBUniform     : IShaderUniform;
     DBUniform     : IShaderUniform;
+    TCParUniform1 : IShaderUniform;
+		TCParUniform2 : IShaderUniform;
+		TCParUniform3 : IShaderUniform;
     ShaderProgram : IShaderProgram;
     LastUsed      : LongInt;
   end;
@@ -84,6 +87,9 @@ begin
       ShaderProgram.Bind;
       VBUniform := ShaderProgram.Uniform('PosTexCoord');
       DBUniform := ShaderProgram.Uniform('QuadData', False);
+      TCParUniform1 := ShaderProgram.Uniform('TexCoordParams1', False);
+		  TCParUniform2 := ShaderProgram.Uniform('TexCoordParams2', False);
+		  TCParUniform3 := ShaderProgram.Uniform('TexCoordParams3', False);
 
       i := 0;
       Uniform := ShaderProgram.Uniform('Map0', False);
@@ -119,7 +125,7 @@ begin
   RenderTechnique[ttNormal] := TehniqueInit(FNormalShader.Compile);
   RenderTechnique[ttText] := TehniqueInit(FTextShader.Compile);
 
-  Engine.AddEventProc(evFrameEnd, @TRender2D.FlushProc);
+  Engine.AddEventProc(evFlush, @TRender2D.FlushProc);
 end;
 
 procedure TRender2D.Free;
@@ -138,6 +144,7 @@ end;
 
 procedure TRender2D.Flush;
 var
+  TCParams  : TVec4f;
   Blend     : TBlendType;
   AlphaTest : Byte;
 begin
@@ -161,10 +168,28 @@ begin
 
   FVrtBuff.Bind;
 
-  with RenderTechnique[FBatchParams.Tehnique] do
+  with FBatchParams, RenderTechnique[FBatchParams.Tehnique] do
   begin
     IndxAttrib.Enable;
     ShaderProgram.Bind;
+
+    if Assigned(TCParUniform1) and Assigned(BatchTexture1) then
+    begin
+      TCParams := BatchTexture1.CoordParams;
+      TCParUniform1.Value(TCParams);
+    end;
+
+    if Assigned(TCParUniform2) and Assigned(BatchTexture2) then
+    begin
+      TCParams := BatchTexture2.CoordParams;
+      TCParUniform2.Value(TCParams);
+    end;
+
+    if Assigned(TCParUniform3) and Assigned(BatchTexture3) then
+    begin
+      TCParams := BatchTexture3.CoordParams;
+      TCParUniform3.Value(TCParams);
+    end;
 
     VBUniform.Value(FVertexBuff[1], FIdx*4);
     if Assigned(DBUniform) then
@@ -306,7 +331,7 @@ begin
       UpdateBathParams;
     end;
 
-    c := Vec4f(1/Display.Width, 1/Display.Height, 1, 1);
+    c := Vec4f(2/Display.Width, 2/Display.Height, 1, 1);
     if Abs(Angle) > EPS then
     begin
       p := Vec4f(Center.X, Center.Y, 0, 0);
@@ -327,7 +352,7 @@ begin
       v[4] := v4 * c;
     end;
 
-    if not (InScreen(v[1]) or InScreen(v[2]) or InScreen(v[3]) or InScreen(v[4])) then Exit;
+    if not (InScreen(v[4]) or InScreen(v[3]) or InScreen(v[2]) or InScreen(v[1])) then Exit;
 
     BatchQuad(v[1], v[2], v[3], v[4], Data1, Data2, Data3, Data4);
   end;
@@ -337,13 +362,13 @@ end;
 procedure TRender2D.DrawSprite(Tex : ITexture; x, y, w, h: Single; const Color: TVec4f; Angle, cx, cy: Single);
 begin
   if not Assigned(Tex) then Exit;
-  DrawSpriteAdv(RenderTechnique[ttNormal].ShaderProgram, Tex, nil, nil, Vec4f(x, y+h, 0, 1),Vec4f(x+w, y+h , 1, 1), Vec4f(x+w, y, 1, 0), Vec4f(x, y, 0, 0), Color, Color, Color, Color, Vec2f(x + w*cx,y + h*cy), Angle);
+  DrawSpriteAdv(RenderTechnique[ttNormal].ShaderProgram, Tex, nil, nil, Vec4f(x, y+h, 0, 0),Vec4f(x+w, y+h , 1, 0), Vec4f(x+w, y, 1, 1), Vec4f(x, y, 0, 1), Color, Color, Color, Color, Vec2f(x + w*cx,y + h*cy), Angle);
 end;
 
 procedure TRender2D.DrawSprite(Tex: ITexture; X, Y, W, H: Single; const c1, c2, c3, c4: TVec4f; Angle, Cx, Cy: Single);
 begin
   if not Assigned(Tex) then Exit;
-  DrawSpriteAdv(RenderTechnique[ttNormal].ShaderProgram, Tex, nil, nil, Vec4f(x, y+h, 0, 1),Vec4f(x+w, y+h , 1, 1), Vec4f(x+w, y, 1, 0), Vec4f(x, y, 0, 0), c1, c2, c3, c4, Vec2f(x + w*cx,y + h*cy), Angle);
+  DrawSpriteAdv(RenderTechnique[ttNormal].ShaderProgram, Tex, nil, nil, Vec4f(x, y+h, 0, 0),Vec4f(x+w, y+h , 1, 0), Vec4f(x+w, y, 1, 1), Vec4f(x, y, 0, 1), c1, c2, c3, c4, Vec2f(x + w*cx,y + h*cy), Angle);
 end;
 
 end.

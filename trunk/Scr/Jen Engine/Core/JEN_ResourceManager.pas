@@ -51,15 +51,13 @@ type
     function GetActiveRes(RT: TResourceType): IUnknown;
     procedure SetActiveRes(RT: TResourceType; Value: IUnknown);
 
-//    function CreateTexture(Width, Height: LongWord; Format: TTextureFormat);
- //   function CreateGeomBuffer(GBufferType: TGBufferType; Count, Stride: LongInt; Data: Pointer): IGeomBuffer; stdcall;
-
     function Load(const FilePath: string; ResType: TResourceType): IResource; overload; stdcall;
     procedure Load(const FilePath: string; out Resource: JEN_Header.IShaderResource); overload; stdcall;
     procedure Load(const FilePath: string; out Resource: JEN_Header.ITexture); overload; stdcall;
     procedure Load(const FilePath: string; out Resource: JEN_Header.IFont); overload; stdcall;
     procedure Load(const FilePath: string; var Resource: IResource); overload;
 
+    function CreateTexture(Width, Height: LongWord; Format: TTextureFormat): JEN_Header.ITexture; stdcall;
     function CreateGeomBuffer(GBufferType: TGBufferType; Count, Stride: LongInt; Data: Pointer): IGeomBuffer; stdcall;
 
     procedure RegisterLoader(Loader: TResLoader);
@@ -190,12 +188,18 @@ var
 begin
   case ResType of
     rtShaderRes : Resource := TShaderResource.Create(Utils.ExtractFileName(FilePath), Utils.ExtractFileDir(FilePath));
-    rtTexture   : Resource := TTexture.Create(Utils.ExtractFileName(FilePath), Utils.ExtractFileDir(FilePath), tfoNone, 0, 0);
+    rtTexture   : Resource := TTexture.Create(Utils.ExtractFileName(FilePath), Utils.ExtractFileDir(FilePath), 0, 0, tfoNone);
     rtFont      : Resource := TFont.Create(Utils.ExtractFileName(FilePath), Utils.ExtractFileDir(FilePath));
   end;
 
   Load(FilePath, Resource);
   Result := Resource;
+end;
+
+function TResourceManager.CreateTexture(Width, Height: LongWord; Format: TTextureFormat): JEN_Header.ITexture; stdcall;
+begin
+  Result := TTexture.Create('', '', Width, Height, Format);
+  FResList.Add(Result);
 end;
 
 function TResourceManager.CreateGeomBuffer(GBufferType: TGBufferType; Count, Stride: LongInt; Data: Pointer): IGeomBuffer; stdcall;

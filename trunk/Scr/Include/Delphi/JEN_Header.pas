@@ -8,7 +8,7 @@ uses
 
 type
   TJenSubSystemType = (ssUtils, ssLog, ssHelpers, ssInput, ssDisplay, ssResMan, ssRender, ssRender2d);
-  TEvent = (evActivate, evKeyUp, evKeyDown, evFrameEnd);
+  TEvent = (evActivate, evKeyUp, evKeyDown, evFlush);
 
   TLogMsg = (lmHeaderMsg, lmInfo, lmNotify, lmCode, lmWarning, lmError);
 
@@ -125,9 +125,8 @@ type
     function FloatToStr(Value: Single; Digits: LongInt = 8): string; stdcall;
     function StrToFloat(const Str: string; Def: Single = 0): Single; stdcall;
     function ExtractFileDir(const FileName: string): string; stdcall;
-    function ExtractFileName(const FileName: string): string; stdcall;
+    function ExtractFileName(const FileName: string; NoExt: Boolean = False): string; stdcall;
     function ExtractFileExt(const FileName: string): string; stdcall;
-    function ExtractFileNameNoExt(const FileName: string): string; stdcall;
     property Time : LongInt read GetTime;
   end;
 
@@ -270,6 +269,8 @@ type
   ['{E9EEFA65-F004-4668-9BAD-2FE92D19F050}']
     procedure Bind(Channel: Byte = 0); stdcall;
 
+    function GetID: LongWord; stdcall;
+    function GetCoordParams: TVec4f; stdcall;
     function GetFormat: TTextureFormat; stdcall;
     procedure SetFormat(Value: TTextureFormat); stdcall;
     function GetSampler: LongWord; stdcall;
@@ -280,9 +281,12 @@ type
     procedure SetClamp(Value: Boolean); stdcall;
 
     procedure DataSet(Width, Height, Size: LongInt; Data: Pointer; Level: LongInt); stdcall;
+    procedure Flip(Vertical, Horizontal: Boolean); stdcall;
 
-    //property Width: LongInt read FWidth;
+    property ID: LongWord read GetID;
+        //property Width: LongInt read FWidth;
    // property Height: LongInt read FHeight;
+    property CoordParams: TVec4f read GetCoordParams;
     property Format: TTextureFormat read GetFormat write SetFormat;
     property Sampler: LongWord read GetSampler write SetSampler;
     property Filter: TTextureFilter read GetFilter write SetFilter;
@@ -328,22 +332,37 @@ type
     function LoadShader(const FileName: string): IShaderResource; stdcall;
     function LoadTexture(const FileName: string): ITexture; stdcall;    }
 
+    function CreateTexture(Width, Height: LongWord; Format: TTextureFormat): ITexture; stdcall;
     function CreateGeomBuffer(GBufferType: TGBufferType; Count, Stride: LongInt; Data: Pointer): IGeomBuffer; stdcall;
   end;
 
   TRenderSupport = (rsWGLEXTswapcontrol);
 
+  IRenderTarget = interface
+    function GetID: LongWord;
+    function GetDrawBuffers: PLongWord; //Do not use it
+    function GetChannelCount: LongInt;
+    function GetTexture(Channel: TRenderChannel): ITexture;
+
+    property ID: LongWord read GetID;
+    property ChannelCount: LongInt read GetChannelCount;
+    property Texture[Channel: TRenderChannel]: ITexture read GetTexture;
+  end;
+
   IRender = interface(IJenSubSystem)
     procedure Init(DepthBits: Byte = 24; StencilBits: Byte = 8; FSAA: Byte = 0); stdcall;
-    procedure Clear(ColorBuff, DepthBuff, StensilBuff: Boolean); stdcall;
+    function Support(RenderSupport: TRenderSupport): Boolean;
+
+    function CreateRenderTarget(Width, Height: LongWord; Format: TTextureFormat; Count: LongWord; Samples: LongWord; DepthBuffer: Boolean): JEN_Header.IRenderTarget; stdcall;
+    procedure SetRenderTarget(Value: IRenderTarget); stdcall;
 
     function GetVSync: Boolean; stdcall;
     procedure SetVSync(Value: Boolean); stdcall;
 
-    function Support(RenderSupport: TRenderSupport): Boolean;
+    procedure Clear(ColorBuff, DepthBuff, StensilBuff: Boolean); stdcall;
 
-    function GetColorMask(Channel : TColorChannel): Boolean; overload; stdcall;
-    procedure SetColorMask(Channel : TColorChannel; Value : Boolean); overload; stdcall;
+    function GetColorMask(Channel: TColorChannel): Boolean; overload; stdcall;
+    procedure SetColorMask(Channel: TColorChannel; Value: Boolean); overload; stdcall;
     function GetColorMask: Byte; overload; stdcall;
     procedure SetColorMask(Red, Green, Blue, Alpha: Boolean); overload; stdcall;
     function GetBlendType: TBlendType; stdcall;

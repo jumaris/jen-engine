@@ -25,7 +25,7 @@ uses
   JEN_Shader in '..\Jen Engine\Render\JEN_Shader.pas',
   CoreX_XML in '..\Jen Engine\Utils\CoreX_XML.pas',
   JEN_Math in '..\Include\Delphi\JEN_Math.pas',
-  JEN_OpenGLHeader in '..\Jen Engine\Utils\JEN_OpenGLHeader.pas',
+  JEN_OpenGLHeader in '..\Jen Engine\Core\JEN_OpenGLHeader.pas',
   JEN_Utils in '..\Jen Engine\Utils\JEN_Utils.pas',
   JEN_Header in '..\Include\Delphi\JEN_Header.pas',
   JEN_Render2D in '..\Jen Engine\Render\JEN_Render2D.pas',

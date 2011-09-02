@@ -3,7 +3,7 @@
 			<ProjectGuid>{E8874A6E-78B2-4D7D-8937-29C2DAC11416}</ProjectGuid>
 			<ProjectVersion>12.0</ProjectVersion>
 			<MainSource>JEN.dpr</MainSource>
-			<Config Condition="'$(Config)'==''">Debug</Config>
+			<Config Condition="'$(Config)'==''">Release</Config>
 			<DCC_DCCCompiler>DCC32</DCC_DCCCompiler>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Config)'=='Base' or '$(Base)'!=''">
@@ -62,7 +62,7 @@
 			<DCCReference Include="..\Jen Engine\Render\JEN_Shader.pas"/>
 			<DCCReference Include="..\Jen Engine\Utils\CoreX_XML.pas"/>
 			<DCCReference Include="..\Include\Delphi\JEN_Math.pas"/>
-			<DCCReference Include="..\Jen Engine\Utils\JEN_OpenGLHeader.pas"/>
+			<DCCReference Include="..\Jen Engine\Core\JEN_OpenGLHeader.pas"/>
 			<DCCReference Include="..\Jen Engine\Utils\JEN_Utils.pas"/>
 			<DCCReference Include="..\Include\Delphi\JEN_Header.pas"/>
 			<DCCReference Include="..\Jen Engine\Render\JEN_Render2D.pas"/>

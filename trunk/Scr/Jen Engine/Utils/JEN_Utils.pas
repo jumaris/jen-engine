@@ -95,9 +95,8 @@ type
     function FloatToStr(Value: Single; Digits: LongInt = 8): string; stdcall;
     function StrToFloat(const Str: string; Def: Single = 0): Single; stdcall;
     function ExtractFileDir(const FileName: string): string; stdcall;
-    function ExtractFileName(const FileName: string): string; stdcall;
+    function ExtractFileName(const FileName: string; NoExt: Boolean): string; stdcall;
     function ExtractFileExt(const FileName: string): string; stdcall;
-    function ExtractFileNameNoExt(const FileName: string): string; stdcall;
   end;
 
   TStream = class
@@ -145,8 +144,6 @@ function LowerCase(const Str: string): string;
 function TrimChars(const Str: string; Chars: TCharSet): string;
 function Trim(const Str: string): string;
 function DeleteChars(const Str: string; Chars: TCharSet): string;
-
-function ExtractFileDir(const Path: string): string;
 
 implementation
 
@@ -230,19 +227,6 @@ begin
       Result[j] := Str[i];
     end;
   SetLength(Result, j);
-end;
-
-function ExtractFileDir(const Path: string): string;
-var
-  i : LongInt;
-begin
-  for i := Length(Path) downto 1 do
-    if (Path[i] = '\') or (Path[i] = '/') then
-    begin
-      Result := Copy(Path, 1, i);
-      Exit;
-    end;
-  Result := '';
 end;
 
 // TList
@@ -589,9 +573,17 @@ begin
   Result := '';
 end;
 
-function TUtils.ExtractFileName(const FileName: string): string;
+function TUtils.ExtractFileName(const FileName: string; NoExt: Boolean): string;
+var
+  i: LongInt;
 begin
   Result := Copy(FileName, Length(ExtractFileDir(FileName)) + 1, Length(FileName));
+  if NoExt then
+  begin
+    for i := Length(Result) - 1 downto 2 do
+      if (Result[i] = '.') and (Result[i - 1] <> '.') then Break;
+    Result := Copy(Result, 0, i - 1);
+  end;
 end;
 
 function TUtils.ExtractFileExt(const FileName: string): string;
@@ -602,19 +594,6 @@ begin
   for i := Length(FileName) downto 1 do
   if (FileName[i] = '.')  then
     Result := Copy(FileName, i+1, length(FileName)-1);
-end;
-
-function TUtils.ExtractFileNameNoExt(const FileName: string): string;
-var
-  i: LongInt;
-begin
-  Result := '';
-  if Length(FileName) > 0 then begin
-    Result := ExtractFileName(FileName);
-    for i := Length(Result) - 1 downto 2 do
-     if (Result[i] = '.') and (Result[i - 1] <> '.') then Break;
-    Result := Copy(Result, 0, i - 1);
-  end;
 end;
 {$ENDREGION}
 
