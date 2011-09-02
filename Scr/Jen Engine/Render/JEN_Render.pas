@@ -4,8 +4,8 @@ interface
 
 uses
   Windows,
-
   JEN_Header,
+  JEN_OpenGLHeader,
   JEN_Math;
 
 type
@@ -27,6 +27,7 @@ type
 
     SBuffer     : array[TRenderSupport] of Boolean;
 
+    FTarget     : IRenderTarget;
     FColorMask  : Byte;
     FBlendType  : TBlendType;
     FAlphaTest  : Byte;
@@ -42,10 +43,12 @@ type
     FCameraDir  : TVec3f;
     function GetValid: Boolean;
   public
+    function CreateRenderTarget(Width, Height: LongWord; Format: TTextureFormat; Count: LongWord; Samples: LongWord; DepthBuffer: Boolean): JEN_Header.IRenderTarget; stdcall;
+    procedure SetRenderTarget(Value: IRenderTarget); stdcall;
+
     procedure Clear(ColorBuff, DepthBuff, StensilBuff: Boolean); stdcall;
     procedure SetViewport(Value: TRecti);
    // procedure SetArrayState(Vertex, TextureCoord, Normal, Color : Boolean); stdcall;
-
     function Support(RenderSupport: TRenderSupport): Boolean;
 
     function GetVSync: Boolean; stdcall;
@@ -83,9 +86,8 @@ type
 implementation
 
 uses
-  JEN_OpenGLHeader,
-  JEN_Main;
-
+  JEN_Main,
+  JEN_RenderTarget;
 
 procedure TRender.Free;
 begin
@@ -247,6 +249,34 @@ begin
   // glEnable(GL_COLOR_MATERIAL);
   Render2d.Init;
   FValid := true;
+end;
+
+function TRender.CreateRenderTarget(Width, Height: LongWord; Format: TTextureFormat; Count: LongWord; Samples: LongWord; DepthBuffer: Boolean): JEN_Header.IRenderTarget;
+begin
+  Result := TRenderTarget.Create(Width, Height, Format, Count, Samples, DepthBuffer);
+end;
+
+procedure TRender.SetRenderTarget(Value: IRenderTarget);
+begin
+  Engine.CreateEvent(evFlush);
+  FTarget := Value;
+  if Value <> nil then
+  begin
+    glBindFramebuffer(GL_FRAMEBUFFER, Value.ID);
+    if Value.ChannelCount = 0 then
+    begin
+      glDrawBuffer(GL_NONE);
+      glReadBuffer(GL_NONE);
+    end else
+    begin
+      glDrawBuffer(GL_BACK);
+      glReadBuffer(GL_BACK);
+    end;
+    glDrawBuffers(Value.ChannelCount, PGLenum(Value.GetDrawBuffers));
+  end else
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+     glViewport( 0, 0,1024, 768);
 end;
 
 function TRender.GetValid: Boolean;
@@ -505,7 +535,7 @@ end;
 
 procedure TRender.Flush;
 begin
-  Engine.CreateEvent(evFrameEnd);
+  Engine.CreateEvent(evFlush);
   FLastDipCount := FDipCount;
   FDipCount := 0;
 end;

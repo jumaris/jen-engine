@@ -25,8 +25,6 @@ type
 
 implementation
 
-
-
 constructor TGeomBuffer.Create(GBufferType: TGBufferType; Count, Stride: LongInt; Data: Pointer);
 begin
   inherited Create;

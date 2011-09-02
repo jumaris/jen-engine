@@ -182,7 +182,7 @@ begin
 
   SetLength(FPages, FPagesCount);
   for I := 0 to FPagesCount - 1 do
-    ResMan.Load(FFilePath + Utils.ExtractFileNameNoExt(FName) + '_' + Utils.IntToStr(I) + '.dds', FPages[i]);
+    ResMan.Load(FFilePath + Utils.ExtractFileName(FName, True) + '_' + Utils.IntToStr(I) + '.dds', FPages[i]);
 end;
 
 procedure TFont.AddChar(Char: WideChar;const Info: TCharInfo);
