@@ -125,7 +125,7 @@ begin
   RenderTechnique[ttNormal] := TehniqueInit(FNormalShader.Compile);
   RenderTechnique[ttText] := TehniqueInit(FTextShader.Compile);
 
-  Engine.AddEventProc(evFlush, @TRender2D.FlushProc);
+  Engine.AddEventProc(evRenderFlush, @TRender2D.FlushProc);
 end;
 
 procedure TRender2D.Free;
@@ -225,40 +225,9 @@ end;
 procedure Rotate2D(out v1, v2, v3, v4: TVec4f; Angle: Single); inline;
 var
   tsin, tcos : Single;
-  //tx1,tx2,ty1,ty2, vx, vy : TVec2f;
   tx1,tx2,ty1,ty2: single;
 begin
-  {begin
-          v4 := Vec2f(X  , Y  )* c;
-     v3 := Vec2f(X+W, Y  )* c;
-     v2 := Vec2f(X+W, Y+H)* c;
-     v1 := Vec2f(X  , Y+H)* c;
-     Exit;
-  end; }
-
-  sincos(Deg2Rad*Angle,tsin,tcos);     {
-  P := Vec2f(Cx, Cy);
-
-  vx := Vec2f(tcos,tsin);
-  vy := Vec2f(-tsin,tcos);
-
-  tx1 := vx*-(w*Cx); tx2 := vx*(w*(1.0-Cx));
-  ty1 := vy*-(h*Cy); ty2 := vy*(h*(1.0-Cy));
-
-  v4 := tx1 + ty1 + p;
-  v3 := tx2 + ty1 + p;
-  v2 := tx2 + ty2 + p;
-  v1 := tx1 + ty2 + p;
-     }         {
-  tx1 := -cx*w;
-	ty1 := -cy*h;
-	tx2 := (1.0-cx)*w;
-	ty2 := (1.0-cy)*h;
-
-	v4 := (Vec2f(tx1*tcos - ty1*tsin, tx1*tsin + ty1*tcos) + p) * c;
-  v3 := (Vec2f(tx2*tcos - ty1*tsin, tx2*tsin + ty1*tcos) + p) * c;
-  v2 := (Vec2f(tx2*tcos - ty2*tsin, tx2*tsin + ty2*tcos) + p) * c;
-  v1 := (Vec2f(tx1*tcos - ty2*tsin, tx1*tsin + ty2*tcos) + p) * c;   }
+  sincos(Deg2Rad*Angle,tsin,tcos);
 
 	v4 := Vec4f(v4.x*tcos - v4.y*tsin, v4.x*tsin + v4.y*tcos, v4.z, v4.w);
   v3 := Vec4f(v3.x*tcos - v3.y*tsin, v3.x*tsin + v3.y*tcos, v3.z, v3.w);
