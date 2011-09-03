@@ -11,7 +11,8 @@ uses
 type
   IRender = interface(JEN_Header.IRender)
     function GetValid : Boolean;
-    procedure Flush;
+    procedure Start;
+    procedure Finish;
 
     property Valid : Boolean read GetValid;
   end;
@@ -35,6 +36,11 @@ type
     FDepthWrite : Boolean;
     FCullFace   : TCullFace;
 
+    FFPS        : LongInt;
+    FFPSTime    : LongInt;
+    FFPSCount   : LongInt;
+    FFrameTime  : LongInt;
+    FFrameStart : LongInt;
     FDipCount   : LongWord;
     FLastDipCount : LongWord;
 
@@ -47,7 +53,8 @@ type
     procedure SetRenderTarget(Value: IRenderTarget); stdcall;
 
     procedure Clear(ColorBuff, DepthBuff, StensilBuff: Boolean); stdcall;
-    procedure SetViewport(Value: TRecti);
+    function GetViewport: TRecti; stdcall;
+    procedure SetViewport(const Value: TRecti); stdcall;
    // procedure SetArrayState(Vertex, TextureCoord, Normal, Color : Boolean); stdcall;
     function Support(RenderSupport: TRenderSupport): Boolean;
 
@@ -68,8 +75,10 @@ type
     function GetCullFace: TCullFace; stdcall;
     procedure SetCullFace(Value: TCullFace); stdcall;
 
+    function GetFPS: LongWord; stdcall;
+    function GetFrameTime: LongWord; stdcall;
     function GetLastDipCount: LongWord; stdcall;
-    function GetDipCount : LongWord; stdcall;
+    function GetDipCount: LongWord; stdcall;
     procedure SetDipCount(Value : LongWord); stdcall;
     procedure IncDip; stdcall;
 
@@ -80,7 +89,8 @@ type
     function  GetCameraDir: TVec3f; stdcall;
     procedure SetCameraDir(Value: TVec3f); stdcall;
 
-    procedure Flush;
+    procedure Start;
+    procedure Finish;
   end;
 
 implementation
@@ -257,13 +267,15 @@ begin
 end;
 
 procedure TRender.SetRenderTarget(Value: IRenderTarget);
+const
+  ChannelList  : array [0..Ord(High(TRenderChannel)) - 1] of GLenum = (GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT0 + 1, GL_COLOR_ATTACHMENT0 + 2, GL_COLOR_ATTACHMENT0 + 3, GL_COLOR_ATTACHMENT0 + 4, GL_COLOR_ATTACHMENT0 + 5, GL_COLOR_ATTACHMENT0 + 6, GL_COLOR_ATTACHMENT0 + 7);
 begin
-  Engine.CreateEvent(evFlush);
+  Engine.CreateEvent(evRenderFlush);
   FTarget := Value;
   if Value <> nil then
   begin
     glBindFramebuffer(GL_FRAMEBUFFER, Value.ID);
-    if Value.ChannelCount = 0 then
+    if Value.ColChanCount = 0 then
     begin
       glDrawBuffer(GL_NONE);
       glReadBuffer(GL_NONE);
@@ -272,11 +284,9 @@ begin
       glDrawBuffer(GL_BACK);
       glReadBuffer(GL_BACK);
     end;
-    glDrawBuffers(Value.ChannelCount, PGLenum(Value.GetDrawBuffers));
+    glDrawBuffers(Value.ColChanCount, @ChannelList[0]);
   end else
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-     glViewport( 0, 0,1024, 768);
 end;
 
 function TRender.GetValid: Boolean;
@@ -291,9 +301,15 @@ begin
            (GL_STENCIL_BUFFER_BIT * Ord(StensilBuff)) );
 end;
 
-procedure TRender.SetViewport(Value: TRecti);
+function TRender.GetViewport: TRecti;
+begin
+  Result := FViewport;
+end;
+
+procedure TRender.SetViewport(const Value: TRecti);
 begin
   FViewport := Value;
+  Engine.CreateEvent(evRenderFlush);
   glViewport(Value.Left, Value.Top, Value.Width, Value.Height);
 end;
              {
@@ -513,6 +529,16 @@ begin
   FCameraDir := Value;
 end;
 
+function TRender.GetFPS: LongWord;
+begin
+  Result := FFps;
+end;
+
+function TRender.GetFrameTime: LongWord;
+begin
+  Result := FFrameTime;
+end;
+
 function TRender.GetDipCount: LongWord;
 begin
   Result := FDipCount;
@@ -533,9 +559,24 @@ begin
   Inc(FDipCount);
 end;
 
-procedure TRender.Flush;
+procedure TRender.Start;
 begin
-  Engine.CreateEvent(evFlush);
+  FFrameStart := Utils.Time;
+end;
+
+procedure TRender.Finish;
+begin
+  Engine.CreateEvent(evRenderFlush);
+
+  Inc(FFPSCount);
+  if Utils.Time - FFPSTime >= 1000 then
+  begin
+   FFPS      := FFPSCount;
+   FFPSCount := 0;
+   FFPSTime  := FFPSTime + 1000;
+  end;
+  FFrameTime := Utils.Time - FFrameStart;
+
   FLastDipCount := FDipCount;
   FDipCount := 0;
 end;

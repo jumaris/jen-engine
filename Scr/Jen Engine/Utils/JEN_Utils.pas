@@ -72,8 +72,8 @@ type
   end;
 
   IUtils = interface(JEN_Header.IUtils)
-    procedure Update;
-    procedure AutoUpdate(Value : Boolean);
+    procedure SetFreezeTime(Value: Boolean);
+    property FreezeTime: Boolean write SetFreezeTime;
   end;
 
   TUtils = class(TInterfacedObject, IJenSubSystem, IUtils)
@@ -83,13 +83,12 @@ type
     FTimeFreq   : Int64;
     FTimeStart  : LongInt;
     HWaitObj    : THandle;
-    FAutoUpdate : Boolean;
+    FFreezeTime : Boolean;
     FTime       : LongInt;
     function GetTime : LongInt; stdcall;
   public
     procedure Sleep(Value: LongWord); stdcall;
-    procedure Update;
-    procedure AutoUpdate(Value: Boolean);
+    procedure SetFreezeTime(Value: Boolean);
     function IntToStr(Value: LongInt): string; stdcall;
     function StrToInt(const Str: string; Def: LongInt = 0): LongInt; stdcall;
     function FloatToStr(Value: Single; Digits: LongInt = 8): string; stdcall;
@@ -473,7 +472,7 @@ begin
   QueryPerformanceFrequency(FTimeFreq);
   QueryPerformanceCounter(Count);
   FTimeStart := Trunc(1000 * (Count / FTimeFreq));
-  FAutoUpdate := True;
+  FFreezeTime := True;
 end;
 
 procedure TUtils.Free;
@@ -488,23 +487,25 @@ begin
 end;
 
 function TUtils.GetTime: LongInt;
-begin
-  if FAutoUpdate then
-    Update;
-  Result := FTime;
-end;
-
-procedure TUtils.AutoUpdate(Value: Boolean);
-begin
-  FAutoUpdate := Value;
-end;
-
-procedure TUtils.Update;
 var
   Count : Int64;
 begin
-  QueryPerformanceCounter(Count);
-  FTime := Trunc(1000 * (Count / FTimeFreq)) - FTimeStart;
+  if not FFreezeTime then
+  begin
+    QueryPerformanceCounter(Count);
+    Result := Trunc(1000 * (Count / FTimeFreq)) - FTimeStart;
+  end else
+    Result := FTime;
+end;
+
+procedure TUtils.SetFreezeTime(Value: Boolean);
+begin
+  if Value then
+  begin
+    FFreezeTime := False;
+    FTime := GetTime;
+  end;
+  FFreezeTime := Value;
 end;
 
 function TUtils.IntToStr(Value: LongInt): String;

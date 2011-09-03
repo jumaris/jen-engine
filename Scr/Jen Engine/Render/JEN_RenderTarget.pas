@@ -12,17 +12,17 @@ type
     constructor Create(Width, Height: LongWord; Format: TTextureFormat; Count: LongWord; Samples: LongWord; DepthBuffer: Boolean);
     destructor Destroy; override;
   private
-    FID : LongWord;
-    FTexture : array [TRenderChannel] of ITexture;
-    FDepthBuf : LongWord;
-    FChannelCount : LongInt;
-    FChannelList : array [0..Ord(High(TRenderChannel)) - 1] of GLenum;
-    function GetID: LongWord;
-    function GetDrawBuffers: PLongWord;
-    function GetChannelCount: LongInt;
-    function GetTexture(Channel: TRenderChannel): ITexture;
-  public
-  //  procedure Attach(Channel: TRenderChannel; Texture: ITexture; Target: TTextureTarget = ttTex2D);
+    FID           : LongWord;
+    FWidth        : LongWord;
+    FHeight       : LongWord;
+    FTexture      : array [TRenderChannel] of ITexture;
+    FDepthBuf     : LongWord;
+    FColChanCount : LongInt;
+    function GetID: LongWord; stdcall;
+    function GetWidth: LongWord; stdcall;
+    function GetHeight: LongWord; stdcall;
+    function GetColChanCount: LongInt; stdcall;
+    function GetTexture(Channel: TRenderChannel): ITexture; stdcall;
   end;
 
 implementation
@@ -39,6 +39,9 @@ begin
 
   glGenFramebuffers(1, @FID);
   glBindFramebuffer(GL_FRAMEBUFFER, FID);
+
+  FWidth := Width;
+  FHeight := Height;
 
   for i := 0 to Count-1 do
   begin
@@ -85,14 +88,7 @@ begin
   if glCheckFramebufferStatus(GL_FRAMEBUFFER) <> GL_FRAMEBUFFER_COMPLETE then
     LogOut('Error creating frame buffer object', lmWarning);
 
-  FChannelCount := 0;
-  for Channel := rcColor0 to High(TRenderChannel) do
-    if FTexture[Channel] <> nil then
-    begin
-      FChannelList[FChannelCount] := Ord(GL_COLOR_ATTACHMENT0) + Ord(Channel) - 1;
-      Inc(FChannelCount);
-    end;
-
+  FColChanCount := Count;
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 end;
 
@@ -102,52 +98,25 @@ begin
     gl.DeleteRenderbuffers(1, @DepthBuf);
   gl.DeleteFramebuffers(1, @FrameBuf); }
 end;
-              {
-procedure TRenderTarget.Attach(Channel: TRenderChannel; Texture: TTexture; Target: TTextureTarget);
-var
-  TargetID  : TGLConst;
-  TextureID : LongWord;
-begin
-  if Target = ttTex2D then
-    TargetID := GL_TEXTURE_2D
-  else
-    TargetID := TGLConst(Ord(GL_TEXTURE_CUBE_MAP_POSITIVE_X) + Ord(Target) - 1);
-
-  if Texture <> nil then
-    TextureID := Texture.FID
-  else
-    TextureID := 0;
-
-  gl.BindFramebuffer(GL_FRAMEBUFFER, FrameBuf);
-  if Channel = rcDepth then
-    gl.FramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, TargetID, TextureID, 0)
-  else
-    gl.FramebufferTexture2D(GL_FRAMEBUFFER, TGLConst(Ord(GL_COLOR_ATTACHMENT0) + Ord(Channel) - 1), TargetID, TextureID, 0);
-
-  Self.Texture[Channel] := Texture;
-  ChannelCount := 0;
-  for Channel := rcColor0 to High(Self.Texture) do
-    if Self.Texture[Channel] <> nil then
-    begin
-      ChannelList[ChannelCount] := TGLConst(Ord(GL_COLOR_ATTACHMENT0) + Ord(Channel) - 1);
-      Inc(ChannelCount);
-    end;
-  gl.BindFramebuffer(GL_FRAMEBUFFER, 0);
-end;          }
 
 function TRenderTarget.GetID: LongWord;
 begin
   Result := FId;
 end;
 
-function TRenderTarget.GetDrawBuffers: PLongWord;
+function TRenderTarget.GetWidth: LongWord;
 begin
-  Result := @FChannelList[0];
+  Result := FWidth;
 end;
 
-function TRenderTarget.GetChannelCount: LongInt;
+function TRenderTarget.GetHeight: LongWord;
 begin
-  Result := FChannelCount;
+  Result := FHeight;
+end;
+
+function TRenderTarget.GetColChanCount: LongInt;
+begin
+  Result := FColChanCount;
 end;
 
 function TRenderTarget.GetTexture(Channel: TRenderChannel): ITexture;

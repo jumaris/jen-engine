@@ -217,23 +217,24 @@ begin
 
   Game.LoadContent;
   Input.Init;
-
-  Utils.AutoUpdate(False);
-  Utils.Update;
   FLastUpdate := Utils.Time;
   DeltaTime := 1;
   while not FQuit do
   begin
     Input.Update;
     Display.Update;
+
+    Utils.FreezeTime := True;
     Game.OnUpdate(DeltaTime);
+    Utils.FreezeTime := True;
+    Render.Start;
     Game.OnRender;
-    Render.Flush;
+    Utils.FreezeTime := False;
+    Render.Finish;
+
     Display.Swap;
 
-    Utils.Update;
     Utils.Sleep( Max(2 - (Utils.Time - FLastUpdate), 0));
-    Utils.Update;
     DeltaTime := Max(Utils.Time - FLastUpdate, 1);
 
     FLastUpdate := Utils.Time;

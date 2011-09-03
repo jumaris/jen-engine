@@ -8,7 +8,7 @@ uses
 
 type
   TJenSubSystemType = (ssUtils, ssLog, ssHelpers, ssInput, ssDisplay, ssResMan, ssRender, ssRender2d);
-  TEvent = (evActivate, evKeyUp, evKeyDown, evFlush);
+  TEvent = (evActivate, evKeyUp, evKeyDown, evDisplayRestore, evRenderFlush);
 
   TLogMsg = (lmHeaderMsg, lmInfo, lmNotify, lmCode, lmWarning, lmError);
 
@@ -181,7 +181,7 @@ type
     function Init(Width: LongWord = 800; Height: LongWord = 600; Refresh: Byte = 0; FullScreen: Boolean = False): Boolean; stdcall;
 
     procedure SetActive(Value: Boolean); stdcall;
-    procedure SetCaption(const Value: string); stdcall;
+    procedure SetCaption(const Value: String); stdcall;
     procedure SetFullScreen(Value: Boolean); stdcall;
 
     function GetFullScreen: Boolean; stdcall;
@@ -191,7 +191,6 @@ type
     function GetWndHandle: HWND; stdcall;
     function GetWidth: LongWord; stdcall;
     function GetHeight: LongWord; stdcall;
-    function GetFPS: LongWord; stdcall;
 
     procedure Swap; stdcall;
     procedure ShowCursor(Value: Boolean); stdcall;
@@ -208,7 +207,6 @@ type
     property Width: LongWord read GetWidth;
     property Height: LongWord read GetHeight;
     property Caption: String write SetCaption;
-    property FPS: LongWord read GetFPS;
   end;
 
   IResource = interface
@@ -339,13 +337,16 @@ type
   TRenderSupport = (rsWGLEXTswapcontrol);
 
   IRenderTarget = interface
-    function GetID: LongWord;
-    function GetDrawBuffers: PLongWord; //Do not use it
-    function GetChannelCount: LongInt;
-    function GetTexture(Channel: TRenderChannel): ITexture;
+    function GetID: LongWord; stdcall;
+    function GetWidth: LongWord; stdcall;
+    function GetHeight: LongWord; stdcall;
+    function GetColChanCount: LongInt; stdcall;
+    function GetTexture(Channel: TRenderChannel): ITexture; stdcall;
 
     property ID: LongWord read GetID;
-    property ChannelCount: LongInt read GetChannelCount;
+    property Width  : LongWord read GetWidth;
+    property Height : LongWord read GetHeight;
+    property ColChanCount: LongInt read GetColChanCount;
     property Texture[Channel: TRenderChannel]: ITexture read GetTexture;
   end;
 
@@ -356,6 +357,8 @@ type
     function CreateRenderTarget(Width, Height: LongWord; Format: TTextureFormat; Count: LongWord; Samples: LongWord; DepthBuffer: Boolean): JEN_Header.IRenderTarget; stdcall;
     procedure SetRenderTarget(Value: IRenderTarget); stdcall;
 
+    function GetViewport: TRecti; stdcall;
+    procedure SetViewport(const Value: TRecti); stdcall;
     function GetVSync: Boolean; stdcall;
     procedure SetVSync(Value: Boolean); stdcall;
 
@@ -383,11 +386,14 @@ type
     function  GetCameraDir: TVec3f; stdcall;
     procedure SetCameraDir(Value: TVec3f); stdcall;
 
+    function GetFPS: LongWord; stdcall;
+    function GetFrameTime: LongWord; stdcall;
     function GetLastDipCount: LongWord; stdcall;
     function GetDIPCount: LongWord; stdcall;
     procedure SetDIPCount(Value: LongWord); stdcall;
     procedure IncDIP; stdcall;
 
+    property Viewport: TRecti read GetViewport write SetViewPort;
     property VSync: Boolean read GetVSync write SetVSync;
     property ColorMask[Channel: TColorChannel]: Boolean read GetColorMask write SetColorMask;
     property BlendType: TBlendType read GetBlendType write SetBlendType;
@@ -398,6 +404,8 @@ type
     property Matrix[Idx: TMatrixType]: TMat4f read GetMatrix write SetMatrix;
     property CameraPos: TVec3f read GetCameraPos write SetCameraPos;
     property CameraDir: TVec3f read GetCameraDir write SetCameraDir;
+    property FPS: LongWord read GetFPS;
+    property FrameTime: LongWord read GetFrameTime;
     property DipCount: LongWord read GetDipCount write SetDipCount;
     property LastDipCount: LongWord read GetLastDipCount;
   end;

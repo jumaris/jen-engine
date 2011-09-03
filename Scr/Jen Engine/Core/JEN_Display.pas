@@ -25,9 +25,6 @@ type
     procedure Free; stdcall;
   private
     FValid      : Boolean;
-    FFPS        : LongInt;
-    FFPSTime    : LongInt;
-    FFPSCount   : LongInt;
     FCaption    : String;
     FHandle     : HWND;
     FDC         : HDC;
@@ -50,7 +47,6 @@ type
     function GetWndHandle: HWND; stdcall;
     function GetWidth: LongWord; stdcall;
     function GetHeight: LongWord; stdcall;
-    function GetFPS: LongWord; stdcall;
 
     class function WndProc(hWnd: HWND; Msg: LongWord; wParam: LongInt; lParam: LongInt): LongInt; stdcall; static;
    public
@@ -236,14 +232,6 @@ end;
 procedure TDisplay.Swap;
 begin
   SwapBuffers(FDC);
-
-  Inc(FFPSCount);
-  if Utils.Time - FFPSTime >= 1000 then
-  begin
-    FFPS      := FFPSCount;
-    FFPSCount := 0;
-    FFPSTime  := Utils.Time;
-  end;
 end;
 
 procedure TDisplay.SetFullScreen(Value: Boolean);
@@ -279,10 +267,10 @@ begin
   end;
 end;
 
-procedure TDisplay.SetCaption(const Value: String);
+procedure TDisplay.SetCaption(const Value: string);
 begin
-  FCaption := Value;
-  SetWindowText(FHandle, PWideChar(Value));
+  FCaption := Copy(Value, 1, Length(Value));
+  SetWindowText(FHandle, PWideChar(FCaption));
 end;
 
 procedure TDisplay.Restore;
@@ -290,9 +278,6 @@ var
   Style : LongWord;
   Rect  : TRecti;
 begin
-  FFPSTime  := Utils.Time;
-  FFPSCount := 0;
-
   Rect := Recti((Helpers.SystemInfo.Screen.Width - FWidth) div 2, (Helpers.SystemInfo.Screen.Height - FHeight) div 2, FWidth, FHeight);
 
   if FFullScreen then
@@ -311,7 +296,8 @@ begin
   ShowWindow(FHandle, SW_SHOWNORMAL);
 
   Update;
-  //Render.Viewport := Recti(0, 0, FWidth, FHeight);
+  Engine.CreateEvent(evDisplayRestore);
+  Render.Viewport := Recti(0, 0, FWidth, FHeight);
 end;
 
 procedure TDisplay.Update;
@@ -377,11 +363,6 @@ end;
 function TDisplay.GetHeight: LongWord;
 begin
   Result := FHeight;
-end;
-
-function TDisplay.GetFPS: LongWord;
-begin
-  Result := FFPS;
 end;
 
 end.
