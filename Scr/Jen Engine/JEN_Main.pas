@@ -234,7 +234,8 @@ begin
 
     Display.Swap;
 
-    Utils.Sleep( Max(2 - (Utils.Time - FLastUpdate), 0));
+    if (Utils.Time - FLastUpdate)< 2 then
+    Utils.Sleep(2);
     DeltaTime := Max(Utils.Time - FLastUpdate, 1);
 
     FLastUpdate := Utils.Time;

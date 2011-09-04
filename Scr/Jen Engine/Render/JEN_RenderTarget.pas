@@ -9,7 +9,7 @@ uses
 
 type
   TRenderTarget = class(TInterfacedObject, IRenderTarget)
-    constructor Create(Width, Height: LongWord; Format: TTextureFormat; Count: LongWord; Samples: LongWord; DepthBuffer: Boolean);
+    constructor Create(Width, Height: LongWord; CFormat: TTextureFormat; Count: LongInt; Samples: LongWord; DepthBuffer: Boolean; DFormat: TTextureFormat);
     destructor Destroy; override;
   private
     FID           : LongWord;
@@ -30,7 +30,7 @@ implementation
 uses
   JEN_Main;
 
-constructor TRenderTarget.Create(Width, Height: LongWord; Format: TTextureFormat; Count: LongWord; Samples: LongWord; DepthBuffer: Boolean);
+constructor TRenderTarget.Create(Width, Height: LongWord; CFormat: TTextureFormat; Count: LongInt; Samples: LongWord; DepthBuffer: Boolean; DFormat: TTextureFormat);
 var
   i : Integer;
   Channel : TRenderChannel;
@@ -59,22 +59,32 @@ begin
 			}
 
 				// Create a color texture
-    FTexture[TRenderChannel(i + Ord(rcColor0))] := ResMan.CreateTexture(Width, Height, Format);
+    FTexture[TRenderChannel(i + Ord(rcColor0))] := ResMan.CreateTexture(Width, Height, CFormat);
     FTexture[TRenderChannel(i + Ord(rcColor0))].Clamp := true;
 
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, FTexture[TRenderChannel(i + Ord(rcColor0))].ID, 0);
   end;
- {  glGenTextures( 1, &rb.colBufs[j] );
-  glBindTexture( GL_TEXTURE_2D, rb.colBufs[j] );
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, bilinear ? GL_LINEAR : GL_NEAREST );
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, bilinear ? GL_LINEAR : GL_NEAREST );
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );   }
 
-  //  glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT + j, GL_TEXTURE_2D, rb.colBufs[j], 0 );
+  if (DepthBuffer) then
+  begin
+		{if(samples > 0) then
 
- // end;
+			// Create a multisampled renderbuffer
+			glGenRenderbuffersEXT( 1, &rb.depthBuf );
+			glBindRenderbufferEXT( GL_RENDERBUFFER_EXT, rb.depthBuf );
+			glRenderbufferStorageMultisampleEXT( GL_RENDERBUFFER_EXT, rb.samples,
+												 GL_DEPTH_COMPONENT, rb.width, rb.height );
 
+			// Attach the renderbuffer
+			glFramebufferRenderbufferEXT( GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT,
+										  GL_RENDERBUFFER_EXT, rb.depthBuf );
+		}
+    begin
+      FTexture[rcDepth] := ResMan.CreateTexture(Width, Height, DFormat);
+      FTexture[rcDepth].Clamp := true;
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, FTexture[rcDepth].ID, 0 );
+    end;
+  end;
 
             {
   if DepthBuffer then

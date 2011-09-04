@@ -49,8 +49,9 @@ type
     FCameraDir  : TVec3f;
     function GetValid: Boolean;
   public
-    function CreateRenderTarget(Width, Height: LongWord; Format: TTextureFormat; Count: LongWord; Samples: LongWord; DepthBuffer: Boolean): JEN_Header.IRenderTarget; stdcall;
-    procedure SetRenderTarget(Value: IRenderTarget); stdcall;
+    function CreateRenderTarget(Width, Height: LongWord; CFormat: TTextureFormat; Count: LongWord; Samples: LongWord; DepthBuffer: Boolean; DFormat: TTextureFormat): JEN_Header.IRenderTarget; stdcall;
+    function GetTarget: IRenderTarget; stdcall;
+    procedure SetTarget(Value: IRenderTarget); stdcall;
 
     procedure Clear(ColorBuff, DepthBuff, StensilBuff: Boolean); stdcall;
     function GetViewport: TRecti; stdcall;
@@ -245,7 +246,7 @@ begin
   SetCullFace(cfBack);
 
   glDepthFunc(GL_LEQUAL);
-  glClearDepth(1.0);
+  glClearDepth(1);
   glClearColor(0.0, 0.0, 0.0, 0.0);
    // Display.Restore;
   // glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
@@ -261,12 +262,17 @@ begin
   FValid := true;
 end;
 
-function TRender.CreateRenderTarget(Width, Height: LongWord; Format: TTextureFormat; Count: LongWord; Samples: LongWord; DepthBuffer: Boolean): JEN_Header.IRenderTarget;
+function TRender.CreateRenderTarget(Width, Height: LongWord; CFormat: TTextureFormat; Count: LongWord; Samples: LongWord; DepthBuffer: Boolean; DFormat: TTextureFormat): JEN_Header.IRenderTarget;
 begin
-  Result := TRenderTarget.Create(Width, Height, Format, Count, Samples, DepthBuffer);
+  Result := TRenderTarget.Create(Width, Height, CFormat, Count, Samples, DepthBuffer, DFormat);
 end;
 
-procedure TRender.SetRenderTarget(Value: IRenderTarget);
+function TRender.GetTarget: IRenderTarget;
+begin
+  Result := FTarget;
+end;
+
+procedure TRender.SetTarget(Value: IRenderTarget);
 const
   ChannelList  : array [0..Ord(High(TRenderChannel)) - 1] of GLenum = (GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT0 + 1, GL_COLOR_ATTACHMENT0 + 2, GL_COLOR_ATTACHMENT0 + 3, GL_COLOR_ATTACHMENT0 + 4, GL_COLOR_ATTACHMENT0 + 5, GL_COLOR_ATTACHMENT0 + 6, GL_COLOR_ATTACHMENT0 + 7);
 begin

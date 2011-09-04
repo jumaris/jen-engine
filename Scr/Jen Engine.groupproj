@@ -9,6 +9,9 @@
 			<Projects Include="Samples\Delphi\02 Attach Engine from DLL\_02_Attach_Engine_from_DDL.dproj">
 				<Dependencies/>
 			</Projects>
+			<Projects Include="JSnake\JSnake.dproj">
+				<Dependencies/>
+			</Projects>
 		</ItemGroup>
 		<ProjectExtensions>
 			<Borland.Personality>Default.Personality.12</Borland.Personality>
@@ -35,14 +38,23 @@
 		<Target Name="_02_Attach_Engine_from_DDL:Make">
 			<MSBuild Targets="Make" Projects="Samples\Delphi\02 Attach Engine from DLL\_02_Attach_Engine_from_DDL.dproj"/>
 		</Target>
+		<Target Name="JSnake">
+			<MSBuild Projects="JSnake\JSnake.dproj"/>
+		</Target>
+		<Target Name="JSnake:Clean">
+			<MSBuild Targets="Clean" Projects="JSnake\JSnake.dproj"/>
+		</Target>
+		<Target Name="JSnake:Make">
+			<MSBuild Targets="Make" Projects="JSnake\JSnake.dproj"/>
+		</Target>
 		<Target Name="Build">
-			<CallTarget Targets="JEN;_02_Attach_Engine_from_DDL"/>
+			<CallTarget Targets="JEN;_02_Attach_Engine_from_DDL;JSnake"/>
 		</Target>
 		<Target Name="Clean">
-			<CallTarget Targets="JEN:Clean;_02_Attach_Engine_from_DDL:Clean"/>
+			<CallTarget Targets="JEN:Clean;_02_Attach_Engine_from_DDL:Clean;JSnake:Clean"/>
 		</Target>
 		<Target Name="Make">
-			<CallTarget Targets="JEN:Make;_02_Attach_Engine_from_DDL:Make"/>
+			<CallTarget Targets="JEN:Make;_02_Attach_Engine_from_DDL:Make;JSnake:Make"/>
 		</Target>
 		<Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
 	</Project>

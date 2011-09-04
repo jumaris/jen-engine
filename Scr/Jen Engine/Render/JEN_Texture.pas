@@ -41,6 +41,7 @@ type
     procedure SetFilter(Value: TTextureFilter); stdcall;
     function GetClamp: Boolean; stdcall;
     procedure SetClamp(Value: Boolean); stdcall;
+    procedure SetCompare(Value: TTextureCompareMode); stdcall;
   public
     procedure Reload; stdcall;
     procedure Flip(Vertical, Horizontal: Boolean); stdcall;
@@ -67,6 +68,10 @@ const
     (Compressed: True;  Swap : False; DivSize: 4; BlockBytes:  8; InternalFormat: GL_COMPRESSED_RGBA_S3TC_DXT1; ExternalFormat: GL_FALSE; DataType: GL_FALSE),
     (Compressed: True;  Swap : False; DivSize: 4; BlockBytes: 16; InternalFormat: GL_COMPRESSED_RGBA_S3TC_DXT3; ExternalFormat: GL_FALSE; DataType: GL_FALSE),
     (Compressed: True;  Swap : False; DivSize: 4; BlockBytes: 16; InternalFormat: GL_COMPRESSED_RGBA_S3TC_DXT5; ExternalFormat: GL_FALSE; DataType: GL_FALSE),
+    (Compressed: False; Swap : False; DivSize: 1; BlockBytes:  1; InternalFormat: GL_DEPTH_COMPONENT; ExternalFormat: GL_DEPTH_COMPONENT; DataType: GL_UNSIGNED_BYTE),
+    (Compressed: False; Swap : False; DivSize: 1; BlockBytes:  1; InternalFormat: GL_DEPTH_COMPONENT; ExternalFormat: GL_DEPTH_COMPONENT16; DataType: GL_UNSIGNED_BYTE),
+    (Compressed: False; Swap : False; DivSize: 1; BlockBytes:  1; InternalFormat: GL_DEPTH_COMPONENT; ExternalFormat: GL_DEPTH_COMPONENT24; DataType: GL_UNSIGNED_BYTE),
+    (Compressed: False; Swap : False; DivSize: 1; BlockBytes:  1; InternalFormat: GL_DEPTH_COMPONENT; ExternalFormat: GL_DEPTH_COMPONENT32; DataType: GL_UNSIGNED_BYTE),
     (Compressed: False; Swap : False; DivSize: 1; BlockBytes:  1; InternalFormat: GL_ALPHA8; ExternalFormat: GL_ALPHA; DataType: GL_UNSIGNED_BYTE),
     (Compressed: False; Swap : False; DivSize: 1; BlockBytes:  1; InternalFormat: GL_LUMINANCE8; ExternalFormat: GL_LUMINANCE; DataType: GL_UNSIGNED_BYTE),
     (Compressed: False; Swap : False; DivSize: 1; BlockBytes:  2; InternalFormat: GL_LUMINANCE8_ALPHA8; ExternalFormat: GL_LUMINANCE_ALPHA; DataType: GL_UNSIGNED_BYTE),
@@ -107,6 +112,12 @@ begin
       glCompressedTexImage2D(GL_TEXTURE_2D, 0, InternalFormat,  Width, Height, 0, 0, 0)
     else
       glTexImage2D(GL_TEXTURE_2D, 0, InternalFormat, Width, Height, 0, ExternalFormat, DataType, 0);
+
+  if (Format = tfoDepth8) or (Format = tfoDepth16) or (Format = tfoDepth24) or (Format = tfoDepth32) then
+  begin
+    //SetCompare(tcmLEqual);
+    glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
+  end;
 
   FMipMap := False;
   FFilter := tfiBilinear;
@@ -190,7 +201,7 @@ end;
 
 procedure TTexture.SetClamp(Value: Boolean);
 const
-  ClampMode : array [Boolean] of GLEnum = (GL_REPEAT, GL_CLAMP_TO_EDGE);
+  ClampMode : array[Boolean] of GLEnum = (GL_REPEAT, GL_CLAMP_TO_EDGE);
 begin
   if FClamp <> Value then
   begin
@@ -202,12 +213,24 @@ begin
   end;
 end;
 
+procedure TTexture.SetCompare(Value: TTextureCompareMode);
+const
+  CompareFunc : array[1..Ord(High(TRenderChannel))] of GLenum = (GL_EQUAL, GL_GEQUAL, GL_LESS, GL_GREATER, GL_EQUAL, GL_NOTEQUAL, GL_ALWAYS, GL_NEVER);
+begin
+  if Value <> tcmNone then
+  begin
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, CompareFunc[Ord(Value)]);
+  end else
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
+end;
+
 procedure TTexture.Reload;
 begin
 
 end;
 
-procedure TTexture.Flip(Vertical, Horizontal: Boolean); stdcall;
+procedure TTexture.Flip(Vertical, Horizontal: Boolean);
 var
   tc : Single;
 begin
