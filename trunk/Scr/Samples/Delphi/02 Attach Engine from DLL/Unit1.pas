@@ -39,7 +39,7 @@ procedure TGame.LoadContent;
 
 begin
    ResMan.Load('Media\123.dds', r);
-   RT := Render.CreateRenderTarget(1024, 1024, tfoBGRA8, 1, 0, false);
+   RT := Render.CreateRenderTarget(1024, 1024, tfoBGRA8, 1, 0, true, tfoDepth8);
    //Rt.Texture[rcColor0].Filter := tfiBilinear;
  //  ResMan.Load('Media\Text.xml', sr);
  //  s := sr.Compile;
@@ -55,7 +55,7 @@ begin
 end;
 
 procedure TGame.OnRender;
-const m =250;
+const m =25;
 var
   i : integer;
  v : TRecti;
@@ -67,7 +67,7 @@ begin
   if c then
   begin
    v := Render.Viewport;
-  Render.SetRenderTarget(Rt);
+  Render.Target:= rt;
 
   Render.Clear(True,False,False);
  // Render.Viewport := Recti(0,0,256,256);
@@ -88,10 +88,10 @@ begin
        // render2d.DrawSprite(r,256,400,400,400, vec4f(1,0,0,1),vec4f(0,1,0,1),vec4f(0,0,1,1),vec4f(1,1,1,1),0* Utils.Time/10000*360,0.5,0.5);
   if c then
   begin
-  Render.SetRenderTarget(nil);
+  Render.Target := nil;
 
 
-  render2d.DrawSprite(Rt.Texture[rcColor0],0,768-1024,1024,1024, clWhite, clWhite, clWhite, clWhite);
+  render2d.DrawSprite(Rt.Texture[rcDepth],0,768-1024,1024,1024, clWhite, clWhite, clWhite, clWhite);
   end;
 
  // render2d.DrawSprite(Rt.Texture[rcColor0],256,400,400,400, vec4f(1,0,0,1),vec4f(0,1,0,1),vec4f(0,0,1,1),vec4f(1,1,1,1), Utils.Time/10000*360,0.5,0.5);

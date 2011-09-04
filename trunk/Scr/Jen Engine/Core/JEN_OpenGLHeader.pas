@@ -243,6 +243,11 @@ const
   GL_MAX_TEXTURE_MAX_ANISOTROPY       = $84FF;
   GENERATE_MIPMAP_SGIS                = $8191;
 
+  GL_DEPTH_TEXTURE_MODE               = $884B;
+  GL_TEXTURE_COMPARE_MODE             = $884C;
+  GL_TEXTURE_COMPARE_FUNC             = $884D;
+  GL_COMPARE_R_TO_TEXTURE             = $884E;
+
  // GL_EXT_texture
   GL_ALPHA4                           = $803B;
   GL_ALPHA8                           = $803C;
@@ -279,7 +284,9 @@ const
   GL_RGBA16                           = $805B;
   GL_BGR                              = $80E0;
   GL_BGRA                             = $80E1;
-
+  GL_DEPTH_COMPONENT16                = $81A5;
+  GL_DEPTH_COMPONENT24                = $81A6;
+  GL_DEPTH_COMPONENT32                = $81A7;
   GL_COMPRESSED_RED                   = $8225;
   GL_COMPRESSED_RG                    = $8226;
   GL_RGBA32F                          = $8814;
@@ -361,7 +368,6 @@ const
 // FBO
   GL_FRAMEBUFFER                      = $8D40;
   GL_RENDERBUFFER                     = $8D41;
-  GL_DEPTH_COMPONENT24                = $81A6;
   GL_COLOR_ATTACHMENT0                = $8CE0;
   GL_DEPTH_ATTACHMENT                 = $8D00;
   GL_FRAMEBUFFER_BINDING              = $8CA6;

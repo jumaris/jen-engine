@@ -43,8 +43,9 @@ type
                         atVec1s, atVec2s, atVec3s, atVec4s,
                         atVec1f, atVec2f, atVec3f, atVec4f);
 
-  TTextureFormat = (tfoNone, tfoDXT1c, tfoDXT1a, tfoDXT3, tfoDXT5, tfoA8, tfoL8, tfoAL8, tfoBGRA8, tfoBGR8, tfoBGR5A1, tfoBGR565, tfoBGRA4, tfoR16F, tfoR32F, tfoGR16F, tfoGR32F, tfoBGRA16F, tfoBGRA32F);
+  TTextureFormat = (tfoNone, tfoDXT1c, tfoDXT1a, tfoDXT3, tfoDXT5, tfoDepth8, tfoDepth16, tfoDepth24, tfoDepth32, tfoA8, tfoL8, tfoAL8, tfoBGRA8, tfoBGR8, tfoBGR5A1, tfoBGR565, tfoBGRA4, tfoR16F, tfoR32F, tfoGR16F, tfoGR32F, tfoBGRA16F, tfoBGRA32F);
   TTextureFilter = (tfiNone, tfiBilinear, tfiTrilinear, tfiAniso);
+  TTextureCompareMode = (tcmNone, tcmLEqual, tcmGEqual, tcmLess, tcmGreater, tcmEqual, tcmNotEqual, tcmAlways, tcmNewer);
 
   TSetModeResult = (SM_Successful, SM_SetDefault, SM_Error);
 
@@ -245,8 +246,9 @@ type
 
   IShaderProgram = interface
   ['{1F79BB95-C0B0-45AF-AA8D-AF9999CC85C8}']
-    function Uniform(const UName: String; CreateDebug: Boolean = True): IShaderUniform; overload; stdcall;
-    function Attrib(const AName: string; CreateDebug: Boolean = True): IShaderAttrib; stdcall;
+    function Valid: Boolean;
+    function Uniform(const UName: String; Necessary: Boolean = True): IShaderUniform; overload; stdcall;
+    function Attrib(const AName: string; Necessary: Boolean = True): IShaderAttrib; stdcall;
     function GetUniformsVersion: LongWord; stdcall;
 
     procedure Bind; stdcall;
@@ -277,6 +279,7 @@ type
     procedure SetFilter(Value: TTextureFilter); stdcall;
     function GetClamp: Boolean; stdcall;
     procedure SetClamp(Value: Boolean); stdcall;
+    procedure SetCompare(Value: TTextureCompareMode); stdcall;
 
     procedure DataSet(Width, Height, Size: LongInt; Data: Pointer; Level: LongInt); stdcall;
     procedure Flip(Vertical, Horizontal: Boolean); stdcall;
@@ -354,8 +357,9 @@ type
     procedure Init(DepthBits: Byte = 24; StencilBits: Byte = 8; FSAA: Byte = 0); stdcall;
     function Support(RenderSupport: TRenderSupport): Boolean;
 
-    function CreateRenderTarget(Width, Height: LongWord; Format: TTextureFormat; Count: LongWord; Samples: LongWord; DepthBuffer: Boolean): JEN_Header.IRenderTarget; stdcall;
-    procedure SetRenderTarget(Value: IRenderTarget); stdcall;
+    function CreateRenderTarget(Width, Height: LongWord; CFormat: TTextureFormat; Count: LongWord; Samples: LongWord = 0; DepthBuffer: Boolean = false; DFormat: TTextureFormat = tfoDepth24): JEN_Header.IRenderTarget; stdcall;
+    function GetTarget: IRenderTarget; stdcall;
+    procedure SetTarget(Value: IRenderTarget); stdcall;
 
     function GetViewport: TRecti; stdcall;
     procedure SetViewport(const Value: TRecti); stdcall;
@@ -393,6 +397,7 @@ type
     procedure SetDIPCount(Value: LongWord); stdcall;
     procedure IncDIP; stdcall;
 
+    property Target: IRenderTarget read GetTarget write SetTarget;
     property Viewport: TRecti read GetViewport write SetViewPort;
     property VSync: Boolean read GetVSync write SetVSync;
     property ColorMask[Channel: TColorChannel]: Boolean read GetColorMask write SetColorMask;

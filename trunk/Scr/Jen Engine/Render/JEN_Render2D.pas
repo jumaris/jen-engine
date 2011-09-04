@@ -170,6 +170,7 @@ begin
 
   with FBatchParams, RenderTechnique[FBatchParams.Tehnique] do
   begin
+    IndxAttrib.Value(4, 0, atVec1f);
     IndxAttrib.Enable;
     ShaderProgram.Bind;
 
@@ -268,7 +269,7 @@ var
           Tehnique := Teh;
           Exit;
         end else
-          if (OlderTime>LastUsed) and (Teh >= ttAdvanced) then
+          if (OlderTime<LastUsed) and (Teh >= ttAdvanced) then
           begin
             OlderTime := LastUsed;
             OlderTeh  := Teh;
@@ -285,7 +286,7 @@ var
   end;
 
 begin
-  if not Assigned(Shader) then Exit;
+  if not (Assigned(Shader) and Shader.Valid) then Exit;
 
   with FBatchParams do
   begin
@@ -322,7 +323,6 @@ begin
     end;
 
     if not (InScreen(v[4]) or InScreen(v[3]) or InScreen(v[2]) or InScreen(v[1])) then Exit;
-
     BatchQuad(v[1], v[2], v[3], v[4], Data1, Data2, Data3, Data4);
   end;
 
