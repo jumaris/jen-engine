@@ -30,9 +30,9 @@ type
     function GetMouse: TMouse; stdcall;
     procedure SetCapture(Value: Boolean); stdcall;
 
-    class procedure onKeyUp(Param: LongInt); stdcall; static;
-    class procedure onKeyDown(Param: LongInt); stdcall; static;
-    class procedure onActivate(Param: LongInt); stdcall; static;
+    class procedure onKeyUp(Param: LongInt; Data: Pointer); stdcall; static;
+    class procedure onKeyDown(Param: LongInt; Data: Pointer); stdcall; static;
+    class procedure onActivate(Param: LongInt; Data: Pointer); stdcall; static;
   public
     procedure Update; stdcall;
     procedure Init;
@@ -68,17 +68,17 @@ begin
   FMouse.Delta.y := 0;
 end;
 
-class procedure TInput.OnKeyUp(Param: LongInt); stdcall;
+class procedure TInput.OnKeyUp(Param: LongInt; Data: Pointer); stdcall;
 begin
   Input.SetState(TInputKey(Param), False);
 end;
 
-class procedure TInput.OnKeyDown(Param: LongInt); stdcall;
+class procedure TInput.OnKeyDown(Param: LongInt; Data: Pointer); stdcall;
 begin
   Input.SetState(TInputKey(Param), True);
 end;
 
-class procedure TInput.onActivate(Param: LongInt); stdcall;
+class procedure TInput.onActivate(Param: LongInt; Data: Pointer); stdcall;
 begin
   if Param <> 0 then
     Input.Reset;
@@ -156,7 +156,5 @@ begin
       FMouse.Delta.Y := 0;
     end;
 end;
-
-
 
 end.

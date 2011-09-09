@@ -32,7 +32,6 @@ type
   end;
 
   TRender2D = class(TInterfacedObject, IRender2D)
-    constructor Create;
     procedure Free; stdcall;
   private
     FNormalShader : IShaderResource;
@@ -60,7 +59,7 @@ type
     procedure Flush;
     function GetTextShader: IShaderProgram;
 
-    class procedure FlushProc(Param: LongInt); stdcall; static;
+    class procedure FlushProc(Param: LongInt; Data: Pointer); stdcall; static;
 
     procedure BatchQuad(const v1, v2, v3, v4, Data1, Data2, Data3, Data4: TVec4f); stdcall;
     procedure DrawSpriteAdv(Shader: IShaderProgram; Tex1, Tex2, Tex3: ITexture; const v1, v2, v3, v4, Data1, Data2, Data3, Data4: TVec4f; const Center: TVec2f; Angle: Single); stdcall;
@@ -85,30 +84,25 @@ begin
       LastUsed := Utils.Time;
       ShaderProgram := Shader;
       ShaderProgram.Bind;
-      VBUniform := ShaderProgram.Uniform('PosTexCoord');
-      DBUniform := ShaderProgram.Uniform('QuadData', False);
-      TCParUniform1 := ShaderProgram.Uniform('TexCoordParams1', False);
-		  TCParUniform2 := ShaderProgram.Uniform('TexCoordParams2', False);
-		  TCParUniform3 := ShaderProgram.Uniform('TexCoordParams3', False);
+      VBUniform := ShaderProgram.Uniform('PosTexCoord', utVec4, false);
+      DBUniform := ShaderProgram.Uniform('QuadData', utVec4, False);
+      TCParUniform1 := ShaderProgram.Uniform('TexCoordParams1', utVec4, False);
+		  TCParUniform2 := ShaderProgram.Uniform('TexCoordParams2', utVec4, False);
+		  TCParUniform3 := ShaderProgram.Uniform('TexCoordParams3', utVec4, False);
 
       i := 0;
-      Uniform := ShaderProgram.Uniform('Map0', False);
+      Uniform := ShaderProgram.Uniform('Map0', utInt, False);
       if Assigned(Uniform) then
         Uniform.Value(i);
 
       i := 1;
-      Uniform := ShaderProgram.Uniform('Map1', False);
+      Uniform := ShaderProgram.Uniform('Map1', utInt, False);
       if Assigned(Uniform) then
         Uniform.Value(i);
 
-      IndxAttrib := ShaderProgram.Attrib('IndxAttrib');
-      IndxAttrib.Value(4, 0, atVec1f);
+      IndxAttrib := ShaderProgram.Attrib('IndxAttrib', atVec1f);
+      IndxAttrib.Value(4, 0);
     end;
-end;
-
-constructor TRender2D.Create;
-begin
-  inherited;
 end;
 
 procedure TRender2D.Init;
@@ -129,7 +123,32 @@ begin
 end;
 
 procedure TRender2D.Free;
+var
+Teh :TTehniqueType;
 begin
+  FVrtBuff := nil;
+  FNormalShader := nil;
+  FTextShader := nil;
+  for Teh := ttNormal to ttAdvancedLast do
+  with RenderTechnique[ TTehniqueType(Teh)] do
+  begin
+    ShaderProgram := nil;
+    VBUniform :=  nil;
+      DBUniform :=  nil;
+      TCParUniform1 :=  nil;
+		  TCParUniform2 := nil;
+		  TCParUniform3 :=  nil;
+
+      IndxAttrib :=  nil;
+  end;
+
+
+  FBatchParams.BatchShader     := nil;
+
+   FBatchParams.   BatchTexture1   := nil;
+   FBatchParams.   BatchTexture2   := nil;
+   FBatchParams.   BatchTexture3   := nil;
+
 end;
 
 function TRender2D.GetTextShader: IShaderProgram;
@@ -170,7 +189,7 @@ begin
 
   with FBatchParams, RenderTechnique[FBatchParams.Tehnique] do
   begin
-    IndxAttrib.Value(4, 0, atVec1f);
+    IndxAttrib.Value(4, 0);
     IndxAttrib.Enable;
     ShaderProgram.Bind;
 

@@ -11,23 +11,20 @@ uses
 const
   CONSOLE_WINDOW_CLASS_NAME = 'JENConsoleWnd';
 
-type TConsole = class(TInterfacedObject, ILogOutput)
+type TConsole = class(TInterfacedObject)
   constructor Create;
   destructor Destroy; override;
   private
-    LastUpdate : LongInt;
+  class var
     Thread     : THandle;
-    class var FHandle : HWND;
-    class var HMemo : HWND;
-    class var QuitEvent : THandle;
-    class var LoadEvent : THandle;
-    class var Quit : Boolean;
-
+    FHandle    : HWND;
+    HMemo      : HWND;
+    QuitEvent  : THandle;
+    LoadEvent  : THandle;
+    Quit       : Boolean;
     class procedure CreateWnd(lpParameter : Pointer); static; stdcall;
     class function WndProc(hWnd: HWND; Msg: LongWord; wParam: LongInt; lParam: LongInt): LongInt; stdcall; static;
-  public
-    procedure Init; stdcall;
-    procedure AddMsg(const Text: String; MType: TLogMsg); stdcall;
+    class procedure AddMsg(MType: TLogMsg; Text: PWideChar); static; stdcall;
   end;
 
 implementation
@@ -38,12 +35,49 @@ uses
 constructor TConsole.Create;
 var
   lpThreadId : DWORD;
+  S     : string;
+  Str   : array[1..4] of string;
+  Major : LongInt;
+  Minor : LongInt;
+  Build : LongInt;
+  i     : LongInt;
 begin
   QuitEvent := CreateEvent(nil, True, False, '');
   LoadEvent := CreateEvent(nil, True, False, '');
   Thread := CreateThread(nil, 0, @TConsole.CreateWnd, nil, 0, lpThreadId);
   WaitForSingleObject(LoadEvent, INFINITE);
   CloseHandle(LoadEvent);
+
+  Helpers.SystemInfo.WindowsVersion(Major, Minor, Build);
+  for I := 0 to 15 do
+    s := s + '*****';
+  AddMsg(lmHeaderMsg, PWideChar(s));
+  AddMsg(lmHeaderMsg, 'JenEngine');
+  Str[1] := 'Windows version: '+Utils.IntToStr(Major)+'.'+Utils.IntToStr(Minor)+' (Buid '+Utils.IntToStr(Build)+')'+Utils.IntToStr(Helpers.SystemInfo.CPUCount);
+  Str[2] := 'CPU            : '+Helpers.SystemInfo.CPUName+'(~'+Utils.IntToStr(Helpers.SystemInfo.CPUSpeed)+')x';
+  Str[3] := 'RAM Total      : '+Utils.IntToStr(Helpers.SystemInfo.RAMTotal)+'Mb';
+  Str[4] := 'RAM Available  : '+Utils.IntToStr(Helpers.SystemInfo.RAMFree)+'Mb';
+  AddMsg(lmHeaderMsg, PWideChar(Str[1]));
+  AddMsg(lmHeaderMsg, PWideChar(Str[2]));
+  AddMsg(lmHeaderMsg, PWideChar(Str[3]));
+  AddMsg(lmHeaderMsg, PWideChar(Str[4]));
+
+  with Helpers.SystemInfo do
+  for i := 0 to GPUList.Count - 1 do
+    with PGPUInfo(GPUList[i])^ do
+    begin
+      Str[1] := 'GPU' + Utils.IntToStr(i) +'           : ' + Description;
+      Str[2] := 'Chip           : ' + ChipType;
+      Str[3] := 'MemorySize     : ' + Utils.IntToStr(MemorySize)+'Mb';
+      Str[4] := 'DriverVersion  : ' + DriverVersion + '(' + DriverDate + ')';
+      AddMsg(lmHeaderMsg, PWideChar(Str[1]));
+      AddMsg(lmHeaderMsg, PWideChar(Str[2]));
+      AddMsg(lmHeaderMsg, PWideChar(Str[3]));
+      AddMsg(lmHeaderMsg, PWideChar(Str[4]));
+    end;
+
+  AddMsg(lmHeaderMsg, PWideChar(s));
+  Engine.AddEventProc(evLogMsg, @AddMsg);
 end;
 
 destructor TConsole.Destroy;
@@ -150,39 +184,7 @@ begin
   end;
 end;
 
-procedure TConsole.Init;
-var
-  S     : AnsiString;
-  Major : LongInt;
-  Minor : LongInt;
-  Build : LongInt;
-  i     : LongInt;
-begin
-  Helpers.SystemInfo.WindowsVersion(Major, Minor, Build);
-  SetLength(S,80);
-  FillChar(S[1],80,ord('*'));
-  AddMsg(s,lmHeaderMsg);
-  AddMsg('JenEngine',lmHeaderMsg);
-  AddMsg('Windows version: '+Utils.IntToStr(Major)+'.'+Utils.IntToStr(Minor)+' (Buid '+Utils.IntToStr(Build)+')'+Utils.IntToStr(Helpers.SystemInfo.CPUCount),lmHeaderMsg);
-  AddMsg('CPU            : '+Helpers.SystemInfo.CPUName+'(~'+Utils.IntToStr(Helpers.SystemInfo.CPUSpeed)+')x',lmHeaderMsg);
-  AddMsg('RAM Total      : '+Utils.IntToStr(Helpers.SystemInfo.RAMTotal)+'Mb',lmHeaderMsg);
-  AddMsg('RAM Available  : '+Utils.IntToStr(Helpers.SystemInfo.RAMFree)+'Mb',lmHeaderMsg);
-
-  with Helpers.SystemInfo do
-  for i := 0 to GPUList.Count - 1 do
-    with PGPUInfo(GPUList[i])^ do
-    begin
-      AddMsg('GPU' + Utils.IntToStr(i) +'           : ' + Description, lmHeaderMsg);
-      AddMsg('Chip           : ' + ChipType, lmHeaderMsg);
-      AddMsg('MemorySize     : ' + Utils.IntToStr(MemorySize)+'Mb', lmHeaderMsg);
-      AddMsg('DriverVersion  : ' + DriverVersion + '(' + DriverDate + ')', lmHeaderMsg);
-    end;
-
-  AddMsg(s,lmHeaderMsg);
-  LastUpdate := Utils.Time;
-end;
-
-procedure TConsole.AddMsg(const Text: String; MType: TLogMsg);
+class procedure TConsole.AddMsg(MType: TLogMsg; Text: PWideChar);
 var
   str ,line       : String;
   tstr            : String;
@@ -216,21 +218,21 @@ begin
   TimeStr := TimeStr + Copy(tstr, Length(tstr)-1, 2) + ':';
 
   tstr := '0' + Utils.IntToStr(s);
-  TimeStr := TimeStr + Copy(tstr, Length(tstr)-1, 2) + ' ';
-
+  TimeStr := TimeStr + Copy(tstr, Length(tstr)-1, 2);
+                     {
   if (Utils.Time - LastUpdate > 9999) then
     tstr := '9999'
   else
     tstr := '0000' + Utils.IntToStr(Utils.Time - LastUpdate);
 
-  TimeStr := TimeStr + Copy(tstr, Length(tstr)-3, 4);
+  TimeStr := TimeStr + Copy(tstr, Length(tstr)-3, 4);}
 
   case MType of
     lmHeaderMsg,lmInfo:
       str := Text+#13#10;
 
     lmNotify :
-      str := '[' + TimeStr + 'ms] ' + Text+#13#10;
+      str := '[' + TimeStr + '] ' + Text+#13#10;
 
     lmCode:
       begin
@@ -270,7 +272,6 @@ begin
     lmError :
       str := '[' + TimeStr + 'ms] ERROR: ' + Text + #13#10;
   end;
-  LastUpdate := Utils.Time;
 
   SendMessage(HMemo, EM_SETSEL, WndTextLength, WndTextLength);
   SendMessage(HMemo, EM_REPLACESEL, 0, LongInt(PChar(str)));

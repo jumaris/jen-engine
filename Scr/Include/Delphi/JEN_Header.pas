@@ -7,8 +7,8 @@ uses
   JEN_Math;
 
 type
-  TJenSubSystemType = (ssUtils, ssLog, ssHelpers, ssInput, ssDisplay, ssResMan, ssRender, ssRender2d);
-  TEvent = (evActivate, evKeyUp, evKeyDown, evDisplayRestore, evRenderFlush);
+  TJenSubSystemType = (ssUtils, ssHelpers, ssInput, ssDisplay, ssResMan, ssRender, ssRender2d);
+  TEvent = (evLogMsg, evActivate, evKeyUp, evKeyDown, evDisplayRestore, evRenderFlush);
 
   TLogMsg = (lmHeaderMsg, lmInfo, lmNotify, lmCode, lmWarning, lmError);
 
@@ -47,9 +47,7 @@ type
   TTextureFilter = (tfiNone, tfiBilinear, tfiTrilinear, tfiAniso);
   TTextureCompareMode = (tcmNone, tcmLEqual, tcmGEqual, tcmLess, tcmGreater, tcmEqual, tcmNotEqual, tcmAlways, tcmNewer);
 
-  TSetModeResult = (SM_Successful, SM_SetDefault, SM_Error);
-
-  TEventProc = procedure(Param: LongInt); stdcall;
+  TEventProc = procedure(Param: LongInt; Data: Pointer); stdcall;
 
   TCompareFunc = function (Item1, Item2: Pointer): LongInt;
   IList = interface
@@ -83,6 +81,23 @@ type
     procedure Finish; stdcall;
     procedure AddEventProc(Event: TEvent; Proc: TEventProc); stdcall;
     procedure DelEventProc(Event: TEvent; Proc: TEventProc); stdcall;
+  end;
+
+  IStream = interface
+    function GetName: string; stdcall;
+    function GetSize: LongInt; stdcall;
+    function GetPos: LongInt; stdcall;
+    procedure SetPos(Value: LongInt); stdcall;
+    function Read(out Buf; BufSize: LongInt): LongWord; stdcall;
+    function Write(const Buf; BufSize: LongInt): LongWord; stdcall;
+    function ReadAnsi: AnsiString; stdcall;
+    procedure WriteAnsi(const Value: AnsiString); stdcall;
+    function ReadUnicode: WideString; stdcall;
+    procedure WriteUnicode(const Value: WideString); stdcall;
+
+    property Size: LongInt read GetSize;
+    property Pos: LongInt read GetPos write SetPos;
+    property Name: String read GetName;
   end;
 
   TXMLParam = record
@@ -138,7 +153,7 @@ type
     function GetRefresh: Byte; stdcall;
     function GetDesktopRect : TRecti; stdcall;
 
-    function SetMode(W, H, R: LongInt): TSetModeResult; stdcall;
+    function SetMode(W, H, R: LongInt): Boolean; stdcall;
     procedure ResetMode; stdcall; //do not use!!!
 
     property DesktopRect : TRecti read GetDesktopRect;
@@ -146,16 +161,6 @@ type
     property Height : LongInt read GetHeight;
     property BPS    : Byte read GetBPS;
     property Refresh: Byte read GetRefresh;
-  end;
-
-  ILogOutput = interface
-    procedure Init; stdcall;
-    procedure AddMsg(const Text: String; MType: TLogMsg); stdcall;
-  end;
-
-  ILog = interface(IJenSubSystem)
-    procedure RegisterOutput(Value : ILogOutput); stdcall;
-    procedure Print(const Text: String; MType: TLogMsg); stdcall;
   end;
 
   TMouse = object
@@ -225,30 +230,39 @@ type
   IShaderUniform = interface
   ['{A587E658-8ADD-4928-A985-771AB9E5D562}']
     function GetName: string; stdcall;
+    function GetType: TShaderUniformType; stdcall;
+ //   procedure SetType(Value: TShaderUniformType); stdcall;
     function GetVersion: Word; stdcall;
 
+    function Valid: Boolean; stdcall;
     procedure Value(const Data; Count: LongInt = 1); stdcall;
-    procedure SetType(Value: TShaderUniformType);
 
     property Name: string read GetName;
+    property UType: TShaderUniformType read GetType;
     property Version: Word read GetVersion;
   end;
 
   IShaderAttrib = interface
   ['{3BF51C3F-3063-4CAE-9993-12F7A5E11DED}']
     function GetName: string; stdcall;
-    procedure Value(Stride, Offset: LongInt; AttribType: TShaderAttribType; Norm: Boolean = False); stdcall;
+    function GetType: TShaderAttribType; stdcall;
+  //  procedure SetType(Value: TShaderAttribType); stdcall;
+
+    function Valid: Boolean; stdcall;
+    procedure Value(Stride, Offset: LongInt; Norm: Boolean = False); stdcall;
+
     procedure Enable; stdcall;
     procedure Disable; stdcall;
 
     property Name: string read GetName;
+    property AType: TShaderAttribType read GetType;
   end;
 
   IShaderProgram = interface
   ['{1F79BB95-C0B0-45AF-AA8D-AF9999CC85C8}']
     function Valid: Boolean;
-    function Uniform(const UName: String; Necessary: Boolean = True): IShaderUniform; overload; stdcall;
-    function Attrib(const AName: string; Necessary: Boolean = True): IShaderAttrib; stdcall;
+    function Uniform(const UName: String; UniformType: TShaderUniformType; Necessary: Boolean = True): IShaderUniform; overload; stdcall;
+    function Attrib(const AName: string; AttribType: TShaderAttribType; Necessary: Boolean = True): IShaderAttrib; stdcall;
     function GetUniformsVersion: LongWord; stdcall;
 
     procedure Bind; stdcall;
@@ -347,8 +361,8 @@ type
     function GetTexture(Channel: TRenderChannel): ITexture; stdcall;
 
     property ID: LongWord read GetID;
-    property Width  : LongWord read GetWidth;
-    property Height : LongWord read GetHeight;
+    property Width: LongWord read GetWidth;
+    property Height: LongWord read GetHeight;
     property ColChanCount: LongInt read GetColChanCount;
     property Texture[Channel: TRenderChannel]: ITexture read GetTexture;
   end;
@@ -480,14 +494,14 @@ type
   end;
 
   IHelpers = interface(IJenSubSystem)
-    function CreateLogFileOutput(FileName: String): ILogOutput; stdcall;
+    function CreateStream(FileName: string; RW: Boolean = True): IStream; stdcall;
     function CreateCamera3D: ICamera3d; stdcall;
 
     function GetSystemInfo: ISystemInfo; stdcall;
     property SystemInfo: ISystemInfo read GetSystemInfo;
   end;
 
-  procedure GetJenEngine(out Engine: IJenEngine; Debug: Boolean = False); stdcall; external 'JEN.dll';
+  function GetJenEngine(FileLog, Debug: Boolean): JEN_Header.IJenEngine; stdcall; external 'JEN.dll';
 
 implementation
 

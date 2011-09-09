@@ -131,7 +131,7 @@ var
   FileExt   : String;
   FileName  : String;
   Loader    : TResLoader;
-  Stream    : TStream;
+  Stream    : IStream;
 begin
   if not Assigned(Resource) then
     Exit;
@@ -157,17 +157,15 @@ begin
     Exit;
   end;
 
-  Stream := TFileStream.Open(FilePath);
+  Stream := Helpers.CreateStream(FilePath, False);
   if not Assigned(Stream) then
   begin
     Logout('Can''t open file ' + FileName, lmWarning);
-    Stream.Free;
     Exit;
   end;
 
   if not Loader.Load(Stream, Resource) then
   begin
-    Stream.Free;
    { Resource := nil;
    { if ResType = ResType then
     begin

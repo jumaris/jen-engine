@@ -72,7 +72,7 @@ type
   TFontLoader = class(TResLoader)
     constructor Create;
   public
-    function Load(const Stream: TStream; var Resource: IResource): Boolean; override;
+    function Load(Stream: IStream; var Resource: IResource): Boolean; override;
   end;
 
 implementation
@@ -246,7 +246,7 @@ begin
   ResType := rtFont;
 end;
 
-function TFontLoader.Load(const Stream: TStream; var Resource: IResource): Boolean;
+function TFontLoader.Load(Stream: IStream; var Resource: IResource): Boolean;
 var
   Font       : IFont;
   Magic      : Int64;
@@ -280,7 +280,6 @@ begin
   end;
 
   Result := True;
-  Stream.Free;
 end;
 
 end.

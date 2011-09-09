@@ -39,7 +39,7 @@ uses
   JEN_Texture in '..\Jen Engine\Render\JEN_Texture.pas';
 
 exports
-  pGetEngine name 'GetJenEngine';
+  GetEngine name 'GetJenEngine';
 
 {$R *.res}
 {$R ..\icon.RES}

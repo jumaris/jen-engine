@@ -30,6 +30,7 @@ var
   r : ITexture;
   s : IShaderProgram;
   sr : IShaderResource;
+  ccc : IShaderUniform;
   c : Boolean;
   procedure p;
 
@@ -38,26 +39,28 @@ implementation
 procedure TGame.LoadContent;
 
 begin
-   ResMan.Load('Media\123.dds', r);
-   RT := Render.CreateRenderTarget(1024, 1024, tfoBGRA8, 1, 0, true, tfoDepth8);
-   //Rt.Texture[rcColor0].Filter := tfiBilinear;
- //  ResMan.Load('Media\Text.xml', sr);
- //  s := sr.Compile;
+  ResMan.Load('Media\123.dds', r);
+  RT := Render.CreateRenderTarget(1024, 1024, tfoBGRA8, 1, 0, true, tfoDepth8);
+  //Rt.Texture[rcColor0].Filter := tfiBilinear;
+  ResMan.Load('Media\Shader2.xml', sr);
+  s := sr.Compile;
+
+   ccc := s.Uniform('count', utInt);
   // r.Filter := tfNone;
 end;
 
 procedure TGame.OnUpdate(dt: LongInt);
 begin
 //Input.Update;
- Display.Caption := Utils.IntToStr(Render.FPS)+'['+Utils.IntToStr(Render.FrameTime)+']';
+  Display.Caption := Utils.IntToStr(Render.FPS)+'['+Utils.IntToStr(Render.FrameTime)+']';
   if Input.Hit[ikSpace] then
-   c := not c;
+    sr.Reload;
 end;
 
 procedure TGame.OnRender;
 const m =25;
 var
-  i : integer;
+ i : integer;
  v : TRecti;
 begin
   //Render.CullFace := cfNone;
@@ -76,13 +79,17 @@ begin
  // render2d.DrawSprite(r,0,0,0.5,0.5, clWhite);
   //render2d.DrawSpriteAdv(s,r,nil,nil,0,0,1,1.33333333, clWhite,clWhite,clWhite,clWhite);
 
-
+             {
   for i := 0 to m do
   render2d.DrawSprite(r ,Frac(i / 30)*1000,(i div 30)*100,100,100, vec4f(1.0 - i/m,1,1,1), 0*Utils.Time/10000*360,0.5,0.5);
     //ssprite2d_Draw(r,Frac(i / 300)*1000,(i div 300)*100,100,100,0);
 
+              }
+              i := 13;
+              ccc.Value(i);
+    render2d.DrawSpriteAdv(s,r,nil,nil,Vec4f(0,1000,0,0),Vec4f(1000,1000,1,0),Vec4f(1000,0,1,1),Vec4f(0,0,0,1), clWhite, clWhite, clWhite, clWhite, Vec2f(500,500),Utils.Time/10000*360);
 
-    //render2d.DrawSpriteAdv(s,nil,nil,nil,0.35,0.2,0.3,0.3, clWhite, clWhite, clWhite, clWhite, Utils.Time/10000*360,0.5,0.5);
+   //  DrawSpriteAdv(RenderTechnique[ttNormal].ShaderProgram, Tex, nil, nil, Vec4f(x, y+h, 0, 0),Vec4f(x+w, y+h , 1, 0), Vec4f(x+w, y, 1, 1), Vec4f(x, y, 0, 1), Color, Color, Color, Color, Vec2f(x + w*cx,y + h*cy), Angle);
 
 
        // render2d.DrawSprite(r,256,400,400,400, vec4f(1,0,0,1),vec4f(0,1,0,1),vec4f(0,0,1,1),vec4f(1,1,1,1),0* Utils.Time/10000*360,0.5,0.5);
@@ -114,7 +121,7 @@ end;
 procedure p;
 begin
   ReportMemoryLeaksOnShutdown := True;
-  GetJenEngine(Engine);
+  Engine := GetJenEngine(True, False);
 
   Engine.GetSubSystem(ssDisplay, IJenSubSystem(Display));
   Engine.GetSubSystem(ssUtils, IJenSubSystem(Utils));

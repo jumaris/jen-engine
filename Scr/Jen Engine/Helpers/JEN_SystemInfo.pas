@@ -9,52 +9,29 @@ uses
   Windows;
 
 type
-  TRefreshRates = record
-    FRefreshRates : array of Byte;
-
-    procedure Clear;
-    procedure Add(Value: Byte);
-    function Count: LongInt;
-    function GetRefresh(Idx: LongInt): Byte;
-    function IsExist(Value: Byte): Boolean;
-
-    property Rates[Idx: LongInt]: Byte read GetRefresh; default;
-  end;
-
   PDisplayMode = ^TDisplayMode;
   TDisplayMode = record
     Width        : LongInt;
     Height       : LongInt;
-    RefreshRates : TRefreshRates;
-  end;
-
-  TDisplayModes = record
-    FModes : array of TDisplayMode;
-
-    procedure Clear;
-    function Add(Width, Height: LongInt; Refresh: Byte): LongInt;
-    function GetMode(Idx: LongInt): PDisplayMode; overload;
-    function GetMode(Width, Height: LongInt): PDisplayMode; overload;
-
-    property Modes[Idx: Integer]: PDisplayMode read GetMode; default;
+    RefreshRates : IList;
   end;
 
   type TScreen = class(TInterfacedObject, IScreen)
     constructor Create;
     destructor Destroy; override;
   private
-    FModes        : TDisplayModes;
+    FModes        : IList;
     FStartWidth   : LongInt;
     FStartHeight  : LongInt;
     FStartBPS     : Byte;
     FStartRefresh : Byte;
-    function GetWidth  : LongInt; stdcall;
-    function GetHeight : LongInt; stdcall;
-    function GetBPS    : Byte; stdcall;
+    function GetWidth: LongInt; stdcall;
+    function GetHeight: LongInt; stdcall;
+    function GetBPS: Byte; stdcall;
     function GetRefresh: Byte; stdcall;
-    function GetDesktopRect : TRecti; stdcall;
+    function GetDesktopRect: TRecti; stdcall;
   public
-    function SetMode(W, H, R: LongInt): TSetModeResult; stdcall;
+    function SetMode(W, H, R: LongInt): Boolean; stdcall;
     procedure ResetMode; stdcall;
   end;
 
@@ -84,174 +61,127 @@ implementation
 uses
   JEN_MAIN;
 
-procedure TRefreshRates.Add(Value: Byte);
-var
-  Idx, i: LongInt;
-begin
-  Idx := -1;
-
-  for i := 0 to High(FRefreshRates) do
-    if FRefreshRates[i] = Value then
-      Idx := i;
-
-  if Idx = -1 then
-  begin
-    Idx := High(FRefreshRates) + 1;
-    SetLength(FRefreshRates, Idx + 1);
-  end;
-
-  FRefreshRates[Idx] := Value;
-end;
-
-function TRefreshRates.Count: LongInt;
-begin
-  Result := Length(FRefreshRates);
-end;
-
-function TRefreshRates.GetRefresh(Idx: LongInt): Byte;
-begin
-  if (Idx < 0) or (Idx > High(FRefreshRates)) then Exit(0);
-  Result := FRefreshRates[Idx];
-end;
-
-function TRefreshRates.IsExist(Value: Byte): Boolean;
-var
-  i: LongInt;
-begin
-  Result := False;
-  for i := 0 to High(FRefreshRates) do
-    if FRefreshRates[i] = Value then
-      Exit(True);
-end;
-
-procedure TRefreshRates.Clear;
-begin
-  SetLength(FRefreshRates,0);
-end;
-
-procedure TDisplayModes.Clear;
-var
-  i : LongInt;
-begin
-  for i := 0 to High(FModes) do
-    FModes[i].RefreshRates.Clear;
-  SetLength(FModes, 0);
-end;
-
-function TDisplayModes.Add(Width, Height: LongInt; Refresh: Byte): LongInt;
-var
-  i : LongInt;
-begin
-  Result := -1;
-
-  for i := 0 to High(FModes) do
-    if (FModes[i].Width = Width) and
-       (FModes[i].Height = Height) then
-      Result := i;
-
-  if Result = -1  then
-  begin
-    Result := High(FModes)+1;
-    SetLength(FModes, Result + 1);
-    FModes[Result].Width := Width;
-    FModes[Result].Height := Height;
-  end;
-
-  FModes[Result].RefreshRates.Add(Refresh);
-end;
-
-function TDisplayModes.GetMode(Idx: LongInt): PDisplayMode;
-begin
-  if (Idx < 0) or (Idx > High(FModes)) then
-    Exit(nil);
-  Result := @FModes[Idx];
-end;
-
-function TDisplayModes.GetMode(Width, Height: LongInt): PDisplayMode;
-var
-  i : LongInt;
-begin
-  Result := nil;
-  for i := 0 to High(FModes) do
-    if (FModes[i].Width = Width) and
-       (FModes[i].Height = Height) then
-      Result := @FModes[i];
-end;
-
 constructor TScreen.Create;
 var
   DevMode : TDeviceMode;
-  i : LongInt;
+  i,j,k   : LongInt;
+  PMode   : PDisplayMode;
+  PRefresh : PByte;
 begin
   i := 0;
-  SetLength(FModes.FModes, 0);
+  FModes := TList.Create;
 
   FStartWidth   := GetWidth;
   FStartHeight  := GetHeight;
   FStartBPS     := GetBPS;
   FStartRefresh := GetRefresh;
-
+             {
   FillChar(DevMode, SizeOf(TDeviceMode), 0);
   DevMode.dmSize := SizeOf(TDeviceMode);
 
   while EnumDisplaySettings(nil, i, DevMode) <> FALSE do
   with DevMode do
+  begin
+    INC(i);
+
+    if dmBitsPerPel <> 32 then
+      Continue;
+
+    for J := 0 to FModes.Count - 1 do
+      with(PDisplayMode(FModes[j])^) do
+      if (Width = dmPelsWidth) and (Height = dmPelsHeight) then
+      begin
+
+        for K := 0 to RefreshRates.Count - 1 do
+          if(PByte(RefreshRates[K])^ = dmDisplayFrequency) then
+            Break;
+
+        if K < RefreshRates.Count then
+        begin
+          GetMem(PRefresh, 1);
+          PRefresh^ := dmDisplayFrequency;
+          RefreshRates.Add(PRefresh);
+        end;
+      end;
+
+    if K < FModes.Count then
     begin
-      INC(i);
+      GetMem(PRefresh, 1);
+      GetMem(PMode, SizeOf(TDisplayMode));
 
-      if dmBitsPerPel <> 32 then
-        Continue;
+      PMode^.Width := dmPelsWidth;
+      PMode^.Height := dmPelsHeight;
+      PRefresh^ := dmDisplayFrequency;
 
-      FModes.Add(dmPelsWidth, dmPelsHeight, dmDisplayFrequency);
-     end;
+      FModes.Add(PMode);
+      PMode^.RefreshRates := TList.Create;
+      PMode^.RefreshRates.Add(PRefresh);
+    end;
+  end;    }
+
 end;
 
 destructor TScreen.Destroy;
+var
+  i,j : LongInt;
 begin
-  FModes.Clear;
+  for I := 0 to FModes.Count - 1 do
+  with(PDisplayMode(FModes[I])^) do
+  begin
+    for J := 0 to RefreshRates.Count - 1 do
+      FreeMem(RefreshRates[J]);
+
+    PDisplayMode(FModes[I])^.RefreshRates := nil;
+    FreeMem(FModes[I]);
+  end;
+  FModes := nil;
   inherited;
 end;
 
-function TScreen.SetMode(W, H, R: LongInt): TSetModeResult;
+function TScreen.SetMode(W, H, R: LongInt): Boolean;
 var
-  DevMode      : TDeviceMode;
- // RefreshRates : PRefreshRateArray;
-  Mode         : PDisplayMode;
-  Str          : String;
+  DevMode : TDeviceMode;
+  i       : LongInt;
+  Mode    : PDisplayMode;
+  Str     : String;
 begin
-  Mode := FModes.GetMode(W, H);
+  Result := False;
+  Mode   := nil;
 
-  if Mode <> nil then
+  for I := 0 to FModes.Count - 1 do
+    with(PDisplayMode(FModes[I])^) do
+      if (Width = W) and (Height = H) then
+      begin
+        Mode := FModes[I];
+        break;
+      end;
+
+  if Assigned(Mode) then
   begin
-    if not Mode^.RefreshRates.IsExist(R) then
+    for I := 0 to Mode^.RefreshRates.Count - 1 do
+      if PByte(Mode^.RefreshRates[i])^ = R then
+        break;
+
+    if I = Mode^.RefreshRates.Count then
       R := 0;
   end else
   begin
     LogOut('Error set display mode ' + Utils.IntToStr(W) + 'x' + Utils.IntToStr(H) + 'x' + Utils.IntToStr(R), lmWarning);
     LogOut('Change display mode to default 1024x768x60', lmNotify);
 
-    if Assigned(FModes.GetMode(1024, 768)) then
-    begin
-      if SetMode(1024, 768, 60) = SM_Successful then
-        Exit(SM_SetDefault)
-      else
-        Exit(SM_Error);
-    end else
-    begin
-      LogOut('Display mode critical error', lmError);
-      Exit(SM_Error);
-    end;
+    if ((W = 1024) and (H = 768) and ((R = 60) or (R = 0))) then
+      LogOut('Critical error set display mode', lmError)
+    else
+      SetMode(1024, 768, 60);
+    Exit;
   end;
 
   if R = 0 then
     with Mode^.RefreshRates do
-      R := Rates[Count-1];
+      R := PByte(Mode^.RefreshRates[Mode^.RefreshRates.Count-1])^;
 
-  if ( (GetWidth = Mode.Width) and
-       (GetHeight = Mode.Height) and
-       (GetBPS = 32) and
-       (GetRefresh = R) ) then
-       Exit(SM_Successful);
+  if((GetWidth = Mode.Width) and (GetHeight = Mode.Height) and (GetBPS = 32) and (GetRefresh = R)) then
+    Exit(True);
 
   FillChar(DevMode, SizeOf(TDeviceMode), 0);
   DevMode.dmSize := SizeOf(TDeviceMode);
@@ -273,7 +203,7 @@ begin
     DISP_CHANGE_SUCCESSFUL :
     begin
       LogOut('Successful set display mode ' + Str, lmNotify);
-      Exit(SM_Successful);
+      Exit(True);
     end;
     DISP_CHANGE_FAILED :
       LogOut('Failed set display mode ' + Str, lmError);
@@ -282,8 +212,6 @@ begin
     else
       LogOut('Failed set display mode ' + Str + ' uncnown error', lmError);
   end;
-
-  Result := SM_Error;
 end;
 
 procedure TScreen.ResetMode;
