@@ -14,7 +14,7 @@ type
   public
     ExtString : string;
     ResType : TResourceType;
-    function Load(const Stream: TStream; var Resource: IResource): Boolean; virtual; abstract;
+    function Load(Stream: IStream; var Resource: IResource): Boolean; virtual; abstract;
   end;
 
   TResource = class(TManagedInterface)

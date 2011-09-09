@@ -4,6 +4,7 @@ interface
 
 uses
   JEN_Header,
+  JEN_Utils,
   JEN_Camera3D,
   JEN_SystemInfo;
 
@@ -15,7 +16,7 @@ type
     FSystemInfo: ISystemInfo;
     function GetSystemInfo: ISystemInfo; stdcall;
   public
-    function CreateLogFileOutput(FileName: String): ILogOutput; stdcall;
+    function CreateStream(FileName: string; RW: Boolean): IStream; stdcall;
     function CreateCamera3D: ICamera3d; stdcall;
   end;
 
@@ -38,9 +39,9 @@ begin
   Result := FSystemInfo;
 end;
 
-function THelpers.CreateLogFileOutput(FileName: String): ILogOutput;
+function THelpers.CreateStream(FileName: string; RW: Boolean): IStream;
 begin
-  Result := TFileLog.Create(FileName);
+  Result := TFileStream.Create(FileName, RW);
 end;
 
 function THelpers.CreateCamera3D: ICamera3d;

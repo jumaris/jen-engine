@@ -15,54 +15,24 @@ uses
   JEN_Render,
   JEN_Render2D,
   JEN_ResourceManager;
-   {
-const
-  lmInfo       = TLogMsg.lmInfo;
-  lmNotify     = TLogMsg.lmNotify;
-  lmCode       = TLogMsg.lmCode;
-  lmWarning    = TLogMsg.lmWarning;
-  lmError      = TLogMsg.lmError;
-
-  btNone        = TBlendType.btNone;
-  btNormal      = TBlendType.btNormal;
-  btAdd         = TBlendType.btAdd;
-  btMult        = TBlendType.btMult;
-  btOne         = TBlendType.btOne;
-  btNoOverride  = TBlendType.btNoOverride;
-  btAddAlpha    = TBlendType.btAddAlpha;
-
-  cfNone        = TCullFace.cfNone;
-  cfFront       = TCullFace.cfFront;
-  cfBack        = TCullFace.cfBack;
-
-  mtViewProj    = TMatrixType.mtViewProj;
-  mtModel       = TMatrixType.mtModel;
-  mtProj        = TMatrixType.mtProj;
-  mtView        = TMatrixType.mtView;
 
 type
-  TFileStream     = JEN_Utils.TFileStream;
-
-  TResourceManager= JEN_ResourceManager.TResourceManager;
-
-  TShaderResource = JEN_Shader.TShaderResource;
-
-type
-  TDDSLoader      = JEN_DDSTexture.TDDSLoader; }
-type
-
   TJenEngine = class(TInterfacedObject, IJenEngine)
-    constructor Create(Debug : Boolean);
+    constructor Create(FileLog: Boolean; Debug : Boolean);
     destructor Destroy; override;
   private
-    class var FisRunnig : Boolean;
-    class var FQuit : Boolean;
-    var FEventsList : array[TEvent] of TList;
-    var FLastUpdate : LongInt;
+    class var
+      FisRunnig : Boolean;
+      FQuit : Boolean;
+    var
+      FEventsList : array[TEvent] of TList;
+      FLastUpdate : LongInt;
+      FConsoleLog : TConsole;
+      FFileLog    : TFileLog;
   public
     procedure Start(Game: IGame); stdcall;
     procedure GetSubSystem(SubSystemType: TJenSubSystemType; out SubSystem: IJenSubSystem); stdcall;
-    procedure CreateEvent(Event: TEvent; Param: LongInt = 0);
+    procedure CreateEvent(Event: TEvent; Param: LongInt = 0; Data: Pointer = nil);
     procedure AddEventProc(Event: TEvent; Proc: TEventProc); stdcall;
     procedure DelEventProc(Event: TEvent; Proc: TEventProc); stdcall;
     procedure Finish; stdcall;
@@ -74,7 +44,6 @@ var
   Utils      : IUtils;
   Input      : IInput;
   Helpers    : IHelpers;
-  Log        : ILog;
   Render     : IRender;
   Render2d   : IRender2D;
   Display    : IDisplay;
@@ -86,23 +55,21 @@ var
    PFD :  TPixelFormatDescriptor;
    pixelFormat  : Integer;
 
-
 procedure LogOut(const Text: string; MType: TLogMsg);
-procedure pGetEngine(out Eng: JEN_Header.IJenEngine; Debug: Boolean); stdcall;
+function GetEngine(FileLog, Debug: Boolean): JEN_Header.IJenEngine; stdcall;
 
 implementation
 
 procedure LogOut(const Text: string; MType: TLogMsg);
 begin
-  if Assigned(Log) then
-    Log.Print(Text, MType);
+  Engine.CreateEvent(evLogMsg, Ord(MType), PWideChar(Text));
 end;
 
-procedure pGetEngine(out Eng: JEN_Header.IJenEngine; Debug: Boolean);
+function GetEngine(FileLog, Debug: Boolean): JEN_Header.IJenEngine;
 begin
   if not Assigned(Engine) then
-    Engine := TJenEngine.Create(Debug);
-  Eng := IJenEngine(Engine);
+    TJenEngine.Create(FileLog, Debug);
+  Result := IJenEngine(Engine);
 end;
 
 constructor TJenEngine.Create;
@@ -110,20 +77,22 @@ var
   Event : TEvent;
 begin
   FisRunnig := False;
+  Engine := Self;
+
   for Event := Low(TEvent) to High(TEvent) do
     FEventsList[Event] := TList.Create;
 
   Utils   := TUtils.Create;
   Helpers := THelpers.Create;
-  Log     := TLog.Create;
   Input   := JEN_Input.TInput.Create;
 
-  Log.RegisterOutput(TFileLog.Create('log.txt'));
+  if FileLog then
+    FFileLog := TFileLog.Create('log.txt');
   {$IFDEF DEBUG}
-    Log.RegisterOutput(TConsole.Create);
+    FConsoleLog := TConsole.Create;
   {$ELSE}
   if Debug then
-    Log.RegisterOutput(TConsole.Create);
+    FConsoleLog := TConsole.Create;
   {$ENDIF}
 
   Render    := TRender.Create;
@@ -169,6 +138,12 @@ begin
   Display.Free;
   Display := nil;
 
+  if Assigned(FFileLog) then
+    FFileLog.Free;
+
+  if Assigned(FConsoleLog) then
+    FConsoleLog.Free;
+
   TestRefCount(Helpers, 'helpers');
   Helpers.Free;
   Helpers := nil;
@@ -176,10 +151,6 @@ begin
   TestRefCount(Input, 'input');
   Input.Free;
   Input := nil;
-
-  TestRefCount(Log, 'log');
-  Log.Free;
-  Log := nil;
 
   TestRefCount(Utils, 'utils');
   Utils.Free;
@@ -250,7 +221,6 @@ begin
   case SubSystemType of
     ssUtils     : SubSystem := IJenSubSystem(Utils);
     ssInput     : SubSystem := IJenSubSystem(Input);
-    ssLog       : SubSystem := IJenSubSystem(Log);
     ssDisplay   : SubSystem := IJenSubSystem(Display);
     ssResMan    : SubSystem := IJenSubSystem(ResMan);
     ssRender    : SubSystem := IJenSubSystem(Render);
@@ -261,12 +231,12 @@ begin
   end;
 end;
 
-procedure TJenEngine.CreateEvent(Event: TEvent; Param: LongInt);
+procedure TJenEngine.CreateEvent(Event: TEvent; Param: LongInt; Data: Pointer);
 var
   i : LongInt;
 begin
   for i:=0 to FEventsList[Event].Count-1 do
-    TEventProc(FEventsList[Event][i])(Param);
+    TEventProc(FEventsList[Event][i])(Param, Data);
 end;
 
 procedure TJenEngine.AddEventProc(Event : TEvent; Proc: TEventProc);
@@ -291,7 +261,6 @@ begin
   //Engine       := nil;
   Utils        := nil;
   Helpers      := nil;
-  Log          := nil;
   Render       := nil;
   Render2d     := nil;
   Display      := nil;

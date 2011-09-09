@@ -14,7 +14,7 @@ type
   TDDSLoader = class(TResLoader)
     constructor Create;
   public
-    function Load(const Stream: TStream; var Resource: IResource): Boolean; override;
+    function Load(Stream: IStream; var Resource: IResource): Boolean; override;
   end;
 
 implementation
@@ -29,7 +29,7 @@ begin
   ResType := rtTexture;
 end;
 
-function TDDSLoader.Load(const Stream: TStream; var Resource: IResource): Boolean;
+function TDDSLoader.Load(Stream: IStream; var Resource: IResource): Boolean;
 type
   TDDSHeader = record
     dwMagic       : LongWord;
@@ -265,7 +265,6 @@ begin
  // glTexParameteri(Texture.Sampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
  // glTexParameteri(Texture.Sampler, GL_TEXTURE_MAX_LEVEL, Mips - 1);
   Result := True;
-  Stream.Free;
 end;
 
 end.

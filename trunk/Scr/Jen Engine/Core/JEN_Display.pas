@@ -160,15 +160,13 @@ begin
   FCursor     := True;
 
   if FullScreen then
-    case Helpers.SystemInfo.Screen.SetMode(Width, Height, Refresh) of
-      SM_SetDefault:
-        begin
-          FWidth   := Helpers.SystemInfo.Screen.Width;
-          FHeight  := Helpers.SystemInfo.Screen.Height;
-          FRefresh := Helpers.SystemInfo.Screen.Refresh;
-        end;
-      SM_Error: Exit;
-    end;
+    if Helpers.SystemInfo.Screen.SetMode(Width, Height, Refresh) then
+    begin
+      FWidth   := Helpers.SystemInfo.Screen.Width;
+      FHeight  := Helpers.SystemInfo.Screen.Height;
+      FRefresh := Helpers.SystemInfo.Screen.Refresh;
+    end else
+      Exit;
 
   FillChar(WinClass, SizeOf(TWndClassEx), 0);
   with WinClass do
@@ -241,7 +239,7 @@ begin
     FFullScreen := Value;
 
     if Value then
-      FValid := FValid and (Helpers.SystemInfo.Screen.SetMode(FWidth, FHeight, FRefresh) <> SM_Error)
+      FValid := FValid and Helpers.SystemInfo.Screen.SetMode(FWidth, FHeight, FRefresh)
     else
       Helpers.SystemInfo.Screen.ResetMode;
 
@@ -258,7 +256,7 @@ begin
     if FFullScreen then
     begin
       if Value then
-        FValid := FValid and (Helpers.SystemInfo.Screen.SetMode(FWidth, FHeight, FRefresh) <> SM_Error)
+        FValid := FValid and Helpers.SystemInfo.Screen.SetMode(FWidth, FHeight, FRefresh)
       else
         Helpers.SystemInfo.Screen.ResetMode;
       Restore;

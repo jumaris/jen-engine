@@ -7,26 +7,12 @@ uses
   JEN_Utils;
 
 type
-  TLog = class(TInterfacedObject, ILog)
-  constructor Create;
-  procedure Free; stdcall;
-  protected
-    class var FLogOutputs : TInterfaceList;
-  public
-    procedure RegisterOutput(Value : ILogOutput); stdcall;
-    procedure Print(const Text: String; MType: TLogMsg); stdcall;
-    class property LogOutputs : TInterfaceList read fLogOutputs;
-  end;
-
-  TFileLog = class(TInterfacedObject, ILogOutput)
-  constructor Create(FileName : String);
-  destructor Destroy; override;
+  TFileLog = class
+    constructor Create(FileName : String);
   private
-    Stream : TFileStream;
-    LastUpdate : LongInt;
-  public
-    procedure Init; stdcall;
-    procedure AddMsg(const Text: String; MType: TLogMsg); stdcall;
+  class var
+    Stream : IStream;
+    class procedure AddMsg(MType: TLogMsg; Text: PWideChar); static; stdcall;
   end;
 
 implementation
@@ -34,69 +20,33 @@ implementation
 uses
   JEN_MAIN;
 
-constructor TLog.Create;
-begin
-  inherited;
-  fLogOutputs := TInterfaceList.Create;
-end;
-
-procedure TLog.Free;
-begin
-  FLogOutputs.Free;
-end;
-
-procedure TLog.RegisterOutput(Value : ILogOutput); stdcall;
-begin
-  if not Assigned(Value) then
-  begin
-    Print('Output is not assigned', lmWarning);
-    Exit;
-  end;
-
-  FLogOutputs.Add(Value, False);
-  Value.Init;
-end;
-
-procedure TLog.Print(const Text: String; MType: TLogMsg);
-var
-  i : LongInt;
-begin
-  for i := 0 to fLogOutputs.Count - 1 do
-    ILogOutput(fLogOutputs[i]).AddMsg(Text, MType);
-end;
-
 constructor TFileLog.Create(FileName : String);
-begin
-  Stream := TFileStream.Open(FileName, True);
-end;
-
-destructor TFileLog.Destroy;
-begin
-  if Assigned(Stream) then
-    Stream.Free;
-end;
-
-procedure TFileLog.Init;
 var
   S : AnsiString;
   Major : LongInt;
   Minor : LongInt;
   Build : LongInt;
+  Str   : array[1..4] of string;
 begin
+  Stream := Helpers.CreateStream(FileName);
+
   Helpers.SystemInfo.WindowsVersion(Major, Minor, Build);
   SetLength(S,80);
   FillChar(S[1],80,ord('*'));
-  AddMsg(String(s),lmHeaderMsg);
-  AddMsg('JenEngine',lmHeaderMsg);
-  AddMsg('Windows version: '+Utils.IntToStr(Major)+'.'+Utils.IntToStr(Minor)+' (Buid '+Utils.IntToStr(Build)+')'+Utils.IntToStr(Helpers.SystemInfo.CPUCount),lmHeaderMsg);
-  AddMsg('CPU            : '+Helpers.SystemInfo.CPUName+'(~'+Utils.IntToStr(Helpers.SystemInfo.CPUSpeed)+')x',lmHeaderMsg);
-  AddMsg('RAM Available  : '+Utils.IntToStr(Helpers.SystemInfo.RAMFree)+'Mb',lmHeaderMsg);
-  AddMsg('RAM Total      : '+Utils.IntToStr(Helpers.SystemInfo.RAMTotal)+'Mb',lmHeaderMsg);
-  AddMsg(String(s),lmHeaderMsg);
-  LastUpdate := Utils.Time;
+  AddMsg(lmHeaderMsg, 'JenEngine');
+  Str[1] := 'Windows version: '+Utils.IntToStr(Major)+'.'+Utils.IntToStr(Minor)+' (Buid '+Utils.IntToStr(Build)+')'+Utils.IntToStr(Helpers.SystemInfo.CPUCount);
+  Str[2] := 'CPU            : '+Helpers.SystemInfo.CPUName+'(~'+Utils.IntToStr(Helpers.SystemInfo.CPUSpeed)+')x';
+  Str[3] := 'RAM Total      : '+Utils.IntToStr(Helpers.SystemInfo.RAMTotal)+'Mb';
+  Str[4] := 'RAM Available  : '+Utils.IntToStr(Helpers.SystemInfo.RAMFree)+'Mb';
+  AddMsg(lmHeaderMsg, PWideChar(Str[1]));
+  AddMsg(lmHeaderMsg, PWideChar(Str[2]));
+  AddMsg(lmHeaderMsg, PWideChar(Str[3]));
+  AddMsg(lmHeaderMsg, PWideChar(Str[4]));
+
+  Engine.AddEventProc(evLogMsg, @AddMsg);
 end;
 
-procedure TFileLog.AddMsg(const Text: String; MType: TLogMsg);
+class procedure TFileLog.AddMsg(MType: TLogMsg; Text: PWideChar);
 var
   str,line : String;
   tstr : String;
@@ -119,21 +69,21 @@ begin
   TimeStr := TimeStr + Copy(tstr, Length(tstr)-1, 2) + ':';
 
   tstr := '0' + Utils.IntToStr(s);
-  TimeStr := TimeStr + Copy(tstr, Length(tstr)-1, 2) + ' ';
-
+  TimeStr := TimeStr + Copy(tstr, Length(tstr)-1, 2);
+                         {
   if (Utils.Time - LastUpdate > 9999) then
     tstr := '9999'
   else
     tstr := '0000' + Utils.IntToStr(Utils.Time - LastUpdate);
 
-  TimeStr := TimeStr + Copy(tstr, Length(tstr)-3, 4);
+  TimeStr := TimeStr + Copy(tstr, Length(tstr)-3, 4);  }
 
   case MType of
     lmHeaderMsg,lmInfo:
       str := Text+#13#10;
 
     lmNotify :
-      str := '[' + TimeStr + 'ms] ' + Text+#13#10;
+      str := '[' + TimeStr + '] ' + Text+#13#10;
 
     lmCode:
       begin
@@ -173,7 +123,6 @@ begin
     lmError :
       str := '[' + TimeStr + 'ms] ERROR: ' + Text+#13#10;
   end;
-  LastUpdate := Utils.Time;
 
   Stream.Write(str[1], Length(str)*2);
 end;

@@ -43,7 +43,7 @@ type
     function GetItem(idx: LongInt): IUnknown; inline;
     procedure SetItem(idx: LongInt; Value: IUnknown); inline;
   public
-    function Add(p: IUnknown; Manage: Boolean = True): IUnknown;
+    function Add(p: IUnknown): IUnknown;
     procedure Del(idx: LongInt);
     procedure Clear; virtual;
     function IndexOf(p: IUnknown): LongInt;
@@ -98,41 +98,25 @@ type
     function ExtractFileExt(const FileName: string): string; stdcall;
   end;
 
-  TStream = class
-  private
-    FSize  : LongInt;
-    FPos   : LongInt;
-    FName  : String;
-    procedure SetPos(Value: LongInt); virtual; abstract;
-    procedure SetBlock(BPos, BSize: LongInt); virtual; abstract;
-  public
-    function Read(out Buf; BufSize: LongInt): LongWord; virtual; abstract;
-    function Write(const Buf; BufSize: LongInt): LongWord; virtual; abstract;
-    function ReadAnsi: AnsiString; virtual; abstract;
-    procedure WriteAnsi(const Value: AnsiString); virtual; abstract;
-    function ReadUnicode: WideString; virtual; abstract;
-    procedure WriteUnicode(const Value: WideString); virtual; abstract;
-
-    property Size: LongInt read FSize;
-    property Pos: LongInt read FPos write SetPos;
-    property Name: String read FName;
-  end;
-
-  TFileStream = class(TStream)
-    class function Open(const FileName: string; RW: Boolean = False): TFileStream;
+  TFileStream = class(TInterfacedObject, IStream)
+    constructor Create(const FileName: string; RW: Boolean);
     destructor Destroy; override;
   private
-    FBPos  : LongInt;
+    FName  : string;
     F      : LongWord;
-    procedure SetPos(Value: LongInt); override;
-    procedure SetBlock(BPos, BSize: LongInt); override;
-  public
-    function Read(out Buf; BufSize: LongInt): LongWord; override;
-    function Write(const Buf; BufSize: LongInt): LongWord; override;
-    function ReadAnsi: AnsiString; override;
-    procedure WriteAnsi(const Value: AnsiString); override;
-    function ReadUnicode: WideString; override;
-    procedure WriteUnicode(const Value: WideString); override;
+    FPos   : LongInt;
+    FBPos  : LongInt;
+    FSize  : LongInt;
+    function GetName: string; stdcall;
+    function GetSize: LongInt; stdcall;
+    function GetPos: LongInt; stdcall;
+    procedure SetPos(Value: LongInt); stdcall;
+    function Read(out Buf; BufSize: LongInt): LongWord; stdcall;
+    function Write(const Buf; BufSize: LongInt): LongWord; stdcall;
+    function ReadAnsi: AnsiString; stdcall;
+    procedure WriteAnsi(const Value: AnsiString); stdcall;
+    function ReadUnicode: WideString; stdcall;
+    procedure WriteUnicode(const Value: WideString); stdcall;
   end;
 
   TCharSet = set of AnsiChar;
@@ -403,7 +387,7 @@ begin
   inherited;
 end;
 
-function TInterfaceList.Add(p: IUnknown; Manage: Boolean = True): IUnknown;
+function TInterfaceList.Add(p: IUnknown): IUnknown;
 begin
   if not Assigned(p) then Exit;
 
@@ -412,9 +396,7 @@ begin
 
   FItems[FCount] := p;
   Result := p;
-
-  if Manage then
-    (p as IManagedInterface).SetManager(self);
+  (p as IManagedInterface).SetManager(self);
 
   Inc(FCount);
 end;
@@ -424,6 +406,7 @@ begin
   if idx < 0  then Exit;     {
   for i := Idx to FCount - 2 do
     FItems[i] := FItems[i + 1];   }
+  (FItems[Idx] as IManagedInterface).SetManager(nil);
   FItems[Idx] := FItems[FCount - 1];
   Dec(FCount);
 
@@ -436,7 +419,11 @@ var
   i : LongInt;
 begin
   for i := 0 to FCount - 1 do
+  begin
+    (FItems[I] as IManagedInterface).SetManager(nil);
     FItems[i] := nil;
+  end;
+
   FCount := 0;
 end;
 
@@ -600,30 +587,23 @@ end;
 
 // TFileStream
 {$REGION 'TFileStream'}
-class function TFileStream.Open(const FileName: string; RW: Boolean): TFileStream;
+constructor TFileStream.Create(const FileName: string; RW: Boolean);
 begin
-  Result := TFileStream.Create;
-  Result.FName := Utils.ExtractFileName(FileName);
+  FName := Utils.ExtractFileName(FileName);
   {$I-}
   FileMode := 2;
 
   if RW then
-    Result.F := CreateFile(PChar(FileName), GENERIC_WRITE or GENERIC_READ, FILE_SHARE_READ, nil, CREATE_ALWAYS, 0, 0)
+    F := CreateFile(PChar(FileName), GENERIC_WRITE or GENERIC_READ, FILE_SHARE_READ, nil, CREATE_ALWAYS, 0, 0)
   else
-    Result.F := CreateFile(PChar(FileName), GENERIC_READ, FILE_SHARE_READ, nil, OPEN_EXISTING, 0, 0);
+    F := CreateFile(PChar(FileName), GENERIC_READ, FILE_SHARE_READ, nil, OPEN_EXISTING, 0, 0);
 
-  if Result.F <> INVALID_HANDLE_VALUE then
-  begin
-    Result.FSize  := GetFileSize(Result.F, nil);
-    Result.FPos   := 0;
-    Result.FBPos  := 0;
-  end else
-  begin
-  //  Assert('Can''t open "' + FileName + '"');
-    Result.Free;
-    Result := nil;
-  end;
+  if F = INVALID_HANDLE_VALUE then
+    Exit;
 
+  FSize  := GetFileSize(F, nil);
+  FPos   := 0;
+  FBPos  := 0;
 end;
 
 destructor TFileStream.Destroy;
@@ -631,27 +611,41 @@ begin
   CloseHandle(F);
 end;
 
+function TFileStream.GetName: string;
+begin
+  Result := FName;
+end;
+
+function TFileStream.GetSize: LongInt;
+begin
+  Result := FSize;
+end;
+
+function TFileStream.GetPos: LongInt;
+begin
+  Result := FPos;
+end;
+
 procedure TFileStream.SetPos(Value: LongInt);
 begin
+  if F = INVALID_HANDLE_VALUE then
+    Exit;
   FPos := Value;
   SetFilePointer(F, FBPos + FPos, nil, FILE_BEGIN);
 end;
 
-procedure TFileStream.SetBlock(BPos, BSize: LongInt);
-begin
-  FSize := BSize;
-  FBPos := BPos;
-  Pos := 0;
-end;
-
 function TFileStream.Read(out Buf; BufSize: LongInt): LongWord;
 begin
+  if F = INVALID_HANDLE_VALUE then
+    Exit;
   ReadFile(F, Buf, BufSize, Result, nil);
   Inc(FPos, Result);
 end;
 
 function TFileStream.Write(const Buf; BufSize: LongInt): LongWord;
 begin
+  if F = INVALID_HANDLE_VALUE then
+    Exit;
   WriteFile(F, Buf, BufSize, Result, nil);
   Inc(FPos, Result);
   Inc(FSize, Max(0, FPos - FSize));
@@ -661,6 +655,8 @@ function TFileStream.ReadAnsi: AnsiString;
 var
   Len : Word;
 begin
+  if F = INVALID_HANDLE_VALUE then
+    Exit;
   Read(Len, SizeOf(Len));
   if Len > 0 then
   begin
@@ -674,6 +670,8 @@ procedure TFileStream.WriteAnsi(const Value: AnsiString);
 var
   Len : Word;
 begin
+  if F = INVALID_HANDLE_VALUE then
+    Exit;
   Len := Length(Value);
   Write(Len, SizeOf(Len));
   if Len > 0 then
@@ -684,6 +682,8 @@ function TFileStream.ReadUnicode: WideString;
 var
   Len : Word;
 begin
+  if F = INVALID_HANDLE_VALUE then
+    Exit;
   Read(Len, SizeOf(Len));
   SetLength(Result, Len);
   Read(Result[1], Len * 2);
@@ -693,6 +693,8 @@ procedure TFileStream.WriteUnicode(const Value: WideString);
 var
   Len : Word;
 begin
+  if F = INVALID_HANDLE_VALUE then
+    Exit;
   Len := Length(Value);
   Write(Len, SizeOf(Len));
   Write(Value[1], Len * 2);

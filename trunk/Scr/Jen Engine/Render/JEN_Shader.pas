@@ -28,15 +28,13 @@ type
 
   IShaderAttrib = interface(JEN_Header.IShaderAttrib)
   ['{CB9EEB22-8256-46BB-B7B1-372E0D4CD624}']
-    procedure Init(ShaderID: GLEnum; const AName: string; Necessary: Boolean);
+    procedure Init(ShaderID: GLEnum; const AName: string; AttribType: TShaderAttribType; Necessary: Boolean);
   end;
 
   TShaderResource = class(TResource, IManagedInterface, IResource, IShaderResource)
     constructor Create(const Name, FilePath: string);
     destructor Destroy; override;
   private
-    FName           : string;
-    FFilePath       : string;
     FShaderPrograms : TInterfaceList;
     FDefines        : TList;
     FXML            : IXML;
@@ -62,8 +60,8 @@ type
   public
     function Valid: Boolean;
     function Init(const VertexShader, FragmentShader: AnsiString): Boolean;
-    function Uniform(const UName: String; Necessary: Boolean): JEN_Header.IShaderUniform; overload; stdcall;
-    function Attrib(const AName: string; Necessary: Boolean): JEN_Header.IShaderAttrib; stdcall;
+    function Uniform(const UName: String; UniformType: TShaderUniformType; Necessary: Boolean): JEN_Header.IShaderUniform; overload; stdcall;
+    function Attrib(const AName: string; AttribType: TShaderAttribType; Necessary: Boolean): JEN_Header.IShaderAttrib; stdcall;
     function GetUniformsVersion: LongWord; stdcall;
 
     procedure Bind; stdcall;
@@ -78,11 +76,13 @@ type
     FValue          : array [0..11] of Single;
     FVersion        : Word;
     function GetName: string; stdcall;
+    function GetType: TShaderUniformType; stdcall;
+    //procedure SetType(Value: TShaderAttribType); stdcall;
     function GetVersion: Word; stdcall;
 
-    procedure SetType(Value: TShaderUniformType);
     procedure Init(ShaderID: GLEnum; const UName: string; UniformType: TShaderUniformType; Necessary: Boolean);
   public
+    function Valid: Boolean; stdcall;
     procedure Value(const Data; Count: LongInt); stdcall;
   end;
 
@@ -90,12 +90,14 @@ type
     constructor Create;
   private
     FID    : GLint;
+    FType  : TShaderAttribType;
     FName  : string;
     function GetName: string; stdcall;
-    procedure Init(ShaderID: GLEnum; const AName: string; Necessary: Boolean);
+    function GetType: TShaderAttribType; stdcall;
+    procedure Init(ShaderID: GLEnum; const AName: string; AttribType: TShaderAttribType; Necessary: Boolean);
   public
-    procedure Value(Stride, Offset: LongInt; AttribType: TShaderAttribType; Norm: Boolean); stdcall;
-    property Name: string read FName;
+    function Valid: Boolean; stdcall;
+    procedure Value(Stride, Offset: LongInt; Norm: Boolean); stdcall;
     procedure Enable; stdcall;
     procedure Disable; stdcall;
   end;
@@ -108,7 +110,7 @@ type
   TShaderLoader = class(TResLoader)
     constructor Create;
   public
-    function Load(const Stream: TStream; var Resource: IResource): Boolean; override;
+    function Load(Stream: IStream; var Resource: IResource): Boolean; override;
   end;
 
 implementation
@@ -210,6 +212,14 @@ begin
     Exit;
   end;
 
+  for j := 0 to FUniformList.Count - 1 do
+  with (FUniformList[j] as IShaderUniform) do
+    Init(FID, Name, UType, Valid);
+
+  for j := 0 to FAttribList.Count - 1 do
+  with (FAttribList[j] as IShaderAttrib) do
+    Init(FID, Name, AType, Valid);
+          {
   glGetProgramiv(FID, GL_ACTIVE_UNIFORMS, @Count);
   for i := 0 to Count-1 do
   begin
@@ -233,15 +243,16 @@ begin
       if(FUniformList[j] as IShaderUniform).Name = Name then
         u := FUniformList[j] as IShaderUniform;
 
-    if not Assigned(u) then
+    if not (Assigned(u) and (u.Name = Name) and (u.UType = UniformType)) then
     begin
       u := TShaderUniform.Create;
       FUniformList.Add(u);
+      u.Init(FID, Name, UniformType, True);
     end;
 
-    u.Init(FID, Name, UniformType, True);
-  end;
+  end;   }
 
+                     {
   glGetProgramiv(FID, GL_ACTIVE_ATTRIBUTES, @Count);
   for I := 0 to Count-1 do
   begin
@@ -261,7 +272,7 @@ begin
     end;
 
     a.Init(FID, Name, True);
-  end;
+  end;   }
 
   Bind();
   glUseProgram(FID);
@@ -269,7 +280,7 @@ begin
   FValid := True;
 end;
 
-function TShaderProgram.Uniform(const UName: string; Necessary: Boolean): JEN_Header.IShaderUniform;
+function TShaderProgram.Uniform(const UName: string; UniformType: TShaderUniformType; Necessary: Boolean): JEN_Header.IShaderUniform;
 var
   i : LongInt;
   u : IShaderUniform;
@@ -279,12 +290,12 @@ begin
       Exit(IShaderUniform(FUniformList[i]));
 
   u := TShaderUniform.Create;
-  u.Init(FID, UName, utNone, Necessary);
+  u.Init(FID, UName, UniformType, Necessary);
   FUniformList.Add(u);
   Result := u;
 end;
 
-function TShaderProgram.Attrib(const AName: string; Necessary: Boolean): JEN_Header.IShaderAttrib;
+function TShaderProgram.Attrib(const AName: string; AttribType: TShaderAttribType; Necessary: Boolean): JEN_Header.IShaderAttrib;
 var
   i : LongInt;
   a : IShaderAttrib;
@@ -294,7 +305,7 @@ begin
       Exit(IShaderAttrib(FAttribList[i]));
 
   a := TShaderAttrib.Create;
-  a.Init(FID, AName, Necessary);
+  a.Init(FID, AName, AttribType, Necessary);
   FAttribList.Add(IShaderAttrib(a));
   Result := a;
 end;
@@ -325,21 +336,31 @@ begin
   inherited;
 end;
 
+function TShaderUniform.Valid: Boolean;
+begin
+  Result := FID <> -1;
+end;
+
 function TShaderUniform.GetName: string;
 begin
   Result := FName;
+end;
+
+function TShaderUniform.GetType: TShaderUniformType;
+begin
+  Result := FType;
 end;
 
 function TShaderUniform.GetVersion: Word;
 begin
   Result := FVersion;
 end;
-
+          {
 procedure TShaderUniform.SetType(Value: TShaderUniformType);
 begin
   FType := Value;
 end;
-
+                }
 procedure TShaderUniform.Init(ShaderID: LongWord; const UName: string; UniformType: TShaderUniformType; Necessary: Boolean);
 var
   i : LongInt;
@@ -399,29 +420,40 @@ begin
   Result := FName;
 end;
 
-procedure TShaderAttrib.Init(ShaderID: LongWord; const AName: string; Necessary: Boolean);
+function TShaderAttrib.GetType: TShaderAttribType;
+begin
+  Result := FType;
+end;
+
+procedure TShaderAttrib.Init(ShaderID: LongWord; const AName: string; AttribType: TShaderAttribType; Necessary: Boolean);
 begin
   FID   := glGetAttribLocation(ShaderID, PAnsiChar(AnsiString(AName)));
   FName := Copy(AName, 1, Length(AName));
+  FType := AttribType;
 
   if (FID = -1) and Necessary then
     LogOut('Uncorrect attrib name ' + AName, lmWarning);
 end;
 
-procedure TShaderAttrib.Value(Stride, Offset: LongInt; AttribType: TShaderAttribType; Norm: Boolean);
+function TShaderAttrib.Valid: Boolean;
+begin
+  Result := FID <> -1;
+end;
+
+procedure TShaderAttrib.Value(Stride, Offset: LongInt; Norm: Boolean);
 var
   DType : GLEnum;
   Size  : LongInt;
 begin
   if FID <> -1 then
   begin
-    case AttribType of
+    case FType of
       atVec1b..atVec4b: DType := GL_UNSIGNED_BYTE;
       atVec1s..atVec4s: DType := GL_SHORT;
       atVec1f..atVec4f: DType := GL_FLOAT;
       else Exit;
     end;
-    Size := (Byte(AttribType) - 1) mod 4 + 1;
+    Size := (Byte(FType) - 1) mod 4 + 1;
     glVertexAttribPointer(FID, Size, DType, Norm, Stride, Pointer(Offset));
   end;
 end;
@@ -524,7 +556,7 @@ var
   i : IResource;
 begin
   i := self;
-  ResMan.Load(FFilePath, i);
+  ResMan.Load(FFilePath+FName, i);
 end;
 
 procedure TShaderResource.Compile(var Shader : IShaderProgram);
@@ -639,7 +671,7 @@ begin
   ResType := rtShaderRes;
 end;
 
-function TShaderLoader.Load(const Stream : TStream; var Resource : IResource) : Boolean;
+function TShaderLoader.Load(Stream : IStream; var Resource : IResource) : Boolean;
 var
   Shader: IShaderResource;
 begin

@@ -26,7 +26,7 @@ type
   end;
 
   TXML = class(TInterfacedObject, IXML)
-    class function Load(const Stream: TStream): IXML;
+    class function Load(Stream: IStream): IXML;
     constructor Create(const Text: string; BeginPos: LongInt);
     destructor Destroy; override;
   private
@@ -129,20 +129,19 @@ begin
   Result.Value := FParams[Idx].Value;
 end;
 
-class function TXML.Load(const Stream: TStream): IXML;
+class function TXML.Load(Stream: IStream): IXML;
 var
   Text     : string;
   Size     : LongInt;
   UTF8Text : UTF8String;
 begin
-  if Stream <> nil then
+  if Assigned(Stream) then
   begin
     Size := Stream.Size;
     SetLength(UTF8Text, Size);
     Stream.Read(UTF8Text[1], Size);
     Text := UTF8ToString(UTF8Text);
     Result := Create(Text, 1);
-    Stream.Free;
   end else
     Result := nil;
 end;
