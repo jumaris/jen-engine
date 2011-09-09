@@ -1,6 +1,6 @@
-﻿<Shader>
+<Shader>
 	<VertexShader>
-		<Code>
+	<Code>
 			#version 120
 			attribute float IndxAttrib;
 
@@ -46,14 +46,12 @@
 	<FragmentShader>
 		<Code>
 			#version 120
-			uniform sampler2D Map0;
-
-			varying vec4 InterpolatedData;
 			varying vec2 Texcoord1;
-
-			void main( void )
+			uniform sampler2D Map0;
+			
+			void main(void)
 			{
-				gl_FragColor = texture2D(Map0, Texcoord1.xy)*InterpolatedData;
+				gl_FragColor = texture2D(Map0, Texcoord1.xy);
 			}
 		</Code> 
 	</FragmentShader>
