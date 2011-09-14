@@ -3,7 +3,7 @@ unit JEN_Main;
 interface
 
 uses
-  windows,
+  Windows,
   JEN_Header,
   JEN_Math,
   JEN_Utils,
@@ -205,8 +205,8 @@ begin
 
     Display.Swap;
 
-    if (Utils.Time - FLastUpdate)< 2 then
-    Utils.Sleep(2);
+    if (Utils.Time - FLastUpdate)< 5 then
+      Utils.Sleep(5);
     DeltaTime := Max(Utils.Time - FLastUpdate, 1);
 
     FLastUpdate := Utils.Time;

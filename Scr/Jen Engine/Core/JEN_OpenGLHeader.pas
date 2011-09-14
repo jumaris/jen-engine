@@ -637,8 +637,8 @@ end;
 
 
 function glGetProc(const ProcName: PAnsiChar; var OldResult: Boolean; Required: Boolean): Pointer;
-var
-  S : AnsiString;
+//var
+ // S : AnsiString;
 begin
   if not OldResult then Exit(nil);
 
@@ -781,6 +781,6 @@ begin
 end;
 
 initialization
-  GlModuleH := GetModuleHandle(Opengl32);
+//  GlModuleH := GetModuleHandle(Opengl32);
 
 end.

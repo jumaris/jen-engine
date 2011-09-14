@@ -33,15 +33,15 @@ type
     constructor Create(const Name, FilePath: string);
     destructor Destroy; override;
   private
-    FName     : string;
-    FFilePath : string;
+    class var Shader : IShaderProgram;
+    FName       : string;
+    FFilePath   : string;
     FHeight     : LongInt;
     FMaxDist    : Word;
     FDistCorr   : Word;
     FPagesCount : Word;
     FChars      : Array[WideChar] of PCharInfo;
     FPages      : Array of JEN_Header.ITexture;
-
     FScale        : Single;
     FColor1       : TVec4f;
     FColor2       : TVec4f;
@@ -84,6 +84,8 @@ const
   JFIMagic = $544e4f465f4e454a;
 
 constructor TFont.Create;
+var
+  Res : IShaderResource;
 begin
   inherited Create(Name, FilePath, rtFont);
   FScale        := 1.0;
@@ -92,6 +94,11 @@ begin
   FOutlineColor := clWhite;
   FOutlineSize  := 0;
   FEdgeSmooth   := 1;
+  if not Assigned(Shader) then
+  begin
+    ResMan.Load('|TextShader.xml', Res);
+    Shader := Res.Compile;
+  end;
 end;
 
 destructor TFont.Destroy;
@@ -215,7 +222,7 @@ begin
       OutlineSize := FOutlineSize/ (128) /FScale/2;
       Pos1 := Vec2f(PosX, Y) + Vec2f(OriginX, OriginY) * FScale - Vec2f(128, 128)  * FScale;
       Pos2 := Pos1 + Vec2f(BlackBoxX, BlackBoxY) * FScale + Vec2f(128, 128) * FScale*2;
-      Render2D.DrawSpriteAdv(Render2d.GetTextShader, FPages[0], nil, nil, Vec4f(Pos1.X, Pos2.Y, TexCoords[1].x, TexCoords[1].y), Vec4f(Pos2.X, Pos2.Y, TexCoords[2].x,TexCoords[2].y), Vec4f(Pos2.X, Pos1.Y, TexCoords[3].x, TexCoords[3].y), Vec4f(Pos1.X, Pos1.Y, TexCoords[4].x, TexCoords[4].y),
+      Render2D.DrawSpriteAdv(Shader, FPages[0], nil, nil, Vec4f(Pos1.X, Pos2.Y, TexCoords[1].x, TexCoords[1].y), Vec4f(Pos2.X, Pos2.Y, TexCoords[2].x,TexCoords[2].y), Vec4f(Pos2.X, Pos1.Y, TexCoords[3].x, TexCoords[3].y), Vec4f(Pos1.X, Pos1.Y, TexCoords[4].x, TexCoords[4].y),
         Vec4f(EdgeSmooth, OutlineSize, (128)/8192, 1), FColor1, FColor2, FOutLineColor, Vec2f(0,0), 0);
           PosX := PosX+(CharInfo^.CellWidht)*FScale+FEdgeSmooth+FOutlineSize;
     end;
@@ -264,7 +271,7 @@ begin
   Font := Resource as IFont;
 
   Stream.Read(Magic, 8);
-  if(JFIMagic <> Magic)then Exit;
+  if (JFIMagic <> Magic) then Exit;
   Stream.Read(Height, SizeOf(Height));
   Stream.Read(MaxDist, SizeOf(MaxDist));
   Stream.Read(DistCorr, SizeOf(DistCorr));

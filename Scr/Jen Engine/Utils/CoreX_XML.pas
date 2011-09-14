@@ -12,7 +12,8 @@ interface
 
 uses
   JEN_Header,
-  JEN_Utils;
+  JEN_Utils,
+  JEN_Math;
 
 type
   TXMLParams = class(TInterfacedObject, IXMLParams)
@@ -135,10 +136,10 @@ var
   Size     : LongInt;
   UTF8Text : UTF8String;
 begin
-  if Assigned(Stream) then
+  if Assigned(Stream) and Stream.Valid then
   begin
     Size := Stream.Size;
-    SetLength(UTF8Text, Size);
+    SetLength(UTF8Text, Max(Size,1));
     Stream.Read(UTF8Text[1], Size);
     Text := UTF8ToString(UTF8Text);
     Result := Create(Text, 1);

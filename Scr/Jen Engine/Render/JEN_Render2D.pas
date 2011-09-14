@@ -13,7 +13,6 @@ type
   IRender2D = interface(JEN_Header.IRender2D)
     procedure Init;
     procedure Flush;
-    function  GetTextShader: IShaderProgram;
     procedure BatchQuad(const v1, v2, v3, v4, Data1, Data2, Data3, Data4: TVec4f); stdcall;
   end;
   TByteArray = array [0..1] of Byte;
@@ -22,6 +21,7 @@ type
 
   TTehnique = record
     IndxAttrib    : IShaderAttrib;
+    MatUniform    : IShaderUniform;
     VBUniform     : IShaderUniform;
     DBUniform     : IShaderUniform;
     TCParUniform1 : IShaderUniform;
@@ -84,7 +84,8 @@ begin
       LastUsed := Utils.Time;
       ShaderProgram := Shader;
       ShaderProgram.Bind;
-      VBUniform := ShaderProgram.Uniform('PosTexCoord', utVec4, false);
+      MatUniform := ShaderProgram.Uniform('Matrix2D', utMat2);
+      VBUniform := ShaderProgram.Uniform('PosTexCoord', utVec4, False);
       DBUniform := ShaderProgram.Uniform('QuadData', utVec4, False);
       TCParUniform1 := ShaderProgram.Uniform('TexCoordParams1', utVec4, False);
 		  TCParUniform2 := ShaderProgram.Uniform('TexCoordParams2', utVec4, False);
@@ -114,8 +115,8 @@ begin
     IdxBuff[i] := i-1;
 
   FVrtBuff := TGeomBuffer.Create(gbVertex, Batch_Size*4, 4, @IdxBuff[1]);//Render.CreateGeomBuffer(gbVertex, Batch_Size*4, 4, @IdxBuff[1]);
-  ResMan.Load('Media\Shader.xml', FNormalShader);
-  ResMan.Load('Media\Text.xml', FTextShader);
+  ResMan.Load('|SpriteShader.xml', FNormalShader);
+  ResMan.Load('|TextShader.xml', FTextShader);
   RenderTechnique[ttNormal] := TehniqueInit(FNormalShader.Compile);
   RenderTechnique[ttText] := TehniqueInit(FTextShader.Compile);
 
@@ -123,10 +124,10 @@ begin
 end;
 
 procedure TRender2D.Free;
-var
-Teh :TTehniqueType;
+///var
+//Teh :TTehniqueType;
 begin
-  FVrtBuff := nil;
+ { FVrtBuff := nil;
   FNormalShader := nil;
   FTextShader := nil;
   for Teh := ttNormal to ttAdvancedLast do
@@ -144,11 +145,10 @@ begin
 
 
   FBatchParams.BatchShader     := nil;
-
-   FBatchParams.   BatchTexture1   := nil;
-   FBatchParams.   BatchTexture2   := nil;
-   FBatchParams.   BatchTexture3   := nil;
-
+  FBatchParams.BatchTexture1   := nil;
+  FBatchParams.BatchTexture2   := nil;
+  FBatchParams.BatchTexture3   := nil;
+       }
 end;
 
 function TRender2D.GetTextShader: IShaderProgram;
@@ -193,6 +193,9 @@ begin
     IndxAttrib.Enable;
     ShaderProgram.Bind;
 
+    TCParams := vec4f(Render.Matrix[mt2DMat].e00, Render.Matrix[mt2DMat].e10, Render.Matrix[mt2DMat].e01, Render.Matrix[mt2DMat].e11);
+    MatUniform.Value(TCParams);
+
     if Assigned(TCParUniform1) and Assigned(BatchTexture1) then
     begin
       TCParams := BatchTexture1.CoordParams;
@@ -215,7 +218,7 @@ begin
     if Assigned(DBUniform) then
       DBUniform.Value(FDataBuff[1], FIdx*4);
   end;
-  FVrtBuff.Draw(gmQuads, FIdx*4, false);
+  FVrtBuff.Draw(gmQuads, FIdx*4, False);
 
   Render.BlendType := Blend;
   Render.AlphaTest := AlphaTest;
@@ -245,7 +248,6 @@ end;
 procedure Rotate2D(out v1, v2, v3, v4: TVec4f; Angle: Single); inline;
 var
   tsin, tcos : Single;
-  tx1,tx2,ty1,ty2: single;
 begin
   sincos(Deg2Rad*Angle,tsin,tcos);
 
@@ -258,7 +260,7 @@ end;
 procedure TRender2D.DrawSpriteAdv(Shader: IShaderProgram; Tex1, Tex2, Tex3: ITexture; const v1, v2, v3, v4, Data1, Data2, Data3, Data4: TVec4f; const Center: TVec2f; Angle: Single); stdcall;
 var
   v : array[1..4] of TVec4f;
-  c,p : TVec4f;
+  p : TVec4f;
 
   procedure UpdateBathParams;
   var
@@ -320,7 +322,6 @@ begin
       UpdateBathParams;
     end;
 
-    c := Vec4f(2/Display.Width, 2/Display.Height, 1, 1);
     if Abs(Angle) > EPS then
     begin
       p := Vec4f(Center.X, Center.Y, 0, 0);
@@ -329,16 +330,16 @@ begin
       v[3] := v3 - p;
       v[4] := v4 - p;
       Rotate2D(v[1], v[2], v[3], v[4], Angle);
-      v[1] := (v[1] + p) * c;
-      v[2] := (v[2] + p) * c;
-      v[3] := (v[3] + p) * c;
-      v[4] := (v[4] + p) * c;
+      v[1] := v[1] + p;
+      v[2] := v[2] + p;
+      v[3] := v[3] + p;
+      v[4] := v[4] + p;
     end else
     begin
-      v[1] := v1 * c;
-      v[2] := v2 * c;
-      v[3] := v3 * c;
-      v[4] := v4 * c;
+      v[1] := v1;
+      v[2] := v2;
+      v[3] := v3;
+      v[4] := v4;
     end;
 
     if not (InScreen(v[4]) or InScreen(v[3]) or InScreen(v[2]) or InScreen(v[1])) then Exit;

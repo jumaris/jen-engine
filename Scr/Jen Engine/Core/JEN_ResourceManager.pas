@@ -158,7 +158,7 @@ begin
   end;
 
   Stream := Helpers.CreateStream(FilePath, False);
-  if not Assigned(Stream) then
+  if not (Assigned(Stream) and Stream.Valid) then
   begin
     Logout('Can''t open file ' + FileName, lmWarning);
     Exit;

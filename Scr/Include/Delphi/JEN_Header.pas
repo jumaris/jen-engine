@@ -36,9 +36,9 @@ type
   TCullFace = (cfNone, cfFront, cfBack);
   TColorChannel = (ccRed, ccGreen, ccBlue, ccAlpha);
   TRenderChannel = (rcDepth, rcColor0, rcColor1, rcColor2, rcColor3, rcColor4, rcColor5, rcColor6, rcColor7);
-  TMatrixType = (mtViewProj, mtModel, mtProj, mtView);
+  TMatrixType = (mt2DMat, mtViewProj, mtModel, mtProj, mtView);
 
-  TShaderUniformType = (utNone, utInt, utVec1, utVec2, utVec3, utVec4, utMat3, utMat4);
+  TShaderUniformType = (utNone, utInt, utVec1, utVec2, utVec3, utVec4, utMat2, utMat3, utMat4);
   TShaderAttribType  = (atNone, atVec1b, atVec2b, atVec3b, atVec4b,
                         atVec1s, atVec2s, atVec3s, atVec4s,
                         atVec1f, atVec2f, atVec3f, atVec4f);
@@ -84,6 +84,7 @@ type
   end;
 
   IStream = interface
+    function Valid: Boolean; stdcall;
     function GetName: string; stdcall;
     function GetSize: LongInt; stdcall;
     function GetPos: LongInt; stdcall;
@@ -371,7 +372,7 @@ type
     procedure Init(DepthBits: Byte = 24; StencilBits: Byte = 8; FSAA: Byte = 0); stdcall;
     function Support(RenderSupport: TRenderSupport): Boolean;
 
-    function CreateRenderTarget(Width, Height: LongWord; CFormat: TTextureFormat; Count: LongWord; Samples: LongWord = 0; DepthBuffer: Boolean = false; DFormat: TTextureFormat = tfoDepth24): JEN_Header.IRenderTarget; stdcall;
+    function CreateRenderTarget(Width, Height: LongWord; CFormat: TTextureFormat; Count: LongWord; Samples: LongWord = 0; DepthBuffer: Boolean = False; DFormat: TTextureFormat = tfoDepth24): JEN_Header.IRenderTarget; stdcall;
     function GetTarget: IRenderTarget; stdcall;
     procedure SetTarget(Value: IRenderTarget); stdcall;
 

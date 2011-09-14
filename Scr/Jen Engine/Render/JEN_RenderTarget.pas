@@ -16,7 +16,6 @@ type
     FWidth        : LongWord;
     FHeight       : LongWord;
     FTexture      : array [TRenderChannel] of ITexture;
-    FDepthBuf     : LongWord;
     FColChanCount : LongInt;
     function GetID: LongWord; stdcall;
     function GetWidth: LongWord; stdcall;
@@ -33,7 +32,6 @@ uses
 constructor TRenderTarget.Create(Width, Height: LongWord; CFormat: TTextureFormat; Count: LongInt; Samples: LongWord; DepthBuffer: Boolean; DFormat: TTextureFormat);
 var
   i : Integer;
-  Channel : TRenderChannel;
 begin
 //  if( numColBufs > RenderBuffer::MaxColorAttachmentCount ) return RenderBuffer();
 
@@ -60,7 +58,7 @@ begin
 
 				// Create a color texture
     FTexture[TRenderChannel(i + Ord(rcColor0))] := ResMan.CreateTexture(Width, Height, CFormat);
-    FTexture[TRenderChannel(i + Ord(rcColor0))].Clamp := true;
+    FTexture[TRenderChannel(i + Ord(rcColor0))].Clamp := True;
 
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, FTexture[TRenderChannel(i + Ord(rcColor0))].ID, 0);
   end;
@@ -81,7 +79,7 @@ begin
 		}
     begin
       FTexture[rcDepth] := ResMan.CreateTexture(Width, Height, DFormat);
-      FTexture[rcDepth].Clamp := true;
+      FTexture[rcDepth].Clamp := True;
 			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, FTexture[rcDepth].ID, 0 );
     end;
   end;
@@ -104,9 +102,9 @@ end;
 
 destructor TRenderTarget.Destroy;
 begin
-  {if DepthBuf <> 0 then
-    gl.DeleteRenderbuffers(1, @DepthBuf);
-  gl.DeleteFramebuffers(1, @FrameBuf); }
+//  if DepthBuf <> 0 then
+ //   gl_DeleteRenderbuffers(1, @DepthBuf);
+  glDeleteFramebuffers(1, @FID);
 end;
 
 function TRenderTarget.GetID: LongWord;
