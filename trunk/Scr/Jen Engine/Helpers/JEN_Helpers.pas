@@ -41,7 +41,7 @@ end;
 
 function THelpers.CreateStream(FileName: string; RW: Boolean): IStream;
 begin
-  Result := TFileStream.Create(FileName, RW);
+  Result := TStream.Create(FileName, RW);
 end;
 
 function THelpers.CreateCamera3D: ICamera3d;

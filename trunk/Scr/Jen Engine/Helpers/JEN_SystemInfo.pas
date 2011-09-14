@@ -75,7 +75,7 @@ begin
   FStartHeight  := GetHeight;
   FStartBPS     := GetBPS;
   FStartRefresh := GetRefresh;
-             {
+
   FillChar(DevMode, SizeOf(TDeviceMode), 0);
   DevMode.dmSize := SizeOf(TDeviceMode);
 
@@ -117,7 +117,7 @@ begin
       PMode^.RefreshRates := TList.Create;
       PMode^.RefreshRates.Add(PRefresh);
     end;
-  end;    }
+  end;
 
 end;
 

@@ -166,6 +166,7 @@ class function TConsole.WndProc(hWnd: HWND; Msg: LongWord; wParam: LongInt; lPar
 var
   rect : TRect;
 begin
+  Result := 0;
   case Msg of
     WM_CLOSE:;{ SetEvent(QuitEvent);   }
 
@@ -267,10 +268,10 @@ begin
       end;
 
     lmWarning :
-      str := '[' + TimeStr + 'ms] WARNING: ' + Text + #13#10;
+      str := '[' + TimeStr + '] WARNING: ' + Text + #13#10;
 
     lmError :
-      str := '[' + TimeStr + 'ms] ERROR: ' + Text + #13#10;
+      str := '[' + TimeStr + '] ERROR: ' + Text + #13#10;
   end;
 
   SendMessage(HMemo, EM_SETSEL, WndTextLength, WndTextLength);

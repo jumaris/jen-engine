@@ -1,0 +1,3 @@
+SpriteShader.xml   10             ".\\Shader.xml"
+TextShader.xml     10             ".\\TextShader.xml"
+MAINICON           ICON           ".\\SmallIcon.ico"

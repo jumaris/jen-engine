@@ -98,15 +98,18 @@ type
     function ExtractFileExt(const FileName: string): string; stdcall;
   end;
 
-  TFileStream = class(TInterfacedObject, IStream)
+  TStream = class(TInterfacedObject, IStream)
     constructor Create(const FileName: string; RW: Boolean);
     destructor Destroy; override;
   private
+    FType  : (stNone, stMemory, stFile);
     FName  : string;
-    F      : LongWord;
+    F      : THandle;
     FPos   : LongInt;
     FBPos  : LongInt;
     FSize  : LongInt;
+    FMem   : Pointer;
+    function Valid: Boolean; stdcall;
     function GetName: string; stdcall;
     function GetSize: LongInt; stdcall;
     function GetPos: LongInt; stdcall;
@@ -118,7 +121,6 @@ type
     function ReadUnicode: WideString; stdcall;
     procedure WriteUnicode(const Value: WideString); stdcall;
   end;
-
   TCharSet = set of AnsiChar;
 
 function MemCmp(p1, p2: Pointer; Size: LongInt): LongInt;
@@ -556,7 +558,7 @@ var
   i : LongInt;
 begin
   for i := Length(FileName) downto 1 do
-    if (FileName[i] = '\') or (FileName[i] = '/') then
+    if (FileName[i] in ['\', '/', '|']) then
       Exit(Copy(FileName, 1, i));
   Result := '';
 end;
@@ -586,76 +588,115 @@ end;
 {$ENDREGION}
 
 // TFileStream
-{$REGION 'TFileStream'}
-constructor TFileStream.Create(const FileName: string; RW: Boolean);
+{$REGION 'TStream'}
+constructor TStream.Create(const FileName: string; RW: Boolean);
+var
+  Res : HRSRC;
 begin
+  FType := stNone;
   FName := Utils.ExtractFileName(FileName);
-  {$I-}
-  FileMode := 2;
 
-  if RW then
-    F := CreateFile(PChar(FileName), GENERIC_WRITE or GENERIC_READ, FILE_SHARE_READ, nil, CREATE_ALWAYS, 0, 0)
-  else
-    F := CreateFile(PChar(FileName), GENERIC_READ, FILE_SHARE_READ, nil, OPEN_EXISTING, 0, 0);
+  if FileName[1] = '|' then
+  begin
+    if Length(FileName) > 1 then
+      Res := FindResource(HInstance, @FileName[2], RT_RCDATA)
+    else
+      Exit;
 
-  if F = INVALID_HANDLE_VALUE then
-    Exit;
+    F := LoadResource(HInstance, Res);
+    FSize := SizeofResource(HInstance, Res);
+    FMem := LockResource(F);
 
-  FSize  := GetFileSize(F, nil);
-  FPos   := 0;
-  FBPos  := 0;
+    if Assigned(FMem) then
+      FType := stMemory;
+  end else
+  begin
+    {$I-}
+    FileMode := 2;
+
+    if RW then
+      F := CreateFile(PChar(FileName), GENERIC_WRITE or GENERIC_READ, FILE_SHARE_READ, nil, CREATE_ALWAYS, 0, 0)
+    else
+      F := CreateFile(PChar(FileName), GENERIC_READ, FILE_SHARE_READ, nil, OPEN_EXISTING, 0, 0);
+
+    if F = INVALID_HANDLE_VALUE then
+      Exit;
+
+    FType := stFile;
+    FSize := GetFileSize(F, nil);
+  end;
+
 end;
 
-destructor TFileStream.Destroy;
+destructor TStream.Destroy;
 begin
-  CloseHandle(F);
+  if FType = stFile then
+    CloseHandle(F);
 end;
 
-function TFileStream.GetName: string;
+function TStream.Valid: Boolean;
+begin
+  Result := FType <> stNone;
+end;
+
+function TStream.GetName: string;
 begin
   Result := FName;
 end;
 
-function TFileStream.GetSize: LongInt;
+function TStream.GetSize: LongInt;
 begin
   Result := FSize;
 end;
 
-function TFileStream.GetPos: LongInt;
+function TStream.GetPos: LongInt;
 begin
   Result := FPos;
 end;
 
-procedure TFileStream.SetPos(Value: LongInt);
+procedure TStream.SetPos(Value: LongInt);
 begin
-  if F = INVALID_HANDLE_VALUE then
-    Exit;
   FPos := Value;
-  SetFilePointer(F, FBPos + FPos, nil, FILE_BEGIN);
+  if FType = stFile then
+    SetFilePointer(F, FBPos + FPos, nil, FILE_BEGIN);
 end;
 
-function TFileStream.Read(out Buf; BufSize: LongInt): LongWord;
+function TStream.Read(out Buf; BufSize: LongInt): LongWord;
 begin
-  if F = INVALID_HANDLE_VALUE then
-    Exit;
-  ReadFile(F, Buf, BufSize, Result, nil);
+  case FType of
+    stMemory :
+    begin
+      Result := Min(FPos + BufSize, FSize) - FPos;
+      Move(FMem^, Buf, Result);
+    end;
+    stFile: ReadFile(F, Buf, BufSize, Result, nil);
+    else Exit;
+  end;
+
   Inc(FPos, Result);
 end;
 
-function TFileStream.Write(const Buf; BufSize: LongInt): LongWord;
+function TStream.Write(const Buf; BufSize: LongInt): LongWord;
 begin
-  if F = INVALID_HANDLE_VALUE then
-    Exit;
-  WriteFile(F, Buf, BufSize, Result, nil);
+  case FType of
+    stMemory :
+    begin
+      Result := Min(FPos + BufSize, FSize) - FPos;
+      Move(Buf, FMem^, Result);
+    end;
+    stFile: WriteFile(F, Buf, BufSize, Result, nil);
+    else Exit;
+
+  end;
   Inc(FPos, Result);
   Inc(FSize, Max(0, FPos - FSize));
 end;
 
-function TFileStream.ReadAnsi: AnsiString;
+function TStream.ReadAnsi: AnsiString;
 var
   Len : Word;
 begin
-  if F = INVALID_HANDLE_VALUE then
+  if not Valid then
     Exit;
   Read(Len, SizeOf(Len));
   if Len > 0 then
@@ -666,11 +707,11 @@ begin
     Result := '';
 end;
 
-procedure TFileStream.WriteAnsi(const Value: AnsiString);
+procedure TStream.WriteAnsi(const Value: AnsiString);
 var
   Len : Word;
 begin
-  if F = INVALID_HANDLE_VALUE then
+  if not Valid then
     Exit;
   Len := Length(Value);
   Write(Len, SizeOf(Len));
@@ -678,22 +719,22 @@ begin
     Write(Value[1], Len);
 end;
 
-function TFileStream.ReadUnicode: WideString;
+function TStream.ReadUnicode: WideString;
 var
   Len : Word;
 begin
-  if F = INVALID_HANDLE_VALUE then
+  if not Valid then
     Exit;
   Read(Len, SizeOf(Len));
   SetLength(Result, Len);
   Read(Result[1], Len * 2);
 end;
 
-procedure TFileStream.WriteUnicode(const Value: WideString);
+procedure TStream.WriteUnicode(const Value: WideString);
 var
   Len : Word;
 begin
-  if F = INVALID_HANDLE_VALUE then
+  if not Valid then
     Exit;
   Len := Length(Value);
   Write(Len, SizeOf(Len));

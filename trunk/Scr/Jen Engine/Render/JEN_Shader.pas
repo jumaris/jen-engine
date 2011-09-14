@@ -54,7 +54,6 @@ type
   private
     FID              : GLint;
     FValid           : Boolean;
-    FUniformsVersion : LongWord;
     FUniformList     : TInterfaceList;
     FAttribList      : TInterfaceList;
   public
@@ -141,18 +140,18 @@ end;
 
 function TShaderProgram.Init(const VertexShader, FragmentShader: AnsiString): Boolean;
 var
-  i,j         : LongInt;
+  i           : LongInt;
   Status      : LongInt;
   LogBuf      : AnsiString;
   LogLen      : LongInt;
-  Count       : LongInt;
-  Info        : LongInt;
-  GLType      : LongInt;
-  NameBuff    : array[0..255] of AnsiChar;
-  UniformType : TShaderUniformType;
-  Name        : String;
-  u           : IShaderUniform;
-  a           : IShaderAttrib;
+ // Count       : LongInt;
+ // Info        : LongInt;
+ // GLType      : LongInt;
+//  NameBuff    : array[0..255] of AnsiChar;
+//  UniformType : TShaderUniformType;
+//  Name        : String;
+ // u           : IShaderUniform;
+ // a           : IShaderAttrib;
 
   procedure Attach(ShaderType: GLenum; const Source: AnsiString);
   var
@@ -212,12 +211,12 @@ begin
     Exit;
   end;
 
-  for j := 0 to FUniformList.Count - 1 do
-  with (FUniformList[j] as IShaderUniform) do
+  for i := 0 to FUniformList.Count - 1 do
+  with (FUniformList[i] as IShaderUniform) do
     Init(FID, Name, UType, Valid);
 
-  for j := 0 to FAttribList.Count - 1 do
-  with (FAttribList[j] as IShaderAttrib) do
+  for i := 0 to FAttribList.Count - 1 do
+  with (FAttribList[i] as IShaderAttrib) do
     Init(FID, Name, AType, Valid);
           {
   glGetProgramiv(FID, GL_ACTIVE_UNIFORMS, @Count);
@@ -378,7 +377,7 @@ end;
 
 procedure TShaderUniform.Value(const Data; Count: LongInt);
 const
-  USize : array [TShaderUniformType] of LongInt = (0, 4, 4, 8, 12, 16, 36, 64);
+  USize : array [TShaderUniformType] of LongInt = (0, 4, 4, 8, 12, 16, 16, 36, 64);
 begin
   if FID <> -1 then
   begin
@@ -387,9 +386,10 @@ begin
       if MemCmp(@FValue, @Data, Count * USize[FType]) <> 0 then
         Move(Data, FValue, Count * USize[FType])
       else
-        Exit
+        Exit;
     end else
       Move(Data, FValue, SizeOf(FValue));
+
 
     inc(FVersion);
     if FVersion = 65535 then
@@ -401,6 +401,7 @@ begin
       utVec2 : glUniform2fv(FID, Count, @Data);
       utVec3 : glUniform3fv(FID, Count, @Data);
       utVec4 : glUniform4fv(FID, Count, @Data);
+      utMat2 : glUniformMatrix2fv(FID, Count, False, @Data);
       utMat3 : glUniformMatrix3fv(FID, Count, False, @Data);
       utMat4 : glUniformMatrix4fv(FID, Count, False, @Data);
     end;

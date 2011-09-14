@@ -186,7 +186,7 @@ begin
     Exit;
   end;
 
-  FHandle := CreateWindowEx(WS_EX_APPWINDOW, WINDOW_CLASS_NAME, @FCaption[1], 0, 0, 0, 0, 0, 0, 0, 0, nil);
+  FHandle := CreateWindowEx(WS_EX_APPWINDOW, WINDOW_CLASS_NAME, @FCaption[1], WS_SYSMENU, 0, 0, 0, 0, 0, 0, 0, nil);
 
   LogOut('Create window.', lmNotify);
   if FHandle = 0 Then
@@ -288,10 +288,9 @@ begin
     Rect.Inflate(GetSystemMetrics(SM_CXDLGFRAME), GetSystemMetrics(SM_CYDLGFRAME) + GetSystemMetrics(SM_CYCAPTION) div 2);
   end;
 
-  SetWindowLongA(FHandle, GWL_STYLE, Style or WS_SYSMENU or WS_VISIBLE);
   SetWindowPos(FHandle, 0, Rect.x, Rect.y, Rect.Width, Rect.Height, $220);
-
   ShowWindow(FHandle, SW_SHOWNORMAL);
+  SetWindowLongW(FHandle, GWL_STYLE, Style or WS_SYSMENU or WS_VISIBLE);
 
   Update;
   Engine.CreateEvent(evDisplayRestore);

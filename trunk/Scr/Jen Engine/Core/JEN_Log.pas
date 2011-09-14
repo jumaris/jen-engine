@@ -118,10 +118,10 @@ begin
       end;
 
     lmWarning :
-      str := '[' + TimeStr + 'ms] WARNING: ' + Text+#13#10;
+      str := '[' + TimeStr + '] WARNING: ' + Text+#13#10;
 
     lmError :
-      str := '[' + TimeStr + 'ms] ERROR: ' + Text+#13#10;
+      str := '[' + TimeStr + '] ERROR: ' + Text+#13#10;
   end;
 
   Stream.Write(str[1], Length(str)*2);

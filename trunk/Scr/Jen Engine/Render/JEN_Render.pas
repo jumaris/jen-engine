@@ -122,7 +122,7 @@ var
   RC      : HGLRC;
   Result  : Boolean;
 
-  FID     : LongWord;
+//  FID     : LongWord;
 begin
   FValid := False;
   Set8087CW($133F);
@@ -236,7 +236,11 @@ begin
   LogOut('Video device   : ' + glGetString(GL_RENDERER), lmInfo);
   LogOut('Texture units  : ' + Utils.IntToStr(Par), lmInfo);
 
-  FValid := True;
+  FMatrix[mt2DMat].Ortho(0, Display.Width, Display.Height, 0, -1, 1);
+  FMatrix[mtViewProj].Identity;
+  FMatrix[mtModel].Identity;
+  FMatrix[mtProj].Identity;
+  FMatrix[mtView].Identity;
 
   SetColorMask(True, True, True, True);
   SetBlendType(btNormal);
@@ -259,7 +263,7 @@ begin
   // glEnable(GL_NORMALIZE);
   // glEnable(GL_COLOR_MATERIAL);
   Render2d.Init;
-  FValid := true;
+  FValid := True;
 end;
 
 function TRender.CreateRenderTarget(Width, Height: LongWord; CFormat: TTextureFormat; Count: LongWord; Samples: LongWord; DepthBuffer: Boolean; DFormat: TTextureFormat): JEN_Header.IRenderTarget;

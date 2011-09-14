@@ -38,6 +38,7 @@ implementation
 
 procedure TGame.LoadContent;
 
+var i : integer;
 begin
   ResMan.Load('Media\123.dds', r);
   RT := Render.CreateRenderTarget(1024, 1024, tfoBGRA8, 1, 0, true, tfoDepth8);
@@ -46,6 +47,8 @@ begin
   s := sr.Compile;
 
    ccc := s.Uniform('count', utInt);
+   c := true;
+
   // r.Filter := tfNone;
 end;
 
@@ -67,39 +70,45 @@ begin
   Render.Clear(True,False,False);
 
 
-  if c then
+ { if c then
   begin
    v := Render.Viewport;
   Render.Target:= rt;
 
   Render.Clear(True,False,False);
  // Render.Viewport := Recti(0,0,256,256);
- end;
+ end;    }
                       //render.AlphaTest:=64;
  // render2d.DrawSprite(r,0,0,0.5,0.5, clWhite);
   //render2d.DrawSpriteAdv(s,r,nil,nil,0,0,1,1.33333333, clWhite,clWhite,clWhite,clWhite);
 
-             {
+
   for i := 0 to m do
-  render2d.DrawSprite(r ,Frac(i / 30)*1000,(i div 30)*100,100,100, vec4f(1.0 - i/m,1,1,1), 0*Utils.Time/10000*360,0.5,0.5);
+  render2d.DrawSprite(r ,Frac(i / 30)*1000,(i div 30)*100,100,100, vec4f(1.0 - i/m,1,1,1), Utils.Time/10000*360,0.5,0.5);
     //ssprite2d_Draw(r,Frac(i / 300)*1000,(i div 300)*100,100,100,0);
 
-              }
-              i := 13;
+
+
+          i := 13;
+          s.Bind;
               ccc.Value(i);
-    render2d.DrawSpriteAdv(s,r,nil,nil,Vec4f(0,1000,0,0),Vec4f(1000,1000,1,0),Vec4f(1000,0,1,1),Vec4f(0,0,0,1), clWhite, clWhite, clWhite, clWhite, Vec2f(500,500),Utils.Time/10000*360);
+              c := false;
+
+
+
+              render2d.DrawSpriteAdv(s,r,nil,nil,Vec4f(0,500,0,0),Vec4f(500,500,1,0),Vec4f(500,0,1,1),Vec4f(0,0,0,1), clWhite, clWhite, clWhite, clWhite, Vec2f(500,500),Utils.Time/10000*360);
 
    //  DrawSpriteAdv(RenderTechnique[ttNormal].ShaderProgram, Tex, nil, nil, Vec4f(x, y+h, 0, 0),Vec4f(x+w, y+h , 1, 0), Vec4f(x+w, y, 1, 1), Vec4f(x, y, 0, 1), Color, Color, Color, Color, Vec2f(x + w*cx,y + h*cy), Angle);
 
 
        // render2d.DrawSprite(r,256,400,400,400, vec4f(1,0,0,1),vec4f(0,1,0,1),vec4f(0,0,1,1),vec4f(1,1,1,1),0* Utils.Time/10000*360,0.5,0.5);
-  if c then
+ { if c then
   begin
   Render.Target := nil;
 
 
   render2d.DrawSprite(Rt.Texture[rcDepth],0,768-1024,1024,1024, clWhite, clWhite, clWhite, clWhite);
-  end;
+  end;       }
 
  // render2d.DrawSprite(Rt.Texture[rcColor0],256,400,400,400, vec4f(1,0,0,1),vec4f(0,1,0,1),vec4f(0,0,1,1),vec4f(1,1,1,1), Utils.Time/10000*360,0.5,0.5);
 end;
