@@ -52,17 +52,19 @@ type
     constructor Create;
     destructor Destroy; override;
   private
-    FID              : GLint;
-    FValid           : Boolean;
-    FUniformList     : TInterfaceList;
-    FAttribList      : TInterfaceList;
+    FID           : GLhandle;
+    FValid        : Boolean;
+    FUniformList  : TInterfaceList;
+    FAttribList   : TInterfaceList;
+    FLock         : Boolean;
   public
-    function Valid: Boolean;
+    function Valid: Boolean; stdcall;
+    function GetID: LongWord; stdcall;
     function Init(const VertexShader, FragmentShader: AnsiString): Boolean;
     function Uniform(const UName: String; UniformType: TShaderUniformType; Necessary: Boolean): JEN_Header.IShaderUniform; overload; stdcall;
     function Attrib(const AName: string; AttribType: TShaderAttribType; Necessary: Boolean): JEN_Header.IShaderAttrib; stdcall;
-    function GetUniformsVersion: LongWord; stdcall;
-
+    procedure Lock(Value: Boolean); stdcall;
+    procedure Update; stdcall;
     procedure Bind; stdcall;
   end;
 
@@ -70,14 +72,13 @@ type
     constructor Create;
   private
     FID             : GLint;
+    FShaderId       : GLhandle;
     FType           : TShaderUniformType;
     FName           : string;
     FValue          : array [0..11] of Single;
-    FVersion        : Word;
     function GetName: string; stdcall;
     function GetType: TShaderUniformType; stdcall;
     //procedure SetType(Value: TShaderAttribType); stdcall;
-    function GetVersion: Word; stdcall;
 
     procedure Init(ShaderID: GLEnum; const UName: string; UniformType: TShaderUniformType; Necessary: Boolean);
   public
@@ -136,6 +137,11 @@ end;
 function TShaderProgram.Valid: Boolean;
 begin
   Result := FValid;
+end;
+
+function TShaderProgram.GetID: LongWord;
+begin
+  Result := FID;
 end;
 
 function TShaderProgram.Init(const VertexShader, FragmentShader: AnsiString): Boolean;
@@ -309,21 +315,23 @@ begin
   Result := a;
 end;
 
-function TShaderProgram.GetUniformsVersion: LongWord;
-var
-  i : LongInt;
+procedure TShaderProgram.Lock(Value: Boolean);
 begin
-  Result := 0;
-  for i := 0 to FUniformList.Count - 1 do
-    inc(Result, (FUniformList[i] as IShaderUniform).Version);
+  FLock := Value;
+end;
+
+procedure TShaderProgram.Update;
+begin
+  if FLock then
+    Engine.CreateEvent(evRenderFlush);
 end;
 
 procedure TShaderProgram.Bind;
 begin
-  if ResMan.Active[rtShaderRes] <> IUnknown(Self) then
+  if ResMan.Active[rtShader] <> IUnknown(Self) then
   begin
     glUseProgram(FID);
-    ResMan.Active[rtShaderRes] := Self;
+    ResMan.Active[rtShader] := Self;
   end;
 end;
 {$ENDREGION}
@@ -331,8 +339,8 @@ end;
 {$REGION 'TShaderUniform'}
 constructor TShaderUniform.Create;
 begin
-  FID := -1;
   inherited;
+  FID := -1;
 end;
 
 function TShaderUniform.Valid: Boolean;
@@ -350,10 +358,6 @@ begin
   Result := FType;
 end;
 
-function TShaderUniform.GetVersion: Word;
-begin
-  Result := FVersion;
-end;
           {
 procedure TShaderUniform.SetType(Value: TShaderUniformType);
 begin
@@ -364,6 +368,7 @@ procedure TShaderUniform.Init(ShaderID: LongWord; const UName: string; UniformTy
 var
   i : LongInt;
 begin
+  FShaderId := ShaderID;
   FID   := glGetUniformLocation(ShaderID, PAnsiChar(AnsiString(UName)));
   FName := Copy(UName, 1, Length(UName));
   FType := UniformType;
@@ -379,32 +384,29 @@ procedure TShaderUniform.Value(const Data; Count: LongInt);
 const
   USize : array [TShaderUniformType] of LongInt = (0, 4, 4, 8, 12, 16, 16, 36, 64);
 begin
-  if FID <> -1 then
+  if (FID = -1) or ((ResMan.Active[rtShader] as IShaderProgram).GetID <> FShaderId) then
+    Exit;
+
+  if Count * USize[FType] <= SizeOf(FValue) then
   begin
-    if Count * USize[FType] <= SizeOf(FValue) then
-    begin
-      if MemCmp(@FValue, @Data, Count * USize[FType]) <> 0 then
-        Move(Data, FValue, Count * USize[FType])
-      else
-        Exit;
-    end else
-      Move(Data, FValue, SizeOf(FValue));
+    if MemCmp(@FValue, @Data, Count * USize[FType]) <> 0 then
+      Move(Data, FValue, Count * USize[FType])
+    else
+      Exit;
+  end else
+    Move(Data, FValue, SizeOf(FValue));
 
+  (ResMan.Active[rtShader] as IShaderProgram).Update;
 
-    inc(FVersion);
-    if FVersion = 65535 then
-      FVersion := 0;
-
-    case FType of
-      utInt  : glUniform1iv(FID, Count, @Data);
-      utVec1 : glUniform1fv(FID, Count, @Data);
-      utVec2 : glUniform2fv(FID, Count, @Data);
-      utVec3 : glUniform3fv(FID, Count, @Data);
-      utVec4 : glUniform4fv(FID, Count, @Data);
-      utMat2 : glUniformMatrix2fv(FID, Count, False, @Data);
-      utMat3 : glUniformMatrix3fv(FID, Count, False, @Data);
-      utMat4 : glUniformMatrix4fv(FID, Count, False, @Data);
-    end;
+  case FType of
+    utInt  : glUniform1iv(FID, Count, @Data);
+    utVec1 : glUniform1fv(FID, Count, @Data);
+    utVec2 : glUniform2fv(FID, Count, @Data);
+    utVec3 : glUniform3fv(FID, Count, @Data);
+    utVec4 : glUniform4fv(FID, Count, @Data);
+    utMat2 : glUniformMatrix2fv(FID, Count, False, @Data);
+    utMat3 : glUniformMatrix3fv(FID, Count, False, @Data);
+    utMat4 : glUniformMatrix4fv(FID, Count, False, @Data);
   end;
 end;
 {$ENDREGION}
@@ -474,7 +476,7 @@ end;
 
 constructor TShaderResource.Create;
 begin
-  inherited Create(Name, FilePath, rtShaderRes);
+  inherited Create(Name, FilePath, rtShader);
   FShaderPrograms := TInterfaceList.Create;
   FDefines := TList.Create;
 end;
@@ -669,7 +671,7 @@ constructor TShaderLoader.Create;
 begin
   inherited;
   ExtString := 'xml';
-  ResType := rtShaderRes;
+  ResType := rtShader;
 end;
 
 function TShaderLoader.Load(Stream : IStream; var Resource : IResource) : Boolean;

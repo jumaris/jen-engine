@@ -83,8 +83,7 @@ type
     procedure SetDipCount(Value : LongWord); stdcall;
     procedure IncDip; stdcall;
 
-    function  GetMatrix(Idx: TMatrixType): TMat4f; stdcall;
-    procedure SetMatrix(Idx: TMatrixType; Value: TMat4f); stdcall;
+    function  GetMatrix(Idx: TMatrixType): PMat4f; stdcall;
     function  GetCameraPos: TVec3f; stdcall;
     procedure SetCameraPos(Value: TVec3f); stdcall;
     function  GetCameraDir: TVec3f; stdcall;
@@ -509,14 +508,9 @@ begin
   end;
 end;
 
-function TRender.GetMatrix(Idx: TMatrixType): TMat4f;
+function TRender.GetMatrix(Idx: TMatrixType): PMat4f;
 begin
-  Result := FMatrix[Idx];
-end;
-
-procedure TRender.SetMatrix(Idx: TMatrixType; Value: TMat4f);
-begin
-  FMatrix[Idx] := Value;
+  Result := @FMatrix[Idx];
 end;
 
 function TRender.GetCameraPos: TVec3f;

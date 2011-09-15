@@ -112,7 +112,7 @@ end;
 
 procedure TResourceManager.Load(const FilePath: string; out Resource: JEN_Header.IShaderResource);
 begin
-  Resource := IShaderResource(Load(FilePath, rtShaderRes));
+  Resource := IShaderResource(Load(FilePath, rtShader));
 end;
 
 procedure TResourceManager.Load(const FilePath: string; out Resource: JEN_Header.ITexture);
@@ -185,9 +185,9 @@ var
   Resource : IResource;
 begin
   case ResType of
-    rtShaderRes : Resource := TShaderResource.Create(Utils.ExtractFileName(FilePath), Utils.ExtractFileDir(FilePath));
-    rtTexture   : Resource := TTexture.Create(Utils.ExtractFileName(FilePath), Utils.ExtractFileDir(FilePath), 0, 0, tfoNone);
-    rtFont      : Resource := TFont.Create(Utils.ExtractFileName(FilePath), Utils.ExtractFileDir(FilePath));
+    rtShader : Resource := TShaderResource.Create(Utils.ExtractFileName(FilePath), Utils.ExtractFileDir(FilePath));
+    rtTexture: Resource := TTexture.Create(Utils.ExtractFileName(FilePath), Utils.ExtractFileDir(FilePath), 0, 0, tfoNone);
+    rtFont   : Resource := TFont.Create(Utils.ExtractFileName(FilePath), Utils.ExtractFileDir(FilePath));
   end;
 
   Load(FilePath, Resource);
