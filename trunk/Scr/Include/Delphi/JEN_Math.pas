@@ -125,6 +125,7 @@ Type
     function Euler: TVec3f;
   end;
 
+  PMat4f = ^TMat4f;
   TMat4f = record
   private
     function  GetPos: TVec3f;

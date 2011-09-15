@@ -42,8 +42,6 @@ type
 
     FBatchParams : record
       Tehnique        : TTehniqueType;
-      BatchShader     : IShaderProgram;
-      UniformsVersion : LongWord;
       BatchTexture1   : ITexture;
       BatchTexture2   : ITexture;
       BatchTexture3   : ITexture;
@@ -189,9 +187,10 @@ begin
 
   with FBatchParams, RenderTechnique[FBatchParams.Tehnique] do
   begin
+    ShaderProgram.Lock(False);
+    ShaderProgram.Bind;
     IndxAttrib.Value(4, 0);
     IndxAttrib.Enable;
-    ShaderProgram.Bind;
 
     TCParams := vec4f(Render.Matrix[mt2DMat].e00, Render.Matrix[mt2DMat].e10, Render.Matrix[mt2DMat].e01, Render.Matrix[mt2DMat].e11);
     MatUniform.Value(TCParams);
@@ -270,8 +269,8 @@ var
   begin
     with FBatchParams do
     begin
-      BatchShader     := Shader;
-      UniformsVersion := Shader.UniformsVersion;
+      RenderTechnique[Tehnique].ShaderProgram.Lock(False);
+      Shader.Lock(True);
       BatchTexture1   := Tex1;
       BatchTexture2   := Tex2;
       BatchTexture3   := Tex3;
@@ -313,10 +312,9 @@ begin
   begin
     if FIdx = 0 then
       UpdateBathParams
-    else if(BatchShader <> Shader) or
+    else if(RenderTechnique[Tehnique].ShaderProgram <> Shader) or
            (BatchTexture1 <> Tex1) or (BatchTexture2 <> Tex2) or (BatchTexture3 <> Tex3) or
-           (Blend <> Render.BlendType) or (ColorMask <> Render.GetColorMask) or (AlphaTest <> Render.AlphaTest) or
-           (UniformsVersion <> Shader.UniformsVersion) then
+           (Blend <> Render.BlendType) or (ColorMask <> Render.GetColorMask) or (AlphaTest <> Render.AlphaTest) then
     begin
       Flush;
       UpdateBathParams;

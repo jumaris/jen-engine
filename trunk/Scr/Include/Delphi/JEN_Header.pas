@@ -25,7 +25,7 @@ type
     ikMouseL = $01, ikMouseR, ikMouseM = $04, ikMouseWheelUp, ikMouseWheelDown
   );
 
-  TResourceType = (rtShaderRes, rtFont, rtTexture, rtTexture1, rtTexture2, rtTexture3, rtTexture4, rtTexture5, rtTexture6,
+  TResourceType = (rtShader, rtFont, rtTexture, rtTexture1, rtTexture2, rtTexture3, rtTexture4, rtTexture5, rtTexture6,
                   rtTexture7, rtTexture8, rtTexture9, rtTexture10, rtTexture11, rtTexture12,
 	                rtTexture13, rtTexture14, rtTexture15);
 
@@ -81,6 +81,7 @@ type
     procedure Finish; stdcall;
     procedure AddEventProc(Event: TEvent; Proc: TEventProc); stdcall;
     procedure DelEventProc(Event: TEvent; Proc: TEventProc); stdcall;
+    procedure CreateEvent(Event: TEvent; Param: LongInt = 0; Data: Pointer = nil);
   end;
 
   IStream = interface
@@ -233,14 +234,12 @@ type
     function GetName: string; stdcall;
     function GetType: TShaderUniformType; stdcall;
  //   procedure SetType(Value: TShaderUniformType); stdcall;
-    function GetVersion: Word; stdcall;
 
     function Valid: Boolean; stdcall;
     procedure Value(const Data; Count: LongInt = 1); stdcall;
 
     property Name: string read GetName;
     property UType: TShaderUniformType read GetType;
-    property Version: Word read GetVersion;
   end;
 
   IShaderAttrib = interface
@@ -261,13 +260,13 @@ type
 
   IShaderProgram = interface
   ['{1F79BB95-C0B0-45AF-AA8D-AF9999CC85C8}']
-    function Valid: Boolean;
+    function Valid: Boolean; stdcall;
+    function GetID: LongWord; stdcall;
     function Uniform(const UName: String; UniformType: TShaderUniformType; Necessary: Boolean = True): IShaderUniform; overload; stdcall;
     function Attrib(const AName: string; AttribType: TShaderAttribType; Necessary: Boolean = True): IShaderAttrib; stdcall;
-    function GetUniformsVersion: LongWord; stdcall;
-
+    procedure Lock(Value: Boolean); stdcall;
+    procedure Update; stdcall;
     procedure Bind; stdcall;
-    property UniformsVersion: LongWord read GetUniformsVersion;
   end;
 
   IShaderResource = interface(IResource)
@@ -398,8 +397,7 @@ type
     function GetCullFace: TCullFace; stdcall;
     procedure SetCullFace(Value: TCullFace); stdcall;
 
-    function  GetMatrix(Idx: TMatrixType): TMat4f; stdcall;
-    procedure SetMatrix(Idx: TMatrixType; Value: TMat4f); stdcall;
+    function  GetMatrix(Idx: TMatrixType): PMat4f; stdcall;
     function  GetCameraPos: TVec3f; stdcall;
     procedure SetCameraPos(Value: TVec3f); stdcall;
     function  GetCameraDir: TVec3f; stdcall;
@@ -421,7 +419,7 @@ type
     property DepthTest: Boolean read GetDepthTest write SetDepthTest;
     property DepthWrite: Boolean read GetDepthWrite write SetDepthWrite;
     property CullFace: TCullFace read GetCullFace write SetCullFace;
-    property Matrix[Idx: TMatrixType]: TMat4f read GetMatrix write SetMatrix;
+    property Matrix[Idx: TMatrixType]: PMat4f read GetMatrix;
     property CameraPos: TVec3f read GetCameraPos write SetCameraPos;
     property CameraDir: TVec3f read GetCameraDir write SetCameraDir;
     property FPS: LongWord read GetFPS;

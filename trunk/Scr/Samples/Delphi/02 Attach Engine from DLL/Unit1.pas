@@ -55,7 +55,7 @@ end;
 procedure TGame.OnUpdate(dt: LongInt);
 begin
 //Input.Update;
-  Display.Caption := Utils.IntToStr(Render.FPS)+'['+Utils.IntToStr(Render.FrameTime)+']';
+  Display.Caption := Utils.IntToStr(Render.FPS)+'['+Utils.IntToStr(Render.FrameTime)+']'+Utils.IntToStr(Render.LastDipCount);
   if Input.Hit[ikSpace] then
     sr.Reload;
 end;
@@ -89,14 +89,26 @@ begin
 
 
 
-          i := 13;
+          i := 5;
           s.Bind;
               ccc.Value(i);
-              c := false;
+
 
 
 
               render2d.DrawSpriteAdv(s,r,nil,nil,Vec4f(0,500,0,0),Vec4f(500,500,1,0),Vec4f(500,0,1,1),Vec4f(0,0,0,1), clWhite, clWhite, clWhite, clWhite, Vec2f(500,500),Utils.Time/10000*360);
+
+
+          i := 13;
+          s.Bind;
+
+              ccc.Value(i);
+
+
+                            render2d.DrawSpriteAdv(s,r,nil,nil,Vec4f(0,500,0,0),Vec4f(500,500,1,0),Vec4f(500,0,1,1),Vec4f(0,0,0,1), clWhite, clWhite, clWhite, clWhite, Vec2f(500,500),Utils.Time/10000*360+90);
+                            render2d.DrawSpriteAdv(s,r,nil,nil,Vec4f(0,500,0,0),Vec4f(500,500,1,0),Vec4f(500,0,1,1),Vec4f(0,0,0,1), clWhite, clWhite, clWhite, clWhite, Vec2f(500,500),Utils.Time/10000*360+180);
+
+
 
    //  DrawSpriteAdv(RenderTechnique[ttNormal].ShaderProgram, Tex, nil, nil, Vec4f(x, y+h, 0, 0),Vec4f(x+w, y+h , 1, 0), Vec4f(x+w, y, 1, 1), Vec4f(x, y, 0, 1), Color, Color, Color, Color, Vec2f(x + w*cx,y + h*cy), Angle);
 

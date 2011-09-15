@@ -180,10 +180,10 @@ begin
   //CalcPlanes;
 
 // Set render states
-  Render.Matrix[mtViewProj] := FView * FProj;
-  Render.Matrix[mtModel].Identity;
-  Render.Matrix[mtProj] := FProj;
-  Render.Matrix[mtView] := FView;
+  Render.Matrix[mtViewProj]^ := FView * FProj;
+  Render.Matrix[mtModel]^.Identity;
+  Render.Matrix[mtProj]^ := FProj;
+  Render.Matrix[mtView]^ := FView;
   Render.CameraPos := FPos;
   Render.CameraDir := GetDir;
 end;

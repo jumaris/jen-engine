@@ -20,7 +20,7 @@ type
     constructor Create(const Name, FilePath: string; Width, Height: LongWord; Format: TTextureFormat);
     destructor Destroy; override;
   private
-    FID       : GLEnum;
+    FID       : GLhandle;
     FFormat   : TTextureFormat;
     FSampler  : GLEnum;
     FWidth    : LongInt;
