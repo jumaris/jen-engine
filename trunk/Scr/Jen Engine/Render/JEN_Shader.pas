@@ -56,15 +56,12 @@ type
     FValid        : Boolean;
     FUniformList  : TInterfaceList;
     FAttribList   : TInterfaceList;
-    FLock         : Boolean;
   public
     function Valid: Boolean; stdcall;
     function GetID: LongWord; stdcall;
     function Init(const VertexShader, FragmentShader: AnsiString): Boolean;
     function Uniform(const UName: String; UniformType: TShaderUniformType; Necessary: Boolean): JEN_Header.IShaderUniform; overload; stdcall;
     function Attrib(const AName: string; AttribType: TShaderAttribType; Necessary: Boolean): JEN_Header.IShaderAttrib; stdcall;
-    procedure Lock(Value: Boolean); stdcall;
-    procedure Update; stdcall;
     procedure Bind; stdcall;
   end;
 
@@ -75,7 +72,7 @@ type
     FShaderId       : GLhandle;
     FType           : TShaderUniformType;
     FName           : string;
-    FValue          : array [0..11] of Single;
+    FValue          : array [0..15] of Single;
     function GetName: string; stdcall;
     function GetType: TShaderUniformType; stdcall;
     //procedure SetType(Value: TShaderAttribType); stdcall;
@@ -315,17 +312,6 @@ begin
   Result := a;
 end;
 
-procedure TShaderProgram.Lock(Value: Boolean);
-begin
-  FLock := Value;
-end;
-
-procedure TShaderProgram.Update;
-begin
-  if FLock then
-    Engine.CreateEvent(evRenderFlush);
-end;
-
 procedure TShaderProgram.Bind;
 begin
   if ResMan.Active[rtShader] <> IUnknown(Self) then
@@ -395,8 +381,6 @@ begin
       Exit;
   end else
     Move(Data, FValue, SizeOf(FValue));
-
-  (ResMan.Active[rtShader] as IShaderProgram).Update;
 
   case FType of
     utInt  : glUniform1iv(FID, Count, @Data);

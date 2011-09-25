@@ -61,6 +61,7 @@ type
 
     function GetVSync: Boolean; stdcall;
     procedure SetVSync(Value: Boolean); stdcall;
+    procedure SetClearColor(const Color: TVec4f); stdcall;
     function GetColorMask(Channel : TColorChannel): Boolean; overload; stdcall;
     procedure SetColorMask(Channel : TColorChannel; Value : Boolean); overload; stdcall;
     function GetColorMask: Byte; overload; stdcall;
@@ -83,7 +84,8 @@ type
     procedure SetDipCount(Value : LongWord); stdcall;
     procedure IncDip; stdcall;
 
-    function  GetMatrix(Idx: TMatrixType): PMat4f; stdcall;
+    function  GetMatrix(Idx: TMatrixType): TMat4f; stdcall;
+    procedure SetMatrix(Idx: TMatrixType; const Value: TMat4f); stdcall;
     function  GetCameraPos: TVec3f; stdcall;
     procedure SetCameraPos(Value: TVec3f); stdcall;
     function  GetCameraDir: TVec3f; stdcall;
@@ -250,7 +252,7 @@ begin
 
   glDepthFunc(GL_LEQUAL);
   glClearDepth(1);
-  glClearColor(0.0, 0.0, 0.0, 0.0);
+  SetClearColor(Vec4f(0, 0, 0, 0));
    // Display.Restore;
   // glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
   // glShadeModel(GL_SMOOTH);
@@ -262,6 +264,7 @@ begin
   // glEnable(GL_NORMALIZE);
   // glEnable(GL_COLOR_MATERIAL);
   Render2d.Init;
+  Render2d.ResolutionCorrect(Display.Width, Display.Height);
   FValid := True;
 end;
 
@@ -279,7 +282,6 @@ procedure TRender.SetTarget(Value: IRenderTarget);
 const
   ChannelList  : array [0..Ord(High(TRenderChannel)) - 1] of GLenum = (GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT0 + 1, GL_COLOR_ATTACHMENT0 + 2, GL_COLOR_ATTACHMENT0 + 3, GL_COLOR_ATTACHMENT0 + 4, GL_COLOR_ATTACHMENT0 + 5, GL_COLOR_ATTACHMENT0 + 6, GL_COLOR_ATTACHMENT0 + 7);
 begin
-  Engine.CreateEvent(evRenderFlush);
   FTarget := Value;
   if Value <> nil then
   begin
@@ -318,7 +320,6 @@ end;
 procedure TRender.SetViewport(const Value: TRecti);
 begin
   FViewport := Value;
-  Engine.CreateEvent(evRenderFlush);
   glViewport(Value.Left, Value.Top, Value.Width, Value.Height);
 end;
              {
@@ -369,6 +370,11 @@ begin
     wglSwapIntervalEXT(Ord(FVSync))
   else
     wglSwapIntervalEXT(0);
+end;
+
+procedure TRender.SetClearColor(const Color: TVec4f);
+begin
+  glClearColor(Color.x, Color.y, Color.z, Color.w);
 end;
 
 function TRender.GetColorMask(Channel : TColorChannel): Boolean;
@@ -508,9 +514,14 @@ begin
   end;
 end;
 
-function TRender.GetMatrix(Idx: TMatrixType): PMat4f;
+function TRender.GetMatrix(Idx: TMatrixType): TMat4f;
 begin
-  Result := @FMatrix[Idx];
+  Result := FMatrix[Idx];
+end;
+
+procedure TRender.SetMatrix(Idx: TMatrixType; const Value: TMat4f);
+begin
+  FMatrix[Idx] := Value;
 end;
 
 function TRender.GetCameraPos: TVec3f;
@@ -565,7 +576,7 @@ end;
 
 procedure TRender.Start;
 begin
-  FFrameStart := Utils.Time;
+  FFrameStart := Utils.RealTime;
 end;
 
 procedure TRender.Finish;
@@ -573,13 +584,13 @@ begin
   Engine.CreateEvent(evRenderFlush);
 
   Inc(FFPSCount);
-  if Utils.Time - FFPSTime >= 1000 then
+  if Utils.RealTime - FFPSTime >= 1000 then
   begin
    FFPS      := FFPSCount;
    FFPSCount := 0;
    FFPSTime  := FFPSTime + 1000;
   end;
-  FFrameTime := Utils.Time - FFrameStart;
+  FFrameTime := Utils.RealTime - FFrameStart;
 
   FLastDipCount := FDipCount;
   FDipCount := 0;

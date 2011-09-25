@@ -206,9 +206,9 @@ begin
     WndTextLength := GetWindowTextLength(HMemo);
   end;
 
-  h := Trunc(Utils.Time/3600000);
-  m := Trunc(Utils.Time/60000);
-  s := Trunc(Utils.Time/1000) - m*60;
+  h := Trunc(Utils.RealTime/3600000);
+  m := Trunc(Utils.RealTime/60000);
+  s := Trunc(Utils.RealTime/1000) - m*60;
   m := m - h*60;
 
   TimeStr := '';

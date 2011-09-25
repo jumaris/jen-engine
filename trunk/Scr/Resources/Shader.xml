@@ -4,7 +4,7 @@
 			#version 120
 			attribute float IndxAttrib;
 
-			uniform mat2 Matrix2D; 
+			uniform mat4 Matrix2D; 
 			uniform vec4 TexCoordParams1;
 			uniform vec4 TexCoordParams2;
 			uniform vec4 TexCoordParams3;
@@ -32,7 +32,7 @@
 				Data3 = QuadData[QuadId+2];
 				Data4 = QuadData[QuadId+3];
 
-				PosTex.xy = PosTex.xy * Matrix2D + vec2(-1.0, 1.0);
+				PosTex.xy = (Matrix2D * vec4(PosTex.x, PosTex.y, 1.0, 1.0)).xy;
 				Texcoord1 = PosTex.zw * TexCoordParams1.zw + TexCoordParams1.xy;
 				Texcoord2 = PosTex.zw * TexCoordParams2.zw + TexCoordParams2.xy;
 				Texcoord3 = PosTex.zw * TexCoordParams3.zw + TexCoordParams3.xy;

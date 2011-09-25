@@ -222,8 +222,8 @@ begin
       OutlineSize := FOutlineSize/ (128) /FScale/2;
       Pos1 := Vec2f(PosX, Y) + Vec2f(OriginX, OriginY) * FScale - Vec2f(128, 128)  * FScale;
       Pos2 := Pos1 + Vec2f(BlackBoxX, BlackBoxY) * FScale + Vec2f(128, 128) * FScale*2;
-      Render2D.DrawSpriteAdv(Shader, FPages[0], nil, nil, Vec4f(Pos1.X, Pos2.Y, TexCoords[1].x, TexCoords[1].y), Vec4f(Pos2.X, Pos2.Y, TexCoords[2].x,TexCoords[2].y), Vec4f(Pos2.X, Pos1.Y, TexCoords[3].x, TexCoords[3].y), Vec4f(Pos1.X, Pos1.Y, TexCoords[4].x, TexCoords[4].y),
-        Vec4f(EdgeSmooth, OutlineSize, (128)/8192, 1), FColor1, FColor2, FOutLineColor, Vec2f(0,0), 0);
+      Render2D.DrawSprite(Shader, FPages[0], nil, nil, Vec4f(Pos1.X, Pos2.Y, TexCoords[1].x, TexCoords[1].y), Vec4f(Pos2.X, Pos2.Y, TexCoords[2].x,TexCoords[2].y), Vec4f(Pos2.X, Pos1.Y, TexCoords[3].x, TexCoords[3].y), Vec4f(Pos1.X, Pos1.Y, TexCoords[4].x, TexCoords[4].y),
+        Vec4f(EdgeSmooth, OutlineSize, (128)/8192, 1), FColor1, FColor2, FOutLineColor,0, Vec2f(0,0) ,0);
           PosX := PosX+(CharInfo^.CellWidht)*FScale+FEdgeSmooth+FOutlineSize;
     end;
 

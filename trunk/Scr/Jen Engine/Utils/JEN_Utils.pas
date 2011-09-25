@@ -72,8 +72,11 @@ type
   end;
 
   IUtils = interface(JEN_Header.IUtils)
+    procedure Update;
+    function GetRealTime: LongInt;
     procedure SetFreezeTime(Value: Boolean);
     property FreezeTime: Boolean write SetFreezeTime;
+    property RealTime: LongInt read GetRealTime;
   end;
 
   TUtils = class(TInterfacedObject, IJenSubSystem, IUtils)
@@ -83,12 +86,15 @@ type
     FTimeFreq   : Int64;
     FTimeStart  : LongInt;
     HWaitObj    : THandle;
-    FFreezeTime : Boolean;
+    FFreezeTime : LongInt;
+    FCorrect    : LongInt;
     FTime       : LongInt;
+    function GetRealTime : LongInt;
     function GetTime : LongInt; stdcall;
   public
     procedure Sleep(Value: LongWord); stdcall;
     procedure SetFreezeTime(Value: Boolean);
+    procedure Update;
     function IntToStr(Value: LongInt): string; stdcall;
     function StrToInt(const Str: string; Def: LongInt = 0): LongInt; stdcall;
     function FloatToStr(Value: Single; Digits: LongInt = 8): string; stdcall;
@@ -459,9 +465,7 @@ begin
   HWaitObj := CreateEvent(nil, True, False, '');
 
   QueryPerformanceFrequency(FTimeFreq);
-  QueryPerformanceCounter(Count);
-  FTimeStart := Trunc(1000 * (Count / FTimeFreq));
-  FFreezeTime := True;
+  FTimeStart := GetRealTime;
 end;
 
 procedure TUtils.Free;
@@ -472,29 +476,33 @@ end;
 procedure TUtils.Sleep(Value: LongWord);
 begin
   if Value > 0 then
-  WaitForSingleObject(HWaitObj, Value);
+    WaitForSingleObject(HWaitObj, Value);
 end;
 
-function TUtils.GetTime: LongInt;
+function TUtils.GetRealTime : LongInt;
 var
   Count : Int64;
 begin
-  if not FFreezeTime then
-  begin
-    QueryPerformanceCounter(Count);
-    Result := Trunc(1000 * (Count / FTimeFreq)) - FTimeStart;
-  end else
-    Result := FTime;
+  QueryPerformanceCounter(Count);
+  Result := Trunc(1000 * (Count / FTimeFreq)) - FTimeStart + FCorrect;
+end;
+
+function TUtils.GetTime: LongInt;
+begin
+  Result := FTime;
 end;
 
 procedure TUtils.SetFreezeTime(Value: Boolean);
 begin
   if Value then
-  begin
-    FFreezeTime := False;
-    FTime := GetTime;
-  end;
-  FFreezeTime := Value;
+    FFreezeTime := GetRealTime
+  else
+    Dec(FCorrect, GetRealTime - FFreezeTime);
+end;
+
+procedure TUtils.Update;
+begin
+  FTime := GetRealTime;
 end;
 
 function TUtils.IntToStr(Value: LongInt): String;

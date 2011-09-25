@@ -1,7 +1,7 @@
 library JEN;
 
-{.$WEAKLINKRTTI ON}
-{.$RTTI EXPLICIT METHODS([]) PROPERTIES([]) FIELDS([])}
+{$WEAKLINKRTTI ON}
+{$RTTI EXPLICIT METHODS([]) PROPERTIES([]) FIELDS([])}
 
 uses
   JEN_Main in '..\Jen Engine\JEN_Main.pas',
@@ -26,7 +26,8 @@ uses
   JEN_Input in '..\Jen Engine\Core\JEN_Input.pas',
   JEN_Font in '..\Jen Engine\Core\JEN_Font.pas',
   JEN_RenderTarget in '..\Jen Engine\Render\JEN_RenderTarget.pas',
-  JEN_Texture in '..\Jen Engine\Render\JEN_Texture.pas';
+  JEN_Texture in '..\Jen Engine\Render\JEN_Texture.pas',
+  JEN_Camera2D in '..\Jen Engine\Helpers\JEN_Camera2D.pas';
 
 exports
   GetEngine name 'GetJenEngine';
