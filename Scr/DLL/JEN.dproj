@@ -87,6 +87,7 @@
 			<DCCReference Include="..\Jen Engine\Core\JEN_Font.pas"/>
 			<DCCReference Include="..\Jen Engine\Render\JEN_RenderTarget.pas"/>
 			<DCCReference Include="..\Jen Engine\Render\JEN_Texture.pas"/>
+			<DCCReference Include="..\Jen Engine\Helpers\JEN_Camera2D.pas"/>
 			<BuildConfiguration Include="Base">
 				<Key>Base</Key>
 			</BuildConfiguration>

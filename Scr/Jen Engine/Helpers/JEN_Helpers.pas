@@ -5,6 +5,7 @@ interface
 uses
   JEN_Header,
   JEN_Utils,
+  JEN_Camera2D,
   JEN_Camera3D,
   JEN_SystemInfo;
 
@@ -18,6 +19,7 @@ type
   public
     function CreateStream(FileName: string; RW: Boolean): IStream; stdcall;
     function CreateCamera3D: ICamera3d; stdcall;
+    function CreateCamera2D: ICamera2d; stdcall;
   end;
 
 implementation
@@ -48,5 +50,11 @@ function THelpers.CreateCamera3D: ICamera3d;
 begin
   Result := TCamera3D.Create;
 end;
+
+function THelpers.CreateCamera2D: ICamera2d;
+begin
+  Result := TCamera2D.Create;
+end;
+
 
 end.

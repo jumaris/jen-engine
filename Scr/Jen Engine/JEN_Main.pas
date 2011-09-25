@@ -31,11 +31,15 @@ type
       FFileLog    : TFileLog;
   public
     procedure Start(Game: IGame); stdcall;
+    procedure Finish; stdcall;
+
     procedure GetSubSystem(SubSystemType: TJenSubSystemType; out SubSystem: IJenSubSystem); stdcall;
-    procedure CreateEvent(Event: TEvent; Param: LongInt = 0; Data: Pointer = nil);
+
+    procedure CreateEvent(Event: TEvent; Param: LongInt = 0; Data: Pointer = nil); stdcall;
     procedure AddEventProc(Event: TEvent; Proc: TEventProc); stdcall;
     procedure DelEventProc(Event: TEvent; Proc: TEventProc); stdcall;
-    procedure Finish; stdcall;
+
+    procedure LogOut(const Text: string; MType: TLogMsg); stdcall;
     class property Quit: Boolean read FQuit write FQuit;
   end;
 
@@ -62,7 +66,7 @@ implementation
 
 procedure LogOut(const Text: string; MType: TLogMsg);
 begin
-  Engine.CreateEvent(evLogMsg, Ord(MType), PWideChar(Text));
+  Engine.LogOut(Text, MType);
 end;
 
 function GetEngine(FileLog, Debug: Boolean): JEN_Header.IJenEngine;
@@ -192,28 +196,31 @@ begin
   DeltaTime := 1;
   while not FQuit do
   begin
-    Input.Update;
-    Display.Update;
-
-    Utils.FreezeTime := True;
     Game.OnUpdate(DeltaTime);
-    Utils.FreezeTime := True;
     Render.Start;
     Game.OnRender;
-    Utils.FreezeTime := False;
     Render.Finish;
 
     Display.Swap;
 
-    if (Utils.Time - FLastUpdate)< 5 then
-      Utils.Sleep(5);
-    DeltaTime := Max(Utils.Time - FLastUpdate, 1);
+    Input.Update;
+    Display.Update;
+    Utils.Update;
 
-    FLastUpdate := Utils.Time;
+    if (Utils.RealTime - FLastUpdate)< 5 then
+      Utils.Sleep(5);
+    DeltaTime := Max(Utils.RealTime - FLastUpdate, 1);
+
+    FLastUpdate := Utils.RealTime;
   end;
 
   Game.Close;
   Game := nil;
+end;
+
+procedure TJenEngine.Finish;
+begin
+  FQuit := True;
 end;
 
 procedure TJenEngine.GetSubSystem(SubSystemType: TJenSubSystemType;out SubSystem: IJenSubSystem);
@@ -249,9 +256,9 @@ begin
   FEventsList[Event].Del(FEventsList[Event].IndexOf(@Proc));
 end;
 
-procedure TJenEngine.Finish;
+procedure TJenEngine.LogOut(const Text: string; MType: TLogMsg); stdcall;
 begin
-  FQuit := True;
+  CreateEvent(evLogMsg, Ord(MType), PWideChar(Text));
 end;
 
 initialization

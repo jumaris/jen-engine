@@ -9,7 +9,6 @@ uses
 type
   TCamera3D = class(TInterfacedObject, ICamera3D)
     constructor Create;
-    destructor Destroy; override;
   private
     FFOV      : Single;
     FPos      : TVec3f;
@@ -23,9 +22,9 @@ type
     function GetFOV: Single; stdcall;
     procedure SetFOV(Value: Single); stdcall;
     function GetPos: TVec3f; stdcall;
-    procedure SetPos(Value: TVec3f); stdcall;
+    procedure SetPos(const Value: TVec3f); stdcall;
     function GetAngle: TVec3f; stdcall;
-    procedure SetAngle(Value: TVec3f); stdcall;
+    procedure SetAngle(const Value: TVec3f); stdcall;
     function GetDir: TVec3f; stdcall;
     function GetMaxSpeed: Single; stdcall;
     procedure SetMaxSpeed(Value: Single); stdcall;
@@ -55,11 +54,6 @@ begin
   FMaxSpeed := 16;
 end;
 
-destructor TCamera3D.Destroy;
-begin
-  inherited;
-end;
-
 function TCamera3D.GetFOV: Single;
 begin
   Result := FFov;
@@ -75,7 +69,7 @@ begin
   Result := FPos;
 end;
 
-procedure TCamera3D.SetPos(Value: TVec3f);
+procedure TCamera3D.SetPos(const Value: TVec3f);
 begin
   FPos := Value;
 end;
@@ -85,7 +79,7 @@ begin
   Result := FAngle;
 end;
 
-procedure TCamera3D.SetAngle(Value: TVec3f);
+procedure TCamera3D.SetAngle(const Value: TVec3f);
 begin
   FAngle := Value;
 end;
@@ -180,10 +174,10 @@ begin
   //CalcPlanes;
 
 // Set render states
-  Render.Matrix[mtViewProj]^ := FView * FProj;
-  Render.Matrix[mtModel]^.Identity;
-  Render.Matrix[mtProj]^ := FProj;
-  Render.Matrix[mtView]^ := FView;
+  Render.Matrix[mtViewProj] := FView * FProj;
+  Render.Matrix[mtModel] := IdentMat;
+  Render.Matrix[mtProj] := FProj;
+  Render.Matrix[mtView] := FView;
   Render.CameraPos := FPos;
   Render.CameraDir := GetDir;
 end;

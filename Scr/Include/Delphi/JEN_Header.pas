@@ -76,12 +76,16 @@ type
   end;
 
   IJenEngine = interface
-    procedure GetSubSystem(SubSustemType: TJenSubSystemType; out SubSystem: IJenSubSystem); stdcall;
     procedure Start(Game : IGame); stdcall;
     procedure Finish; stdcall;
+
+    procedure GetSubSystem(SubSustemType: TJenSubSystemType; out SubSystem: IJenSubSystem); stdcall;
+
     procedure AddEventProc(Event: TEvent; Proc: TEventProc); stdcall;
     procedure DelEventProc(Event: TEvent; Proc: TEventProc); stdcall;
-    procedure CreateEvent(Event: TEvent; Param: LongInt = 0; Data: Pointer = nil);
+    procedure CreateEvent(Event: TEvent; Param: LongInt = 0; Data: Pointer = nil); stdcall;
+
+    procedure LogOut(const Text: string; MType: TLogMsg); stdcall;
   end;
 
   IStream = interface
@@ -187,6 +191,7 @@ type
 
   IDisplay = interface(IJenSubSystem)
     function Init(Width: LongWord = 800; Height: LongWord = 600; Refresh: Byte = 0; FullScreen: Boolean = False): Boolean; stdcall;
+    procedure Resize(Width, Height: LongWord); stdcall;
 
     procedure SetActive(Value: Boolean); stdcall;
     procedure SetCaption(const Value: String); stdcall;
@@ -264,8 +269,6 @@ type
     function GetID: LongWord; stdcall;
     function Uniform(const UName: String; UniformType: TShaderUniformType; Necessary: Boolean = True): IShaderUniform; overload; stdcall;
     function Attrib(const AName: string; AttribType: TShaderAttribType; Necessary: Boolean = True): IShaderAttrib; stdcall;
-    procedure Lock(Value: Boolean); stdcall;
-    procedure Update; stdcall;
     procedure Bind; stdcall;
   end;
 
@@ -382,6 +385,7 @@ type
 
     procedure Clear(ColorBuff, DepthBuff, StensilBuff: Boolean); stdcall;
 
+    procedure SetClearColor(const Color: TVec4f); stdcall;
     function GetColorMask(Channel: TColorChannel): Boolean; overload; stdcall;
     procedure SetColorMask(Channel: TColorChannel; Value: Boolean); overload; stdcall;
     function GetColorMask: Byte; overload; stdcall;
@@ -397,7 +401,8 @@ type
     function GetCullFace: TCullFace; stdcall;
     procedure SetCullFace(Value: TCullFace); stdcall;
 
-    function  GetMatrix(Idx: TMatrixType): PMat4f; stdcall;
+    function  GetMatrix(Idx: TMatrixType): TMat4f; stdcall;
+    procedure SetMatrix(Idx: TMatrixType;const Value: TMat4f); stdcall;
     function  GetCameraPos: TVec3f; stdcall;
     procedure SetCameraPos(Value: TVec3f); stdcall;
     function  GetCameraDir: TVec3f; stdcall;
@@ -413,13 +418,14 @@ type
     property Target: IRenderTarget read GetTarget write SetTarget;
     property Viewport: TRecti read GetViewport write SetViewPort;
     property VSync: Boolean read GetVSync write SetVSync;
+    property ClearColor: TVec4f write SetClearColor;
     property ColorMask[Channel: TColorChannel]: Boolean read GetColorMask write SetColorMask;
     property BlendType: TBlendType read GetBlendType write SetBlendType;
     property AlphaTest: Byte read GetAlphaTest write SetAlphaTest;
     property DepthTest: Boolean read GetDepthTest write SetDepthTest;
     property DepthWrite: Boolean read GetDepthWrite write SetDepthWrite;
     property CullFace: TCullFace read GetCullFace write SetCullFace;
-    property Matrix[Idx: TMatrixType]: PMat4f read GetMatrix;
+    property Matrix[Idx: TMatrixType]: TMat4f read GetMatrix write SetMatrix;
     property CameraPos: TVec3f read GetCameraPos write SetCameraPos;
     property CameraDir: TVec3f read GetCameraDir write SetCameraDir;
     property FPS: LongWord read GetFPS;
@@ -429,19 +435,56 @@ type
   end;
 
   IRender2D = interface(IJenSubSystem)
-    procedure DrawSpriteAdv(Shader: IShaderProgram; Tex1, Tex2, Tex3: ITexture; const v1, v2, v3, v4, Data1, Data2, Data3, Data4: TVec4f; const Center: TVec2f; Angle: Single); stdcall;
+    procedure ResolutionCorrect(Width, Height: LongWord); stdcall;
+    function  GetEnableRC: Boolean; stdcall;
+    procedure SetEnableRC(Value: Boolean); stdcall;
+    function  GetRCWidth: LongWord; stdcall;
+    function  GetRCHeight: LongWord; stdcall;
+    function  GetRCRect: TRecti; stdcall;
+    function  GetRCScale: Single; stdcall;
+    function  GetRCMatrix: TMat4f; stdcall;
 
-    procedure DrawSprite(Tex : ITexture; x, y, w, h: Single; const Color: TVec4f; Angle: Single = 0.0; cx: Single = 0.5; cy: Single = 0.5); overload; stdcall;
-    procedure DrawSprite(Tex : ITexture; x, y, w, h: Single; const c1, c2, c3, c4: TVec4f; Angle: Single = 0.0; cx: Single = 0.5; cy: Single = 0.5); overload;  stdcall;
+    procedure BatchBegin; stdcall;
+    procedure BatchEnd; stdcall;
+
+    procedure DrawSprite(Shader: IShaderProgram; Tex1, Tex2, Tex3: ITexture; const v1, v2, v3, v4, Data1, Data2, Data3, Data4: TVec4f; Angle: Single; const Center: TVec2f; Effects: Cardinal); overload; stdcall;
+    procedure DrawSprite(Shader: IShaderProgram; Tex1, Tex2, Tex3: ITexture; x, y, w, h: Single; const Data1, Data2, Data3, Data4: TVec4f; Angle: Single; const Center: TVec2f; Effects: Cardinal); overload; stdcall;
+    procedure DrawSprite(Tex : ITexture; x, y, w, h: Single; const Color: TVec4f; Angle: Single = 0.0; cx: Single = 0.5; cy: Single = 0.5; Effects: Cardinal = 0); overload; stdcall;
+    procedure DrawSprite(Tex : ITexture; x, y, w, h: Single; const c1, c2, c3, c4: TVec4f; Angle: Single = 0.0; cx: Single = 0.5; cy: Single = 0.5; Effects: Cardinal = 0); overload;  stdcall;
+
+    property EnableRCt: Boolean read GetEnableRC write SetEnableRC;
+    property RCRect: TRecti read GetRCRect;
+    property RCWidth: LongWord read GetRCWidth;
+    property RCHeight: LongWord read GetRCHeight;
+    property RCScale: Single read GetRCScale;
+    property RCMatrix: TMat4f read GetRCMatrix;
+  end;
+
+  ICamera2d = interface
+    function GetEnable: Boolean; stdcall;
+    procedure SetEnable(Value: Boolean); stdcall;
+    function GetPos: TVec2f; stdcall;
+    procedure SetPos(const Value: TVec2f); stdcall;
+    function GetAngle: Single; stdcall;
+    procedure SetAngle(Value: Single); stdcall;
+    function GetScale: Single; stdcall;
+    procedure SetScale(Value: Single); stdcall;
+
+    procedure SetCam; stdcall;
+
+    property Enable: Boolean read GetEnable write SetEnable;
+    property Pos: TVec2f read GetPos write SetPos;
+    property Angle: Single read GetAngle write SetAngle;
+    property Scale: Single read GetScale write SetScale;
   end;
 
   ICamera3d = interface
     function GetFOV: Single; stdcall;
     procedure SetFOV(Value: Single); stdcall;
     function GetPos: TVec3f; stdcall;
-    procedure SetPos(Value: TVec3f); stdcall;
+    procedure SetPos(const Value: TVec3f); stdcall;
     function GetAngle: TVec3f; stdcall;
-    procedure SetAngle(Value: TVec3f); stdcall;
+    procedure SetAngle(const Value: TVec3f); stdcall;
     function GetDir: TVec3f; stdcall;
     function GetMaxSpeed: Single; stdcall;
     procedure SetMaxSpeed(Value: Single); stdcall;
@@ -495,6 +538,7 @@ type
   IHelpers = interface(IJenSubSystem)
     function CreateStream(FileName: string; RW: Boolean = True): IStream; stdcall;
     function CreateCamera3D: ICamera3d; stdcall;
+    function CreateCamera2D: ICamera2d; stdcall;
 
     function GetSystemInfo: ISystemInfo; stdcall;
     property SystemInfo: ISystemInfo read GetSystemInfo;

@@ -125,7 +125,6 @@ Type
     function Euler: TVec3f;
   end;
 
-  PMat4f = ^TMat4f;
   TMat4f = record
   private
     function  GetPos: TVec3f;
@@ -170,6 +169,12 @@ const
   EmptyRect: TRecti = (x: 0; y: 0; Width: 0; Height: 0);
   NullVec3f : TVec3f = (x: 0; y: 0; z: 0);
   clWhite : TVec4f = (x: 1; y: 1; z: 1; w: 1);
+  IdentMat : TMat4f = (
+    e00: 1; e10: 0; e20: 0; e30: 0;
+    e01: 0; e11: 1; e21: 0; e31: 0;
+    e02: 0; e12: 0; e22: 1; e32: 0;
+    e03: 0; e13: 0; e23: 0; e33: 1;
+  );
 
 function Max(x, y: Single): Single; overload; inline;
 function Min(x, y: Single): Single; overload; inline;
@@ -488,7 +493,7 @@ end;
 
 function TRecti.GetCenter: TPoint2i;
 begin
-  Result := Point2i(x, y);
+  Result := Point2i(x+ Width shr 1, y + Height shr 1);
 end;
 
 function TRecti.IsEmpty: Boolean;
@@ -1179,13 +1184,6 @@ begin
 end;
 
 procedure TMat4f.Identity;
-const
-  IdentMat : TMat4f = (
-    e00: 1; e10: 0; e20: 0; e30: 0;
-    e01: 0; e11: 1; e21: 0; e31: 0;
-    e02: 0; e12: 0; e22: 1; e32: 0;
-    e03: 0; e13: 0; e23: 0; e33: 1;
-  );
 begin
   Self := IdentMat;
 end;

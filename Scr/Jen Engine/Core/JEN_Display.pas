@@ -14,7 +14,6 @@ type
   IDisplay = interface(JEN_Header.IDisplay)
     function GetValid : Boolean;
 
-    procedure Resize(W, H: LongWord);
     procedure Restore;
     procedure Update;
 
@@ -55,7 +54,7 @@ type
     procedure Swap; stdcall;
     procedure ShowCursor(Value: Boolean); stdcall;
 
-    procedure Resize(W, H: LongWord);
+    procedure Resize(Width, Height: LongWord); stdcall;
     procedure Restore;
     procedure Update;
   end;
@@ -85,6 +84,12 @@ begin
           else
             ShowWindow(hWnd, SW_MINIMIZE);
       end;
+
+    WM_ENTERSIZEMOVE:
+      Utils.FreezeTime := True;
+
+    WM_EXITSIZEMOVE:
+      Utils.FreezeTime := False;
 
     WM_SETCURSOR:
       begin
@@ -117,7 +122,6 @@ begin
 
     WM_MBUTTONUP:
       Engine.CreateEvent(evKeyUp, LongInt(ikMouseM));
-
 
     WM_LBUTTONDOWN:
       Engine.CreateEvent(evKeyDown, LongInt(ikMouseL));
@@ -294,7 +298,6 @@ begin
 
   Update;
   Engine.CreateEvent(evDisplayRestore);
-  Render.Viewport := Recti(0, 0, FWidth, FHeight);
 end;
 
 procedure TDisplay.Update;
@@ -308,10 +311,10 @@ begin
   end;
 end;
 
-procedure TDisplay.Resize(W, H: LongWord);
+procedure TDisplay.Resize(Width, Height: LongWord);
 begin
-  FWidth  := W;
-  FHeight := H;
+  FWidth  := Width;
+  FHeight := Height;
   if FFullScreen and FActive then
     Helpers.SystemInfo.Screen.SetMode(FWidth, FHeight, FRefresh);
   Restore;
