@@ -58,6 +58,7 @@
 			<DCCReference Include="..\..\..\Include\Delphi\JEN_Header.pas"/>
 			<DCCReference Include="..\..\..\Include\Delphi\JEN_Math.pas"/>
 			<DCCReference Include="Unit1.pas"/>
+			<DCCReference Include="TopScores.pas"/>
 			<BuildConfiguration Include="Base">
 				<Key>Base</Key>
 			</BuildConfiguration>

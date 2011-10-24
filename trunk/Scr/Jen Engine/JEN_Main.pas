@@ -123,9 +123,6 @@ var
   end;
 
 begin
-  for Event:=Low(TEvent) to High(TEvent) do
-    FEventsList[Event].Free;
-
   TestRefCount(ResMan, 'resource manager');
   ResMan.Free;
   ResMan := nil;
@@ -141,6 +138,9 @@ begin
   TestRefCount(Display, 'display');
   Display.Free;
   Display := nil;
+
+  for Event:=Low(TEvent) to High(TEvent) do
+    FEventsList[Event].Free;
 
   if Assigned(FFileLog) then
     FFileLog.Free;
@@ -207,8 +207,8 @@ begin
     Display.Update;
     Utils.Update;
 
-    if (Utils.RealTime - FLastUpdate)< 5 then
-      Utils.Sleep(5);
+  {  if (Utils.RealTime - FLastUpdate)< 5 then
+      Utils.Sleep(5);                            }
     DeltaTime := Max(Utils.RealTime - FLastUpdate, 1);
 
     FLastUpdate := Utils.RealTime;

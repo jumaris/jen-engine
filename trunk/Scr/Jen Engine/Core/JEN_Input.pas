@@ -8,7 +8,8 @@ uses
 
 type
   IInput = interface(JEN_Header.IInput)
-    procedure SetState(InputKey: TInputKey; Value: Boolean);
+    procedure SetKeyState(InputKey: TInputKey; Value: Boolean);
+    procedure SetWheelDelta(Value: Integer);
     procedure Init;
     procedure Reset;
   end;
@@ -21,7 +22,8 @@ type
     FMouse      : TMouse;
     FDown, FHit : array [TInputKey] of Boolean;
     FLastKey    : TInputKey;
-    procedure SetState(InputKey: TInputKey; Value: Boolean);
+    procedure SetKeyState(InputKey: TInputKey; Value: Boolean);
+    procedure SetWheelDelta(Value: Integer);
 
     function GetLastKey: TInputKey; stdcall;
     function IsKeyDown(Value: TInputKey): Boolean; stdcall;
@@ -30,9 +32,10 @@ type
     function GetMouse: TMouse; stdcall;
     procedure SetCapture(Value: Boolean); stdcall;
 
-    class procedure onKeyUp(Param: LongInt; Data: Pointer); stdcall; static;
-    class procedure onKeyDown(Param: LongInt; Data: Pointer); stdcall; static;
-    class procedure onActivate(Param: LongInt; Data: Pointer); stdcall; static;
+    class procedure OnKeyUp(Param: LongInt; Data: Pointer); stdcall; static;
+    class procedure OnKeyDown(Param: LongInt; Data: Pointer); stdcall; static;
+    class procedure OnMouseWhell(Param: LongInt; Data: Pointer); stdcall; static;
+    class procedure OnActivate(Param: LongInt; Data: Pointer); stdcall; static;
   public
     procedure Update; stdcall;
     procedure Init;
@@ -57,6 +60,7 @@ procedure TInput.Init;
 begin
   Engine.AddEventProc(evKeyUp, @TInput.OnKeyUp);
   Engine.AddEventProc(evKeyDown, @TInput.OnKeyDown);
+  Engine.AddEventProc(evMouseWhell, @TInput.OnMouseWhell);
   Engine.AddEventProc(evActivate, @TInput.OnActivate);
 end;
 
@@ -70,21 +74,30 @@ end;
 
 class procedure TInput.OnKeyUp(Param: LongInt; Data: Pointer); stdcall;
 begin
-  Input.SetState(TInputKey(Param), False);
+  Input.SetKeyState(TInputKey(Param), False);
 end;
 
 class procedure TInput.OnKeyDown(Param: LongInt; Data: Pointer); stdcall;
 begin
-  Input.SetState(TInputKey(Param), True);
+  Input.SetKeyState(TInputKey(Param), True);
 end;
 
-class procedure TInput.onActivate(Param: LongInt; Data: Pointer); stdcall;
+class procedure TInput.OnMouseWhell(Param: LongInt; Data: Pointer); stdcall;
+begin
+  Input.SetWheelDelta(Param);
+  if Param > 0 then
+    Input.SetKeyState(TInputKey(ikMouseWheelUp), True)
+  else
+    Input.SetKeyState(TInputKey(ikMouseWheelDown), True);
+end;
+
+class procedure TInput.OnActivate(Param: LongInt; Data: Pointer); stdcall;
 begin
   if Param <> 0 then
     Input.Reset;
 end;
 
-procedure TInput.SetState(InputKey: TInputKey; Value: Boolean);
+procedure TInput.SetKeyState(InputKey: TInputKey; Value: Boolean);
 begin
   if FDown[InputKey] and (not Value) then
   begin
@@ -92,6 +105,11 @@ begin
     FLastKey := InputKey;
   end;
   FDown[InputKey] := Value;
+end;
+
+procedure TInput.SetWheelDelta(Value: Integer);
+begin
+  FMouse.WheelDelta := Value;
 end;
 
 function TInput.GetLastKey: TInputKey;
@@ -128,6 +146,10 @@ begin
   FillChar(FHit, SizeOf(FHit), False);
   GetWindowRect(Display.Handle, Rect);
   GetCursorPos(Pos);
+
+  FMouse.WheelDelta := 0;
+  SetKeyState(ikMouseWheelUp, False);
+  SetKeyState(ikMouseWheelDown, False);
 
   if not FCapture then
   begin

@@ -10,35 +10,32 @@ uses
 
 type
   TCharInfo = packed record
-    TexCoords : array[1..4] of record
-      X, Y : single;
-    end;
-    Page         : Word;
-    BlackBoxX    : LongWord;
-    BlackBoxY    : LongWord;
-    OriginX      : LongInt;
-    OriginY      : LongInt;
-    CellWidht    : SmallInt;
-    CellHeight   : SmallInt;
+    TexCoords     : TVec4f;
+    Page          : Word;
+    BlackBoxX     : LongWord;
+    BlackBoxY     : LongWord;
+    OriginX       : LongInt;
+    OriginY       : LongInt;
+    CellWidht     : SmallInt;
+    CellHeight    : SmallInt;
   end;
   PCharInfo = ^TCharInfo;
 
   IFont = interface(JEN_Header.IFont)
   ['{A0099F94-3B64-45B6-971A-606E97CA4D44}']
-    procedure Init(PagesCount: Word; Height: LongInt; MaxDist, DistCorr: Word);
+    procedure Init(PagesCount: Word; Height: LongInt; MaxDist: Word; MaxDistTC: Single);
     procedure AddChar(Char: WideChar;const Info: TCharInfo);
   end;
 
-  TFont = class(TResource, IManagedInterface, IResource, IFont)
-    constructor Create(const Name, FilePath: string);
+  TFont = class(TResource, IResource, IFont)
+    constructor Create(const FilePath: string);
     destructor Destroy; override;
   private
     class var Shader : IShaderProgram;
-    FName       : string;
-    FFilePath   : string;
+    class var ParamsUniform : IShaderUniform;
     FHeight     : LongInt;
     FMaxDist    : Word;
-    FDistCorr   : Word;
+    FMaxDistTC  : Single;
     FPagesCount : Word;
     FChars      : Array[WideChar] of PCharInfo;
     FPages      : Array of JEN_Header.ITexture;
@@ -62,7 +59,7 @@ type
 
   public
     procedure Reload; stdcall;
-    procedure Init(PagesCount: Word; Height: LongInt; MaxDist, DistCorr: Word);
+    procedure Init(PagesCount: Word; Height: LongInt; MaxDist: Word; MaxDistTC: Single);
     procedure AddChar(Char: WideChar;const Info: TCharInfo);
 
     function GetTextWidth(const Text: String): Single; stdcall;
@@ -87,7 +84,7 @@ constructor TFont.Create;
 var
   Res : IShaderResource;
 begin
-  inherited Create(Name, FilePath, rtFont);
+  inherited Create(FilePath, rtFont);
   FScale        := 1.0;
   FColor1       := clWhite;
   FColor2       := clWhite;
@@ -98,6 +95,7 @@ begin
   begin
     ResMan.Load('|TextShader.xml', Res);
     Shader := Res.Compile;
+    ParamsUniform := Shader.Uniform('Params', utVec4);
   end;
 end;
 
@@ -178,14 +176,14 @@ begin
 
 end;
 
-procedure TFont.Init(PagesCount: Word; Height: LongInt; MaxDist, DistCorr: Word);
+procedure TFont.Init(PagesCount: Word; Height: LongInt; MaxDist: Word; MaxDistTC: Single);
 var
   I : Integer;
 begin
   FPagesCount := PagesCount;
   FHeight := Height;
   FMaxDist := MaxDist;
-  FDistCorr := DistCorr;
+  FMaxDistTC := MaxDistTC;
 
   SetLength(FPages, FPagesCount);
   for I := 0 to FPagesCount - 1 do
@@ -207,10 +205,28 @@ var
   CharInfo : PCharInfo;
   EdgeSmooth : Single;
   OutlineSize : Single;
+  Mat      : TMat4f;
+  Rect     : TRecti;
+  Scale    : Single;
+  Params   : array[0..3] of TVec4f;
 begin
   PosX := X;
   Render.AlphaTest := 1;
+  Mat   := Render.Matrix[mt2DMat];
+  Scale := Sqrt(Sqr(Mat.e00 + Mat.e01)+Sqr(Mat.e10 + Mat.e11));
+  Rect  := Render2D.RCRect;
+  Scale := Sqrt(Sqr(2/Rect.Width)+Sqr(2/Rect.Height))/Scale;
+  EdgeSmooth   := FEdgeSmooth/(FMaxDist)/FScale*Scale*0.5;
+  OutlineSize  := FOutlineSize/(FMaxDist)*0.5;
 
+  Shader.Bind;
+  Params[0] := Vec4f(EdgeSmooth, OutlineSize, 10/1024, 1);
+  Params[1] := FColor1;
+  Params[2] := FColor2;
+  Params[3] := FOutLineColor;
+  ParamsUniform.Value(Params,4);
+
+  Render2d.BatchBegin;
   for i := 1 to Length(Text) do
   begin
     CharInfo := FChars[Text[i]];
@@ -218,16 +234,20 @@ begin
 
     with CharInfo^ do
     begin
-      EdgeSmooth  := FEdgeSmooth/ (128)/FScale/2;
-      OutlineSize := FOutlineSize/ (128) /FScale/2;
-      Pos1 := Vec2f(PosX, Y) + Vec2f(OriginX, OriginY) * FScale - Vec2f(128, 128)  * FScale;
-      Pos2 := Pos1 + Vec2f(BlackBoxX, BlackBoxY) * FScale + Vec2f(128, 128) * FScale*2;
-      Render2D.DrawSprite(Shader, FPages[0], nil, nil, Vec4f(Pos1.X, Pos2.Y, TexCoords[1].x, TexCoords[1].y), Vec4f(Pos2.X, Pos2.Y, TexCoords[2].x,TexCoords[2].y), Vec4f(Pos2.X, Pos1.Y, TexCoords[3].x, TexCoords[3].y), Vec4f(Pos1.X, Pos1.Y, TexCoords[4].x, TexCoords[4].y),
-        Vec4f(EdgeSmooth, OutlineSize, (128)/8192, 1), FColor1, FColor2, FOutLineColor,0, Vec2f(0,0) ,0);
-          PosX := PosX+(CharInfo^.CellWidht)*FScale+FEdgeSmooth+FOutlineSize;
-    end;
+      Pos1 := Vec2f(PosX, Y) + Vec2f(OriginX, OriginY) * FScale - Vec2f(FMaxDist, FMaxDist) * FScale;
+      Pos2 := Pos1 + Vec2f(BlackBoxX, BlackBoxY) * FScale + Vec2f(FMaxDist, FMaxDist) * FScale * 2;
+              {
+      Render2D.DrawSprite(Shader, FPages[0], nil, nil, Vec2f(Pos1.X, Pos2.Y), Pos2, Vec2f(Pos2.X, Pos1.Y), Vec2f(Pos1.X, Pos1.Y),
+          Vec4f(EdgeSmooth, OutlineSize, (128)/8192, 1), FColor1, FColor2, FOutLineColor, 0, Vec2f(0,0),0);
+                    }
 
+      Render2D.DrawSprite(Shader, FPages[0], nil, nil, Vec2f(Pos1.X, Pos2.Y), Pos2, Vec2f(Pos2.X, Pos1.Y), Pos1,
+          TexCoords, clWhite, clWhite, clWhite, 0, Vec2f(0,0),0);
+
+      PosX := PosX + (CharInfo^.CellWidht) * FScale + FEdgeSmooth + FOutlineSize * FScale;
+    end;
   end;
+  Render2d.BatchEnd;
 end;
 
 function TFont.GetTextWidth(const Text: String): Single;
@@ -243,7 +263,7 @@ begin
     if not Assigned(CharInfo) then Continue;
 
     with CharInfo^ do
-      Result := Result+(CharInfo^.CellWidht)*FScale+FEdgeSmooth+FOutlineSize;
+      Result := Result + (CharInfo^.CellWidht) * FScale + FEdgeSmooth + FOutlineSize * FScale;
   end;
 end;
 
@@ -257,12 +277,14 @@ function TFontLoader.Load(Stream: IStream; var Resource: IResource): Boolean;
 var
   Font       : IFont;
   Magic      : Int64;
-  I          : LongInt;
+
   CharsCount : Word;
   PagesCount : Word;
   Height     : LongInt;
   MaxDist    : Word;
-  DistCorr   : Word;
+  MaxDistTC  : Single;
+
+  I          : LongInt;
   Char       : WideChar;
   CharInfo   : TCharInfo;
 begin
@@ -274,11 +296,11 @@ begin
   if (JFIMagic <> Magic) then Exit;
   Stream.Read(Height, SizeOf(Height));
   Stream.Read(MaxDist, SizeOf(MaxDist));
-  Stream.Read(DistCorr, SizeOf(DistCorr));
+  Stream.Read(MaxDistTC, SizeOf(MaxDistTC));
   Stream.Read(PagesCount, SizeOf(PagesCount));
   Stream.Read(CharsCount, SizeOf(CharsCount));
 
-  Font.Init(PagesCount, Height, 60, 0);
+  Font.Init(PagesCount, Height, MaxDist, MaxDistTC);
   for I := 0 to CharsCount - 1 do
   begin
     Stream.Read(Char, SizeOf(Char));

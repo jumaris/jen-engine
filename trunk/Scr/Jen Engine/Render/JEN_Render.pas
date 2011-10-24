@@ -253,6 +253,7 @@ begin
   glDepthFunc(GL_LEQUAL);
   glClearDepth(1);
   SetClearColor(Vec4f(0, 0, 0, 0));
+  SetVSync(false);
    // Display.Restore;
   // glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
   // glShadeModel(GL_SMOOTH);
@@ -586,9 +587,9 @@ begin
   Inc(FFPSCount);
   if Utils.RealTime - FFPSTime >= 1000 then
   begin
-   FFPS      := FFPSCount;
-   FFPSCount := 0;
-   FFPSTime  := FFPSTime + 1000;
+    FFPS      := FFPSCount;
+    FFPSCount := 0;
+    FFPSTime  := FFPSTime + 1000;
   end;
   FFrameTime := Utils.RealTime - FFrameStart;
 

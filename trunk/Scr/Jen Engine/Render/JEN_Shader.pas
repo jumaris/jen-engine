@@ -31,8 +31,8 @@ type
     procedure Init(ShaderID: GLEnum; const AName: string; AttribType: TShaderAttribType; Necessary: Boolean);
   end;
 
-  TShaderResource = class(TResource, IManagedInterface, IResource, IShaderResource)
-    constructor Create(const Name, FilePath: string);
+  TShaderResource = class(TResource, IResource, IShaderResource)
+    constructor Create(const FilePath: string);
     destructor Destroy; override;
   private
     FShaderPrograms : TInterfaceList;
@@ -48,7 +48,7 @@ type
     function Compile: JEN_Header.IShaderProgram; overload; stdcall;
   end;
 
-  TShaderProgram = class(TManagedInterface, IShaderProgram)
+  TShaderProgram = class(TInterfacedObject, IShaderProgram)
     constructor Create;
     destructor Destroy; override;
   private
@@ -65,14 +65,14 @@ type
     procedure Bind; stdcall;
   end;
 
-  TShaderUniform = class(TManagedInterface, IShaderUniform)
+  TShaderUniform = class(TInterfacedObject, IShaderUniform)
     constructor Create;
   private
     FID             : GLint;
     FShaderId       : GLhandle;
     FType           : TShaderUniformType;
     FName           : string;
-    FValue          : array [0..15] of Single;
+    FValue          : array [0..11] of Single;
     function GetName: string; stdcall;
     function GetType: TShaderUniformType; stdcall;
     //procedure SetType(Value: TShaderAttribType); stdcall;
@@ -83,7 +83,7 @@ type
     procedure Value(const Data; Count: LongInt); stdcall;
   end;
 
-  TShaderAttrib = class(TManagedInterface, IShaderAttrib)
+  TShaderAttrib = class(TInterfacedObject, IShaderAttrib)
     constructor Create;
   private
     FID    : GLint;
@@ -460,7 +460,7 @@ end;
 
 constructor TShaderResource.Create;
 begin
-  inherited Create(Name, FilePath, rtShader);
+  inherited Create(FilePath, rtShader);
   FShaderPrograms := TInterfaceList.Create;
   FDefines := TList.Create;
 end;

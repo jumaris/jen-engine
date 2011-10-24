@@ -132,13 +132,9 @@ begin
     WM_MBUTTONDOWN:
       Engine.CreateEvent(evKeyDown, LongInt(ikMouseM));
 
-    WM_MOUSEWHEEL  :;{
-      begin
-        with CMouse.FDelta do
-          Inc(Wheel, SmallInt(wParam  shr 16) div 120);
-        if SmallInt(wParam shr 16) > 0 then CInput.Down[KM_WHUP] := True;
-        if SmallInt(wParam shr 16) < 0 then CInput.Down[KM_WHDN] := True;
-      end     }
+    WM_MOUSEWHEEL:
+      Engine.CreateEvent(evMouseWhell, LongInt(SmallInt(wParam shr 16) div 120));
+
   else
     Result := DefWindowProc(hWnd, Msg, wParam, lParam);
   end;

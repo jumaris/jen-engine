@@ -215,6 +215,8 @@ begin
         break;
       end;
 
+    Mips := max(Mips, 1);
+
     // 2D image
     Texture.Sampler := GL_TEXTURE_2D;
     Samples := 1;
@@ -261,9 +263,6 @@ begin
 
   Texture.Filter := tfiAniso;
   Texture.Flip(True, False);
-   // glTexParameteri(Texture.Sampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
- // glTexParameteri(Texture.Sampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
- // glTexParameteri(Texture.Sampler, GL_TEXTURE_MAX_LEVEL, Mips - 1);
   Result := True;
 end;
 
