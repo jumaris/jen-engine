@@ -51,26 +51,6 @@ type
     property Items[Idx: LongInt]: IUnknown read GetItem write SetItem; default;
   end;
 
-  IManagedInterface = interface
-    ['{7B975F52-35F8-4776-B557-7536F9B2C55C}']
-    procedure SetManager(Value: Pointer); stdcall;
-  end;
-
-  TManagedInterface = class(TObject, IInterface, IManagedInterface)
-  protected
-    FRefCount : LongInt;
-    FManager  : TInterfaceList;
-    function QueryInterface(const IID: TGUID; out Obj): HResult; stdcall;
-    function _AddRef: LongInt; stdcall;
-    function _Release: LongInt; stdcall;
-    procedure SetManager(Value: Pointer); stdcall;
-  public
-    procedure AfterConstruction; override;
-    procedure BeforeDestruction; override;
-    class function NewInstance: TObject; override;
-    property RefCount: LongInt read FRefCount;
-  end;
-
   IUtils = interface(JEN_Header.IUtils)
     procedure Update;
     function GetRealTime: LongInt;
@@ -326,61 +306,6 @@ begin
 end;
 {$ENDREGION}
 
-// TManagedInterfacedObj
-{$REGION 'TManagedInterfacedObj'}
-procedure TManagedInterface.SetManager(Value: Pointer);
-begin
-  FManager := Value;
-end;
-
-procedure TManagedInterface.AfterConstruction;
-begin
-  InterlockedDecrement(FRefCount);
-end;
-
-procedure TManagedInterface.BeforeDestruction;
-begin
-  if RefCount <> 0 then
-    System.Error(reInvalidPtr);
-end;
-
-class function TManagedInterface.NewInstance: TObject;
-begin
-  Result := inherited NewInstance;
-  TManagedInterface(Result).FRefCount := 1;
-end;
-
-function TManagedInterface.QueryInterface(const IID: TGUID; out Obj): HResult;
-begin
-  if GetInterface(IID, Obj) then
-    Result := 0
-  else
-    Result := E_NOINTERFACE;
-end;
-
-function TManagedInterface._AddRef: LongInt;
-begin
-  Result := InterlockedIncrement(FRefCount);
-end;
-
-function TManagedInterface._Release: LongInt;
-var
-  Manager : TInterfaceList;
-begin
-  Result := InterlockedDecrement(FRefCount);
-  case Result of
-    0: Destroy;
-    1: if(Assigned(FManager)) then
-      begin
-        Manager := FManager;
-        FManager := nil;
-        Manager.Del(Manager.IndexOf(self));
-      end;
-  end;
-
-end;
-{$ENDREGION}
-
 // TInterfaceList
 {$REGION 'TInterfaceList'}
 constructor TInterfaceList.Create;
@@ -404,17 +329,13 @@ begin
 
   FItems[FCount] := p;
   Result := p;
-  (p as IManagedInterface).SetManager(self);
 
   Inc(FCount);
 end;
 
 procedure TInterfaceList.Del(Idx: LongInt);
 begin
-  if idx < 0  then Exit;     {
-  for i := Idx to FCount - 2 do
-    FItems[i] := FItems[i + 1];   }
-  (FItems[Idx] as IManagedInterface).SetManager(nil);
+  if idx < 0  then Exit;
   FItems[Idx] := FItems[FCount - 1];
   Dec(FCount);
 
@@ -427,10 +348,7 @@ var
   i : LongInt;
 begin
   for i := 0 to FCount - 1 do
-  begin
-    (FItems[I] as IManagedInterface).SetManager(nil);
     FItems[i] := nil;
-  end;
 
   FCount := 0;
 end;

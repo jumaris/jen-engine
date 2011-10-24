@@ -138,8 +138,9 @@ Type
     e03, e13, e23, e33: Single;
     class operator Add(const a, b: TMat4f): TMat4f;
     class operator Multiply(const a, b: TMat4f): TMat4f;
+    class operator Multiply(const m: TMat4f; const v: TVec2f): TVec2f;
     class operator Multiply(const m: TMat4f; const v: TVec3f): TVec3f;
-//    class operator Multiply(const m: TMat4f; const v: TVec4f): TVec4f;
+    class operator Multiply(const m: TMat4f; const v: TVec4f): TVec4f;
     class operator Multiply(const m: TMat4f; x: Single): TMat4f;
 
     procedure Identity;
@@ -1151,6 +1152,15 @@ begin
   end;
 end;
 
+class operator TMat4f.Multiply(const m: TMat4f; const v: TVec2f): TVec2f;
+begin
+  with m do
+  begin
+    Result.x := e00 * v.x + e01 * v.y + e02 + e03;
+    Result.y := e10 * v.x + e11 * v.y + e12 + e13;
+  end;
+end;
+
 class operator TMat4f.Multiply(const m: TMat4f; const v: TVec3f): TVec3f;
 begin
   with m do
@@ -1160,7 +1170,7 @@ begin
     Result.z := e20 * v.x + e21 * v.y + e22 * v.z + e23;
   end;
 end;
-                             {
+
 class operator TMat4f.Multiply(const m: TMat4f; const v: TVec4f): TVec4f;
 begin
   with m do
@@ -1170,7 +1180,7 @@ begin
     Result.z := e20 * v.x + e21 * v.y + e22 * v.z + e23 * v.w;
     Result.w := e30 * v.x + e31 * v.y + e32 * v.z + e33 * v.w;
   end;
-end;                     }
+end;
 
 class operator TMat4f.Multiply(const m: TMat4f; x: Single): TMat4f;
 begin

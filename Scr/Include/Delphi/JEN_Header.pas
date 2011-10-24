@@ -8,7 +8,7 @@ uses
 
 type
   TJenSubSystemType = (ssUtils, ssHelpers, ssInput, ssDisplay, ssResMan, ssRender, ssRender2d);
-  TEvent = (evLogMsg, evActivate, evKeyUp, evKeyDown, evDisplayRestore, evRenderFlush);
+  TEvent = (evLogMsg, evActivate, evKeyUp, evKeyDown, evMouseWhell, evDisplayRestore, evRenderFlush);
 
   TLogMsg = (lmHeaderMsg, lmInfo, lmNotify, lmCode, lmWarning, lmError);
 
@@ -170,8 +170,9 @@ type
   end;
 
   TMouse = object
-    Pos   : TPoint2i;
-    Delta : TPoint2i;
+    Pos         : TPoint2i;
+    Delta       : TPoint2i;
+    WheelDelta  : LongInt;
   end;
 
   IInput = interface(IJenSubSystem)
@@ -289,6 +290,8 @@ type
     function GetID: LongWord; stdcall;
     function GetCoordParams: TVec4f; stdcall;
     function GetFormat: TTextureFormat; stdcall;
+    function GetWidth: LongWord; stdcall;
+    function GetHeight: LongWord; stdcall;
     procedure SetFormat(Value: TTextureFormat); stdcall;
     function GetSampler: LongWord; stdcall;
     procedure SetSampler(Value: LongWord); stdcall;
@@ -298,17 +301,23 @@ type
     procedure SetClamp(Value: Boolean); stdcall;
     procedure SetCompare(Value: TTextureCompareMode); stdcall;
 
+    function GettSubTexCount: LongInt; stdcall;
+    function GetSubTex(idx: LongInt): ITexture; stdcall;
+
     procedure DataSet(Width, Height, Size: LongInt; Data: Pointer; Level: LongInt); stdcall;
     procedure Flip(Vertical, Horizontal: Boolean); stdcall;
+    procedure Split(Vertical, Horizontal: LongWord); stdcall;
 
     property ID: LongWord read GetID;
-        //property Width: LongInt read FWidth;
-   // property Height: LongInt read FHeight;
+    property Width: LongWord read GetWidth;
+    property Height: LongWord read GetHeight;
     property CoordParams: TVec4f read GetCoordParams;
     property Format: TTextureFormat read GetFormat write SetFormat;
     property Sampler: LongWord read GetSampler write SetSampler;
     property Filter: TTextureFilter read GetFilter write SetFilter;
     property Clamp: Boolean read GetClamp write SetClamp;
+    property SubTexCount: LongInt read GettSubTexCount;
+    property SubTex[Idx: LongInt]: ITexture read GetSubTex; default;
   end;
 
   IGeomBuffer = Interface
@@ -346,6 +355,7 @@ type
     procedure Load(const FilePath: string; out Resource: JEN_Header.IShaderResource); overload; stdcall;
     procedure Load(const FilePath: string; out Resource: JEN_Header.ITexture); overload; stdcall;
     procedure Load(const FilePath: string; out Resource: JEN_Header.IFont); overload; stdcall;
+
     {
     function LoadShader(const FileName: string): IShaderResource; stdcall;
     function LoadTexture(const FileName: string): ITexture; stdcall;    }
@@ -447,10 +457,10 @@ type
     procedure BatchBegin; stdcall;
     procedure BatchEnd; stdcall;
 
-    procedure DrawSprite(Shader: IShaderProgram; Tex1, Tex2, Tex3: ITexture; const v1, v2, v3, v4, Data1, Data2, Data3, Data4: TVec4f; Angle: Single; const Center: TVec2f; Effects: Cardinal); overload; stdcall;
-    procedure DrawSprite(Shader: IShaderProgram; Tex1, Tex2, Tex3: ITexture; x, y, w, h: Single; const Data1, Data2, Data3, Data4: TVec4f; Angle: Single; const Center: TVec2f; Effects: Cardinal); overload; stdcall;
-    procedure DrawSprite(Tex : ITexture; x, y, w, h: Single; const Color: TVec4f; Angle: Single = 0.0; cx: Single = 0.5; cy: Single = 0.5; Effects: Cardinal = 0); overload; stdcall;
-    procedure DrawSprite(Tex : ITexture; x, y, w, h: Single; const c1, c2, c3, c4: TVec4f; Angle: Single = 0.0; cx: Single = 0.5; cy: Single = 0.5; Effects: Cardinal = 0); overload;  stdcall;
+    procedure DrawSprite(Shader: IShaderProgram; Tex1, Tex2, Tex3: ITexture; const v1, v2, v3, v4: TVec2f; const Data1, Data2, Data3, Data4: TVec4f; Angle: Single; const Center: TVec2f; Effects: Cardinal); overload; stdcall;
+    procedure DrawSprite(Shader: IShaderProgram; Tex1, Tex2, Tex3: ITexture; x, y, w, h: Single; const Data1, Data2, Data3, Data4: TVec4f; Angle: Single = 0.0; Effects: Cardinal = 0); overload; stdcall;
+    procedure DrawSprite(Tex: ITexture; x, y, w, h: Single; const Color1, Color2, Color3, Color4: TVec4f; Angle: Single = 0.0; Effects: Cardinal = 0); overload; stdcall;
+    procedure DrawSprite(Tex: ITexture; x, y, w, h: Single; const Color: TVec4f; Angle: Single = 0.0; Effects: Cardinal = 0); overload; stdcall;
 
     property EnableRCt: Boolean read GetEnableRC write SetEnableRC;
     property RCRect: TRecti read GetRCRect;

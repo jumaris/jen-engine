@@ -30,8 +30,11 @@ type
 
     function GetActiveRes(RT: TResourceType): IUnknown;
     procedure SetActiveRes(RT: TResourceType; Value: IUnknown);
+    function GetActiveResID(RT: TResourceType): LongWord;
+    procedure SetActiveResID(RT: TResourceType; Value: LongWord);
 
     property Active[RT :TResourceType]: IUnknown read GetActiveRes write SetActiveRes;
+    property ActiveID[RT :TResourceType]: LongWord read GetActiveResID write SetActiveResID;
   end;
 
   TResourceManager = class(TInterfacedObject, IResourceManager)
@@ -43,13 +46,14 @@ type
     FErrorTexture : TTexture;
     FResChangeCallBack : Pointer;
     FActiveRes: array [TResourceType] of IUnknown;
+    FActiveResID: array [TResourceType] of LongWord;
   public
-    DebugTexture : TTexture;
-
     procedure SetResChangeCallBack(Proc: Pointer);
 
     function GetActiveRes(RT: TResourceType): IUnknown;
     procedure SetActiveRes(RT: TResourceType; Value: IUnknown);
+    function GetActiveResID(RT: TResourceType): LongWord;
+    procedure SetActiveResID(RT: TResourceType; Value: LongWord);
 
     function Load(const FilePath: string; ResType: TResourceType): IResource; overload; stdcall;
     procedure Load(const FilePath: string; out Resource: JEN_Header.IShaderResource); overload; stdcall;
@@ -108,6 +112,16 @@ end;
 procedure TResourceManager.SetActiveRes(RT: TResourceType; Value: IUnknown);
 begin
   FActiveRes[RT] := Value;
+end;
+
+function TResourceManager.GetActiveResID(RT: TResourceType): LongWord;
+begin
+  Result := FActiveResID[RT];
+end;
+
+procedure TResourceManager.SetActiveResID(RT: TResourceType; Value: LongWord);
+begin
+  FActiveResID[RT] := Value;
 end;
 
 procedure TResourceManager.Load(const FilePath: string; out Resource: JEN_Header.IShaderResource);
@@ -185,9 +199,9 @@ var
   Resource : IResource;
 begin
   case ResType of
-    rtShader : Resource := TShaderResource.Create(Utils.ExtractFileName(FilePath), Utils.ExtractFileDir(FilePath));
-    rtTexture: Resource := TTexture.Create(Utils.ExtractFileName(FilePath), Utils.ExtractFileDir(FilePath), 0, 0, tfoNone);
-    rtFont   : Resource := TFont.Create(Utils.ExtractFileName(FilePath), Utils.ExtractFileDir(FilePath));
+    rtShader : Resource := TShaderResource.Create(FilePath);
+    rtTexture: Resource := TTexture.Create(FilePath, 0, 0, tfoNone);
+    rtFont   : Resource := TFont.Create(FilePath);
   end;
 
   Load(FilePath, Resource);
@@ -196,7 +210,7 @@ end;
 
 function TResourceManager.CreateTexture(Width, Height: LongWord; Format: TTextureFormat): JEN_Header.ITexture; stdcall;
 begin
-  Result := TTexture.Create('', '', Width, Height, Format);
+  Result := TTexture.Create('', Width, Height, Format);
   FResList.Add(Result);
 end;
 

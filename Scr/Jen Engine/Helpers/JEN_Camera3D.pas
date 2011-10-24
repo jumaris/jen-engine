@@ -122,11 +122,11 @@ begin
 end;
 
 procedure TCamera3D.onUpdate(DeltaTime: Single);
-var
-  Dir    : TVec3f;
-  VSpeed : TVec3f;
+//var
+//  Dir    : TVec3f;
+//  VSpeed : TVec3f;
 begin
-  DeltaTime := DeltaTime/100;
+//  DeltaTime := DeltaTime/100;
   with Input.Mouse do
   begin
   FAngle.x := FAngle.x + Delta.y * 0.1;

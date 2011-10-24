@@ -17,8 +17,8 @@ type
     function Load(Stream: IStream; var Resource: IResource): Boolean; virtual; abstract;
   end;
 
-  TResource = class(TManagedInterface)
-    constructor Create(const Name, FilePath: string; ResType: TResourceType);
+  TResource = class(TInterfacedObject)
+    constructor Create(const FilePath: string; ResType: TResourceType);
   protected
     FName     : string;
     FFilePath : string;
@@ -33,11 +33,11 @@ implementation
 uses
   JEN_Main;
 
-constructor TResource.Create(const Name, FilePath: string; ResType: TResourceType);
+constructor TResource.Create(const FilePath: string; ResType: TResourceType);
 begin
-  FFilePath := FilePath;
-  if Name <> '' then
-    FName := Name
+  FFilePath := Utils.ExtractFileDir(FilePath);
+  if FilePath <> '' then
+    FName := Utils.ExtractFileName(FilePath)
   else
     FName := '$' + Utils.IntToStr(LongInt(Self));
   FResType := ResType;
