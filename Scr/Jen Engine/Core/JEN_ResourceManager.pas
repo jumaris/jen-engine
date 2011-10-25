@@ -200,7 +200,7 @@ var
 begin
   case ResType of
     rtShader : Resource := TShaderResource.Create(FilePath);
-    rtTexture: Resource := TTexture.Create(FilePath, 0, 0, tfoNone);
+    rtTexture: Resource := TTexture.Create(FilePath);
     rtFont   : Resource := TFont.Create(FilePath);
   end;
 
@@ -208,13 +208,17 @@ begin
   Result := Resource;
 end;
 
-function TResourceManager.CreateTexture(Width, Height: LongWord; Format: TTextureFormat): JEN_Header.ITexture; stdcall;
+function TResourceManager.CreateTexture(Width, Height: LongWord; Format: TTextureFormat): JEN_Header.ITexture;
+var
+  Tex : ITexture;
 begin
-  Result := TTexture.Create('', Width, Height, Format);
-  FResList.Add(Result);
+  Tex := TTexture.Create('');
+  Tex.Init(Width, Height, Format);
+  FResList.Add(Tex);
+  Result := Tex;
 end;
 
-function TResourceManager.CreateGeomBuffer(GBufferType: TGBufferType; Count, Stride: LongInt; Data: Pointer): IGeomBuffer; stdcall;
+function TResourceManager.CreateGeomBuffer(GBufferType: TGBufferType; Count, Stride: LongInt; Data: Pointer): IGeomBuffer;
 begin
   Result := TGeomBuffer.Create(GBufferType, Count, Stride, Data);
 end;

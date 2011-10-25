@@ -218,21 +218,18 @@ begin
     Mips := max(Mips, 1);
 
     // 2D image
-    Texture.Sampler := GL_TEXTURE_2D;
+    Texture.Init(dwWidth, dwHeight, Format);
     Samples := 1;
     // CubeMap image
     if dwCaps2 and DDSCAPS2_CUBEMAP > 0 then
     begin
-      Texture.Sampler := GL_TEXTURE_CUBE_MAP;
+   //   Texture.Sampler := GL_TEXTURE_CUBE_MAP;
       Samples := 6;
     end;
     // 3D image
     ///...
 
     Data := GetMemory((dwWidth div DivSize) * (dwHeight div DivSize) * BlockBytes);
-    Texture.Format := Format;
-    Texture.Bind;
-
     for s := 0 to Samples - 1 do
     begin
       case Texture.Sampler of

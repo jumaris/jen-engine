@@ -10,15 +10,17 @@ uses
   JEN_Math;
 
 type
-                 {
-  ITexture = interface(JEN_Header.ITexture)
-  ['{5EC7ADB4-2241-46EE-B5BE-4959B06EA364}{]
 
-  end;                                     }
+  ITexture = interface(JEN_Header.ITexture)
+  ['{5EC7ADB4-2241-46EE-B5BE-4959B06EA364}']
+    procedure Init(Width, Height: LongWord; Format: TTextureFormat); overload;
+    procedure Init(Parent: ITexture; S, T, SW, TH: Single); overload;
+  end;
 
   TTexture = class(TResource, IResource, ITexture)
-    constructor Create(const FilePath: string; Width, Height: LongWord; Format: TTextureFormat); overload;
-    constructor Create(Parent: ITexture; S, T, SW, TH: Single); overload;
+    constructor Create(const FilePath: string);
+    procedure Init(Width, Height: LongWord; Format: TTextureFormat); overload;
+    procedure Init(Parent: ITexture; S, T, SW, TH: Single); overload;
     destructor Destroy; override;
   private
     FIsSubTex : Boolean;
@@ -37,18 +39,16 @@ type
     function GetID: LongWord; stdcall;
     function GetCoordParams: TVec4f; stdcall;
     function GetFormat: TTextureFormat; stdcall;
-    procedure SetFormat(Value: TTextureFormat); stdcall;
     function GetWidth: LongWord; stdcall;
     function GetHeight: LongWord; stdcall;
     function GetSampler: LongWord; stdcall;
-    procedure SetSampler(Value: LongWord); stdcall;
     function GetFilter: TTextureFilter; stdcall;
     procedure SetFilter(Value: TTextureFilter); stdcall;
     function GetClamp: Boolean; stdcall;
     procedure SetClamp(Value: Boolean); stdcall;
     procedure SetCompare(Value: TTextureCompareMode); stdcall;
     function GettSubTexCount: LongInt; stdcall;
-    function GetSubTex(idx: LongInt): ITexture; stdcall;
+    function GetSubTex(idx: LongInt): JEN_Header.ITexture; stdcall;
   public
     procedure Reload; stdcall;
     procedure Flip(Vertical, Horizontal: Boolean); stdcall;
@@ -101,33 +101,26 @@ implementation
 uses
   JEN_Main;
 
-constructor TTexture.Create(Parent: ITexture; S, T, SW, TH: Single);
-begin
-  inherited Create(Parent.Name + '|' + Utils.IntToStr(LongInt(Self)), rtTexture);
-  FIsSubTex := True;
-  FID     := Parent.ID;
-  FWidth  := Round(Parent.Width * Abs(SW));
-  FHeight := Round(Parent.Height * Abs(TH));
-  FS      := S;
-  FT      := T;
-  FSW     := SW;
-  FTH     := TH;
-  FFormat := Parent.Format;
-  FSampler := Parent.Sampler;
-end;
-
-constructor TTexture.Create(const FilePath: string; Width, Height: LongWord; Format: TTextureFormat);
+constructor TTexture.Create(const FilePath: string);
 begin
   inherited Create(FilePath, rtTexture);
-  FWidth  := Width;
-  FHeight := Height;
   FS      := 0;
   FT      := 0;
   FSW     := 1;
   FTH     := 1;
-  FFormat := Format;
+end;
+
+procedure TTexture.Init(Width, Height: LongWord; Format: TTextureFormat);
+begin
+  FWidth  := Width;
+  FHeight := Height;
   FSampler := GL_TEXTURE_2D;
+  FFormat := Format;
+
+  if glIsTexture(FID) then
+    glDeleteTextures(1, @FID);
   glGenTextures(1, @FID);
+
   Bind;
 
   if Format <> tfoNone then
@@ -138,15 +131,26 @@ begin
       glTexImage2D(GL_TEXTURE_2D, 0, InternalFormat, Width, Height, 0, ExternalFormat, DataType, nil);
 
   if (Format = tfoDepth8) or (Format = tfoDepth16) or (Format = tfoDepth24) or (Format = tfoDepth32) then
-  begin
-    //SetCompare(tcmLEqual);
     glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
-  end;
 
   FMipMap := False;
   FFilter := tfiBilinear;
   SetFilter(tfiNone);
-  SetClamp(true);
+end;
+
+procedure TTexture.Init(Parent: ITexture; S, T, SW, TH: Single);
+begin
+  FIsSubTex := True;
+  FName     := Parent.Name + '|' + Utils.IntToStr(LongInt(Self));
+  FID       := Parent.ID;
+  FWidth    := Round(Parent.Width * Abs(SW));
+  FHeight   := Round(Parent.Height * Abs(TH));
+  FS        := S;
+  FT        := T;
+  FSW       := SW;
+  FTH       := TH;
+  FFormat   := Parent.Format;
+  FSampler  := Parent.Sampler;
 end;
 
 destructor TTexture.Destroy;
@@ -175,11 +179,6 @@ begin
   Result := FFormat;
 end;
 
-procedure TTexture.SetFormat(Value: TTextureFormat);
-begin
-  FFormat := Value;
-end;
-
 function TTexture.GetWidth: LongWord; stdcall;
 begin
   Result := FWidth;
@@ -193,11 +192,6 @@ end;
 function TTexture.GetSampler: LongWord;
 begin
   Result := FSampler;
-end;
-
-procedure TTexture.SetSampler(Value: LongWord);
-begin
-  FSampler := Value;
 end;
 
 function TTexture.GetFilter: TTextureFilter;
@@ -268,7 +262,7 @@ begin
   Result := FSubTexList.Count;
 end;
 
-function TTexture.GetSubTex(idx: LongInt): ITexture;
+function TTexture.GetSubTex(idx: LongInt): JEN_Header.ITexture;
 begin
   if not Assigned(FSubTexList) then
     Exit(nil);
@@ -296,7 +290,8 @@ end;
 
 procedure TTexture.Split(Vertical, Horizontal: LongWord); stdcall;
 var
-  i, j  : Integer;
+  i, j : Integer;
+  Tex  : ITexture;
 begin
   if Assigned(FSubTexList) then
     FSubTexList.Clear
@@ -305,7 +300,11 @@ begin
 
   for J := Vertical-1 downto 0 do
     for I :=0 to Horizontal-1 do
-      FSubTexList.Add(TTexture.Create(Self, (I/Horizontal)*FSW + FS,(J/Vertical)*FTH + FT, FSW/Horizontal, FTH/Vertical));
+    begin
+      Tex := TTexture.Create('');
+      Tex.Init(Self, (I/Horizontal)*FSW + FS,(J/Vertical)*FTH + FT, FSW/Horizontal, FTH/Vertical);
+      FSubTexList.Add(Tex);
+    end;
 end;
 
 procedure TTexture.DataSet(Width, Height, Size: LongInt; Data: Pointer; Level: LongInt);
@@ -332,13 +331,12 @@ end;                 }
 
 procedure TTexture.Bind(Channel: Byte);
 begin
-  if (ResMan.ActiveID[TResourceType(Channel + Ord(rtTexture))] <> FID) or
-     (ResMan.Active[TResourceType(Channel + Ord(rtTexture))] <> ITexture(Self)) then
+  if (ResMan.ActiveID[TResourceType(Channel + Ord(rtTexture))] <> FID) then
   begin
     glActiveTexture(GL_TEXTURE0 + Channel);
     glBindTexture(FSampler, FID);
-    ResMan.Active[TResourceType(Channel + Ord(rtTexture))] := ITexture(Self);
     ResMan.ActiveID[TResourceType(Channel + Ord(rtTexture))] := FID;
+    ResMan.Active[TResourceType(Channel + Ord(rtTexture))] := ITexture(Self);
   end;
 end;
 

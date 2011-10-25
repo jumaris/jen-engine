@@ -292,9 +292,7 @@ type
     function GetFormat: TTextureFormat; stdcall;
     function GetWidth: LongWord; stdcall;
     function GetHeight: LongWord; stdcall;
-    procedure SetFormat(Value: TTextureFormat); stdcall;
     function GetSampler: LongWord; stdcall;
-    procedure SetSampler(Value: LongWord); stdcall;
     function GetFilter: TTextureFilter; stdcall;
     procedure SetFilter(Value: TTextureFilter); stdcall;
     function GetClamp: Boolean; stdcall;
@@ -312,8 +310,8 @@ type
     property Width: LongWord read GetWidth;
     property Height: LongWord read GetHeight;
     property CoordParams: TVec4f read GetCoordParams;
-    property Format: TTextureFormat read GetFormat write SetFormat;
-    property Sampler: LongWord read GetSampler write SetSampler;
+    property Format: TTextureFormat read GetFormat;
+    property Sampler: LongWord read GetSampler;
     property Filter: TTextureFilter read GetFilter write SetFilter;
     property Clamp: Boolean read GetClamp write SetClamp;
     property SubTexCount: LongInt read GettSubTexCount;
