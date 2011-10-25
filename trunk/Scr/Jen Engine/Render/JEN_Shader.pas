@@ -314,9 +314,10 @@ end;
 
 procedure TShaderProgram.Bind;
 begin
-  if ResMan.Active[rtShader] <> IUnknown(Self) then
+  if (ResMan.ActiveID[rtShader] <> FID) then
   begin
     glUseProgram(FID);
+    ResMan.ActiveID[rtShader] := FID;
     ResMan.Active[rtShader] := Self;
   end;
 end;

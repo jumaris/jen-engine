@@ -453,6 +453,7 @@ const
   // Texture
   procedure glBindTexture(target: GLenum; texture: GLuint); stdcall; external opengl32;
   procedure glGenTextures(n: GLsizei; textures: PGLuint); stdcall; external opengl32;
+  function  glIsTexture(texture: GLuint): GLboolean; stdcall; external opengl32;
   procedure glDeleteTextures(n: GLsizei; const textures: PGLuint); stdcall; external opengl32;
   procedure glTexParameterf(target: GLenum; pname: GLenum; param: GLfloat); stdcall; external opengl32;
   procedure glTexParameteri(target: GLenum; pname: GLenum; param: GLint); stdcall; external opengl32;

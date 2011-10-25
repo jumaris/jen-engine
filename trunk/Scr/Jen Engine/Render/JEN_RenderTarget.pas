@@ -4,8 +4,7 @@ interface
 
 uses
   JEN_Header,
-  JEN_OpenGLHeader,
-  JEN_Texture;
+  JEN_OpenGLHeader;
 
 type
   TRenderTarget = class(TInterfacedObject, IRenderTarget)
