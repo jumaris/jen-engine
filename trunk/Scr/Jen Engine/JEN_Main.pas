@@ -39,7 +39,7 @@ type
     procedure AddEventProc(Event: TEvent; Proc: TEventProc); stdcall;
     procedure DelEventProc(Event: TEvent; Proc: TEventProc); stdcall;
 
-    procedure LogOut(const Text: string; MType: TLogMsg); stdcall;
+    procedure LogOut( Text: PWideChar; MType: TLogMsg); stdcall;
     class property Quit: Boolean read FQuit write FQuit;
   end;
 
@@ -66,7 +66,7 @@ implementation
 
 procedure LogOut(const Text: string; MType: TLogMsg);
 begin
-  Engine.LogOut(Text, MType);
+  Engine.LogOut(PWideChar(Text), MType);
 end;
 
 function GetEngine(FileLog, Debug: Boolean): JEN_Header.IJenEngine;
@@ -113,12 +113,12 @@ var
   begin
     if not Assigned(SubSystem) then
     begin
-      LogOut('OMG all reference to ' + Name + ' released', lmError);
+      JEN_Main.LogOut('OMG all reference to ' + Name + ' released', lmError);
       Exit;
     end;
 
     if(SubSystem._AddRef>3) then
-      LogOut('Do not all reference to ' + Name + ' released', lmError);
+      JEN_Main.LogOut('Do not all reference to ' + Name + ' released', lmError);
     SubSystem._Release;
   end;
 
@@ -256,9 +256,9 @@ begin
   FEventsList[Event].Del(FEventsList[Event].IndexOf(@Proc));
 end;
 
-procedure TJenEngine.LogOut(const Text: string; MType: TLogMsg); stdcall;
+procedure TJenEngine.LogOut(Text: PWideChar; MType: TLogMsg); stdcall;
 begin
-  CreateEvent(evLogMsg, Ord(MType), PWideChar(Text));
+  CreateEvent(evLogMsg, Ord(MType), Text);
 end;
 
 initialization

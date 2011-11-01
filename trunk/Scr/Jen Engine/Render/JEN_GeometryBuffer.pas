@@ -49,8 +49,8 @@ end;
 procedure TGeomBuffer.SetData(Offset, Size: LongInt; Data: Pointer);
 type
   TByteArray = array[0..0] of Byte;
-var
-  p : ^TByteArray;
+//var
+//  p : ^TByteArray;
 begin
  // Bind;
   //glBufferData(FType, size, nil, GL_STREAM_DRAW );

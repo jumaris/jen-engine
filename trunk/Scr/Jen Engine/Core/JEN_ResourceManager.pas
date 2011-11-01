@@ -55,10 +55,10 @@ type
     function GetActiveResID(RT: TResourceType): LongWord;
     procedure SetActiveResID(RT: TResourceType; Value: LongWord);
 
-    function Load(const FilePath: string; ResType: TResourceType): IResource; overload; stdcall;
-    procedure Load(const FilePath: string; out Resource: JEN_Header.IShaderResource); overload; stdcall;
-    procedure Load(const FilePath: string; out Resource: JEN_Header.ITexture); overload; stdcall;
-    procedure Load(const FilePath: string; out Resource: JEN_Header.IFont); overload; stdcall;
+    function Load(FilePath: PWideChar; ResType: TResourceType): IResource; overload; stdcall;
+    procedure Load(FilePath: PWideChar; out Resource: JEN_Header.IShaderResource); overload; stdcall;
+    procedure Load(FilePath: PWideChar; out Resource: JEN_Header.ITexture); overload; stdcall;
+    procedure Load(FilePath: PWideChar; out Resource: JEN_Header.IFont); overload; stdcall;
     procedure Load(const FilePath: string; var Resource: IResource); overload;
 
     function CreateTexture(Width, Height: LongWord; Format: TTextureFormat): JEN_Header.ITexture; stdcall;
@@ -124,17 +124,17 @@ begin
   FActiveResID[RT] := Value;
 end;
 
-procedure TResourceManager.Load(const FilePath: string; out Resource: JEN_Header.IShaderResource);
+procedure TResourceManager.Load(FilePath: PWideChar; out Resource: JEN_Header.IShaderResource);
 begin
   Resource := IShaderResource(Load(FilePath, rtShader));
 end;
 
-procedure TResourceManager.Load(const FilePath: string; out Resource: JEN_Header.ITexture);
+procedure TResourceManager.Load(FilePath: PWideChar; out Resource: JEN_Header.ITexture);
 begin
   Resource := ITexture(Load(FilePath, rtTexture));
 end;
 
-procedure TResourceManager.Load(const FilePath: string; out Resource: JEN_Header.IFont);
+procedure TResourceManager.Load(FilePath: PWideChar; out Resource: JEN_Header.IFont);
 begin
   Resource := IFont(Load(FilePath, rtFont));
 end;
@@ -171,7 +171,7 @@ begin
     Exit;
   end;
 
-  Stream := Helpers.CreateStream(FilePath, False);
+  Stream := Helpers.CreateStream(PWideChar(FilePath), False);
   if not (Assigned(Stream) and Stream.Valid) then
   begin
     Logout('Can''t open file ' + FileName, lmWarning);
@@ -194,7 +194,7 @@ begin
   LogOut('Loading '+ (Resource as IResource).Name, lmNotify);
 end;
 
-function TResourceManager.Load(const FilePath: string; ResType: TResourceType): JEN_Header.IResource;
+function TResourceManager.Load(FilePath: PWideChar; ResType: TResourceType): JEN_Header.IResource;
 var
   Resource : IResource;
 begin

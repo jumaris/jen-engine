@@ -57,6 +57,14 @@ type
     procedure SetFreezeTime(Value: Boolean);
     property FreezeTime: Boolean write SetFreezeTime;
     property RealTime: LongInt read GetRealTime;
+
+    function IntToStr(Value: LongInt): string;
+    function StrToInt(const Str: string; Def: LongInt = 0): LongInt;
+    function FloatToStr(Value: Single; Digits: LongInt = 8): string;
+    function StrToFloat(const Str: string; Def: Single = 0): Single;
+    function ExtractFileDir(const FileName: string): string;
+    function ExtractFileName(const FileName: string; NoExt: Boolean = False): string;
+    function ExtractFileExt(const FileName: string): string;
   end;
 
   TUtils = class(TInterfacedObject, IJenSubSystem, IUtils)
@@ -75,13 +83,13 @@ type
     procedure Sleep(Value: LongWord); stdcall;
     procedure SetFreezeTime(Value: Boolean);
     procedure Update;
-    function IntToStr(Value: LongInt): string; stdcall;
-    function StrToInt(const Str: string; Def: LongInt = 0): LongInt; stdcall;
-    function FloatToStr(Value: Single; Digits: LongInt = 8): string; stdcall;
-    function StrToFloat(const Str: string; Def: Single = 0): Single; stdcall;
-    function ExtractFileDir(const FileName: string): string; stdcall;
-    function ExtractFileName(const FileName: string; NoExt: Boolean): string; stdcall;
-    function ExtractFileExt(const FileName: string): string; stdcall;
+    function IntToStr(Value: LongInt): string;
+    function StrToInt(const Str: string; Def: LongInt = 0): LongInt;
+    function FloatToStr(Value: Single; Digits: LongInt = 8): string;
+    function StrToFloat(const Str: string; Def: Single = 0): Single;
+    function ExtractFileDir(const FileName: string): string;
+    function ExtractFileName(const FileName: string; NoExt: Boolean): string;
+    function ExtractFileExt(const FileName: string): string;
   end;
 
   TStream = class(TInterfacedObject, IStream)
@@ -96,16 +104,16 @@ type
     FSize  : LongInt;
     FMem   : Pointer;
     function Valid: Boolean; stdcall;
-    function GetName: string; stdcall;
+    function GetName: PWideChar; stdcall;
     function GetSize: LongInt; stdcall;
     function GetPos: LongInt; stdcall;
     procedure SetPos(Value: LongInt); stdcall;
     function Read(out Buf; BufSize: LongInt): LongWord; stdcall;
     function Write(const Buf; BufSize: LongInt): LongWord; stdcall;
-    function ReadAnsi: AnsiString; stdcall;
-    procedure WriteAnsi(const Value: AnsiString); stdcall;
-    function ReadUnicode: WideString; stdcall;
-    procedure WriteUnicode(const Value: WideString); stdcall;
+  //  function ReadAnsi: PAnsiChar; stdcall;
+    procedure WriteAnsi(Value: PAnsiChar); stdcall;
+   // function ReadUnicode: PWideChar; stdcall;
+    procedure WriteUnicode(Value: PWideChar); stdcall;
   end;
   TCharSet = set of AnsiChar;
 
@@ -377,8 +385,6 @@ end;
 // TUtils
 {$REGION 'TUtils'}
 constructor TUtils.Create;
-var
-  Count : Int64;
 begin
   HWaitObj := CreateEvent(nil, True, False, '');
 
@@ -423,7 +429,7 @@ begin
   FTime := GetRealTime;
 end;
 
-function TUtils.IntToStr(Value: LongInt): String;
+function TUtils.IntToStr(Value: LongInt): string;
 var
   Res : string[32];
 begin
@@ -431,7 +437,7 @@ begin
   Result := string(Res);
 end;
 
-function TUtils.StrToInt(const Str: String; Def: LongInt): LongInt;
+function TUtils.StrToInt(const Str: string; Def: LongInt): LongInt;
 var
   Code : LongInt;
 begin
@@ -565,9 +571,9 @@ begin
   Result := FType <> stNone;
 end;
 
-function TStream.GetName: string;
+function TStream.GetName: PWideChar;
 begin
-  Result := FName;
+  Result := PWideChar(FName);
 end;
 
 function TStream.GetSize: LongInt;
@@ -617,23 +623,25 @@ begin
   Inc(FPos, Result);
   Inc(FSize, Max(0, FPos - FSize));
 end;
-
-function TStream.ReadAnsi: AnsiString;
+                      {
+function TStream.ReadAnsi: PAnsiChar;
 var
   Len : Word;
+  Str : AnsiString;
 begin
   if not Valid then
     Exit;
   Read(Len, SizeOf(Len));
   if Len > 0 then
   begin
-    SetLength(Result, Len);
-    Read(Result[1], Len);
+    SetLength(Str, Len);
+    Read(Str[1], Len);
+    Result := PAnsiChar(Str);
   end else
     Result := '';
 end;
-
-procedure TStream.WriteAnsi(const Value: AnsiString);
+             }
+procedure TStream.WriteAnsi(Value: PAnsiChar);
 var
   Len : Word;
 begin
@@ -644,7 +652,7 @@ begin
   if Len > 0 then
     Write(Value[1], Len);
 end;
-
+                {
 function TStream.ReadUnicode: WideString;
 var
   Len : Word;
@@ -655,8 +663,8 @@ begin
   SetLength(Result, Len);
   Read(Result[1], Len * 2);
 end;
-
-procedure TStream.WriteUnicode(const Value: WideString);
+                 }
+procedure TStream.WriteUnicode(Value: PWideChar);
 var
   Len : Word;
 begin

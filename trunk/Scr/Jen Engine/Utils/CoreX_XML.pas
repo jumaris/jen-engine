@@ -20,15 +20,18 @@ type
     constructor Create(const Text: string);
   private
     FCount  : LongInt;
-    FParams : array of TXMLParam;
-    function GetParam(const Name: string): TXMLParam; stdcall;
+    FParams : array of record
+      Name  : String;
+      Value : String;
+    end;
+    function GetParam(Name: PWideChar): TXMLParam; stdcall;
     function GetParamI(Idx: LongInt): TXMLParam; stdcall;
     function GetCount: LongInt; stdcall;
   end;
 
   TXML = class(TInterfacedObject, IXML)
     class function Load(Stream: IStream): IXML;
-    constructor Create(const Text: string; BeginPos: LongInt);
+    constructor Create(const Text: String; BeginPos: LongInt);
     destructor Destroy; override;
   private
     FCount   : LongInt;
@@ -38,11 +41,11 @@ type
     FDataLen : LongInt;
     FParams  : IXMLParams;
     function GetCount: LongInt; stdcall;
-    function GetTag: string; stdcall;
-    function GetContent: string; stdcall;
+    function GetTag: PWideChar; stdcall;
+    function GetContent: PWideChar; stdcall;
     function GetDataLen: LongInt; stdcall;
     function GetParams: IXMLParams; stdcall;
-    function GetNode(const TagName: string): IXML; stdcall;
+    function GetNode(TagName: PWideChar): IXML; stdcall;
     function GetNodeI(Idx: LongInt): IXML; stdcall;
   end;
 
@@ -108,7 +111,7 @@ begin
   Result := FCount;
 end;
 
-function TXMLParams.GetParam(const Name: string): TXMLParam;
+function TXMLParams.GetParam(Name: PWideChar): TXMLParam;
 const
   NullParam : TXMLParam = (Name: ''; Value: '');
 var
@@ -117,8 +120,8 @@ begin
   for i := 0 to FCount - 1 do
     if FParams[i].Name = Name then
     begin
-      Result.Name  := FParams[i].Name;
-      Result.Value := FParams[i].Value;
+      Result.Name  := PWideChar(FParams[i].Name);
+      Result.Value := PWideChar(FParams[i].Value);
       Exit;
     end;
   Result := NullParam;
@@ -126,8 +129,8 @@ end;
 
 function TXMLParams.GetParamI(Idx: LongInt): TXMLParam;
 begin
-  Result.Name  := FParams[Idx].Name;
-  Result.Value := FParams[Idx].Value;
+  Result.Name  := PWideChar(FParams[Idx].Name);
+  Result.Value := PWideChar(FParams[Idx].Value);
 end;
 
 class function TXML.Load(Stream: IStream): IXML;
@@ -294,14 +297,14 @@ begin
   Result := FCount;
 end;
 
-function TXML.GetTag: string;
+function TXML.GetTag: PWideChar;
 begin
-  Result := FTag;
+  Result := PWideChar(FTag);
 end;
 
-function TXML.GetContent: string;
+function TXML.GetContent: PWideChar;
 begin
-  Result := FContent;
+  Result := PWideChar(FContent);
 end;
 
 function TXML.GetDataLen: LongInt;
@@ -314,12 +317,12 @@ begin
   Result := FParams;
 end;
 
-function TXML.GetNode(const TagName: string): IXML;
+function TXML.GetNode(TagName: PWideChar): IXML;
 var
   i : LongInt;
 begin
   for i := 0 to FCount - 1 do
-    if FNode[i].Tag = TagName then
+    if string(FNode[i].Tag) = string(TagName) then
     begin
       Result := FNode[i];
       Exit;

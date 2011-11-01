@@ -17,7 +17,7 @@ type
     FSystemInfo: ISystemInfo;
     function GetSystemInfo: ISystemInfo; stdcall;
   public
-    function CreateStream(FileName: string; RW: Boolean): IStream; stdcall;
+    function CreateStream(FileName: PWideChar; RW: Boolean): IStream; stdcall;
     function CreateCamera3D: ICamera3d; stdcall;
     function CreateCamera2D: ICamera2d; stdcall;
   end;
@@ -41,7 +41,7 @@ begin
   Result := FSystemInfo;
 end;
 
-function THelpers.CreateStream(FileName: string; RW: Boolean): IStream;
+function THelpers.CreateStream(FileName: PWideChar; RW: Boolean): IStream;
 begin
   Result := TStream.Create(FileName, RW);
 end;

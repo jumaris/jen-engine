@@ -28,7 +28,7 @@ var
   Build : LongInt;
   Str   : array[1..4] of string;
 begin
-  Stream := Helpers.CreateStream(FileName);
+  Stream := Helpers.CreateStream(PWideChar(FileName));
 
   Helpers.SystemInfo.WindowsVersion(Major, Minor, Build);
   SetLength(S,80);

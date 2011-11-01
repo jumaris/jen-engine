@@ -126,6 +126,7 @@ var
 //  FID     : LongWord;
 begin
   FValid := False;
+  Result := False;
   Set8087CW($133F);
 
   if not (Assigned(Display) and Display.Valid) then
@@ -265,7 +266,7 @@ begin
   // glEnable(GL_NORMALIZE);
   // glEnable(GL_COLOR_MATERIAL);
   Render2d.Init;
-  Render2d.ResolutionCorrect(Display.Width, Display.Height);
+  Render2d.UpdateRC;
   FValid := True;
 end;
 
