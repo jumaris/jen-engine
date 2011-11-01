@@ -62,8 +62,8 @@ type
     procedure Init(PagesCount: Word; Height: LongInt; MaxDist: Word; MaxDistTC: Single);
     procedure AddChar(Char: WideChar;const Info: TCharInfo);
 
-    function GetTextWidth(const Text: String): Single; stdcall;
-    procedure Print(const Text: String; X, Y: Single); stdcall;
+    function GetTextWidth(Text: PWideChar): Single; stdcall;
+    procedure Print(Text: PWideChar; X, Y: Single); stdcall;
   end;
 
   TFontLoader = class(TResLoader)
@@ -178,7 +178,7 @@ end;
 
 procedure TFont.Init(PagesCount: Word; Height: LongInt; MaxDist: Word; MaxDistTC: Single);
 var
-  I : Integer;
+  I   : Integer;
 begin
   FPagesCount := PagesCount;
   FHeight := Height;
@@ -187,7 +187,7 @@ begin
 
   SetLength(FPages, FPagesCount);
   for I := 0 to FPagesCount - 1 do
-    ResMan.Load(FFilePath + Utils.ExtractFileName(FName, True) + '_' + Utils.IntToStr(I) + '.dds', FPages[i]);
+    ResMan.Load(PWideChar(FFilePath + Utils.ExtractFileName(PWideChar(FName), True) + '_' + Utils.IntToStr(I) + '.dds'), FPages[i]);
 end;
 
 procedure TFont.AddChar(Char: WideChar;const Info: TCharInfo);
@@ -197,7 +197,7 @@ begin
   //Move(Info, FChars[Char], SizeOf(TCharInfo));
 end;
 
-procedure TFont.Print(const Text: String; X, Y: Single);
+procedure TFont.Print(Text: PWideChar; X, Y: Single);
 var
   i        : LongInt;
   PosX     : Single;
@@ -250,7 +250,7 @@ begin
   Render2d.BatchEnd;
 end;
 
-function TFont.GetTextWidth(const Text: String): Single;
+function TFont.GetTextWidth(Text: PWideChar): Single;
 var
   i        : LongInt;
   CharInfo : PCharInfo;

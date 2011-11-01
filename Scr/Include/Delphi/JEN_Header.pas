@@ -85,70 +85,63 @@ type
     procedure DelEventProc(Event: TEvent; Proc: TEventProc); stdcall;
     procedure CreateEvent(Event: TEvent; Param: LongInt = 0; Data: Pointer = nil); stdcall;
 
-    procedure LogOut(const Text: string; MType: TLogMsg); stdcall;
+    procedure LogOut(Text: PWideChar; MType: TLogMsg); stdcall;
   end;
 
   IStream = interface
     function Valid: Boolean; stdcall;
-    function GetName: string; stdcall;
+    function GetName: PWideChar; stdcall;
     function GetSize: LongInt; stdcall;
     function GetPos: LongInt; stdcall;
     procedure SetPos(Value: LongInt); stdcall;
     function Read(out Buf; BufSize: LongInt): LongWord; stdcall;
     function Write(const Buf; BufSize: LongInt): LongWord; stdcall;
-    function ReadAnsi: AnsiString; stdcall;
-    procedure WriteAnsi(const Value: AnsiString); stdcall;
-    function ReadUnicode: WideString; stdcall;
-    procedure WriteUnicode(const Value: WideString); stdcall;
+  //  function ReadAnsi: PAnsiChar; stdcall;
+    procedure WriteAnsi(Value: PAnsiChar); stdcall;
+  //  function ReadUnicode: PWideChar; stdcall;
+    procedure WriteUnicode(Value: PWideChar); stdcall;
 
     property Size: LongInt read GetSize;
     property Pos: LongInt read GetPos write SetPos;
-    property Name: String read GetName;
+    property Name: PWideChar read GetName;
   end;
 
   TXMLParam = record
-    Name  : string;
-    Value : string;
+    Name  : PWideChar;
+    Value : PWideChar;
   end;
 
   IXMLParams = interface
-    function GetParam(const Name: string): TXMLParam; stdcall;
+    function GetParam(Name: PWideChar): TXMLParam; stdcall;
     function GetParamI(Idx: LongInt): TXMLParam; stdcall;
     function GetCount: LongInt; stdcall;
 
     property Count: LongInt read GetCount;
-    property Param[const Name: string]: TXMLParam read GetParam; default;
+    property Param[Name: PWideChar]: TXMLParam read GetParam; default;
     property ParamI[Idx: LongInt]: TXMLParam read GetParamI;
   end;
 
   IXML = interface
     function GetCount: LongInt; stdcall;
-    function GetTag: string; stdcall;
-    function GetContent: string; stdcall;
+    function GetTag: PWideChar; stdcall;
+    function GetContent: PWideChar; stdcall;
     function GetDataLen: LongInt; stdcall;
     function GetParams: IXMLParams; stdcall;
-    function GetNode(const TagName: string): IXML; stdcall;
+    function GetNode(TagName: PWideChar): IXML; stdcall;
     function GetNodeI(Idx: LongInt): IXML; stdcall;
 
     property Count: LongInt read GetCount;
-    property Tag: string read GetTag;
-    property Content: string read GetContent;
+    property Tag: PWideChar read GetTag;
+    property Content: PWideChar read GetContent;
     property DataLen: LongInt read GetDataLen;
     property Params: IXMLParams read GetParams;
-    property Node[const TagName: string]: IXML read GetNode; default;
+    property Node[TagName: PWideChar]: IXML read GetNode; default;
     property NodeI[Idx: LongInt]: IXML read GetNodeI;
   end;
 
   IUtils = interface(IJenSubSystem)
     function GetTime : LongInt; stdcall;
     procedure Sleep(Value: LongWord); stdcall;
-    function IntToStr(Value: LongInt): string; stdcall;
-    function StrToInt(const Str: string; Def: LongInt = 0): LongInt; stdcall;
-    function FloatToStr(Value: Single; Digits: LongInt = 8): string; stdcall;
-    function StrToFloat(const Str: string; Def: Single = 0): Single; stdcall;
-    function ExtractFileDir(const FileName: string): string; stdcall;
-    function ExtractFileName(const FileName: string; NoExt: Boolean = False): string; stdcall;
-    function ExtractFileExt(const FileName: string): string; stdcall;
     property Time : LongInt read GetTime;
   end;
 
@@ -191,11 +184,12 @@ type
   end;
 
   IDisplay = interface(IJenSubSystem)
-    function Init(Width: LongWord = 800; Height: LongWord = 600; Refresh: Byte = 0; FullScreen: Boolean = False): Boolean; stdcall;
+    function Init(Width: LongWord = 800; Height: LongWord = 600; Refresh: Byte = 0; FullScreen: Boolean = False): Boolean; overload; stdcall;
+    function Init(Handle: HWND): Boolean; overload; stdcall;
     procedure Resize(Width, Height: LongWord); stdcall;
 
     procedure SetActive(Value: Boolean); stdcall;
-    procedure SetCaption(const Value: String); stdcall;
+    procedure SetCaption(Value: PWideChar); stdcall;
     procedure SetFullScreen(Value: Boolean); stdcall;
 
     function GetFullScreen: Boolean; stdcall;
@@ -220,37 +214,37 @@ type
     property DC: HDC read GetWndDC;
     property Width: LongWord read GetWidth;
     property Height: LongWord read GetHeight;
-    property Caption: String write SetCaption;
+    property Caption: PWideChar write SetCaption;
   end;
 
   IResource = interface
   ['{85CA9B42-E24A-4FA8-BFFA-083B73CCA057}']
     procedure Reload; stdcall;
-    function GetName: string; stdcall;
-    function GetFilePath: string; stdcall;
+    function GetName: PWideChar; stdcall;
+    function GetFilePath: PWideChar; stdcall;
     function GetResType: TResourceType; stdcall;
 
-    property Name: string read GetName;
-    property FilePath: string read GetFilePath;
+    property Name: PWideChar read GetName;
+    property FilePath: PWideChar read GetFilePath;
     property ResType: TResourceType read GetResType;
   end;
 
   IShaderUniform = interface
   ['{A587E658-8ADD-4928-A985-771AB9E5D562}']
-    function GetName: string; stdcall;
+    function GetName: PWideChar; stdcall;
     function GetType: TShaderUniformType; stdcall;
  //   procedure SetType(Value: TShaderUniformType); stdcall;
 
     function Valid: Boolean; stdcall;
     procedure Value(const Data; Count: LongInt = 1); stdcall;
 
-    property Name: string read GetName;
+    property Name: PWideChar read GetName;
     property UType: TShaderUniformType read GetType;
   end;
 
   IShaderAttrib = interface
   ['{3BF51C3F-3063-4CAE-9993-12F7A5E11DED}']
-    function GetName: string; stdcall;
+    function GetName: PWideChar; stdcall;
     function GetType: TShaderAttribType; stdcall;
   //  procedure SetType(Value: TShaderAttribType); stdcall;
 
@@ -260,7 +254,7 @@ type
     procedure Enable; stdcall;
     procedure Disable; stdcall;
 
-    property Name: string read GetName;
+    property Name: PWideChar read GetName;
     property AType: TShaderAttribType read GetType;
   end;
 
@@ -268,19 +262,19 @@ type
   ['{1F79BB95-C0B0-45AF-AA8D-AF9999CC85C8}']
     function Valid: Boolean; stdcall;
     function GetID: LongWord; stdcall;
-    function Uniform(const UName: String; UniformType: TShaderUniformType; Necessary: Boolean = True): IShaderUniform; overload; stdcall;
-    function Attrib(const AName: string; AttribType: TShaderAttribType; Necessary: Boolean = True): IShaderAttrib; stdcall;
+    function Uniform(UName: PWideChar; UniformType: TShaderUniformType; Necessary: Boolean = True): IShaderUniform; overload; stdcall;
+    function Attrib(AName: PWideChar; AttribType: TShaderAttribType; Necessary: Boolean = True): IShaderAttrib; stdcall;
     procedure Bind; stdcall;
   end;
 
   IShaderResource = interface(IResource)
   ['{313C3497-C065-4A29-A970-07B9750D5914}']
-    function GetDefine(const Name: String): LongInt; stdcall;
-    procedure SetDefine(const Name: String; Value: LongInt); stdcall;
+    function GetDefine(Name: PWideChar): LongInt; stdcall;
+    procedure SetDefine(Name: PWideChar; Value: LongInt); stdcall;
 
     function Compile: IShaderProgram; stdcall;
 
-    property Define[const Name: String]: LongInt read GetDefine write SetDefine; default;
+    property Define[Name: PWideChar]: LongInt read GetDefine write SetDefine; default;
   end;
 
   ITexture = interface(IResource)
@@ -326,8 +320,8 @@ type
 
   IFont = interface(IResource)
   ['{9057EA67-509A-4D17-AFC8-8B96481A6BCF}']
-    function GetTextWidth(const Text: String): Single; stdcall;
-    procedure Print(const Text: String; X, Y: Single);stdcall;
+    function GetTextWidth(Text: PWideChar): Single; stdcall;
+    procedure Print(Text: PWideChar; X, Y: Single);stdcall;
 
     function GetScale: Single; stdcall;
     procedure SetScale(Value: Single); stdcall;
@@ -349,14 +343,14 @@ type
   end;
 
   IResourceManager = interface(IJenSubSystem)
-    function Load(const FilePath: string; Resource: TResourceType): IResource; overload; stdcall;
-    procedure Load(const FilePath: string; out Resource: JEN_Header.IShaderResource); overload; stdcall;
-    procedure Load(const FilePath: string; out Resource: JEN_Header.ITexture); overload; stdcall;
-    procedure Load(const FilePath: string; out Resource: JEN_Header.IFont); overload; stdcall;
+    function Load(FilePath: PWideChar; Resource: TResourceType): IResource; overload; stdcall;
+    procedure Load(FilePath: PWideChar; out Resource: JEN_Header.IShaderResource); overload; stdcall;
+    procedure Load(FilePath: PWideChar; out Resource: JEN_Header.ITexture); overload; stdcall;
+    procedure Load(FilePath: PWideChar; out Resource: JEN_Header.IFont); overload; stdcall;
 
     {
-    function LoadShader(const FileName: string): IShaderResource; stdcall;
-    function LoadTexture(const FileName: string): ITexture; stdcall;    }
+    function LoadShader(FileName: PWideChar): IShaderResource; stdcall;
+    function LoadTexture(FileName: PWideChar): ITexture; stdcall;    }
 
     function CreateTexture(Width, Height: LongWord; Format: TTextureFormat): ITexture; stdcall;
     function CreateGeomBuffer(GBufferType: TGBufferType; Count, Stride: LongInt; Data: Pointer): IGeomBuffer; stdcall;
@@ -529,12 +523,12 @@ type
     function GetRAMTotal: LongWord; stdcall;
     function GetRAMFree: LongWord; stdcall;
     function GetCPUCount: LongInt; stdcall;
-    function GetCPUName: String; stdcall;
+    function GetCPUName: PWideChar; stdcall;
     function GetCPUSpeed: LongWord; stdcall;
 
     property GPUList: IList read GetGpuList;
     property CPUCount: LongInt read GetCPUCount;
-    property CPUName: String read GetCPUName;
+    property CPUName: PWideChar read GetCPUName;
     property CPUSpeed: LongWord read GetCPUSpeed;
     property RAMTotal: LongWord read GetRAMTotal;
     property RAMFree: LongWord read GetRAMFree;
@@ -544,7 +538,7 @@ type
   end;
 
   IHelpers = interface(IJenSubSystem)
-    function CreateStream(FileName: string; RW: Boolean = True): IStream; stdcall;
+    function CreateStream(FileName: PWideChar; RW: Boolean = True): IStream; stdcall;
     function CreateCamera3D: ICamera3d; stdcall;
     function CreateCamera2D: ICamera2d; stdcall;
 

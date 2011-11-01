@@ -37,8 +37,16 @@ var
 
 implementation
 
-procedure TGame.LoadContent;
+function IntToStr(Value: LongInt): string;
+var
+  Res : string[32];
+begin
+  Str(Value, Res);
+  Result := string(Res);
+end;
 
+
+procedure TGame.LoadContent;
 begin
   ResMan.Load('Media\ArialFont.jfi', Font);
   ResMan.Load('Media\123.dds', r);
@@ -51,9 +59,9 @@ end;
 
 procedure TGame.OnUpdate(dt: LongInt);
 var
-  i : Integer;
+  i   : Integer;
 begin
-  Display.Caption := Utils.IntToStr(Render.FPS)+'['+Utils.IntToStr(Render.FrameTime)+']'+Utils.IntToStr(Render.LastDipCount);
+ // Display.Caption := PWideChar(IntToStr(Render.FPS)+'['+IntToStr(Render.FrameTime)+']'+IntToStr(Render.LastDipCount));
   for I := 1 to Input.Mouse.WheelDelta do
     Cam.Scale := Cam.Scale*2;
 
@@ -63,15 +71,19 @@ begin
 end;
 
 procedure TGame.OnRender;
+var i : integer;
 begin
   Cam.SetCam;
-  Render.Clear(True,False,False);
+  Render.Clear(True,False,False);    {
   Font.OutlineSize := 1;
  // Font.Scale := Cam.Scale;
  Font.SetGradColors(clwhite, Vec4f(1,0,0,1));
   Font.OutlineColor := Vec3f(1,0,0);
-  Font.Print('asd',0,0);
-  Render2d.DrawSprite(r,0,0,50,60,clwhite);
+  Font.Print('asd',0,0);         }
+
+  for i := 0 to 2000 do
+
+  Render2d.DrawSprite(r,0,0,1024,768,clwhite);
 end;
 
 procedure TGame.Close;

@@ -13,7 +13,7 @@ type
     FFOV      : Single;
     FPos      : TVec3f;
     FAngle    : TVec3f;
-    FSpeed    : TVec3f;
+ //   FSpeed    : TVec3f;
     FMaxSpeed : Single;
     FProj     : TMat4f; // projection
     FView     : TMat4f;

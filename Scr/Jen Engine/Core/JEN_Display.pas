@@ -11,34 +11,39 @@ const
   WINDOW_CLASS_NAME = 'JEngineWindowClass';
 
 type
+  TWndProc = function(hWnd: HWND; Msg: LongWord; wParam: LongInt; lParam: LongInt): LongInt; stdcall;
   IDisplay = interface(JEN_Header.IDisplay)
     function GetValid : Boolean;
+    function GetCustom : Boolean;
 
     procedure Restore;
     procedure Update;
 
     property Valid: Boolean read GetValid;
+    property Custom: Boolean read GetCustom;
   end;
 
   TDisplay = class(TInterfacedObject, IDisplay)
     procedure Free; stdcall;
   private
-    FValid      : Boolean;
-    FCaption    : String;
-    FHandle     : HWND;
-    FDC         : HDC;
-    FWidth      : LongWord;
-    FHeight     : LongWord;
-    FRefresh    : Byte;
-    FFullScreen : Boolean;
-    FActive     : Boolean;
-    FCursor     : Boolean;
+    FValid        : Boolean;
+    FCustomHandle : Boolean;
+    FCaption      : String;
+    FHandle       : HWND;
+    FDC           : HDC;
+    FWidth        : LongWord;
+    FHeight       : LongWord;
+    FRefresh      : Byte;
+    FFullScreen   : Boolean;
+    FActive       : Boolean;
+    FCursor       : Boolean;
 
     procedure SetActive(Value: Boolean); stdcall;
-    procedure SetCaption(const Value: string); stdcall;
+    procedure SetCaption(Value: PWideChar); stdcall;
     procedure SetFullScreen(Value: Boolean); stdcall;
 
-    function GetValid : Boolean;
+    function GetValid: Boolean;
+    function GetCustom: Boolean;
     function GetFullScreen: Boolean; stdcall;
     function GetActive: Boolean; stdcall;
     function GetCursorState: Boolean; stdcall;
@@ -49,7 +54,8 @@ type
 
     class function WndProc(hWnd: HWND; Msg: LongWord; wParam: LongInt; lParam: LongInt): LongInt; stdcall; static;
    public
-    function Init(Width: LongWord; Height: LongWord; Refresh: Byte; FullScreen: Boolean): Boolean; stdcall;
+    function Init(Width: LongWord; Height: LongWord; Refresh: Byte; FullScreen: Boolean): Boolean; overload; stdcall;
+    function Init(Handle: HWND): Boolean; overload; stdcall;
 
     procedure Swap; stdcall;
     procedure ShowCursor(Value: Boolean); stdcall;
@@ -66,12 +72,14 @@ uses
   JEN_MATH;
 
 class function TDisplay.WndProc(hWnd: HWND; Msg: LongWord; wParam: LongInt; lParam: LongInt): LongInt; stdcall;
+var
+  Rect : TRect;
 begin
   Result := 0;
 
   case Msg of
-    WM_CLOSE:
-      TJenEngine.Quit := True;
+   WM_CLOSE:
+     TJenEngine.Quit := True;
 
    WM_ACTIVATE:
       begin
@@ -99,9 +107,11 @@ begin
           SetCursor(LoadCursor(0, PWideChar(32512)));
       end;
 
-  //  WM_MOVE, WM_SIZE :;
-     { GetWindowRect(hWnd, CDisplay.FRect);
-         }
+    WM_MOVE, WM_SIZE :
+    begin
+      GetClientRect(Display.Handle, Rect);
+      Display.Resize(Rect.Right - Rect.Left, Rect.Bottom - Rect.Top);
+    end;
 
     WM_SYSKEYUP, WM_KEYUP:
       Engine.CreateEvent(evKeyUp, WParam);
@@ -136,7 +146,10 @@ begin
       Engine.CreateEvent(evMouseWhell, LongInt(SmallInt(wParam shr 16) div 120));
 
   else
-    Result := DefWindowProc(hWnd, Msg, wParam, lParam);
+    if Display.Custom then
+      Result := TWndProc(GetWindowLongW(Hwnd, GWL_USERDATA))(Hwnd, Msg, WParam, LParam)
+    else
+      Result := DefWindowProc(hWnd, Msg, wParam, lParam);
   end;
 
 end;
@@ -150,6 +163,7 @@ begin
 
   Result := False;
 
+  FCustomHandle := False;
   FCaption    := 'JEN Engine application';
   FWidth      := Width;
   FHeight     := Height;
@@ -202,6 +216,28 @@ begin
   Restore;
 end;
 
+function TDisplay.Init(Handle: HWND): Boolean;
+var
+  Rect : TRect;
+begin
+  Result      := True;
+  FCustomHandle := True;
+  FHandle       := Handle;
+  SetCaption('JEN Engine application');
+  GetClientRect(FHandle, Rect);
+  FWidth      := Rect.Right - Rect.Left;
+  FHeight     := Rect.Bottom - Rect.Top;
+  FValid      := True;
+  FActive     := True;
+  FCursor     := True;
+
+  SendMessage(FHandle, WM_SETICON, 1, LPARAM(LoadIconW(HInstance, 'MAINICON')));
+  SetWindowLongW(FHandle, GWL_USERDATA, SetWindowLongW(FHandle, GWL_WNDPROC, LongInt(@WndProc)));
+  SetFocus(FHandle);
+  FDC := GetDC(FHandle);
+  Restore;
+end;
+
 procedure TDisplay.Free;
 begin
   if not FValid then Exit;
@@ -211,20 +247,25 @@ begin
   else
     LogOut('Release device context.', lmNotify);
 
-  if(FHandle <> 0) and (not DestroyWindow(FHandle)) Then
+  if not FCustomHandle then
   begin
-    LogOut('Cannot destroy window.', lmError);
-    FHandle := 0;
+    if(FHandle <> 0) and (not DestroyWindow(FHandle)) Then
+    begin
+      LogOut('Cannot destroy window.', lmError);
+      FHandle := 0;
+    end else
+      LogOut('Destroy window.', lmNotify);
+
+    if not UnRegisterClass(WINDOW_CLASS_NAME, 0) Then
+      LogOut('Cannot unregister window class.', lmError)
+    else
+      LogOut('Unregister window class.', lmNotify);
+
+    if FFullScreen then
+      Helpers.SystemInfo.Screen.ResetMode;
   end else
-    LogOut('Destroy window.', lmNotify);
+    SetWindowLongW(FHandle, GWL_WNDPROC, GetWindowLongW(FHandle, GWL_USERDATA));
 
-  if not UnRegisterClass(WINDOW_CLASS_NAME, 0) Then
-    LogOut('Cannot unregister window class.', lmError)
-  else
-    LogOut('Unregister window class.', lmNotify);
-
-  if FFullScreen then
-    Helpers.SystemInfo.Screen.ResetMode;
 end;
 
 procedure TDisplay.Swap;
@@ -234,7 +275,7 @@ end;
 
 procedure TDisplay.SetFullScreen(Value: Boolean);
 begin
-  if (FFullScreen <> Value) then
+  if (FFullScreen <> Value) and (FCustomHandle = False) then
   begin
     FFullScreen := Value;
 
@@ -249,7 +290,7 @@ end;
 
 procedure TDisplay.SetActive(Value: Boolean);
 begin
-  if (FActive <> Value) then
+  if (FActive <> Value) and (FCustomHandle = False) then
   begin
     FActive := Value;
 
@@ -265,7 +306,7 @@ begin
   end;
 end;
 
-procedure TDisplay.SetCaption(const Value: string);
+procedure TDisplay.SetCaption(Value: PWideChar);
 begin
   FCaption := Copy(Value, 1, Length(Value));
   SetWindowText(FHandle, PWideChar(FCaption));
@@ -276,6 +317,8 @@ var
   Style : LongWord;
   Rect  : TRecti;
 begin
+  if not FCustomHandle then
+  begin
   Rect := Recti((Helpers.SystemInfo.Screen.Width - FWidth) div 2, (Helpers.SystemInfo.Screen.Height - FHeight) div 2, FWidth, FHeight);
 
   if FFullScreen then
@@ -291,6 +334,7 @@ begin
   SetWindowPos(FHandle, 0, Rect.x, Rect.y, Rect.Width, Rect.Height, $220);
   ShowWindow(FHandle, SW_SHOWNORMAL);
   SetWindowLongW(FHandle, GWL_STYLE, Style or WS_SYSMENU or WS_VISIBLE);
+  end;
 
   Update;
   Engine.CreateEvent(evDisplayRestore);
@@ -313,7 +357,7 @@ begin
   FHeight := Height;
   if FFullScreen and FActive then
     Helpers.SystemInfo.Screen.SetMode(FWidth, FHeight, FRefresh);
-  Restore;
+  Engine.CreateEvent(evDisplayRestore);
 end;
 
 procedure TDisplay.ShowCursor(Value: Boolean);
@@ -321,9 +365,14 @@ begin
   FCursor := Value;
 end;
 
-function TDisplay.GetValid : Boolean;
+function TDisplay.GetValid: Boolean;
 begin
   Result := FValid;
+end;
+
+function TDisplay.GetCustom: Boolean;
+begin
+  Result := FCustomHandle;
 end;
 
 function TDisplay.GetFullScreen: Boolean;

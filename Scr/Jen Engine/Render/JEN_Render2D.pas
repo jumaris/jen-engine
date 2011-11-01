@@ -183,13 +183,14 @@ begin
     BorderV  := Round((Display.Width - FRCWidth/FRCScale)/2);
     BorderH  := Round((Display.Height - FRCHeight/FRCScale)/2);
     FRCRect  := Recti(BorderV, BorderH, Display.Width - BorderV*2, Display.Height- BorderH*2);
+    FRCMatrix.Ortho(0, FRCWidth, FRCHeight, 0, -1, 1);
   end else
   begin
-    FRCScale := 1;
-    FRCRect  := Recti(0, 0, Display.Width, Display.Height);
+    FRCScale  := 1;
+    FRCRect   := Recti(0, 0, Display.Width, Display.Height);
+    FRCMatrix.Ortho(0, Display.Width, Display.Height, 0, -1, 1);
   end;
 
-  FRCMatrix.Ortho(0, FRCWidth, FRCHeight, 0, -1, 1);
   Render.Viewport := FRCRect;
   Render.Matrix[mt2DMat] := FRCMatrix;
 end;

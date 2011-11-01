@@ -38,9 +38,9 @@ type
     FShaderPrograms : TInterfaceList;
     FDefines        : TList;
     FXML            : IXML;
-    function GetDefineId(const Name: string): LongInt;
-    function GetDefine(const Name: string): LongInt; stdcall;
-    procedure SetDefine(const Name: string; Value: LongInt); stdcall;
+    function GetDefineId(Name: PWideChar): LongInt;
+    function GetDefine(Name: PWideChar): LongInt; stdcall;
+    procedure SetDefine(Name: PWideChar; Value: LongInt); stdcall;
   public
     procedure Init(XML: IXML);
     procedure Reload; stdcall;
@@ -60,8 +60,8 @@ type
     function Valid: Boolean; stdcall;
     function GetID: LongWord; stdcall;
     function Init(const VertexShader, FragmentShader: AnsiString): Boolean;
-    function Uniform(const UName: String; UniformType: TShaderUniformType; Necessary: Boolean): JEN_Header.IShaderUniform; overload; stdcall;
-    function Attrib(const AName: string; AttribType: TShaderAttribType; Necessary: Boolean): JEN_Header.IShaderAttrib; stdcall;
+    function Uniform(UName: PWideChar; UniformType: TShaderUniformType; Necessary: Boolean): JEN_Header.IShaderUniform; overload; stdcall;
+    function Attrib(AName: PWideChar; AttribType: TShaderAttribType; Necessary: Boolean): JEN_Header.IShaderAttrib; stdcall;
     procedure Bind; stdcall;
   end;
 
@@ -73,7 +73,7 @@ type
     FType           : TShaderUniformType;
     FName           : string;
     FValue          : array [0..11] of Single;
-    function GetName: string; stdcall;
+    function GetName: PWideChar; stdcall;
     function GetType: TShaderUniformType; stdcall;
     //procedure SetType(Value: TShaderAttribType); stdcall;
 
@@ -89,7 +89,7 @@ type
     FID    : GLint;
     FType  : TShaderAttribType;
     FName  : string;
-    function GetName: string; stdcall;
+    function GetName: PWideChar; stdcall;
     function GetType: TShaderAttribType; stdcall;
     procedure Init(ShaderID: GLEnum; const AName: string; AttribType: TShaderAttribType; Necessary: Boolean);
   public
@@ -282,7 +282,7 @@ begin
   FValid := True;
 end;
 
-function TShaderProgram.Uniform(const UName: string; UniformType: TShaderUniformType; Necessary: Boolean): JEN_Header.IShaderUniform;
+function TShaderProgram.Uniform(UName: PWideChar; UniformType: TShaderUniformType; Necessary: Boolean): JEN_Header.IShaderUniform;
 var
   i : LongInt;
   u : IShaderUniform;
@@ -297,7 +297,7 @@ begin
   Result := u;
 end;
 
-function TShaderProgram.Attrib(const AName: string; AttribType: TShaderAttribType; Necessary: Boolean): JEN_Header.IShaderAttrib;
+function TShaderProgram.Attrib(AName: PWideChar; AttribType: TShaderAttribType; Necessary: Boolean): JEN_Header.IShaderAttrib;
 var
   i : LongInt;
   a : IShaderAttrib;
@@ -335,9 +335,9 @@ begin
   Result := FID <> -1;
 end;
 
-function TShaderUniform.GetName: string;
+function TShaderUniform.GetName: PWideChar;
 begin
-  Result := FName;
+  Result := PWideChar(FName);
 end;
 
 function TShaderUniform.GetType: TShaderUniformType;
@@ -403,9 +403,9 @@ begin
   inherited;
 end;
 
-function TShaderAttrib.GetName: string;
+function TShaderAttrib.GetName: PWideChar;
 begin
-  Result := FName;
+  Result := PWideChar(FName)
 end;
 
 function TShaderAttrib.GetType: TShaderAttribType;
@@ -482,7 +482,7 @@ begin
   inherited;
 end;
 
-function TShaderResource.GetDefineId(const Name: String): LongInt;
+function TShaderResource.GetDefineId(Name: PWideChar): LongInt;
 var
   I : LongInt;
 begin
@@ -492,7 +492,7 @@ begin
       Exit(I);
 end;
 
-function TShaderResource.GetDefine(const Name: String): LongInt;
+function TShaderResource.GetDefine(Name: PWideChar): LongInt;
 var
   Id : LongInt;
 begin
@@ -503,7 +503,7 @@ begin
   Result := TShaderDefine(FDefines[id]^).Value;
 end;
 
-procedure TShaderResource.SetDefine(const Name: String; Value: LongInt);
+procedure TShaderResource.SetDefine(Name: PWideChar; Value: LongInt);
 var
   Define : ^TShaderDefine;
   Id : LongInt;
@@ -574,7 +574,7 @@ var
 
     function GetParam(const Node: IXML; const Name: string): TXMLParam;
     begin
-      Result := Node.Params[Name];
+      Result := Node.Params[PWideChar(Name)];
       if Result.Name = '' then
         LogOut('Not defined param def in token: ' + Node.Tag, lmWarning);
     end;
@@ -624,12 +624,17 @@ var
   end;
 
 begin
-  if not (Assigned(FXML) and Assigned(Shader)) then Exit;
+  if (Assigned(FXML) and Assigned(Shader)) then
+  begin
+    XN_VS := FXML.Node['VertexShader'];
+    XN_FS := FXML.Node['FragmentShader'];
+  end;
 
-  XN_VS := FXML.Node['VertexShader'];
-  XN_FS := FXML.Node['FragmentShader'];
-
-  if not (Assigned(XN_VS) and Assigned(XN_FS)) then Exit;
+  if not (Assigned(XN_VS) and Assigned(XN_FS)) then
+  begin
+    LogOut('Uncorrect shader xml file', lmWarning);
+    Exit;
+  end;
 
   if not Shader.Init(MergeCode(XN_VS), MergeCode(XN_FS)) then
   begin

@@ -49,7 +49,7 @@ type
     function GetRAMTotal: LongWord; stdcall;
     function GetRAMFree: LongWord; stdcall;
     function GetCPUCount: LongInt; stdcall;
-    function GetCPUName: String; stdcall;
+    function GetCPUName: PWideChar; stdcall;
     function GetCPUSpeed: LongWord; stdcall;
     function GetScreen: IScreen; stdcall;
   public
@@ -459,9 +459,9 @@ begin
   Result := System.CPUCount;
 end;
 
-function TSystem.GetCPUName: String;
+function TSystem.GetCPUName: PWideChar;
 begin
-  Result := FCPUName;
+  Result := PWideChar(FCPUName);
 end;
 
 function TSystem.GetCPUSpeed: LongWord;

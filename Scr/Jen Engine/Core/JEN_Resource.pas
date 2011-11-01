@@ -24,8 +24,8 @@ type
     FFilePath : string;
     FResType  : TResourceType;
     function GetResType: TResourceType; stdcall;
-    function GetName: string; stdcall;
-    function GetFilePath: string; stdcall;
+    function GetName: PWideChar; stdcall;
+    function GetFilePath: PWideChar; stdcall;
   end;
 
 implementation
@@ -35,9 +35,9 @@ uses
 
 constructor TResource.Create(const FilePath: string; ResType: TResourceType);
 begin
-  FFilePath := Utils.ExtractFileDir(FilePath);
+  FFilePath := Utils.ExtractFileDir(PWideChar(FilePath));
   if FilePath <> '' then
-    FName := Utils.ExtractFileName(FilePath)
+    FName := Utils.ExtractFileName(PWideChar(FilePath))
   else
     FName := '$' + Utils.IntToStr(LongInt(Self));
   FResType := ResType;
@@ -48,14 +48,14 @@ begin
   Result := FResType;
 end;
 
-function TResource.GetName: string;
+function TResource.GetName: PWideChar;
 begin
-  Result := FName;
+  Result := PWideChar(FName);
 end;
 
-function TResource.GetFilePath: string;
+function TResource.GetFilePath: PWideChar;
 begin
-  Result := FFilePath;
+  Result := PWideChar(FFilePath);
 end;
 
 end.
