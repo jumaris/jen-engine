@@ -323,7 +323,8 @@ var
 begin
   if not FCustomHandle then
   begin
-    Rect := Recti((Helpers.SystemInfo.Screen.Width - FWidth) div 2, (Helpers.SystemInfo.Screen.Height - FHeight) div 2, FWidth, FHeight);
+    with Helpers.SystemInfo do
+      Rect := Recti(Max((Screen.Width - FWidth) div 2, Screen.DesktopRect.x), Max((Helpers.SystemInfo.Screen.Height - FHeight) div 2, Screen.DesktopRect.y), FWidth, FHeight);
 
     if FFullScreen then
     begin
