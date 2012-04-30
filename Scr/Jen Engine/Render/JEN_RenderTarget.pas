@@ -12,6 +12,7 @@ type
     destructor Destroy; override;
   private
     FID           : LongWord;
+    FRB           : LongWord;
     FWidth        : LongWord;
     FHeight       : LongWord;
     FTexture      : array [TRenderChannel] of ITexture;
@@ -83,17 +84,19 @@ begin
     end;
   end;
 
-            {
-  if DepthBuffer then
+
+
+  //if DepthBuffer then
+
   begin
-    gl_GenRenderbuffers(1, @DepthBuf);
-    gl_BindRenderbuffer(GL_RENDERBUFFER, DepthBuf);
+    glGenRenderbuffers(1, @FRB);
+    glBindRenderbuffer(GL_RENDERBUFFER, FRB);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, Width, Height);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, DepthBuf);
-  end;
-  }
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, FRB);
+   end;
+
   if glCheckFramebufferStatus(GL_FRAMEBUFFER) <> GL_FRAMEBUFFER_COMPLETE then
-    LogOut('Error creating frame buffer object', lmWarning);
+    Engine.Warning('Error creating frame buffer object');
 
   FColChanCount := Count;
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -103,30 +106,32 @@ destructor TRenderTarget.Destroy;
 begin
 //  if DepthBuf <> 0 then
  //   gl_DeleteRenderbuffers(1, @DepthBuf);
+  glDeleteRenderbuffers(1, @FRB);
   glDeleteFramebuffers(1, @FID);
+
 end;
 
-function TRenderTarget.GetID: LongWord;
+function TRenderTarget.GetID: LongWord; stdcall;
 begin
   Result := FId;
 end;
 
-function TRenderTarget.GetWidth: LongWord;
+function TRenderTarget.GetWidth: LongWord; stdcall;
 begin
   Result := FWidth;
 end;
 
-function TRenderTarget.GetHeight: LongWord;
+function TRenderTarget.GetHeight: LongWord; stdcall;
 begin
   Result := FHeight;
 end;
 
-function TRenderTarget.GetColChanCount: LongInt;
+function TRenderTarget.GetColChanCount: LongInt; stdcall;
 begin
   Result := FColChanCount;
 end;
 
-function TRenderTarget.GetTexture(Channel: TRenderChannel): ITexture;
+function TRenderTarget.GetTexture(Channel: TRenderChannel): ITexture; stdcall;
 begin
   Result := FTexture[Channel];
 end;

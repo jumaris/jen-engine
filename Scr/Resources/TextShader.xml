@@ -1,7 +1,7 @@
 ﻿<Shader>
 	<VertexShader>
 		<Code>
-			#version 120
+			#version 110
 			attribute float IndxAttrib;
 
 			uniform vec2 Position[64]; 
@@ -13,12 +13,10 @@
 			varying vec2 Texcoord;
 			varying float Grade;
 
-			const vec2 TexCoordArray[4] = vec2[4](
-			vec2(0.0,0.0),
-			vec2(1.0,0.0),
-			vec2(1.0,1.0),
-			vec2(0.0,1.0) );
-			
+			//Shitty Intel 
+			const vec4 TexCoordArrayX = vec4(0.0, 1.0, 1.0, 0.0);
+			const vec4 TexCoordArrayY = vec4(0.0, 0.0, 1.0, 1.0);
+
 			void main( void )
 			{
 				int VertexId = int(IndxAttrib);
@@ -27,7 +25,8 @@
 				Data1 = QuadData[QuadId+0];
 
 				gl_Position = vec4(Position[VertexId], -1.0, 1.0);
-				Texcoord = TexCoordArray[VertexId-QuadId]*Data1.zw+Data1.xy;
+				vec2 TC = vec2(TexCoordArrayX[VertexId-QuadId], TexCoordArrayY[VertexId-QuadId]);
+				Texcoord =  TC*Data1.zw+Data1.xy;
 			////		Grade = (PosTex.w-PosTexCoord[QuadId+2].w-Data1.z)/(PosTexCoord[QuadId+0].w-PosTexCoord[QuadId+2].w-Data1.z*2); 
 
 				//Grade = TexCoordArray[VertexId-QuadId].y  * (1.0+Params[0].z*2.0*Data1.w)-Params[0].z*Data1.w;				
@@ -35,7 +34,7 @@
 				//Grade = (-TexCoordArray[VertexId-QuadId].y+1.0+Data1.y/Data1.w*2.0+Params[0].z/Data1.w)/(-Params[0].z*2.0);
 			//Grade = (1.0-TexCoordArray[VertexId-QuadId].y)/(1.0+2.0*Params[0].z/Data1.w)+1.0/(Data1.w/Params[0].z+2.0);
 				//	Grade = (-TexCoordArray[VertexId-QuadId].y+1.0-Params[0].z/(-Data1.w))/(1.0-Params[0].z/(-Data1.w)*2.0);
-				Grade = (Params[0].z + Data1.w - Data1.w * TexCoordArray[VertexId-QuadId].y) / (2.0 * Params[0].z + Data1.w);
+				Grade = (Params[0].z + Data1.w - Data1.w * TC.y) / (2.0 * Params[0].z + Data1.w);
 
 			}
 		</Code>

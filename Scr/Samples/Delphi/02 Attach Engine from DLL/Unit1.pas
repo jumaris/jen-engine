@@ -24,16 +24,15 @@ var
   Render2d : IRender2d;
   Helpers : IHelpers;
   RT : IRenderTarget;
-  Utils : IUtils;
   Game : IGame;
   Input : IInput;
   ResMan : IResourceManager;
   r : ITexture;
+  s : IShaderProgram;
   tsss : TTSBoard;
   Font  : IFont;
   Cam   :  ICamera2d;
   procedure p;
-
 
 implementation
 
@@ -47,51 +46,61 @@ end;
 
 
 procedure TGame.LoadContent;
+var
+sp  : IShaderResource;
 begin
-  ResMan.Load('Media\ArialFont.jfi', Font);
+//  ResMan.Load('Media\ArialFont.jfi', Font); //OOOOO◊≈Õ‹ Œœ¿—Õ¿!
   ResMan.Load('Media\123.dds', r);
+ ResMan.Load('media\123.xml', sp);
+ sp.Compile(s);
   //tsss := TTSBoard.Create;
   //tsss.Init('Test', '1.0');
   //tsss.Sumbit('ÈˆÛ',5123);
-  Cam := Helpers.CreateCamera2D;
-  Cam.Enable := True;
+ { Cam := Helpers.CreateCamera2D;
+  Cam.Enable := True;   }
 end;
 
 procedure TGame.OnUpdate(dt: LongInt);
 var
   i   : Integer;
 begin
- // Display.Caption := PWideChar(IntToStr(Render.FPS)+'['+IntToStr(Render.FrameTime)+']'+IntToStr(Render.LastDipCount));
-  for I := 1 to Input.Mouse.WheelDelta do
+ // Display.Caption := '321';//PWideChar(IntToStr(Render.FPS)+'['+IntToStr(Render.FrameTime)+']'+IntToStr(Render.LastDipCount));
+{  for I := 1 to Input.Mouse.WheelDelta do
     Cam.Scale := Cam.Scale*2;
 
   for I := -1 downto Input.Mouse.WheelDelta do
-    Cam.Scale := Cam.Scale/2;
+    Cam.Scale := Cam.Scale/2;    }
+//  Engine.log(IntToStr(Render.FPS)+'['+IntToStr(Render.FrameTime)+']'+IntToStr(Render.LastDipCount));
 
 end;
 
 procedure TGame.OnRender;
 var i : integer;
 begin
-  Cam.SetCam;
-  Render.Clear(True,False,False);    {
+  //Cam.SetCam;
+  Render.Clear(True,False,False);
+
+//  Render2d.DrawSprite(r,300,100,512,512,clwhite);
+  Render2d.DrawSprite(s,r,nil,nil,300,200,512,512,clBlack,clWhite,clBlack,clWhite,45,0);
+     {
   Font.OutlineSize := 1;
  // Font.Scale := Cam.Scale;
  Font.SetGradColors(clwhite, Vec4f(1,0,0,1));
   Font.OutlineColor := Vec3f(1,0,0);
   Font.Print('asd',0,0);         }
+{
+  for i := 0 to 20 do
 
-  for i := 0 to 2000 do
-
-  Render2d.DrawSprite(r,0,0,1024,768,clwhite);
+  Render2d.DrawSprite(r,0,0,1024,768,clwhite);  }
 end;
 
 procedure TGame.Close;
 begin
+  Cam      := nil;
   r        := nil;
+   Font    := nil;
   RT       := nil;
   Display  := nil;
-  Utils    := nil;
   Input    := nil;
   Render   := nil;
   Render2d := nil;
@@ -100,12 +109,13 @@ begin
 end;
 
 procedure p;
+var
+sp  : IShaderResource;
 begin
-  ReportMemoryLeaksOnShutdown := True;
-  Engine := GetJenEngine(True, False);
+//  ReportMemoryLeaksOnShutdown := True;
+  Engine := GetJenEngine(False);
 
   Engine.GetSubSystem(ssDisplay, IJenSubSystem(Display));
-  Engine.GetSubSystem(ssUtils, IJenSubSystem(Utils));
   Engine.GetSubSystem(ssRender, IJenSubSystem(Render));
   Engine.GetSubSystem(ssHelpers, IJenSubSystem(Helpers));
   Engine.GetSubSystem(ssInput, IJenSubSystem(Input));
@@ -119,7 +129,7 @@ begin
   Game := TGame.Create;
   Engine.Start(Game);
 
-  tsss.Free;
+ // tsss.Free;
 
   Game := nil;
   Engine := nil;

@@ -32,10 +32,10 @@ type
     function GetMouse: TMouse; stdcall;
     procedure SetCapture(Value: Boolean); stdcall;
 
-    class procedure OnKeyUp(Param: LongInt; Data: Pointer); stdcall; static;
-    class procedure OnKeyDown(Param: LongInt; Data: Pointer); stdcall; static;
-    class procedure OnMouseWhell(Param: LongInt; Data: Pointer); stdcall; static;
-    class procedure OnActivate(Param: LongInt; Data: Pointer); stdcall; static;
+    class procedure OnKeyUp(Param: LongInt; Data: Pointer); stdcall; {$IFNDEF FPC} static;{$ENDIF}
+    class procedure OnKeyDown(Param: LongInt; Data: Pointer); stdcall; {$IFNDEF FPC} static;{$ENDIF}
+    class procedure OnMouseWhell(Param: LongInt; Data: Pointer); stdcall; {$IFNDEF FPC} static;{$ENDIF}
+    class procedure OnActivate(Param: LongInt; Data: Pointer); stdcall; {$IFNDEF FPC} static;{$ENDIF}
   public
     procedure Update; stdcall;
     procedure Init;
@@ -58,10 +58,10 @@ end;
 
 procedure TInput.Init;
 begin
-  Engine.AddEventProc(evKeyUp, @TInput.OnKeyUp);
-  Engine.AddEventProc(evKeyDown, @TInput.OnKeyDown);
-  Engine.AddEventProc(evMouseWhell, @TInput.OnMouseWhell);
-  Engine.AddEventProc(evActivate, @TInput.OnActivate);
+  Engine.AddEventListener(evKeyUp, @TInput.OnKeyUp);
+  Engine.AddEventListener(evKeyDown, @TInput.OnKeyDown);
+  Engine.AddEventListener(evMouseWhell, @TInput.OnMouseWhell);
+  Engine.AddEventListener(evActivate, @TInput.OnActivate);
 end;
 
 procedure TInput.Reset;

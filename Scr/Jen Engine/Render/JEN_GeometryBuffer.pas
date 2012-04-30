@@ -1,10 +1,13 @@
 unit JEN_GeometryBuffer;
 
+{$IFDEF FPC}
+  {$MODE Delphi}
+{$ENDIF}
+
 interface
 
 uses
   JEN_Header,
-
   JEN_OpenGLHeader;
 
 type

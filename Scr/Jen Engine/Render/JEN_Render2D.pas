@@ -15,7 +15,6 @@ type
     procedure Flush;
     procedure UpdateRC;
   end;
-  TByteArray = array [0..1] of Byte;
 
   TTehniqueType = (ttNone, ttNormal, ttText, ttAdvanced, ttAdvanced1, ttAdvanced2, ttAdvanced3, ttAdvanced4);
 
@@ -40,6 +39,8 @@ type
     FEnableRC     : Boolean;
     FRCMatrix     : TMat4f;
 
+    FRotCenter    : TVec2f;
+
     FBatch        : Boolean;
     FNormalShader : IShaderResource;
     FTextShader   : IShaderResource;
@@ -56,6 +57,7 @@ type
     procedure Init;
 
     procedure ResolutionCorrect(Width, Height: LongWord); stdcall;
+  //  procedure SetScaleMode(
     procedure UpdateRC;
     function  GetEnableRC: Boolean; stdcall;
     procedure SetEnableRC(Value: Boolean); stdcall;
@@ -65,8 +67,11 @@ type
     function  GetRCScale: Single; stdcall;
     function  GetRCMatrix: TMat4f; stdcall;
 
-    class procedure FlushProc(Param: LongInt; Data: Pointer); stdcall; static;
-    class procedure DisplayRestore(Param: LongInt; Data: Pointer); stdcall; static;
+    function  GetRotCenter: TVec2f; stdcall;
+    procedure SetRotCenter(const Value: TVec2f); stdcall;
+
+    class procedure FlushProc(Param: LongInt; Data: Pointer); static; stdcall;
+    class procedure DisplayRestore(Param: LongInt; Data: Pointer); static; stdcall;
 
     procedure BatchBegin; stdcall;
     procedure BatchEnd; stdcall;
@@ -77,7 +82,7 @@ type
     procedure DrawSprite(Shader: IShaderProgram; Tex1, Tex2, Tex3: ITexture; x, y, w, h: Single; const Data1, Data2, Data3, Data4: TVec4f; Angle: Single; Effects: Cardinal); overload; stdcall;
     procedure DrawSprite(Tex: ITexture; x, y, w, h: Single; const Color1, Color2, Color3, Color4: TVec4f; Angle: Single; Effects: Cardinal); overload; stdcall;
     procedure DrawSprite(Tex: ITexture; x, y, w, h: Single; const Color: TVec4f; Angle: Single; Effects: Cardinal); overload; stdcall;
-   end;
+  end;
 
 implementation
 
@@ -92,7 +97,7 @@ begin
   if Assigned(Shader) then
     with Tehnique do
     begin
-      LastUsed := Utils.Time;
+      LastUsed := Helpers.Time;
       ShaderProgram := Shader;
       ShaderProgram.Bind;
 
@@ -112,8 +117,8 @@ begin
       if Assigned(Uniform) then
         Uniform.Value(i);
 
-      IndxAttrib := ShaderProgram.Attrib('IndxAttrib', atVec4f);
-      IndxAttrib.Value(32, 0);
+      IndxAttrib := ShaderProgram.Attrib('IndxAttrib', atVec1f);
+      IndxAttrib.Value(4, 0);
     end;
 end;
 
@@ -121,22 +126,30 @@ procedure TRender2D.Init;
 var
   i : Integer;
   IdxBuff : array[1..Batch_Size*4] of Single;
+  Shader : IShaderProgram;
 begin
+  FRCWidth := Render.Viewport.Width;
+  FRCHeight := Render.Viewport.Height;
   for I := 1 to Batch_Size*4 do
     IdxBuff[i] := i-1;
+
+  FRotCenter := Vec2f(0.5, 0.5);
 
   FVrtBuff := TGeomBuffer.Create(gbVertex, Batch_Size*4, 4, @IdxBuff[1]);
 
   ResMan.Load('|SpriteShader.xml', FNormalShader);
-  ResMan.Load('|TextShader.xml', FTextShader);
-  TehniqueInit(RenderTechnique[ttNormal], FNormalShader.Compile);
-  TehniqueInit(RenderTechnique[ttText], FTextShader.Compile);
+  FNormalShader.Compile(Shader);
+  TehniqueInit(RenderTechnique[ttNormal], Shader);
 
-  Engine.AddEventProc(evRenderFlush, @TRender2D.FlushProc);
-  Engine.AddEventProc(evDisplayRestore, @TRender2D.DisplayRestore);
+  ResMan.Load('|TextShader.xml', FTextShader);
+  FTextShader.Compile(Shader);
+  TehniqueInit(RenderTechnique[ttText], Shader);
+
+  Engine.AddEventListener(evRenderFlush, {$IFDEF FPC}Pointer(FlushProc){$ELSE}@FlushProc{$ENDIF});
+  Engine.AddEventListener(evDisplayRestore, {$IFDEF FPC}Pointer(DisplayRestore){$ELSE}@DisplayRestore{$ENDIF});
 end;
 
-procedure TRender2D.Free;
+procedure TRender2D.Free; stdcall;
 ///var
 //Teh :TTehniqueType;
 begin
@@ -164,7 +177,7 @@ begin
        }
 end;
 
-procedure TRender2D.ResolutionCorrect(Width, Height: LongWord);
+procedure TRender2D.ResolutionCorrect(Width, Height: LongWord); stdcall;
 begin
   FRCWidth := Width;
   FRCHeight := Height;
@@ -179,28 +192,28 @@ var
 begin
   if FEnableRC then
   begin
-    FRCScale := Max(FRCWidth/Display.Width, FRCHeight/Display.Height);
-    BorderV  := Round((Display.Width - FRCWidth/FRCScale)/2);
-    BorderH  := Round((Display.Height - FRCHeight/FRCScale)/2);
-    FRCRect  := Recti(BorderV, BorderH, Display.Width - BorderV*2, Display.Height- BorderH*2);
+    FRCScale := Max(FRCWidth/Render.Viewport.Width, FRCHeight/Render.Viewport.Height);
+    BorderV  := Round((Render.Viewport.Width - FRCWidth/FRCScale)/2);
+    BorderH  := Round((Render.Viewport.Height - FRCHeight/FRCScale)/2);
+    FRCRect  := Recti(BorderV, BorderH, Render.Viewport.Width - BorderV*2, Render.Viewport.Height - BorderH*2);
     FRCMatrix.Ortho(0, FRCWidth, FRCHeight, 0, -1, 1);
+    Render.Viewport := FRCRect;
   end else
   begin
     FRCScale  := 1;
-    FRCRect   := Recti(0, 0, Display.Width, Display.Height);
-    FRCMatrix.Ortho(0, Display.Width, Display.Height, 0, -1, 1);
+    FRCRect   := Render.Viewport;//Recti(0, 0, Display.Width, Display.Height);
+    FRCMatrix.Ortho(0, Render.Viewport.Width, Render.Viewport.Height, 0, -1, 1);
   end;
 
-  Render.Viewport := FRCRect;
   Render.Matrix[mt2DMat] := FRCMatrix;
 end;
 
-function TRender2D.GetEnableRC: Boolean;
+function TRender2D.GetEnableRC: Boolean; stdcall;
 begin
   Result := FEnableRC;
 end;
 
-procedure TRender2D.SetEnableRC(Value: Boolean);
+procedure TRender2D.SetEnableRC(Value: Boolean); stdcall;
 begin
   if Value <> FEnableRC then
   begin
@@ -209,48 +222,58 @@ begin
   end;
 end;
 
-function TRender2D.GetRCWidth: LongWord;
+function TRender2D.GetRCWidth: LongWord; stdcall;
 begin
   Result := FRCWidth;
 end;
 
-function TRender2D.GetRCHeight: LongWord;
+function TRender2D.GetRCHeight: LongWord; stdcall;
 begin
   Result := FRCHeight;
 end;
 
-function TRender2D.GetRCRect: TRecti;
+function TRender2D.GetRCRect: TRecti; stdcall;
 begin
   Result := FRCRect
 end;
 
-function TRender2D.GetRCScale: Single;
+function TRender2D.GetRCScale: Single; stdcall;
 begin
   Result := FRCScale
 end;
 
-function TRender2D.GetRCMatrix: TMat4f;
+function TRender2D.GetRCMatrix: TMat4f; stdcall;
 begin
   Result := FRCMatrix;
 end;
 
-class procedure TRender2D.FlushProc;
+function TRender2D.GetRotCenter: TVec2f; stdcall;
+begin
+  Result := FRotCenter;
+end;
+
+procedure TRender2D.SetRotCenter(const Value: TVec2f); stdcall;
+begin
+  FRotCenter := Value;
+end;
+
+class procedure TRender2D.FlushProc(Param: LongInt; Data: Pointer); stdcall;
 begin
   Render2d.Flush;
 end;
 
-class procedure TRender2D.DisplayRestore;
+class procedure TRender2D.DisplayRestore(Param: LongInt; Data: Pointer); stdcall;
 begin
   Render2d.UpdateRC;
 end;
 
-procedure TRender2D.BatchBegin;
+procedure TRender2D.BatchBegin; stdcall;
 begin
   Flush;
   FBatch := True;
 end;
 
-procedure TRender2D.BatchEnd;
+procedure TRender2D.BatchEnd; stdcall;
 begin
   Flush;
   FBatch := False;
@@ -288,6 +311,8 @@ var
   tsin, tcos  : Single;
 
 begin
+  if not Assigned(Shader) then
+    Shader := RenderTechnique[ttNormal].ShaderProgram;
 
   if Abs(Angle) > EPS then
   begin
@@ -348,7 +373,7 @@ begin
       with RenderTechnique[Teh] do
       if ShaderProgram = Shader then
       begin
-        LastUsed := Utils.Time;
+        LastUsed := Helpers.Time;
         Tehnique := Teh;
         Break;
       end else
@@ -381,7 +406,7 @@ begin
    if Assigned(Tex3) then
     begin
       Tex3.Bind(0);
-      TCParams := Tex2.CoordParams;
+      TCParams := Tex3.CoordParams;
       RenderTechnique[Tehnique].TCParUniform3.Value(TCParams);
     end;
   end;
@@ -397,27 +422,27 @@ begin
     Flush;
 end;
 
-procedure TRender2D.DrawSprite(Shader: IShaderProgram; Tex1, Tex2, Tex3: ITexture; const v1, v2, v3, v4: TVec2f; const Data1, Data2, Data3, Data4: TVec4f; Angle: Single; const Center: TVec2f; Effects: Cardinal);
+procedure TRender2D.DrawSprite(Shader: IShaderProgram; Tex1, Tex2, Tex3: ITexture; const v1, v2, v3, v4: TVec2f; const Data1, Data2, Data3, Data4: TVec4f; Angle: Single; const Center: TVec2f; Effects: Cardinal); stdcall;
 begin
   RealDrawSprite(Shader, Tex1, Tex2, Tex3, v1, v2, v3, v4, Data1, Data2, Data3, Data4, Angle, Center, Effects);
 end;
 
-procedure TRender2D.DrawSprite(Shader: IShaderProgram; Tex1, Tex2, Tex3: ITexture; x, y, w, h: Single; const Data1, Data2, Data3, Data4: TVec4f; Angle: Single; Effects: Cardinal);
+procedure TRender2D.DrawSprite(Shader: IShaderProgram; Tex1, Tex2, Tex3: ITexture; x, y, w, h: Single; const Data1, Data2, Data3, Data4: TVec4f; Angle: Single; Effects: Cardinal); stdcall;
 begin
   if not (Assigned(Shader)) then Exit;
-  RealDrawSprite(Shader, Tex1, Tex2, Tex3, Vec2f(x, y+h), Vec2f(x+w, y+h), Vec2f(x+w, y), Vec2f(x, y), Data1, Data2, Data3, Data4, Angle, Vec2f(x+w*0.5, y+h*0.5), Effects);
+  RealDrawSprite(Shader, Tex1, Tex2, Tex3, Vec2f(x, y+h), Vec2f(x+w, y+h), Vec2f(x+w, y), Vec2f(x, y), Data1, Data2, Data3, Data4, Angle, Vec2f(x, y) + Vec2f(w, h) * FRotCenter, Effects);
 end;
 
-procedure TRender2D.DrawSprite(Tex: ITexture; x, y, w, h: Single; const Color1, Color2, Color3, Color4: TVec4f; Angle: Single; Effects: Cardinal);
+procedure TRender2D.DrawSprite(Tex: ITexture; x, y, w, h: Single; const Color1, Color2, Color3, Color4: TVec4f; Angle: Single; Effects: Cardinal); stdcall;
 begin
   if not (Assigned(Tex)) then Exit;
-  RealDrawSprite(RenderTechnique[ttNormal].ShaderProgram, Tex, nil, nil, Vec2f(x, y+h), Vec2f(x+w, y+h), Vec2f(x+w, y), Vec2f(x, y), Color1, Color2, Color3, Color4, Angle, Vec2f(x+w*0.5, y+h*0.5), Effects);
+  RealDrawSprite(RenderTechnique[ttNormal].ShaderProgram, Tex, nil, nil, Vec2f(x, y+h), Vec2f(x+w, y+h), Vec2f(x+w, y), Vec2f(x, y), Color1, Color2, Color3, Color4, Angle, Vec2f(x, y) + Vec2f(w, h) * FRotCenter, Effects);
 end;
 
-procedure TRender2D.DrawSprite(Tex: ITexture; x, y, w, h: Single; const Color: TVec4f; Angle: Single; Effects: Cardinal);
+procedure TRender2D.DrawSprite(Tex: ITexture; x, y, w, h: Single; const Color: TVec4f; Angle: Single; Effects: Cardinal); stdcall;
 begin
   if not (Assigned(Tex)) then Exit;
-  RealDrawSprite(RenderTechnique[ttNormal].ShaderProgram, Tex, nil, nil, Vec2f(x, y+h), Vec2f(x+w, y+h), Vec2f(x+w, y), Vec2f(x, y), Color, Color, Color, Color, Angle, Vec2f(x+w*0.5, y+h*0.5), Effects);
+  RealDrawSprite(RenderTechnique[ttNormal].ShaderProgram, Tex, nil, nil, Vec2f(x, y+h), Vec2f(x+w, y+h), Vec2f(x+w, y), Vec2f(x, y), Color, Color, Color, Color, Angle, Vec2f(x, y) + Vec2f(w, h) * FRotCenter, Effects);
 end;
 
 

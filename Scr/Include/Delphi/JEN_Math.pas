@@ -2,19 +2,13 @@ unit JEN_Math;
 
 interface
 
-{$IFDEF FPC}
-  {$asmmode intel}
-{$ENDIF}
-
 Type
-  TPoint2i  = {$IFDEF FPC} object {$ELSE} record {$ENDIF}
+  TPoint2i = record
     x, y : LongInt;
-    {$IFNDEF FPC}
     class operator Equal(const a, b: TPoint2i): Boolean;
-    {$ENDIF}
   end;
 
-  TRecti = {$IFDEF FPC} object {$ELSE} record {$ENDIF}
+  TRecti = record
     x, y          : LongInt;
     Width, Height : LongInt;
     private
@@ -49,20 +43,16 @@ Type
 //    function Intersect(const Rect : TRectf)  : TRectf ;
       function Union(const Rect1, Rect2 : TRecti): TRecti ; overload;
 //    function Union(const Rect1, Rect2 : TRectf): TRectf ; overload;
-      {$IFNDEF FPC}
       class operator Equal(const Rect1, Rect2: TRecti): Boolean;
-      {$ENDIF}
   end;
 
-  TVec2f = {$IFDEF FPC} object {$ELSE} record {$ENDIF}
+  TVec2f = record
     x, y : Single;
-    {$IFNDEF FPC}
     class operator Equal(const a, b: TVec2f): Boolean;
     class operator Add(const a, b: TVec2f): TVec2f;
     class operator Subtract(const a, b: TVec2f): TVec2f;
     class operator Multiply(const a, b: TVec2f): TVec2f;
     class operator Multiply(const v: TVec2f; x: Single): TVec2f;
-    {$ENDIF}
     function Dot(const v: TVec2f): Single;
     function Reflect(const n: TVec2f): TVec2f;
     function Refract(const n: TVec2f; Factor: Single): TVec2f;
@@ -80,15 +70,13 @@ Type
   end;
 
   PVec3f = ^TVec3f;
-  TVec3f = {$IFDEF FPC} object {$ELSE} record {$ENDIF}
+  TVec3f = record
     x, y, z : Single;
-    {$IFNDEF FPC}
     class operator Equal(const a, b: TVec3f): Boolean;
     class operator Add(const a, b: TVec3f): TVec3f;
     class operator Subtract(const a, b: TVec3f): TVec3f;
     class operator Multiply(const a, b: TVec3f): TVec3f;
     class operator Multiply(const v: TVec3f; x: Single): TVec3f;
-    {$ENDIF}
     function Dot(const v: TVec3f): Single;
     function Cross(const v: TVec3f): TVec3f;
     function Reflect(const n: TVec3f): TVec3f;
@@ -107,29 +95,27 @@ Type
     function MultiOp(out r: TVec3f; const v1, v2, op1, op2: TVec3f): Single;
   end;
 
-  TVec4f = {$IFDEF FPC} object {$ELSE} record {$ENDIF}
+  TVec4f = record {/$IFDEF FPC object /$ELSE record {/$ENDIF}
     x, y, z, w : Single;
-    {$IFNDEF FPC}
+    {/$IFNDEF FPC}
     class operator Equal(const a, b: TVec4f): Boolean;
     class operator Add(const a, b: TVec4f): TVec4f;
     class operator Subtract(const a, b: TVec4f): TVec4f;
     class operator Multiply(const a, b: TVec4f): TVec4f;
     class operator Multiply(const v: TVec4f; x: Single): TVec4f;
-    {$ENDIF}
+    {/$ENDIF}
     function Dot(const v: TVec3f): Single;
     function Lerp(const v: TVec4f; t: Single): TVec4f;
   end;
 
-  TQuat = {$IFDEF FPC} object {$ELSE} record {$ENDIF}
+  TQuat = record
     x, y, z, w : Single;
-    {$IFNDEF FPC}
     class operator Equal(const q1, q2: TQuat): Boolean;
     class operator Add(const q1, q2: TQuat): TQuat;
     class operator Subtract(const q1, q2: TQuat): TQuat;
     class operator Multiply(const q: TQuat; x: Single): TQuat;
     class operator Multiply(const q1, q2: TQuat): TQuat;
     class operator Multiply(const q: TQuat; const v: TVec3f): TVec3f;
-    {$ENDIF}
     function Invert: TQuat; inline;
     function Lerp(const q: TQuat; t: Single): TQuat;
     function Dot(const q: TQuat): Single; inline;
@@ -137,7 +123,7 @@ Type
     function Euler: TVec3f;
   end;
 
-  TMat4f = {$IFDEF FPC} object {$ELSE} record {$ENDIF}
+  TMat4f = record
   private
     function  GetPos: TVec3f;
     procedure SetPos(const v: TVec3f);
@@ -148,14 +134,12 @@ Type
     e01, e11, e21, e31,
     e02, e12, e22, e32,
     e03, e13, e23, e33: Single;
-    {$IFNDEF FPC}
     class operator Add(const a, b: TMat4f): TMat4f;
     class operator Multiply(const a, b: TMat4f): TMat4f;
     class operator Multiply(const m: TMat4f; const v: TVec2f): TVec2f;
     class operator Multiply(const m: TMat4f; const v: TVec3f): TVec3f;
     class operator Multiply(const m: TMat4f; const v: TVec4f): TVec4f;
     class operator Multiply(const m: TMat4f; x: Single): TMat4f;
-    {$ENDIF}
     procedure Identity;
     function Det: Single;
     function Inverse: TMat4f;
@@ -183,6 +167,7 @@ const
   EmptyRect: TRecti = (x: 0; y: 0; Width: 0; Height: 0);
   NullVec3f : TVec3f = (x: 0; y: 0; z: 0);
   clWhite : TVec4f = (x: 1; y: 1; z: 1; w: 1);
+  clBlack : TVec4f = (x: 0; y: 0; z: 0; w: 1);
   IdentMat : TMat4f = (
     e00: 1; e10: 0; e20: 0; e30: 0;
     e01: 0; e11: 1; e21: 0; e31: 0;
@@ -190,7 +175,7 @@ const
     e03: 0; e13: 0; e23: 0; e33: 1;
   );
 
-  {$IFDEF FPC}
+  {.$IFDEF FPC
   // TVec2f
     operator = (const a, b: TVec2f): Boolean;
     operator + (const a, b: TVec2f): TVec2f;
@@ -224,7 +209,7 @@ const
     operator * (const m: TMat4f; const v: TVec3f): TVec3f;
     operator * (const m: TMat4f; const v: TVec4f): TVec4f;
     operator * (const m: TMat4f; x: Single): TMat4f;
-  {$ENDIF}
+  $ENDIF}
 
 function Max(x, y: Single): Single; overload; inline;
 function Min(x, y: Single): Single; overload; inline;
@@ -497,8 +482,7 @@ end;
 {$ENDREGION}
 
 {$REGION 'TPoint2i'}
-{$IFDEF FPC}operator = {$ELSE}class operator TPoint2i.Equal{$ENDIF}
-  (const a, b: TPoint2i): Boolean;
+class operator TPoint2i.Equal(const a, b: TPoint2i): Boolean;
 begin
   Result := (a.x = b.x) and (a.y = b.y);
 end;
@@ -616,44 +600,38 @@ begin
   Result.Height := Max(Rect1.Y + Rect1.Height, Rect2.Y + Rect2.Height) - Y1;
 end;
 
-{$IFDEF FPC}operator = {$ELSE}class operator TRecti.Equal{$ENDIF}
-  (const Rect1, Rect2: TRecti): Boolean;
+class operator TRecti.Equal(const Rect1, Rect2: TRecti): Boolean;
 begin
   Result := ((((Rect1.X = Rect2.X) and (Rect1.Y = Rect2.Y)) and (Rect1.Width = Rect2.Width)) and (Rect1.Height = Rect2.Height));
 end;
 {$ENDREGION}
 
 {$REGION 'TVec2f'}
-{$IFDEF FPC}operator = {$ELSE}class operator TVec2f.Equal{$ENDIF}
-  (const a, b: TVec2f): Boolean;
+class operator TVec2f.Equal(const a, b: TVec2f): Boolean;
 begin
   with b - a do
     Result := (abs(x) <= EPS) and (abs(y) <= EPS);
 end;
 
-{$IFDEF FPC}operator + {$ELSE}class operator TVec2f.Add{$ENDIF}
-  (const a, b: TVec2f): TVec2f;
+class operator TVec2f.Add(const a, b: TVec2f): TVec2f;
 begin
   Result.x := a.x + b.x;
   Result.y := a.y + b.y;
 end;
 
-{$IFDEF FPC}operator - {$ELSE}class operator TVec2f.Subtract{$ENDIF}
-  (const a, b: TVec2f): TVec2f;
+class operator TVec2f.Subtract(const a, b: TVec2f): TVec2f;
 begin
   Result.x := a.x - b.x;
   Result.y := a.y - b.y;
 end;
 
-{$IFDEF FPC}operator * {$ELSE}class operator TVec2f.Multiply{$ENDIF}
-  (const a, b: TVec2f): TVec2f;
+class operator TVec2f.Multiply(const a, b: TVec2f): TVec2f;
 begin
   Result.x := a.x * b.x;
   Result.y := a.y * b.y;
 end;
 
-{$IFDEF FPC}operator * {$ELSE}class operator TVec2f.Multiply{$ENDIF}
-  (const v: TVec2f; x: Single): TVec2f;
+class operator TVec2f.Multiply(const v: TVec2f; x: Single): TVec2f;
 begin
   Result.x := v.x * x;
   Result.y := v.y * x;
@@ -756,39 +734,34 @@ end;
 {$ENDREGION}
 
 {$REGION 'TVec3f'}
-{$IFDEF FPC}operator = {$ELSE}class operator TVec3f.Equal{$ENDIF}
-  (const a, b: TVec3f): Boolean;
+class operator TVec3f.Equal(const a, b: TVec3f): Boolean;
 begin
   with b - a do
     Result := (abs(x) <= EPS) and (abs(y) <= EPS) and (abs(z) <= EPS);
 end;
 
-{$IFDEF FPC}operator + {$ELSE}class operator TVec3f.Add{$ENDIF}
-  (const a, b: TVec3f): TVec3f;
+class operator TVec3f.Add(const a, b: TVec3f): TVec3f;
 begin
   Result.x := a.x + b.x;
   Result.y := a.y + b.y;
   Result.z := a.z + b.z;
 end;
 
-{$IFDEF FPC}operator - {$ELSE}class operator TVec3f.Subtract{$ENDIF}
-  (const a, b: TVec3f): TVec3f;
+class operator TVec3f.Subtract(const a, b: TVec3f): TVec3f;
 begin
   Result.x := a.x - b.x;
   Result.y := a.y - b.y;
   Result.z := a.z - b.z;
 end;
 
-{$IFDEF FPC}operator * {$ELSE}class operator TVec3f.Multiply{$ENDIF}
-  (const a, b: TVec3f): TVec3f;
+class operator TVec3f.Multiply(const a, b: TVec3f): TVec3f;
 begin
   Result.x := a.x * b.x;
   Result.y := a.y * b.y;
   Result.z := a.z * b.z;
 end;
 
-{$IFDEF FPC}operator * {$ELSE}class operator TVec3f.Multiply{$ENDIF}
-  (const v: TVec3f; x: Single): TVec3f;
+class operator TVec3f.Multiply(const v: TVec3f; x: Single): TVec3f;
 begin
   Result.x := v.x * x;
   Result.y := v.y * x;
@@ -924,15 +897,13 @@ end;
 {$ENDREGION}
 
 {$REGION 'TVec4f'}
-{$IFDEF FPC}operator = {$ELSE}class operator TVec4f.Equal{$ENDIF}
-  (const a, b: TVec4f): Boolean;
+class operator TVec4f.Equal(const a, b: TVec4f): Boolean;
 begin
   with b - a do
     Result := (abs(x) <= EPS) and (abs(y) <= EPS) and (abs(z) <= EPS) and (abs(w) <= EPS);
 end;
 
-{$IFDEF FPC}operator + {$ELSE}class operator TVec4f.Add{$ENDIF}
-  (const a, b: TVec4f): TVec4f;
+class operator TVec4f.Add(const a, b: TVec4f): TVec4f;
 begin
   Result.x := a.x + b.x;
   Result.y := a.y + b.y;
@@ -940,8 +911,7 @@ begin
   Result.w := a.w + b.w;
 end;
 
-{$IFDEF FPC}operator - {$ELSE}class operator TVec4f.Subtract{$ENDIF}
-  (const a, b: TVec4f): TVec4f;
+class operator TVec4f.Subtract(const a, b: TVec4f): TVec4f;
 begin
   Result.x := a.x - b.x;
   Result.y := a.y - b.y;
@@ -949,8 +919,7 @@ begin
   Result.w := a.w - b.w;
 end;
 
-{$IFDEF FPC}operator * {$ELSE}class operator TVec4f.Multiply{$ENDIF}
-  (const a, b: TVec4f): TVec4f;
+class operator TVec4f.Multiply(const a, b: TVec4f): TVec4f;
 begin
   Result.x := a.x * b.x;
   Result.y := a.y * b.y;
@@ -958,8 +927,7 @@ begin
   Result.w := a.w * b.w;
 end;
 
-{$IFDEF FPC}operator * {$ELSE}class operator TVec4f.Multiply{$ENDIF}
-  (const v: TVec4f; x: Single): TVec4f;
+class operator TVec4f.Multiply(const v: TVec4f; x: Single): TVec4f;
 begin
   Result.x := v.x * x;
   Result.y := v.y * x;
@@ -979,8 +947,7 @@ end;
 {$ENDREGION}
 
 {$REGION 'TQuat'}
-{$IFDEF FPC}operator = {$ELSE}class operator TQuat.Equal{$ENDIF}
-  (const q1, q2: TQuat): Boolean;
+class operator TQuat.Equal(const q1, q2: TQuat): Boolean;
 begin
   Result := (abs(q1.x - q2.x) <= EPS) and
             (abs(q1.y - q2.y) <= EPS) and
@@ -988,8 +955,7 @@ begin
             (abs(q1.w - q2.w) <= EPS);
 end;
 
-{$IFDEF FPC}operator + {$ELSE}class operator TQuat.Add{$ENDIF}
-  (const q1, q2: TQuat): TQuat;
+class operator TQuat.Add(const q1, q2: TQuat): TQuat;
 begin
   Result.x := q1.x + q2.x;
   Result.y := q1.y + q2.y;
@@ -997,8 +963,7 @@ begin
   Result.w := q1.w + q2.w;
 end;
 
-{$IFDEF FPC}operator - {$ELSE}class operator TQuat.Subtract{$ENDIF}
-  (const q1, q2: TQuat): TQuat;
+class operator TQuat.Subtract(const q1, q2: TQuat): TQuat;
 begin
   Result.x := q1.x - q2.x;
   Result.y := q1.y - q2.y;
@@ -1006,8 +971,7 @@ begin
   Result.w := q1.w - q2.w;
 end;
 
-{$IFDEF FPC}operator * {$ELSE}class operator TQuat.Multiply{$ENDIF}
-  (const q: TQuat; x: Single): TQuat;
+class operator TQuat.Multiply(const q: TQuat; x: Single): TQuat;
 begin
   Result.x := q.x * x;
   Result.y := q.y * x;
@@ -1015,8 +979,7 @@ begin
   Result.w := q.w * x;
 end;
 
-{$IFDEF FPC}operator * {$ELSE}class operator TQuat.Multiply{$ENDIF}
-  (const q1, q2: TQuat): TQuat;
+class operator TQuat.Multiply(const q1, q2: TQuat): TQuat;
 begin
   Result.x := q1.w * q2.x + q1.x * q2.w + q1.y * q2.z - q1.z * q2.y;
   Result.y := q1.w * q2.y + q1.y * q2.w + q1.z * q2.x - q1.x * q2.z;
@@ -1024,8 +987,7 @@ begin
   Result.w := q1.w * q2.w - q1.x * q2.x - q1.y * q2.y - q1.z * q2.z;
 end;
 
-{$IFDEF FPC}operator * {$ELSE}class operator TQuat.Multiply{$ENDIF}
-  (const q: TQuat; const v: TVec3f): TVec3f;
+class operator TQuat.Multiply(const q: TQuat; const v: TVec3f): TVec3f;
 begin
   with q * Quat(v.x, v.y, v.z, 0) * q.Invert do
     Result := Vec3f(x, y, z);
@@ -1174,8 +1136,7 @@ begin
   end;
 end;
 
-{$IFDEF FPC}operator + {$ELSE}class operator TMat4f.Add{$ENDIF}
-  (const a, b: TMat4f): TMat4f;
+class operator TMat4f.Add(const a, b: TMat4f): TMat4f;
 begin
   with Result do
   begin
@@ -1186,8 +1147,7 @@ begin
   end;
 end;
 
-{$IFDEF FPC}operator * {$ELSE}class operator TMat4f.Multiply{$ENDIF}
-  (const a, b: TMat4f): TMat4f;
+class operator TMat4f.Multiply(const a, b: TMat4f): TMat4f;
 begin
   with Result do
   begin
@@ -1210,8 +1170,7 @@ begin
   end;
 end;
 
-{$IFDEF FPC}operator * {$ELSE}class operator TMat4f.Multiply{$ENDIF}
-  (const m: TMat4f; const v: TVec2f): TVec2f;
+class operator TMat4f.Multiply(const m: TMat4f; const v: TVec2f): TVec2f;
 begin
   with m do
   begin
@@ -1220,8 +1179,7 @@ begin
   end;
 end;
 
-{$IFDEF FPC}operator * {$ELSE}class operator TMat4f.Multiply{$ENDIF}
-  (const m: TMat4f; const v: TVec3f): TVec3f;
+class operator TMat4f.Multiply(const m: TMat4f; const v: TVec3f): TVec3f;
 begin
   with m do
   begin
@@ -1231,8 +1189,7 @@ begin
   end;
 end;
 
-{$IFDEF FPC}operator * {$ELSE}class operator TMat4f.Multiply{$ENDIF}
-  (const m: TMat4f; const v: TVec4f): TVec4f;
+class operator TMat4f.Multiply(const m: TMat4f; const v: TVec4f): TVec4f;
 begin
   with m do
   begin
@@ -1243,8 +1200,7 @@ begin
   end;
 end;
 
-{$IFDEF FPC}operator * {$ELSE}class operator TMat4f.Multiply{$ENDIF}
-  (const m: TMat4f; x: Single): TMat4f;
+class operator TMat4f.Multiply(const m: TMat4f; x: Single): TMat4f;
 begin
   with Result do
   begin

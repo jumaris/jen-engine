@@ -1,10 +1,15 @@
 unit JEN_ResourceManager;
 
+{$IFDEF FPC}
+  {$MODE Delphi}
+{$ENDIF}
+
 interface
 
 uses
+  SysUtils,
   JEN_Header,
-  JEN_Utils,
+  JEN_Helpers,
   JEN_Shader,
   JEN_Texture,
   JEN_GeometryBuffer,
@@ -23,9 +28,9 @@ type
   end;
 
   IResourceManager = interface(JEN_Header.IResourceManager)
-    procedure Load(const FilePath: string; var Resource: IResource); overload;
+    procedure Load(const FilePath: UnicodeString; var Resource: IResource); overload;
 
-    function GetRef(const Name: string): IResource;
+    function GetRef(const Name: UnicodeString): IResource;
     procedure RegisterLoader(Loader: TResLoader);
 
     function GetActiveRes(RT: TResourceType): IUnknown;
@@ -59,13 +64,13 @@ type
     procedure Load(FilePath: PWideChar; out Resource: JEN_Header.IShaderResource); overload; stdcall;
     procedure Load(FilePath: PWideChar; out Resource: JEN_Header.ITexture); overload; stdcall;
     procedure Load(FilePath: PWideChar; out Resource: JEN_Header.IFont); overload; stdcall;
-    procedure Load(const FilePath: string; var Resource: IResource); overload;
+    procedure Load(const FilePath: UnicodeString; var Resource: IResource); overload;
 
     function CreateTexture(Width, Height: LongWord; Format: TTextureFormat): JEN_Header.ITexture; stdcall;
     function CreateGeomBuffer(GBufferType: TGBufferType; Count, Stride: LongInt; Data: Pointer): IGeomBuffer; stdcall;
 
     procedure RegisterLoader(Loader: TResLoader);
-    function GetRef(const Name: string): IResource;
+    function GetRef(const Name: UnicodeString): IResource;
 
     property ErrorTexture : TTexture read FErrorTexture;
   end;
@@ -94,6 +99,14 @@ var
 begin
   for I := 0 to FLoaderList.Count - 1 do
     TResLoader(FLoaderList[i]).Free;
+
+  for I := 0 to FResList.Count - 1 do
+    if FResList[i]._AddRef > 4 then
+    begin
+      Engine.Error('Do not all reference to resource' + IResource(FResList[i]).Name + ' released');
+      while FResList[i]._Release > 4 do;
+    end else
+      FResList[i]._Release;
 
   FResList.Free;
   FLoaderList.Free;
@@ -139,19 +152,19 @@ begin
   Resource := IFont(Load(FilePath, rtFont));
 end;
 
-procedure TResourceManager.Load(const FilePath: string; var Resource: IResource);
+procedure TResourceManager.Load(const FilePath: UnicodeString; var Resource: IResource);
 var
   I         : LongInt;
-  FileExt   : String;
-  FileName  : String;
+  FileExt   : UnicodeString;
+  FileName  : UnicodeString;
   Loader    : TResLoader;
   Stream    : IStream;
 begin
   if not Assigned(Resource) then
     Exit;
 
-  FileExt := Utils.ExtractFileExt(FilePath);
-  FileName := Utils.ExtractFileName(FilePath);
+  FileExt := ExtractFileExt(FilePath);
+  FileName := ExtractFileName(FilePath);
 
        {
   if not FileExist(
@@ -167,14 +180,14 @@ begin
 
   if not Assigned(Loader) then
   begin
-    Logout('Don''t find loader for file ' + FileName, lmWarning);
+    Engine.Warning('Don''t find loader for file ' + FileName);
     Exit;
   end;
 
   Stream := Helpers.CreateStream(PWideChar(FilePath), False);
   if not (Assigned(Stream) and Stream.Valid) then
   begin
-    Logout('Can''t open file ' + FileName, lmWarning);
+    Engine.Warning('Can''t open file ' + FileName);
     Exit;
   end;
 
@@ -184,14 +197,14 @@ begin
    { if ResType = ResType then
     begin
 
-     // Resource := DebugTexture;
+     // Resource := DebuggerTexture;
     end;      }
-    Logout('Error while loading file ' + FileName, lmWarning);
+    Engine.Warning('Error while loading file ' + FileName);
     Exit;
   end;
 
   FResList.Add(Resource);
-  LogOut('Loading '+ (Resource as IResource).Name, lmNotify);
+  Engine.Log('Loading '+ (Resource as IResource).Name);
 end;
 
 function TResourceManager.Load(FilePath: PWideChar; ResType: TResourceType): JEN_Header.IResource;
@@ -226,10 +239,10 @@ end;
 procedure TResourceManager.RegisterLoader(Loader : TResLoader);
 begin
   FLoaderList.Add(Loader);
-  LogOut('Register '+ TResourceStringName[Loader.ResType] + ' loader. Ext string: ' + Loader.ExtString, lmNotify);
+  Engine.Log('Register '+ TResourceStringName[Loader.ResType] + ' loader. Ext UnicodeString: ' + Loader.ExtString);
 end;
 
-function TResourceManager.GetRef(const Name: string): IResource;
+function TResourceManager.GetRef(const Name: UnicodeString): IResource;
 begin
 
 end;

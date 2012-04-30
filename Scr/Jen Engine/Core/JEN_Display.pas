@@ -1,5 +1,9 @@
 unit JEN_Display;
 
+{$IFDEF FPC}
+  {$MODE Delphi}
+{$ENDIF}
+
 interface
 
 uses
@@ -28,7 +32,7 @@ type
   private
     FValid        : Boolean;
     FCustomHandle : Boolean;
-    FCaption      : String;
+    FCaption      : UnicodeString;
     FHandle       : HWND;
     FDC           : HDC;
     FWidth        : LongWord;
@@ -83,7 +87,7 @@ begin
 
    WM_ACTIVATE:
       begin
-        Engine.CreateEvent(evActivate, Word(wParam));
+        Engine.DispatchEvent(evActivate, Word(wParam));
         Display.Active := LOWORD(wParam) <> WA_INACTIVE;
 
         if Display.FullScreen then
@@ -94,17 +98,17 @@ begin
       end;
 
     WM_ENTERSIZEMOVE:
-      Utils.FreezeTime := True;
+      Helpers.FreezeTime := True;
 
     WM_EXITSIZEMOVE:
-      Utils.FreezeTime := False;
+      Helpers.FreezeTime := False;
 
     WM_SETCURSOR:
       begin
         if (Display.Active) and (Word(lparam) = 1) and (not Display.Cursor) Then
           SetCursor(0)
-        else
-          SetCursor(LoadCursor(0, PWideChar(32512)));
+        else;
+        //  SetCursor(LoadCursor(0, PWideChar(32512)));
       end;
 
     WM_MOVE, WM_SIZE :
@@ -114,36 +118,36 @@ begin
     end;
 
     WM_SYSKEYUP, WM_KEYUP:
-      Engine.CreateEvent(evKeyUp, WParam);
+      Engine.DispatchEvent(evKeyUp, WParam);
 
     WM_SYSKEYDOWN, WM_KEYDOWN:
     begin
-      Engine.CreateEvent(evKeyDown, WParam);
+      Engine.DispatchEvent(evKeyDown, WParam);
       if (Msg = WM_SYSKEYDOWN) and (Wparam = LongInt(ikF4)) Then
         TJenEngine.Quit := True;
     end;
 
   // Mouse
     WM_LBUTTONUP:
-      Engine.CreateEvent(evKeyUp, LongInt(ikMouseL));
+      Engine.DispatchEvent(evKeyUp, LongInt(ikMouseL));
 
     WM_RBUTTONUP:
-      Engine.CreateEvent(evKeyUp, LongInt(ikMouseR));
+      Engine.DispatchEvent(evKeyUp, LongInt(ikMouseR));
 
     WM_MBUTTONUP:
-      Engine.CreateEvent(evKeyUp, LongInt(ikMouseM));
+      Engine.DispatchEvent(evKeyUp, LongInt(ikMouseM));
 
     WM_LBUTTONDOWN:
-      Engine.CreateEvent(evKeyDown, LongInt(ikMouseL));
+      Engine.DispatchEvent(evKeyDown, LongInt(ikMouseL));
 
     WM_RBUTTONDOWN:
-      Engine.CreateEvent(evKeyDown, LongInt(ikMouseR));
+      Engine.DispatchEvent(evKeyDown, LongInt(ikMouseR));
 
     WM_MBUTTONDOWN:
-      Engine.CreateEvent(evKeyDown, LongInt(ikMouseM));
+      Engine.DispatchEvent(evKeyDown, LongInt(ikMouseM));
 
     WM_MOUSEWHEEL:
-      Engine.CreateEvent(evMouseWhell, LongInt(SmallInt(wParam shr 16) div 120));
+      Engine.DispatchEvent(evMouseWhell, LongInt(SmallInt(wParam shr 16) div 120));
 
   else
     if Display.Custom then
@@ -164,7 +168,6 @@ begin
   Result := False;
 
   FCustomHandle := False;
-  FCaption    := 'JEN Engine application';
   FWidth      := Width;
   FHeight     := Height;
   FRefresh    := Refresh;
@@ -193,19 +196,20 @@ begin
 	  lpszClassName	:= WINDOW_CLASS_NAME;
   end;
 
-  LogOut('Register window class.', lmNotify);
+  Engine.Log('Register window class.');
   if RegisterClassEx(WinClass) = 0 Then
   begin
-    LogOut('Cannot register window class.', lmError);
+    Engine.Error('Cannot register window class.');
     Exit;
   end;
 
-  FHandle := CreateWindowEx(WS_EX_APPWINDOW, WINDOW_CLASS_NAME, @FCaption[1], WS_SYSMENU, 0, 0, 0, 0, 0, 0, 0, nil);
+  FHandle := CreateWindowEx(WS_EX_APPWINDOW, WINDOW_CLASS_NAME, '', WS_SYSMENU, 0, 0, 0, 0, 0, 0, 0, nil);
+  SetCaption('JEN Engine application');
 
-  LogOut('Create window.', lmNotify);
+  Engine.Log('Create window.');
   if FHandle = 0 Then
     begin
-      LogOut('Cannot create window.', lmError);
+      Engine.Error('Cannot create window.');
       Exit;
     end;
 
@@ -232,7 +236,7 @@ begin
   FCursor     := True;
 
   SendMessage(FHandle, WM_SETICON, 1, LPARAM(LoadIconW(HInstance, 'MAINICON')));
-  SetWindowLongW(FHandle, GWL_USERDATA, SetWindowLongW(FHandle, GWL_WNDPROC, LongInt(@WndProc)));
+  SetWindowLongW(FHandle, GWL_USERDATA, SetWindowLongW(FHandle, GWL_WNDPROC, LongInt({$IFDEF FPC}Pointer(WndProc){$ELSE}@WndProc{$ENDIF})));
   SetFocus(FHandle);
   FDC := GetDC(FHandle);
   Restore;
@@ -243,23 +247,23 @@ begin
   if not FValid then Exit;
 
   if ReleaseDC(FHandle, FDC) = 0 Then
-    LogOut('Cannot release device context.', lmError)
+    Engine.Error('Cannot release device context.')
   else
-    LogOut('Release device context.', lmNotify);
+    Engine.Log('Release device context.');
 
   if not FCustomHandle then
   begin
     if(FHandle <> 0) and (not DestroyWindow(FHandle)) Then
     begin
-      LogOut('Cannot destroy window.', lmError);
+      Engine.Error('Cannot destroy window.');
       FHandle := 0;
     end else
-      LogOut('Destroy window.', lmNotify);
+      Engine.Log('Destroy window.');
 
     if not UnRegisterClass(WINDOW_CLASS_NAME, 0) Then
-      LogOut('Cannot unregister window class.', lmError)
+      Engine.Error('Cannot unregister window class.')
     else
-      LogOut('Unregister window class.', lmNotify);
+      Engine.Log('Unregister window class.');
 
     if FFullScreen then
       Helpers.SystemInfo.Screen.ResetMode;
@@ -309,7 +313,7 @@ end;
 procedure TDisplay.SetCaption(Value: PWideChar);
 begin
   FCaption := Copy(Value, 1, Length(Value));
-  SetWindowText(FHandle, PWideChar(FCaption));
+  SetWindowTextW(FHandle, PWideChar(FCaption));
 end;
 
 procedure TDisplay.Restore;
@@ -319,25 +323,25 @@ var
 begin
   if not FCustomHandle then
   begin
-  Rect := Recti((Helpers.SystemInfo.Screen.Width - FWidth) div 2, (Helpers.SystemInfo.Screen.Height - FHeight) div 2, FWidth, FHeight);
+    Rect := Recti((Helpers.SystemInfo.Screen.Width - FWidth) div 2, (Helpers.SystemInfo.Screen.Height - FHeight) div 2, FWidth, FHeight);
 
-  if FFullScreen then
-  begin
-    Rect.Location := ZeroPoint;
-    Style := WS_POPUP
-  end else
-  begin
-    Style := WS_CAPTION or WS_MINIMIZEBOX;
-    Rect.Inflate(GetSystemMetrics(SM_CXDLGFRAME), GetSystemMetrics(SM_CYDLGFRAME) + GetSystemMetrics(SM_CYCAPTION) div 2);
-  end;
+    if FFullScreen then
+    begin
+      Rect.Location := ZeroPoint;
+      Style := WS_POPUP
+    end else
+    begin
+      Style := WS_CAPTION or WS_MINIMIZEBOX;
+      Rect.Inflate(GetSystemMetrics(SM_CXDLGFRAME), GetSystemMetrics(SM_CYDLGFRAME) + GetSystemMetrics(SM_CYCAPTION) div 2);
+    end;
 
-  SetWindowPos(FHandle, 0, Rect.x, Rect.y, Rect.Width, Rect.Height, $220);
-  ShowWindow(FHandle, SW_SHOWNORMAL);
-  SetWindowLongW(FHandle, GWL_STYLE, Style or WS_SYSMENU or WS_VISIBLE);
+    SetWindowPos(FHandle, 0, Rect.x, Rect.y, Rect.Width, Rect.Height, $220);
+    ShowWindow(FHandle, SW_SHOWNORMAL);
+    SetWindowLongW(FHandle, GWL_STYLE, Style or WS_SYSMENU or WS_VISIBLE);
   end;
 
   Update;
-  Engine.CreateEvent(evDisplayRestore);
+  Engine.DispatchEvent(evDisplayRestore);
 end;
 
 procedure TDisplay.Update;
@@ -357,7 +361,7 @@ begin
   FHeight := Height;
   if FFullScreen and FActive then
     Helpers.SystemInfo.Screen.SetMode(FWidth, FHeight, FRefresh);
-  Engine.CreateEvent(evDisplayRestore);
+  Engine.DispatchEvent(evDisplayRestore);
 end;
 
 procedure TDisplay.ShowCursor(Value: Boolean);

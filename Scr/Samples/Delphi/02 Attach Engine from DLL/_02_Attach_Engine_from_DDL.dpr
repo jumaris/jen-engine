@@ -1,5 +1,10 @@
 program _02_Attach_Engine_from_DDL;
 
+{$IMAGEBASE $40000}
+{$IFDEF FPC}
+  {$MODE Delphi}
+{$ENDIF}
+
 uses
   JEN_Header in '..\..\..\Include\Delphi\JEN_Header.pas',
   JEN_Math in '..\..\..\Include\Delphi\JEN_Math.pas',
@@ -10,5 +15,5 @@ uses
 {$R *.res}
 
 begin
-  p;
+ p;
 end.
