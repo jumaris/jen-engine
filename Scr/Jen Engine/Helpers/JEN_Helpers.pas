@@ -329,8 +329,6 @@ begin
   if FCount mod LIST_DELTA = 0 then
     SetLength(FItems, Length(FItems) + LIST_DELTA);
 
-  s := inttostr(FCount);
-  Engine.Log(s);
   FItems[FCount] := p;
   Result := p;
 
