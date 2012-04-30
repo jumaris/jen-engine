@@ -399,7 +399,7 @@ begin
           Str := RegReadString(Handle, 'HardwareInformation.AdapterString');
           if Str<> '' then
           begin
-          	GetMem(ChipType, Length(Str)*SizeOf(WideChar));
+          	GetMem(ChipType, (Length(Str)+1)*SizeOf(WideChar));
           	Move(Str[1], ChipType^, (Length(Str)+1)*SizeOf(WideChar));
           end;
 
