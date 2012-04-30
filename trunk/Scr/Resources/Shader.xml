@@ -1,7 +1,7 @@
 <Shader>
 	<VertexShader>
 	<Code>
-		#version 120
+			#version 110
 			attribute float IndxAttrib;
 
 			uniform vec4 TexCoordParams1;
@@ -19,11 +19,9 @@
 			varying vec2 Texcoord2;
 			varying vec2 Texcoord3;
 
-			const vec2 TexCoordArray[4] = vec2[4](
-			vec2(0.0,0.0),
-			vec2(1.0,0.0),
-			vec2(1.0,1.0),
-			vec2(0.0,1.0) );
+			//Shitty Intel 
+			const vec4 TexCoordArrayX = vec4(0.0, 1.0, 1.0, 0.0);
+			const vec4 TexCoordArrayY = vec4(0.0, 0.0, 1.0, 1.0);
 	
 			void main( void )
 			{
@@ -36,7 +34,7 @@
 				Data3 = QuadData[QuadId+2];
 				Data4 = QuadData[QuadId+3];
 
-				vec2 TC = TexCoordArray[VertexId-QuadId];
+				vec2 TC = vec2(TexCoordArrayX[VertexId-QuadId], TexCoordArrayY[VertexId-QuadId]);
 				Texcoord1 = TC * TexCoordParams1.zw + TexCoordParams1.xy;
 				Texcoord2 = TC * TexCoordParams2.zw + TexCoordParams2.xy;
 				Texcoord3 = TC * TexCoordParams3.zw + TexCoordParams3.xy;
@@ -56,7 +54,7 @@
 			
 			void main(void)
 			{
-				gl_FragColor = texture2D(Map0, Texcoord1.xy);
+				gl_FragColor = texture2D(Map0, Texcoord1.xy)*InterpolatedData;
 			}
 		</Code> 
 	</FragmentShader>

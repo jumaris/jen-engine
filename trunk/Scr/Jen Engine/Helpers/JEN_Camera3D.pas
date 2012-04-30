@@ -13,8 +13,8 @@ type
     FFOV      : Single;
     FPos      : TVec3f;
     FAngle    : TVec3f;
- //   FSpeed    : TVec3f;
-    FMaxSpeed : Single;
+   // FSpeed    : TVec3f;
+   // FMaxSpeed : Single;
     FProj     : TMat4f; // projection
     FView     : TMat4f;
     FZNear    : Single;
@@ -26,6 +26,8 @@ type
     function GetAngle: TVec3f; stdcall;
     procedure SetAngle(const Value: TVec3f); stdcall;
     function GetDir: TVec3f; stdcall;
+    procedure SetDir(const Value, Up: TVec3f); stdcall;
+    function GetUp: TVec3f; stdcall;
     function GetMaxSpeed: Single; stdcall;
     procedure SetMaxSpeed(Value: Single); stdcall;
     function GetZNear: Single; stdcall;
@@ -51,7 +53,7 @@ begin
   FFOV   := 50;
   FZNear  := 1;
   FZFar   := 10000;
-  FMaxSpeed := 16;
+  //FMaxSpeed := 16;
 end;
 
 function TCamera3D.GetFOV: Single;
@@ -89,16 +91,42 @@ begin
   Result.x := sin(pi - FAngle.y * deg2rad) * cos(FAngle.x * deg2rad);
   Result.y := -sin(FAngle.x * deg2rad);
   Result.z := cos(pi - FAngle.y * deg2rad) * cos(FAngle.x * deg2rad);
+        {
+  Result.x := sin(pi - FAngle.y * deg2rad) * sin(FAngle.x * deg2rad);
+  Result.y := cos(FAngle.x * deg2rad);
+  Result.z := cos(pi - FAngle.y * deg2rad) * sin(FAngle.x * deg2rad);
+             }
+ { Result.x := FView.e11;
+  Result.y := FView.e12;
+  Result.z := FView.e13;
+  FView.Pos:=Vec3f(0,0,0);
+  Result := FView.Transpose*vec3f(0,0,-1);   }
+end;
+
+function TCamera3D.GetUp: TVec3f; stdcall;
+begin
+  Result.x := sin(pi - FAngle.y * deg2rad) * sin(FAngle.x * deg2rad);
+  Result.y := cos(FAngle.x * deg2rad);
+  Result.z := cos(pi - FAngle.y * deg2rad) * sin(FAngle.x * deg2rad);
+end;
+
+procedure TCamera3D.SetDir(const Value, Up: TVec3f);
+var
+  C : TVec3f;
+begin
+  FAngle.x := -arcsin(Value.y/Value.Length)* rad2deg;
+  FAngle.y := ArcTan2(Value.z, Value.x)* rad2deg + 90;
+  FAngle.z := -Arccos(Up.Dot(GetUp))* rad2deg;
 end;
 
 function TCamera3D.GetMaxSpeed: Single;
 begin
-  Result := FMaxSpeed;
+ // Result := FMaxSpeed;
 end;
 
 procedure TCamera3D.SetMaxSpeed(Value: Single);
 begin
-  FMaxSpeed := Value;
+  //FMaxSpeed := Value;
 end;
 
 function TCamera3D.GetZNear: Single;
@@ -122,11 +150,11 @@ begin
 end;
 
 procedure TCamera3D.onUpdate(DeltaTime: Single);
-//var
-//  Dir    : TVec3f;
-//  VSpeed : TVec3f;
+var
+  Dir    : TVec3f;
+  VSpeed : TVec3f;
 begin
-//  DeltaTime := DeltaTime/100;
+  DeltaTime := DeltaTime/100;
   with Input.Mouse do
   begin
   FAngle.x := FAngle.x + Delta.y * 0.1;
@@ -138,11 +166,11 @@ begin
       {
      if FAngle.x <  90 then FAngle.x := 90;
      if FAngle.x >  270 then FAngle.x :=  270;   }
-
-     if FAngle.x <  -90 then FAngle.x := -90;
-      if FAngle.x >  90 then FAngle.x :=  90;
+  {
+     if FAngle.x < -90 + EPS then FAngle.x := -90 + EPS;
+     if FAngle.x >  90 - EPS then FAngle.x :=  90 - EPS;
     // летим куда хотим
- {Dir.x := sin(pi - FAngle.y * deg2rad) * cos(FAngle.x * deg2rad);
+{  Dir.x := sin(pi - FAngle.y * deg2rad) * cos(FAngle.x * deg2rad);
   Dir.y := -sin(FAngle.x * deg2rad);
   Dir.z := cos(pi - FAngle.y * deg2rad) * cos(FAngle.x * deg2rad);
   VSpeed := Vec3f(0, 0, 0);
@@ -153,7 +181,7 @@ begin
   FSpeed := FSpeed.Lerp(VSpeed.Normal * FMaxSpeed, DeltaTime);
   if FSpeed.Length < 0.001 then
     FSpeed := Vec3f(0, 0, 0);
-  FPos := FPos + FSpeed*DeltaTime;  }
+  FPos := FPos + FSpeed*DeltaTime; }
 
   CalcMatrix;
 end;

@@ -1,13 +1,18 @@
 unit JEN_Shader;
 
+{$IFDEF FPC}
+  {$MODE Delphi}
+{$ENDIF}
+
 interface
 
 uses
+  SysUtils,
   JEN_Header,
   JEN_Math,
   JEN_Resource,
   JEN_OpenGlHeader,
-  JEN_Utils,
+  JEN_Helpers,
   CoreX_XML;
 
 type
@@ -23,16 +28,16 @@ type
 
   IShaderUniform = interface(JEN_Header.IShaderUniform)
   ['{4AB4AE0B-7FBC-4838-87B0-4A9BEA508ED4}']
-    procedure Init(ShaderID: GLEnum; const UName: string; UniformType: TShaderUniformType; Necessary: Boolean);
+    procedure Init(ShaderID: GLEnum; const UName: AnsiString; UniformType: TShaderUniformType; Necessary: Boolean);
   end;
 
   IShaderAttrib = interface(JEN_Header.IShaderAttrib)
   ['{CB9EEB22-8256-46BB-B7B1-372E0D4CD624}']
-    procedure Init(ShaderID: GLEnum; const AName: string; AttribType: TShaderAttribType; Necessary: Boolean);
+    procedure Init(ShaderID: GLEnum; const AName: AnsiString; AttribType: TShaderAttribType; Necessary: Boolean);
   end;
 
   TShaderResource = class(TResource, IResource, IShaderResource)
-    constructor Create(const FilePath: string);
+    constructor Create(const FilePath: UnicodeString);
     destructor Destroy; override;
   private
     FShaderPrograms : TInterfaceList;
@@ -44,8 +49,7 @@ type
   public
     procedure Init(XML: IXML);
     procedure Reload; stdcall;
-    procedure Compile(var Shader: IShaderProgram); overload;
-    function Compile: JEN_Header.IShaderProgram; overload; stdcall;
+    procedure Compile(var Shader: JEN_Header.IShaderProgram); stdcall;
   end;
 
   TShaderProgram = class(TInterfacedObject, IShaderProgram)
@@ -71,13 +75,13 @@ type
     FID             : GLint;
     FShaderId       : GLhandle;
     FType           : TShaderUniformType;
-    FName           : string;
+    FName           : UnicodeString;
     FValue          : array [0..11] of Single;
     function GetName: PWideChar; stdcall;
     function GetType: TShaderUniformType; stdcall;
     //procedure SetType(Value: TShaderAttribType); stdcall;
 
-    procedure Init(ShaderID: GLEnum; const UName: string; UniformType: TShaderUniformType; Necessary: Boolean);
+    procedure Init(ShaderID: GLEnum; const UName: AnsiString; UniformType: TShaderUniformType; Necessary: Boolean);
   public
     function Valid: Boolean; stdcall;
     procedure Value(const Data; Count: LongInt); stdcall;
@@ -88,10 +92,10 @@ type
   private
     FID    : GLint;
     FType  : TShaderAttribType;
-    FName  : string;
+    FName  : UnicodeString;
     function GetName: PWideChar; stdcall;
     function GetType: TShaderAttribType; stdcall;
-    procedure Init(ShaderID: GLEnum; const AName: string; AttribType: TShaderAttribType; Necessary: Boolean);
+    procedure Init(ShaderID: GLEnum; const AName: AnsiString; AttribType: TShaderAttribType; Necessary: Boolean);
   public
     function Valid: Boolean; stdcall;
     procedure Value(Stride, Offset: LongInt; Norm: Boolean); stdcall;
@@ -100,7 +104,7 @@ type
   end;
 
   TShaderDefine = record
-    Name  : String;
+    Name  : UnicodeString;
     Value : LongWord;
   end;
 
@@ -152,7 +156,7 @@ var
  // GLType      : LongInt;
 //  NameBuff    : array[0..255] of AnsiChar;
 //  UniformType : TShaderUniformType;
-//  Name        : String;
+//  Name        : UnicodeString;
  // u           : IShaderUniform;
  // a           : IShaderAttrib;
 
@@ -161,7 +165,6 @@ var
     Obj         : GLEnum;
     SourcePtr   : PAnsiChar;
     SourceSize  : LongInt;
-    Str         : string;
   begin
     Obj := glCreateShader(ShaderType);
 
@@ -173,15 +176,13 @@ var
     glGetShaderiv(Obj, GL_COMPILE_STATUS, @Status);
     if Status <> 1 then
     begin
-      LogOut('Error compiling shader', lmWarning);
-
-      LogOut(Str, lmNotify);
-      LogOut(string(Source)+#0, lmCode);
+      Engine.Warning('Error compiling shader');
+      Engine.CodeBlock(Source);
 
       glGetShaderiv(Obj, GL_INFO_LOG_LENGTH, @LogLen);
       SetLength(LogBuf, LogLen);
       glGetShaderInfoLog(Obj, LogLen, LogLen, PAnsiChar(LogBuf));
-      LogOut(string(LogBuf), lmWarning);
+      Engine.Warning(LogBuf);
     end;
 
     glAttachShader(FID, Obj);
@@ -206,27 +207,27 @@ begin
   glGetProgramiv(FID, GL_LINK_STATUS, @Status);
   if Status <> 1 then
   begin
-    LogOut('Error linking shader', lmWarning);
+    Engine.Warning('Error linking shader');
     glGetProgramiv(FID, GL_INFO_LOG_LENGTH, @LogLen);
     SetLength(LogBuf, LogLen);
     glGetProgramInfoLog(FID, LogLen, LogLen, PAnsiChar(LogBuf));
-    LogOut(string(LogBuf), lmWarning);
+    Engine.Warning(LogBuf);
     Exit;
   end;
 
-  for i := 0 to FUniformList.Count - 1 do
-  with (FUniformList[i] as IShaderUniform) do
+  for i := 0 to FUniformList.Count - 1 do
+  with (FUniformList[i] as IShaderUniform) do
     Init(FID, Name, UType, Valid);
 
-  for i := 0 to FAttribList.Count - 1 do
-  with (FAttribList[i] as IShaderAttrib) do
+  for i := 0 to FAttribList.Count - 1 do
+  with (FAttribList[i] as IShaderAttrib) do
     Init(FID, Name, AType, Valid);
-          {
-  glGetProgramiv(FID, GL_ACTIVE_UNIFORMS, @Count);
-  for i := 0 to Count-1 do
-  begin
-    glGetActiveUniform(FID, I, 255, @Info, @Info, @GLType, @NameBuff[0]);
-    case GLType of
+          {
+  glGetProgramiv(FID, GL_ACTIVE_UNIFORMS, @Count);
+  for i := 0 to Count-1 do
+  begin
+    glGetActiveUniform(FID, I, 255, @Info, @Info, @GLType, @NameBuff[0]);
+    case GLType of
       GL_INT, GL_SAMPLER_1D..GL_SAMPLER_2D_SHADOW: UniformType := utInt;
       GL_FLOAT: UniformType := utVec1;
       GL_FLOAT_VEC2: UniformType := utVec2;
@@ -237,7 +238,7 @@ begin
       else UniformType := utNone;
     end;
 
-    Name := String(NameBuff);
+    Name := UnicodeString(NameBuff);
     Delete(Name, Pos('[', Name), 3);
 
     u := nil;
@@ -258,9 +259,9 @@ begin
   glGetProgramiv(FID, GL_ACTIVE_ATTRIBUTES, @Count);
   for I := 0 to Count-1 do
   begin
-    glGetActiveAttrib(FID, I, 255, @Info, @Info, @GLType, @NameBuff[0]);
+    glGetActiveAttrib(FID, I, 255, @Info, @Info, @GLType, @NameBuff[0]);
 
-    Name := String(NameBuff);
+    Name := UnicodeString(NameBuff);
     a    := nil;
 
     for j := 0 to FAttribList.Count -1 do
@@ -302,6 +303,7 @@ var
   i : LongInt;
   a : IShaderAttrib;
 begin
+
   for i := 0 to FAttribList.Count - 1 do
     if ((FAttribList[i] as IShaderAttrib).Name = AName) then
       Exit(IShaderAttrib(FAttribList[i]));
@@ -351,17 +353,17 @@ begin
   FType := Value;
 end;
                 }
-procedure TShaderUniform.Init(ShaderID: LongWord; const UName: string; UniformType: TShaderUniformType; Necessary: Boolean);
+procedure TShaderUniform.Init(ShaderID: LongWord; const UName: AnsiString; UniformType: TShaderUniformType; Necessary: Boolean);
 var
   i : LongInt;
 begin
   FShaderId := ShaderID;
-  FID   := glGetUniformLocation(ShaderID, PAnsiChar(AnsiString(UName)));
+  FID   := glGetUniformLocation(ShaderID, PAnsiChar(UName));
   FName := Copy(UName, 1, Length(UName));
   FType := UniformType;
 
   if (FID = -1) and Necessary then
-    LogOut('Uncorrect uniform name ' + UName, lmWarning);
+    Engine.Warning('Uncorrect uniform name ' + UName);
 
   for i := 0 to Length(FValue) - 1 do
     FValue[i] := NAN;
@@ -413,14 +415,14 @@ begin
   Result := FType;
 end;
 
-procedure TShaderAttrib.Init(ShaderID: LongWord; const AName: string; AttribType: TShaderAttribType; Necessary: Boolean);
+procedure TShaderAttrib.Init(ShaderID: LongWord; const AName: AnsiString; AttribType: TShaderAttribType; Necessary: Boolean);
 begin
-  FID   := glGetAttribLocation(ShaderID, PAnsiChar(AnsiString(AName)));
+  FID   := glGetAttribLocation(ShaderID, PAnsiChar(AName));
   FName := Copy(AName, 1, Length(AName));
   FType := AttribType;
 
   if (FID = -1) and Necessary then
-    LogOut('Uncorrect attrib name ' + AName, lmWarning);
+    Engine.Warning('Uncorrect attrib name ' + AName);
 end;
 
 function TShaderAttrib.Valid: Boolean;
@@ -478,7 +480,7 @@ begin
   end;
 
   FDefines.Free;
-  LogOut('Shader resource ' + FName + ' destroyed',lmNotify);
+  Engine.Log('Shader resource ' + FName + ' destroyed');
   inherited;
 end;
 
@@ -510,7 +512,7 @@ var
 begin
   if Value < 0 then
   begin
-    LogOut('Can not set the value to define less than zero', lmWarning);
+    Engine.Warning('Can not set the value to define less than zero');
     Exit;
   end;
 
@@ -529,12 +531,12 @@ end;
 procedure TShaderResource.Init(XML: IXML);
 var
   I       : LongInt;
-  Shader  : IShaderProgram;
+  Shader  : JEN_Header.IShaderProgram;
 begin
   FXML := XML;
   for I := 0 to FShaderPrograms.Count - 1 do
   begin
-    Shader := FShaderPrograms[i] as IShaderProgram;
+    Shader := FShaderPrograms[i] as JEN_Header.IShaderProgram;
     Compile(Shader);
   end;
 end;
@@ -547,14 +549,14 @@ begin
   ResMan.Load(FFilePath+FName, i);
 end;
 
-procedure TShaderResource.Compile(var Shader : IShaderProgram);
+procedure TShaderResource.Compile(var Shader: JEN_Header.IShaderProgram);
 var
   XN_VS   : IXML;
   XN_FS   : IXML;
   i       : LongInt;
-  Str     : string;
+  Str     : UnicodeString;
 
-  function IndexStr(const AText: string; const AValues: array of string): LongInt;
+  function IndexStr(const AText: UnicodeString; const AValues: array of UnicodeString): LongInt;
   var
     J : Integer;
   begin
@@ -572,11 +574,11 @@ var
     i : LongInt;
     Param : TXMLParam;
 
-    function GetParam(const Node: IXML; const Name: string): TXMLParam;
+    function GetParam(const Node: IXML; const Name: UnicodeString): TXMLParam;
     begin
       Result := Node.Params[PWideChar(Name)];
       if Result.Name = '' then
-        LogOut('Not defined param def in token: ' + Node.Tag, lmWarning);
+        Engine.Warning('Not defined param def in token: ' + Node.Tag);
     end;
 
   begin
@@ -603,7 +605,7 @@ var
 
             case GetDefine(Param.Value) of
                1 : Result := Result + AnsiString(Content) + MergeCode(xNode.NodeI[i]);
-              -1 : LogOut('Is not set definition: ' + Param.Value, lmWarning);
+              -1 : Engine.Warning('Is not set definition: ' + Param.Value);
             end;
 
           end;
@@ -617,14 +619,16 @@ var
                Result := Result + AnsiString(Content) + MergeCode(xNode.NodeI[i]);
           end;
         else
-          LogOut('Uncorrect token: ' + Tag, lmWarning);
+          Engine.Warning('Uncorrect token: ' + Tag);
       end;
 
     end;
   end;
 
 begin
-  if (Assigned(FXML) and Assigned(Shader)) then
+  Shader := IShaderProgram(TShaderProgram.Create);
+
+  if (Assigned(FXML)) then
   begin
     XN_VS := FXML.Node['VertexShader'];
     XN_FS := FXML.Node['FragmentShader'];
@@ -632,35 +636,26 @@ begin
 
   if not (Assigned(XN_VS) and Assigned(XN_FS)) then
   begin
-    LogOut('Uncorrect shader xml file', lmWarning);
+    Engine.Warning('Uncorrect shader xml file');
     Exit;
   end;
 
-  if not Shader.Init(MergeCode(XN_VS), MergeCode(XN_FS)) then
+  if not (Shader as IShaderProgram).Init(MergeCode(XN_VS), MergeCode(XN_FS)) then
   begin
     Str := 'Defines:';
     for I := 0 to FDefines.Count - 1 do
       with TShaderDefine(FDefines[i]^) do
-        Str := Str + #10 + Name + ' - ' + Utils.IntToStr(Value);
+        Str := Str + #10 + Name + ' - ' + IntToStr(Value);
 
-    LogOut(Str, lmNotify);
+    Engine.Log(Str);
   end;
-end;
-
-function TShaderResource.Compile : JEN_Header.IShaderProgram;
-var
-  Shader : IShaderProgram;
-begin
-  Shader := IShaderProgram(TShaderProgram.Create);
-  Compile(Shader);
   FShaderPrograms.Add(Shader);
-  Result := Shader;
 end;
 
 constructor TShaderLoader.Create;
 begin
   inherited;
-  ExtString := 'xml';
+  ExtString := '.xml';
   ResType := rtShader;
 end;
 

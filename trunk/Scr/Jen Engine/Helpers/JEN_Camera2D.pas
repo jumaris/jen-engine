@@ -44,6 +44,7 @@ begin
   FAngle    := 0;
   //FMaxSpeed := 16;
   FScale    := 1;
+  FEnable   := True;
 end;
 
 function TCamera2D.GetEnable: Boolean;
@@ -139,11 +140,10 @@ begin
 
   if FEnable then
   begin
-    Mat.Translate(Vec3f(-FPos.x, -FPos.y, 0));
-    Mat.Translate(Vec3f(Render2d.RCWidth/2, Render2d.RCHeight/2, 0));
-    Mat.Scale(Vec3f(FScale, FScale, 0));
+    Mat.Translate(Vec3f(Render2d.RCWidth*0.5, Render2d.RCHeight*0.5, 0));
+    Mat.Scale(Vec3f(FScale, FScale, 1));
     Mat.Rotate(FAngle, Vec3f(0, 0, 1));
-    Mat.Translate(Vec3f(-Render2d.RCWidth/2, -Render2d.RCHeight/2, 0));
+    Mat.Translate(Vec3f(-FPos.x, -FPos.y, 0));
   end;
 
   Render.Matrix[mt2DMat] := Mat;

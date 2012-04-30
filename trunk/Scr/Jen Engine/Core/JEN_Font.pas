@@ -3,9 +3,10 @@ unit JEN_Font;
 interface
 
 uses
+  SysUtils,
   JEN_Header,
   JEN_Math,
-  JEN_Utils,
+  JEN_Helpers,
   JEN_Resource;
 
 type
@@ -28,7 +29,7 @@ type
   end;
 
   TFont = class(TResource, IResource, IFont)
-    constructor Create(const FilePath: string);
+    constructor Create(const FilePath: UnicodeString);
     destructor Destroy; override;
   private
     class var Shader : IShaderProgram;
@@ -80,7 +81,7 @@ uses
 const
   JFIMagic = $544e4f465f4e454a;
 
-constructor TFont.Create;
+constructor TFont.Create(const FilePath: UnicodeString);
 var
   Res : IShaderResource;
 begin
@@ -94,7 +95,7 @@ begin
   if not Assigned(Shader) then
   begin
     ResMan.Load('|TextShader.xml', Res);
-    Shader := Res.Compile;
+    Res.Compile(Shader);
     ParamsUniform := Shader.Uniform('Params', utVec4);
   end;
 end;
@@ -112,73 +113,74 @@ begin
   inherited;
 end;
 
-function TFont.GetScale: Single;
+function TFont.GetScale: Single; stdcall;
 begin
   Result := FScale;
 end;
 
-procedure TFont.SetScale(Value: Single);
+procedure TFont.SetScale(Value: Single); stdcall;
 begin
   FScale := Value;
 end;
 
-function TFont.GetColor: TVec4f;
+function TFont.GetColor: TVec4f; stdcall;
 begin
   Result := FColor1;
 end;
 
-procedure TFont.SetColor(const Value: TVec4f);
+procedure TFont.SetColor(const Value: TVec4f); stdcall;
 begin
   FColor1 := Value;
   FColor2 := Value;
 end;
 
-procedure TFont.SetGradColors(const Value1, Value2: TVec4f);
+procedure TFont.SetGradColors(const Value1, Value2: TVec4f); stdcall;
 begin
   FColor1 := Value1;
   FColor2 := Value2;
 end;
 
-function TFont.GetOutlineColor: TVec3f;
+function TFont.GetOutlineColor: TVec3f; stdcall;
 begin
   Result.X := FOutlineColor.X;
   Result.Y := FOutlineColor.Y;
   Result.Z := FOutlineColor.Z;
 end;
 
-procedure TFont.SetOutlineColor(Value: TVec3f);
+procedure TFont.SetOutlineColor(Value: TVec3f); stdcall;
 begin
   FOutlineColor := Vec4f(Value.x, Value.y, Value.z, 1);
 end;
 
-function TFont.GetOutlineSize: Single;
+function TFont.GetOutlineSize: Single; stdcall;
 begin
   Result := FOutlineSize;
 end;
 
-procedure TFont.SetOutlineSize(const Value: Single);
+procedure TFont.SetOutlineSize(const Value: Single); stdcall;
 begin
   FOutlineSize := Value;
 end;
 
-function TFont.GetEdgeSmooth: Single;
+function TFont.GetEdgeSmooth: Single; stdcall;
 begin
   Result := FEdgeSmooth;
 end;
 
-procedure TFont.SetEdgeSmooth(Value: Single);
+procedure TFont.SetEdgeSmooth(Value: Single); stdcall;
 begin
   FEdgeSmooth := Value;
 end;
 
-procedure TFont.Reload;
+procedure TFont.Reload; stdcall;
 begin
 
 end;
 
 procedure TFont.Init(PagesCount: Word; Height: LongInt; MaxDist: Word; MaxDistTC: Single);
 var
-  I   : Integer;
+  I        : Integer;
+  FileName : UnicodeString;
 begin
   FPagesCount := PagesCount;
   FHeight := Height;
@@ -187,7 +189,10 @@ begin
 
   SetLength(FPages, FPagesCount);
   for I := 0 to FPagesCount - 1 do
-    ResMan.Load(PWideChar(FFilePath + Utils.ExtractFileName(PWideChar(FName), True) + '_' + Utils.IntToStr(I) + '.dds'), FPages[i]);
+  begin
+    FileName := FFilePath + ExtractFileName(FName) + '_' + IntToStr(I) + '.dds';
+    ResMan.Load(PWideChar(FileName), FPages[i]);
+  end;
 end;
 
 procedure TFont.AddChar(Char: WideChar;const Info: TCharInfo);
@@ -197,7 +202,7 @@ begin
   //Move(Info, FChars[Char], SizeOf(TCharInfo));
 end;
 
-procedure TFont.Print(Text: PWideChar; X, Y: Single);
+procedure TFont.Print(Text: PWideChar; X, Y: Single); stdcall;
 var
   i        : LongInt;
   PosX     : Single;
@@ -227,7 +232,7 @@ begin
   ParamsUniform.Value(Params,4);
 
   Render2d.BatchBegin;
-  for i := 1 to Length(Text) do
+  for i := 0 to Length(Text)-1 do
   begin
     CharInfo := FChars[Text[i]];
     if not Assigned(CharInfo) then Continue;
@@ -250,7 +255,7 @@ begin
   Render2d.BatchEnd;
 end;
 
-function TFont.GetTextWidth(Text: PWideChar): Single;
+function TFont.GetTextWidth(Text: PWideChar): Single; stdcall;
 var
   i        : LongInt;
   CharInfo : PCharInfo;
@@ -269,7 +274,7 @@ end;
 
 constructor TFontLoader.Create;
 begin
-  ExtString := 'jfi';
+  ExtString := '.jfi';
   ResType := rtFont;
 end;
 

@@ -1,4 +1,6 @@
+{%RunWorkingDir F:\Kot\Programming\Engines\MY\jen_engine\Bin\}
 unit JEN_Header;
+
 
 interface
 
@@ -7,10 +9,9 @@ uses
   JEN_Math;
 
 type
-  TJenSubSystemType = (ssUtils, ssHelpers, ssInput, ssDisplay, ssResMan, ssRender, ssRender2d);
+  TJenSubSystemType = (ssHelpers, ssInput, ssDisplay, ssResMan, ssRender, ssRender2d);
   TEvent = (evLogMsg, evActivate, evKeyUp, evKeyDown, evMouseWhell, evDisplayRestore, evRenderFlush);
-
-  TLogMsg = (lmHeaderMsg, lmInfo, lmNotify, lmCode, lmWarning, lmError);
+  TLogMsg = (lmHeaderMsg, lmNotify, lmCode, lmWarning, lmError);
 
   TInputKey = (
   // Keyboard
@@ -30,9 +31,12 @@ type
 	                rtTexture13, rtTexture14, rtTexture15);
 
   // TVertexAttrib = (vaPosition, vaNormal, vaColor, vaTexCoord);
+  TCompareMode  = (cmNone, cmLEqual, cmGEqual, cmLess, cmGreater, cmEqual, cmNotEqual, cmAlways, cmNewer);
+  TScencilOp = (soKeep, soZero, soReplace, soInc, soDec, soIncWrap, soDecWrap, soInvert);
+
   TGBufferType = (gbIndex, gbVertex);
   TGeomMode = (gmTrianles = $0004, gmTriangleStrip, gmTriangleFan, gmQuads, gmQuadStrip, gmPolygon);
-  TBlendType = (btNone, btNormal, btAdd, btMult, btOne, btNoOverride, btAddAlpha);
+  TBlendType = (btNone, btNormal, btAdd, btMult, btOne, btPreMulAlpha );
   TCullFace = (cfNone, cfFront, cfBack);
   TColorChannel = (ccRed, ccGreen, ccBlue, ccAlpha);
   TRenderChannel = (rcDepth, rcColor0, rcColor1, rcColor2, rcColor3, rcColor4, rcColor5, rcColor6, rcColor7);
@@ -45,9 +49,8 @@ type
 
   TTextureFormat = (tfoNone, tfoDXT1c, tfoDXT1a, tfoDXT3, tfoDXT5, tfoDepth8, tfoDepth16, tfoDepth24, tfoDepth32, tfoA8, tfoL8, tfoAL8, tfoBGRA8, tfoBGR8, tfoBGR5A1, tfoBGR565, tfoBGRA4, tfoR16F, tfoR32F, tfoGR16F, tfoGR32F, tfoBGRA16F, tfoBGRA32F);
   TTextureFilter = (tfiNone, tfiBilinear, tfiTrilinear, tfiAniso);
-  TTextureCompareMode = (tcmNone, tcmLEqual, tcmGEqual, tcmLess, tcmGreater, tcmEqual, tcmNotEqual, tcmAlways, tcmNewer);
 
-  TEventProc = procedure(Param: LongInt; Data: Pointer); stdcall;
+  TEventListener = procedure(Param: LongInt; Data: Pointer); stdcall;
 
   TCompareFunc = function (Item1, Item2: Pointer): LongInt;
   IList = interface
@@ -71,8 +74,16 @@ type
     procedure Close; stdcall;
   end;
 
-  IJenSubSystem = interface(IUnknown)
+  IJenSubSystem = interface
     procedure Free; stdcall;
+  end;
+
+  IConsole = interface
+    function InitWindow: Boolean; stdcall;
+    procedure AddMessage(Text: PWideChar); stdcall;
+    function GetHandle : HWND; stdcall;
+
+    property Handle: HWND read GetHandle;
   end;
 
   IJenEngine = interface
@@ -81,11 +92,18 @@ type
 
     procedure GetSubSystem(SubSustemType: TJenSubSystemType; out SubSystem: IJenSubSystem); stdcall;
 
-    procedure AddEventProc(Event: TEvent; Proc: TEventProc); stdcall;
-    procedure DelEventProc(Event: TEvent; Proc: TEventProc); stdcall;
-    procedure CreateEvent(Event: TEvent; Param: LongInt = 0; Data: Pointer = nil); stdcall;
+    procedure AddEventListener(Event: TEvent; Proc: TEventListener); stdcall;
+    procedure RemoveEventListener(Event: TEvent; Proc: TEventListener); stdcall;
+    procedure DispatchEvent(Event: TEvent; Param: LongInt = 0; Data: Pointer = nil); stdcall;
 
-    procedure LogOut(Text: PWideChar; MType: TLogMsg); stdcall;
+    procedure Log(Text: PWideChar); overload; stdcall;
+    procedure Log(Text: WideString); overload; stdcall;
+    procedure Error(Text: PWideChar); overload; stdcall;
+    procedure Error(Text: WideString); overload; stdcall;
+    procedure Warning(Text: PWideChar); overload; stdcall;
+    procedure Warning(Text: WideString); overload; stdcall;
+    procedure CodeBlock(Text: PWideChar); overload; stdcall;
+    procedure CodeBlock(Text: WideString); overload; stdcall;
   end;
 
   IStream = interface
@@ -137,12 +155,6 @@ type
     property Params: IXMLParams read GetParams;
     property Node[TagName: PWideChar]: IXML read GetNode; default;
     property NodeI[Idx: LongInt]: IXML read GetNodeI;
-  end;
-
-  IUtils = interface(IJenSubSystem)
-    function GetTime : LongInt; stdcall;
-    procedure Sleep(Value: LongWord); stdcall;
-    property Time : LongInt read GetTime;
   end;
 
   IScreen = interface
@@ -269,12 +281,12 @@ type
 
   IShaderResource = interface(IResource)
   ['{313C3497-C065-4A29-A970-07B9750D5914}']
-    function GetDefine(Name: PWideChar): LongInt; stdcall;
-    procedure SetDefine(Name: PWideChar; Value: LongInt); stdcall;
+    function GetDefine(DName: PWideChar): LongInt; stdcall;
+    procedure SetDefine(DName: PWideChar; Value: LongInt); stdcall;
 
-    function Compile: IShaderProgram; stdcall;
+    procedure Compile(var shader: IShaderProgram); stdcall;
 
-    property Define[Name: PWideChar]: LongInt read GetDefine write SetDefine; default;
+    property Define[DName: PWideChar]: LongInt read GetDefine write SetDefine; default;
   end;
 
   ITexture = interface(IResource)
@@ -291,7 +303,7 @@ type
     procedure SetFilter(Value: TTextureFilter); stdcall;
     function GetClamp: Boolean; stdcall;
     procedure SetClamp(Value: Boolean); stdcall;
-    procedure SetCompare(Value: TTextureCompareMode); stdcall;
+    procedure SetCompare(Value: TCompareMode); stdcall;
 
     function GettSubTexCount: LongInt; stdcall;
     function GetSubTex(idx: LongInt): ITexture; stdcall;
@@ -348,10 +360,6 @@ type
     procedure Load(FilePath: PWideChar; out Resource: JEN_Header.ITexture); overload; stdcall;
     procedure Load(FilePath: PWideChar; out Resource: JEN_Header.IFont); overload; stdcall;
 
-    {
-    function LoadShader(FileName: PWideChar): IShaderResource; stdcall;
-    function LoadTexture(FileName: PWideChar): ITexture; stdcall;    }
-
     function CreateTexture(Width, Height: LongWord; Format: TTextureFormat): ITexture; stdcall;
     function CreateGeomBuffer(GBufferType: TGBufferType; Count, Stride: LongInt; Data: Pointer): IGeomBuffer; stdcall;
   end;
@@ -392,14 +400,21 @@ type
     procedure SetColorMask(Channel: TColorChannel; Value: Boolean); overload; stdcall;
     function GetColorMask: Byte; overload; stdcall;
     procedure SetColorMask(Red, Green, Blue, Alpha: Boolean); overload; stdcall;
-    function GetBlendType: TBlendType; stdcall;
-    procedure SetBlendType(Value: TBlendType); stdcall;
+    function GetBlendRGB: TBlendType; stdcall;
+    function GetBlendA: TBlendType; stdcall;
+    procedure SetBlend(Value: TBlendType); overload; stdcall;
+    procedure SetBlend(RGBValue, AValue: TBlendType); overload;  stdcall;
     function GetAlphaTest: Byte; stdcall;
     procedure SetAlphaTest(Value: Byte); stdcall;
     function GetDepthTest: Boolean; stdcall;
     procedure SetDepthTest(Value: Boolean); stdcall;
+    function GetStencilTest: Boolean; stdcall;
+    procedure SetStencilTest(Value: Boolean); stdcall;
+    procedure SetStencilFunc(CompMode: TCompareMode; Value: LongInt; Mask: LongWord); stdcall;
+    procedure SetStencilOp(Fail, ZFail, Pass: TScencilOp); stdcall;
     function GetDepthWrite: Boolean; stdcall;
     procedure SetDepthWrite(Value: Boolean); stdcall;
+    procedure SetDepthOffset(Factor: Single; Units: Single); stdcall;
     function GetCullFace: TCullFace; stdcall;
     procedure SetCullFace(Value: TCullFace); stdcall;
 
@@ -422,9 +437,10 @@ type
     property VSync: Boolean read GetVSync write SetVSync;
     property ClearColor: TVec4f write SetClearColor;
     property ColorMask[Channel: TColorChannel]: Boolean read GetColorMask write SetColorMask;
-    property BlendType: TBlendType read GetBlendType write SetBlendType;
+    property BlendType: TBlendType read GetBlendRGB write SetBlend;
     property AlphaTest: Byte read GetAlphaTest write SetAlphaTest;
     property DepthTest: Boolean read GetDepthTest write SetDepthTest;
+    property StencilTest: Boolean read GetStencilTest write SetStencilTest;
     property DepthWrite: Boolean read GetDepthWrite write SetDepthWrite;
     property CullFace: TCullFace read GetCullFace write SetCullFace;
     property Matrix[Idx: TMatrixType]: TMat4f read GetMatrix write SetMatrix;
@@ -449,6 +465,9 @@ type
     procedure BatchBegin; stdcall;
     procedure BatchEnd; stdcall;
 
+    function  GetRotCenter: TVec2f; stdcall;
+    procedure SetRotCenter(const Value: TVec2f); stdcall;
+
     procedure DrawSprite(Shader: IShaderProgram; Tex1, Tex2, Tex3: ITexture; const v1, v2, v3, v4: TVec2f; const Data1, Data2, Data3, Data4: TVec4f; Angle: Single; const Center: TVec2f; Effects: Cardinal); overload; stdcall;
     procedure DrawSprite(Shader: IShaderProgram; Tex1, Tex2, Tex3: ITexture; x, y, w, h: Single; const Data1, Data2, Data3, Data4: TVec4f; Angle: Single = 0.0; Effects: Cardinal = 0); overload; stdcall;
     procedure DrawSprite(Tex: ITexture; x, y, w, h: Single; const Color1, Color2, Color3, Color4: TVec4f; Angle: Single = 0.0; Effects: Cardinal = 0); overload; stdcall;
@@ -460,6 +479,7 @@ type
     property RCHeight: LongWord read GetRCHeight;
     property RCScale: Single read GetRCScale;
     property RCMatrix: TMat4f read GetRCMatrix;
+    property RotCenter: TVec2f read GetRotCenter write SetRotCenter;
   end;
 
   ICamera2d = interface
@@ -488,6 +508,8 @@ type
     function GetAngle: TVec3f; stdcall;
     procedure SetAngle(const Value: TVec3f); stdcall;
     function GetDir: TVec3f; stdcall;
+    procedure SetDir(const Value, Up: TVec3f); stdcall;
+    function GetUp: TVec3f; stdcall;
     function GetMaxSpeed: Single; stdcall;
     procedure SetMaxSpeed(Value: Single); stdcall;
     function GetZNear: Single; stdcall;
@@ -501,6 +523,7 @@ type
     property Pos: TVec3f read GetPos write SetPos;
     property Angle: TVec3f read GetAngle write SetAngle;
     property Dir: TVec3f read GetDir;
+    property Up: TVec3f read GetUp;
     property MaxSpeed: Single read GetMaxSpeed write SetMaxSpeed;
 
     property ZNear: Single read GetZNear write SetZNear;
@@ -538,15 +561,20 @@ type
   end;
 
   IHelpers = interface(IJenSubSystem)
+    function GetTime : LongInt; stdcall;
+    procedure Sleep(Value: LongWord); stdcall;
+
+    function CreateList(): IList; stdcall;
     function CreateStream(FileName: PWideChar; RW: Boolean = True): IStream; stdcall;
     function CreateCamera3D: ICamera3d; stdcall;
     function CreateCamera2D: ICamera2d; stdcall;
 
+    property Time : LongInt read GetTime;
     function GetSystemInfo: ISystemInfo; stdcall;
     property SystemInfo: ISystemInfo read GetSystemInfo;
   end;
 
-  function GetJenEngine(FileLog, Debug: Boolean): JEN_Header.IJenEngine; stdcall; external 'JEN.dll';
+function GetJenEngine(Debug: Boolean): JEN_Header.IJenEngine; stdcall; external 'JEN.dll';
 
 implementation
 

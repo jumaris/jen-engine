@@ -181,12 +181,14 @@ const
   GL_COMPILE_AND_EXECUTE              = $1301;
 
 // StencilOp
-{      GL_ZERO }
-{  GL_KEEP                             = $1E00;
+  GL_KEEP                             = $1E00;
   GL_REPLACE                          = $1E01;
   GL_INCR                             = $1E02;
-  GL_DECR                             = $1E03;        ]
-{      GL_INVERT }
+  GL_DECR                             = $1E03;
+  GL_INCR_WRAP                        = $8507;
+  GL_DECR_WRAP                        = $8508;
+  GL_INVERT                           = $150A;
+
                 {
  // LightParameter
   GL_AMBIENT                          = $1200;
@@ -390,12 +392,12 @@ const
   GL_STREAM_DRAW                      = $88E0;
   GL_STATIC_DRAW                      = $88E4;
 
-  GL_TEXTURE_COORD_ARRAY              = $8078;
-  GL_NORMAL_ARRAY                     = $8075;
+  GL_TEXTURE_COORD_ARRAY              = $8078;
+  GL_NORMAL_ARRAY                     = $8075;
   GL_COLOR_ARRAY                      = $8076;
   GL_VERTEX_ARRAY                     = $8074;
 
-// Queries
+// Queries
   GL_SAMPLES_PASSED                   = $8914;
   GL_QUERY_COUNTER_BITS               = $8864;
   GL_CURRENT_QUERY                    = $8865;
@@ -439,6 +441,12 @@ const
   // Depth
   procedure glDepthFunc(func: GLenum); stdcall; external opengl32;
   procedure glDepthMask(flag: GLboolean); stdcall; external opengl32;
+  procedure glPolygonOffset(factor: GLfloat; units:GLfloat); stdcall; external opengl32;
+
+  // Stenctil
+  procedure glStencilFunc(func: GLenum; ref: GLint; mask: GLuint); stdcall; external opengl32;
+  //TglStencilMask = procedure(mask: TGLuint); {$IFNDEF CLR}{$IFDEF Win32}stdcall; {$ELSE}cdecl; {$ENDIF}{$ENDIF}
+  procedure glStencilOp(fail: GLenum; zfail: GLenum; zpass: GLenum); stdcall; external opengl32;
 
   // Color
   procedure glColorMask(red, green, blue, alpha: GLboolean); stdcall; external opengl32;
@@ -471,17 +479,19 @@ const
   procedure glDrawElements(mode: GLenum; count: GLsizei; atype: GLenum; const indices: Pointer); stdcall; external opengl32;
   procedure glPolygonMode(face: GLenum; mode: GLenum); stdcall; external opengl32;
 
-  function wglCreateContext(DC: HDC): HGLRC; stdcall; external opengl32;
-  function wglDeleteContext(RC: HGLRC): LongBool; stdcall; external opengl32;
+  function wglCreateContext(DC: HDC): HGLRC; stdcall; external opengl32;
+  function wglDeleteContext(RC: HGLRC): LongBool; stdcall; external opengl32;
   function wglMakeCurrent(DC: HDC; RC: HGLRC): LongBool; stdcall; external opengl32;
   function wglGetProcAddress(ProcName: PAnsiChar): Pointer; stdcall; external opengl32;
 
-var
-  wglGetExtensionsStringEXT: function(): PAnsiChar; stdcall;
+var
+  wglGetExtensionsStringEXT: function(): PAnsiChar; stdcall;
   wglGetExtensionsStringARB: function(hdc: HDC): PAnsiChar; stdcall;
 
-  wglChoosePixelFormatARB: function(hdc: HDC; const piAttribIList: PGLint; const pfAttribFList: PGLfloat; nMaxFormats: GLuint; piFormats: PGLint; nNumFormats: PGLuint): LongBool; stdcall;
+  wglChoosePixelFormatARB: function(hdc: HDC; const piAttribIList: PGLint; const pfAttribFList: PGLfloat; nMaxFormats: GLuint; piFormats: PGLint; nNumFormats: PGLuint): LongBool; stdcall;
   wglSwapIntervalEXT: function(interval: GLint): LongBool; stdcall;
+
+  glBlendFuncSeparate       : procedure(sfactorRGB: GLenum; dfactorRGB: GLenum; sfactorAlpha: GLenum; dfactorAlpha: GLenum); stdcall;
 
   glGenRenderbuffers        : procedure (n: GLsizei; renderbuffers: PGLuint); stdcall;
   glDeleteRenderbuffers     : procedure (n: GLsizei; const renderbuffers: PGLuint); stdcall;
@@ -663,23 +673,25 @@ begin
   if (not Assigned(Result)) then
   begin
 
-    LogOut('Cannot load procedure ' + ProcName, lmError);
-    if  (Required) then
-
-    OldResult := False;
+    Engine.Error('Cannot load procedure ' + ProcName);
+    if (Required) then
+      OldResult := False;
   end;
 end;
 
 procedure ReadGlExt;
+type
+    TwglGetExtensionsStringEXT = function(): PAnsiChar; stdcall;
+    TwglGetExtensionsStringARB = function(hdc: HDC): PAnsiChar; stdcall;
 begin
   ExtString := glGetString(GL_EXTENSIONS);
 
-  wglGetExtensionsStringEXT := wglGetProcAddress('wglGetExtensionsStringEXT');
+  wglGetExtensionsStringEXT := TwglGetExtensionsStringEXT(wglGetProcAddress('wglGetExtensionsStringEXT'));
   if Assigned(@wglGetExtensionsStringEXT) then
-    ExtString := ExtString + ' ' + wglGetExtensionsStringEXT
+    ExtString := ExtString + ' ' + wglGetExtensionsStringEXT()
   else
   begin
-    wglGetExtensionsStringARB := wglGetProcAddress('wglGetExtensionsStringARB');
+    wglGetExtensionsStringARB := TwglGetExtensionsStringARB(wglGetProcAddress('wglGetExtensionsStringARB'));
     if Assigned(@wglGetExtensionsStringARB) then
     ExtString := ExtString + ' ' + wglGetExtensionsStringARB(wglGetCurrentDC);
   end;
@@ -693,7 +705,10 @@ begin
   glActiveTexture := glGetProc('glActiveTexture', Result);
   glMultiTexCoord4f := glGetProc('glMultiTexCoord4f', Result);
 
+  glBlendFuncSeparate       := glGetProc('glBlendFuncSeparate', Result);
+
   glGenRenderbuffers        := glGetProc('glGenRenderbuffersEXT', Result);
+  glDeleteRenderbuffers     := glGetProc('glDeleteRenderbuffersEXT', Result);
   glBindRenderbuffer        := glGetProc('glBindRenderbufferEXT', Result);
   glRenderbufferStorage     := glGetProc('glRenderbufferStorageEXT', Result);
   glGenFramebuffers         := glGetProc('glGenFramebuffersEXT', Result);

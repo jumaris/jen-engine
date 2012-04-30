@@ -1,27 +1,32 @@
 unit JEN_Resource;
 
+{$IFDEF FPC}
+  {$MODE Delphi}
+{$ENDIF}
+
 interface
 
 uses
+  SysUtils,
   JEN_Header,
-  JEN_Utils;
+  JEN_Helpers;
 
 const
-  TResourceStringName : array[TResourceType] of string = ('shader', 'font', 'texture', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '');
+  TResourceStringName : array[TResourceType] of UnicodeString = ('shader', 'font', 'texture', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '');
 
 type
   TResLoader = class
   public
-    ExtString : string;
+    ExtString : UnicodeString;
     ResType : TResourceType;
     function Load(Stream: IStream; var Resource: IResource): Boolean; virtual; abstract;
   end;
 
   TResource = class(TInterfacedObject)
-    constructor Create(const FilePath: string; ResType: TResourceType);
+    constructor Create(const FilePath: UnicodeString; ResType: TResourceType);
   protected
-    FName     : string;
-    FFilePath : string;
+    FName     : UnicodeString;
+    FFilePath : UnicodeString;
     FResType  : TResourceType;
     function GetResType: TResourceType; stdcall;
     function GetName: PWideChar; stdcall;
@@ -33,13 +38,13 @@ implementation
 uses
   JEN_Main;
 
-constructor TResource.Create(const FilePath: string; ResType: TResourceType);
+constructor TResource.Create(const FilePath: UnicodeString; ResType: TResourceType);
 begin
-  FFilePath := Utils.ExtractFileDir(PWideChar(FilePath));
+  FFilePath := ExtractFileDir(FilePath);
   if FilePath <> '' then
-    FName := Utils.ExtractFileName(PWideChar(FilePath))
+    FName := ExtractFileName(FilePath)
   else
-    FName := '$' + Utils.IntToStr(LongInt(Self));
+    FName := '$' + IntToStr(LongInt(Self));
   FResType := ResType;
 end;
 

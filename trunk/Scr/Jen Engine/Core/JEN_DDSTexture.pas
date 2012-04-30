@@ -1,11 +1,15 @@
 unit JEN_DDSTexture;
 
+{$IFDEF FPC}
+  {$MODE Delphi}
+{$ENDIF}
+
 interface
 
 uses
   JEN_Header,
-  JEN_OpenGlHeader,
-  JEN_Utils,
+  JEN_OpenGLHeader,
+  JEN_Helpers,
   JEN_Math,
   JEN_Resource,
   JEN_Texture;
@@ -25,7 +29,7 @@ uses
 constructor TDDSLoader.Create;
 begin
   inherited;
-  ExtString := 'dds';
+  ExtString := '.dds';
   ResType := rtTexture;
 end;
 
@@ -179,7 +183,7 @@ begin
 
   if (Stream.Size < 128) then
   begin
-    LogOut('Wrong dds file', lmWarning);
+    Engine.Warning('Wrong dds file');
     Exit;
   end;
 
@@ -190,14 +194,14 @@ begin
       or (Header.dwFlags and DDSD_PIXELFORMAT = 0)
       or (Header.dwFlags and DDSD_CAPS = 0) ) then
         begin
-          LogOut('Wrong dds header', lmWarning);
+          Engine.Warning('Wrong dds header');
           Exit;
         end;
 
   Format := GetLoadFormat(Header);
   if Format = tfoNone then
   begin
-    LogOut('Not supported texture format: ' + Stream.Name, lmWarning);
+    Engine.Warning('Not supported texture format: ' + Stream.Name);
     Exit;
   end;
 
@@ -209,7 +213,7 @@ begin
     Mips := dwMipMapCount;
 
     for i := 0 to dwMipMapCount - 1 do
-      if Min(dwWidth shr i, dwHeight shr i) < 4 then
+      if Min(LongInt(dwWidth shr i), LongInt(dwHeight shr i)) < 4 then
       begin
         Mips := i;
         break;

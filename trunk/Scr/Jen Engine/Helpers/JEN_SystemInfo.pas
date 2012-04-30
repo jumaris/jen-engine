@@ -5,8 +5,8 @@ interface
 uses
   JEN_Header,
   JEN_Math,
-  JEN_Utils,
-  Windows;
+  Windows,
+  SysUtils;
 
 type
   PDisplayMode = ^TDisplayMode;
@@ -39,8 +39,8 @@ type
     constructor Create;
     destructor Destroy; override;
   private
-  var
-    FCPUName  : String;
+    FCPUName  : UnicodeString;
+    FCPUCount : LongInt;
     FCPUSpeed : LongWord;
     FScreen   : IScreen;
     FGPUList  : IList;
@@ -59,6 +59,7 @@ type
 implementation
 
 uses
+  JEN_Helpers,
   JEN_MAIN;
 
 constructor TScreen.Create;
@@ -143,7 +144,7 @@ var
   DevMode : TDeviceMode;
   i       : LongInt;
   Mode    : PDisplayMode;
-  Str     : String;
+  Str     : UnicodeString;
 begin
   Result := False;
   Mode   := nil;
@@ -166,11 +167,11 @@ begin
       R := 0;
   end else
   begin
-    LogOut('Error set display mode ' + Utils.IntToStr(W) + 'x' + Utils.IntToStr(H) + 'x' + Utils.IntToStr(R), lmWarning);
-    LogOut('Change display mode to default 1024x768x60', lmNotify);
+    Engine.Warning('Failed to Set Display Mode' + IntToStr(W) + 'x' + IntToStr(H) + 'x' + IntToStr(R));
+    Engine.Log('Change display mode to default 1024x768x60');
 
     if ((W = 1024) and (H = 768) and ((R = 60) or (R = 0))) then
-      LogOut('Critical error set display mode', lmError)
+      Engine.Error('Critical error set display mode')
     else
       SetMode(1024, 768, 60);
     Exit;
@@ -197,20 +198,20 @@ begin
     dmFields           := DM_BITSPERPEL or DM_PELSWIDTH or DM_PELSHEIGHT or DM_DISPLAYFREQUENCY ;
   end;
 
-  Str := ' ' + Utils.IntToStr(Mode.Width) + 'x' + Utils.IntToStr(Mode.Height) + 'x' + Utils.IntToStr(R);
+  Str := ' ' + IntToStr(Mode.Width) + 'x' + IntToStr(Mode.Height) + 'x' + IntToStr(R);
 
   case ChangeDisplaySettingsEx(nil, DevMode, 0, $04, nil) of
     DISP_CHANGE_SUCCESSFUL :
     begin
-      LogOut('Successful set display mode ' + Str, lmNotify);
+      Engine.Log('Successful set display mode ' + Str);
       Exit(True);
     end;
     DISP_CHANGE_FAILED :
-      LogOut('Failed set display mode ' + Str, lmError);
+      Engine.Error('Failed set display mode ' + Str);
     DISP_CHANGE_BADMODE :
-      LogOut('Failed set display mode ' + Str + ' bad mode', lmError);
+      Engine.Error('Failed set display mode ' + Str + ' bad mode');
     else
-      LogOut('Failed set display mode ' + Str + ' uncnown error', lmError);
+      Engine.Error('Failed set display mode ' + Str + ' uncnown error');
   end;
 end;
 
@@ -228,7 +229,7 @@ begin
   DevMode.dmSize := SizeOf(TDeviceMode);
 
   ChangeDisplaySettingsEx(nil, DevMode, 0, 0, nil);
-  LogOut('Reset display mode to default', lmNotify);
+  Engine.Log('Reset display mode to default');
 end;
 
 function TScreen.GetWidth: LongInt;
@@ -263,7 +264,7 @@ function TScreen.GetDesktopRect: TRecti;
 var
   DR: TRect;
 begin
-  SystemParametersInfo(SPI_GETWORKAREA, 0, DR, 0);
+  SystemParametersInfo(SPI_GETWORKAREA, 0, @DR, 0);
   Result.X := Dr.Left;
   Result.Y := Dr.Top;
   Result.Width := Dr.Right - Dr.Left;
@@ -274,143 +275,170 @@ constructor TSystem.Create;
 var
   i           : Integer;
   Handle      : HKEY;
-  Driver      : string;
-  Str         : string;
+  Driver      : UnicodeString;
+  Str         : UnicodeString;
   DeviceList  : IList;
-  Path        : string;
+  Path        : UnicodeString;
   GPUInfo     : PGPUInfo;
+  SysInfo     : TSystemInfo;
 
-  procedure RegReadString(Handle: HKEY; const Name: string; var Value: string);
+  function RegReadString(Handle: HKEY; const Name: UnicodeString): UnicodeString;
   var
     DataType : DWORD;
 	  DataSize : DWORD;
   begin
-    Value := #0;
     DataSize := 0;
-    if (RegQueryValueEx(Handle,	@Name[1], nil, @DataType, nil,	@DataSize) <> ERROR_SUCCESS){ or (DataType <> REG_SZ) }or (DataSize = 0) then
+    if (RegQueryValueExW(Handle, @Name[1], nil, @DataType, nil,	@DataSize) <> ERROR_SUCCESS){ or (DataType <> REG_SZ) }or (DataSize = 0) then
       Exit;
 
-    SetLength(Value, DataSize div 2 - 1);
-    RegQueryValueEx(Handle, @Name[1], nil, @DataType, @Value[1], @DataSize);
+    Result := '';
+    SetLength(Result, DataSize div 2 - 1);
+    RegQueryValueExW(Handle, @Name[1], nil, @DataType, @Result[1], @DataSize);
   end;
 
-  procedure RegReadWord(Handle: HKEY; const Name: String; var Value: LongWord);
+  function RegReadWord(Handle: HKEY; const Name: UnicodeString): LongWord;
   var
     DataType : DWORD;
 	  DataSize : DWORD;
   begin
-    Value := 0;
+    Result := 0;
     DataSize := SizeOf(LongWord);
-    RegQueryValueEx(Handle, @Name[1], nil, @DataType, @Value, @DataSize);
+    RegQueryValueExW(Handle, @Name[1], nil, @DataType, @Result, @DataSize);
   end;
 
-  procedure EnumAllDevice(List: IList; const Path: string; Depth: Byte = 1);
+  procedure EnumAllDevice(List: IList; const Path: UnicodeString; Depth: Byte = 1);
   var
     i        : Integer;
-    p        : Pointer;
     Handle   : HKEY;
     Count    : DWORD;
-    Str      : String;
+    P, P2,p3    : PWideChar;
+    Str      : UnicodeString;
     DataSize : DWORD;
+    Size     : DWORD;
   begin
     DataSize := 0;
-    if RegOpenKeyEx(HKEY_LOCAL_MACHINE, @Path[1], 0, KEY_READ, Handle) = ERROR_SUCCESS then
-    if RegQueryInfoKey(Handle, nil, nil, nil, @Count, @DataSize, nil, nil, nil, nil, nil, nil) = ERROR_SUCCESS then
+    if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, @Path[1], 0, KEY_READ, Handle) = ERROR_SUCCESS) and
+       (RegQueryInfoKeyW(Handle, nil, nil, nil, @Count, @DataSize, nil, nil, nil, nil, nil, nil) = ERROR_SUCCESS) and
+       (Count > 0) then
+    begin
+      inc(DataSize);
+      GetMem(P, DataSize*2);
       for i := 0 to Count-1 do
       begin
-        Inc(DataSize);
-        GetMem(p, DataSize*2);
-        if RegEnumKeyEx(Handle, i, p, DataSize, nil, nil, nil, nil) = ERROR_SUCCESS then
+        Size := DataSize;
+        if RegEnumKeyExW(Handle, i, P, Size, nil, nil, nil, nil) = ERROR_SUCCESS then
         begin
-          Str := Path + '\' + pchar(p);
-          FreeMem(p);
+          Str := Path + '\' + P;
           if Depth = 3 then
           begin
-            GetMem(p, (Length(Str)+1)*2);
-            CopyMemory(p, @Str[1], (Length(Str)+1)*2);
-            List.Add(p);
+            GetMem(P2, (Length(Str)+1)*SizeOf(WideChar));
+            Move(Str[1], P2^, (Length(Str)+1)*SizeOf(WideChar));
+            List.Add(P2);
           end else
             EnumAllDevice(List, Str, Depth + 1);
-        end else
-          FreeMem(p);
+        end;
       end;
+      FreeMem(P);
+    end;
     RegCloseKey(Handle);
   end;
 
 begin
   FScreen := TScreen.Create;
   FGPUList := TList.Create;
+  DeviceList := TList.Create;
 
+  GetSystemInfo(SysInfo);
+  FCpuCount := SysInfo.dwNumberOfProcessors;
   FCPUSpeed := 0;
   FCPUName  :='Couldn''t get CPU name!';
 
   if RegOpenKeyEx(HKEY_LOCAL_MACHINE, 'HARDWARE\DESCRIPTION\System\CentralProcessor\0', 0, KEY_READ, Handle) = ERROR_SUCCESS then
   begin
-    RegReadString(Handle, 'ProcessorNameString', FCPUName);
-    RegReadWord(Handle, '~MHz', FCPUSpeed);
+    FCPUName := RegReadString(Handle, 'ProcessorNameString');
+    FCPUSpeed := RegReadWord(Handle, '~MHz');
   end;
   RegCloseKey(Handle);
 
-  DeviceList := TList.Create;
   EnumAllDevice(DeviceList, 'SYSTEM\CurrentControlSet\Enum');
   for i := 0 to DeviceList.Count - 1 do
   begin
-    RegOpenKeyEx(HKEY_LOCAL_MACHINE, DeviceList[i], 0, KEY_READ, Handle);
-    RegReadString(Handle, 'Class', Str);
+    RegOpenKeyExW(HKEY_LOCAL_MACHINE, DeviceList[i], 0, KEY_READ, Handle);
+    Str := RegReadString(Handle, 'Class');
     RegCloseKey(Handle);
 
     if LowerCase(Str) = 'display' then
     begin
-      RegOpenKeyEx(HKEY_LOCAL_MACHINE, DeviceList[i], 0, KEY_READ, Handle);
-      RegReadString(Handle, 'Service', Str);
-      RegReadString(Handle, 'Driver', Driver);
+      RegOpenKeyExW(HKEY_LOCAL_MACHINE, DeviceList[i], 0, KEY_READ, Handle);
+      Str := RegReadString(Handle, 'Service');
+      Driver := RegReadString(Handle, 'Driver');
       RegCloseKey(Handle);
 
       Path := 'SYSTEM\CurrentControlSet\Services\' + Str + '\Device0';
-      if RegOpenKeyEx(HKEY_LOCAL_MACHINE, @Path[1], 0, KEY_READ, Handle) = ERROR_SUCCESS then
+      if RegOpenKeyExW(HKEY_LOCAL_MACHINE, @Path[1], 0, KEY_READ, Handle) = ERROR_SUCCESS then
       begin
-        RegReadString(Handle, 'HardwareInformation.DacType', Str);
-        if Str = #0 then
+        Str := RegReadString(Handle, 'HardwareInformation.DacType');
+        if Str = '' then
         begin
-          Path := PChar(DeviceList[i]) + '\Device Parameters';
+          Path := PWideChar(DeviceList[i]) + '\Device Parameters';
           RegCloseKey(Handle);
-          if RegOpenKeyEx(HKEY_LOCAL_MACHINE, @Path[1], 0, KEY_READ, Handle) = ERROR_SUCCESS then
-            RegReadString(Handle, 'VideoID', Str);
+          if RegOpenKeyExW(HKEY_LOCAL_MACHINE, @Path[1], 0, KEY_READ, Handle) = ERROR_SUCCESS then
+            Str := RegReadString(Handle, 'VideoID');
           Path := 'SYSTEM\CurrentControlSet\Control\Video\' + Str + '\0000';
         end;
       end;
       RegCloseKey(Handle);
 
       GetMem(GPUInfo, SizeOf(TGPUInfo));
+      FillChar(GPUInfo^, SizeOf(TGPUInfo), 0);
       GPUInfo^.Description:=nil;
 
-      if RegOpenKeyEx(HKEY_LOCAL_MACHINE, @Path[1], 0, KEY_READ, Handle) = ERROR_SUCCESS then
+      if RegOpenKeyExW(HKEY_LOCAL_MACHINE, @Path[1], 0, KEY_READ, Handle) = ERROR_SUCCESS then
       with GPUInfo^ do
         begin
-          RegReadString(Handle, 'Device Description', Str);
-          GetMem(Description, (Length(Str)+1)*2);
-          CopyMemory(Description, @Str[1], (Length(Str)+1)*2);
+          Str := RegReadString(Handle, 'HardwareInformation.AdapterString');
+          if Str<> '' then
+          begin
+          	GetMem(ChipType, Length(Str)*SizeOf(WideChar));
+          	Move(Str[1], ChipType^, (Length(Str)+1)*SizeOf(WideChar));
+          end;
 
-          RegReadString(Handle, 'HardwareInformation.ChipType', Str);
-          GetMem(ChipType, (Length(Str)+1)*2);
-          CopyMemory(ChipType, @Str[1], (Length(Str)+1)*2);
+          MemorySize := RegReadWord(Handle, 'HardwareInformation.MemorySize') div (1024*1024);
 
-          RegReadWord(Handle, 'HardwareInformation.MemorySize', MemorySize);
-          MemorySize := MemorySize div (1024*1024);
+        	Str := RegReadString(Handle, 'Device Description');
+          if Str = '' then
+          begin
+          	RegCloseKey(Handle);
+            Path := Path + '\Settings\';
+            if RegOpenKeyExW(HKEY_LOCAL_MACHINE, @Path[1], 0, KEY_READ, Handle) = ERROR_SUCCESS then
+             	Str := RegReadString(Handle, 'Device Description');
+          end;
+
+          if Str<> '' then
+          begin
+          	GetMem(Description, (Length(Str)+1)*SizeOf(WideChar));
+          	Move(Str[1], Description^, (Length(Str)+1)*SizeOf(WideChar));
+          end;
         end;
       RegCloseKey(Handle);
 
       Path := 'SYSTEM\CurrentControlSet\Control\Class\' + Driver;
-      if RegOpenKeyEx(HKEY_LOCAL_MACHINE, @Path[1], 0, KEY_READ, Handle) = ERROR_SUCCESS then
+      if RegOpenKeyExW(HKEY_LOCAL_MACHINE, @Path[1], 0, KEY_READ, Handle) = ERROR_SUCCESS then
       with GPUInfo^ do
       begin
-        RegReadString(Handle, 'DriverVersion', Str);
-        GetMem(DriverVersion, (Length(Str)+1)*2);
-        CopyMemory(DriverVersion, @Str[1], (Length(Str)+1)*2);
+        Str := RegReadString(Handle, 'DriverVersion');
+        if Str<> '' then
+        begin
+        	GetMem(DriverVersion, (Length(Str)+1)*SizeOf(WideChar)); ;
+        	Move(Str[1], DriverVersion^, (Length(Str)+1)*SizeOf(WideChar));
+        end;
 
-        RegReadString(Handle, 'DriverDate', Str);
-        GetMem(DriverDate, (Length(Str)+1)*2);
-        CopyMemory(DriverDate, @Str[1], (Length(Str)+1)*2);
+        Str := RegReadString(Handle, 'DriverDate');
+        if Str<> '' then
+        begin
+        	GetMem(DriverDate, (Length(Str)+1)*SizeOf(WideChar));
+        	Move(Str[1], DriverDate^, (Length(Str)+1)*SizeOf(WideChar));
+        end;
       end;
       RegCloseKey(Handle);
 
@@ -456,7 +484,7 @@ end;
 
 function TSystem.GetCPUCount: LongInt;
 begin
-  Result := System.CPUCount;
+  Result := FCPUCount;
 end;
 
 function TSystem.GetCPUName: PWideChar;
@@ -481,20 +509,20 @@ end;
 
 function TSystem.GetRAMTotal: LongWord;
 var
-  MemStatus : TMemoryStatusEx;
+  MemStatus : TMemoryStatus;
 begin
-  MemStatus.dwLength := SizeOf(TMemoryStatusEx);
-  GlobalMemoryStatusEx(MemStatus);
-  Result := Trunc(MemStatus.ullTotalPhys/(1024*1024)+1);
+  MemStatus.dwLength := SizeOf(TMemoryStatus);
+  GlobalMemoryStatus(MemStatus);
+  Result := Trunc(MemStatus.dwTotalPhys/(1024*1024)+1);
 end;
 
 function TSystem.GetRAMFree: LongWord;
 var
-  MemStatus : TMemoryStatusEx;
+  MemStatus : TMemoryStatus;
 begin
-  MemStatus.dwLength := SizeOf(TMemoryStatusEx);
-  GlobalMemoryStatusEx(MemStatus);
-  Result := Trunc(MemStatus.ullAvailPhys/(1024*1024)+1);
+  MemStatus.dwLength := SizeOf(TMemoryStatus);
+  GlobalMemoryStatus(MemStatus);
+  Result := Trunc(MemStatus.dwAvailPhys/(1024*1024)+1);
 end;
 
 end.

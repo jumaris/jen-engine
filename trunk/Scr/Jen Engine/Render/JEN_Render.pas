@@ -1,13 +1,47 @@
 unit JEN_Render;
 
+{$IFDEF FPC}
+  {$MODE Delphi}
+{$ENDIF}
+
 interface
 
 uses
   Windows,
+  SysUtils,
   JEN_Header,
   JEN_OpenGLHeader,
+  JEN_Helpers,
   JEN_Math;
 
+const
+  CompareFunc: array[TCompareMode] of GLenum = (GL_ZERO, GL_EQUAL, GL_GEQUAL, GL_LESS, GL_GREATER, GL_EQUAL, GL_NOTEQUAL, GL_ALWAYS, GL_NEVER);
+  ScencilOp: array[TScencilOp] of GLenum = (GL_KEEP, GL_ZERO, GL_REPLACE, GL_INCR, GL_DECR, GL_INCR_WRAP, GL_DECR_WRAP, GL_INVERT);
+
+  // (btNone, btNormal, btAdd, btMult, btOne, btNoOverride, btAddAlpha);
+  BlendParams: array[TBlendType] of record
+    Scr, Dest : GLenum;
+  end = (
+          (Scr: GL_ZERO; Dest: GL_ZERO),
+          (Scr: GL_SRC_ALPHA; Dest: GL_ONE_MINUS_SRC_ALPHA),
+          (Scr: GL_SRC_ALPHA; Dest: GL_ONE),
+          (Scr: GL_ZERO; Dest: GL_SRC_COLOR),
+          (Scr: GL_ONE;  Dest: GL_ZERO),
+          (Scr: GL_ONE;  Dest: GL_ONE_MINUS_SRC_ALPHA)
+        );
+        {
+      if Value <> btNone then
+      glEnable(GL_BLEND);
+    case Value of
+      btNormal:
+        glBlendFunc(, GL_ONE_MINUS_SRC_ALPHA);
+      btAdd:
+        glBlendFunc(, );
+      btMult:
+        glBlendFunc(GL_ZERO, GL_SRC_COLOR);
+    else
+      glDisable(GL_BLEND);
+    end;   }
 type
   IRender = interface(JEN_Header.IRender)
     function GetValid : Boolean;
@@ -30,9 +64,11 @@ type
 
     FTarget     : IRenderTarget;
     FColorMask  : Byte;
-    FBlendType  : TBlendType;
+    FBlendRGB   : TBlendType;
+    FBlendA     : TBlendType;
     FAlphaTest  : Byte;
     FDepthTest  : Boolean;
+    FStencilTest: Boolean;
     FDepthWrite : Boolean;
     FCullFace   : TCullFace;
 
@@ -66,14 +102,21 @@ type
     procedure SetColorMask(Channel : TColorChannel; Value : Boolean); overload; stdcall;
     function GetColorMask: Byte; overload; stdcall;
     procedure SetColorMask(Red, Green, Blue, Alpha: Boolean); overload; stdcall;
-    function GetBlendType: TBlendType; stdcall;
-    procedure SetBlendType(Value: TBlendType); stdcall;
+    function GetBlendRGB: TBlendType; stdcall;
+    function GetBlendA: TBlendType; stdcall;
+    procedure SetBlend(Value: TBlendType); overload; stdcall;
+    procedure SetBlend(ValueRGB, ValueA: TBlendType); overload; stdcall;
     function GetAlphaTest: Byte; stdcall;
     procedure SetAlphaTest(Value: Byte); stdcall;
     function GetDepthTest: Boolean; stdcall;
     procedure SetDepthTest(Value: Boolean); stdcall;
+    function GetStencilTest: Boolean; stdcall;
+    procedure SetStencilTest(Value: Boolean); stdcall;
+    procedure SetStencilFunc(CompMode: TCompareMode; Value: LongInt; Mask: LongWord); stdcall;
+    procedure SetStencilOp(Fail, ZFail, Pass: TScencilOp); stdcall;
     function GetDepthWrite: Boolean; stdcall;
     procedure SetDepthWrite(Value: Boolean); stdcall;
+    procedure SetDepthOffset(Factor: Single; Units: Single); stdcall;
     function GetCullFace: TCullFace; stdcall;
     procedure SetCullFace(Value: TCullFace); stdcall;
 
@@ -103,9 +146,9 @@ uses
 
 procedure TRender.Free;
 begin
-  LogOut('Delete OpenGL context.', lmNotify);
+  Engine.Log('Delete OpenGL context.');
   if not wglDeleteContext(FGL_Context) Then
-    LogOut('Cannot delete OpenGL context.', lmError)
+    Engine.Error('Cannot delete OpenGL context.')
 end;
 
 procedure TRender.Init(DepthBits: Byte; StencilBits: Byte; FSAA: Byte);
@@ -131,7 +174,7 @@ begin
 
   if not (Assigned(Display) and Display.Valid) then
   begin
-    LogOut('Cannot create OpenGL context, display is not correct', lmError);
+    Engine.Error('Cannot create OpenGL context, display is not correct');
     Exit;
   end;
 
@@ -193,10 +236,10 @@ begin
     Result := Result and DestroyWindow(PHandle);
 
     if Result = False then
-      LogOut('Cannot set FSAA', lmWarning);
+      Engine.Warning('Cannot set FSAA');
   end;
 
-  LogOut('Set pixel format.', lmNotify);
+  Engine.Log('Set pixel format.');
 
   if Result then
     Result := SetPixelFormat(Display.DC, PFIdx, @PFD)
@@ -205,22 +248,22 @@ begin
 
   if not Result then
   begin
-    LogOut('Cannot set pixel format.', lmError);
+    Engine.Error('Cannot set pixel format.');
     Exit;
   end;
 
-  LogOut('Create OpenGL context.', lmNotify);
+  Engine.Log('Create OpenGL context.');
   FGL_Context := wglCreateContext(Display.DC);
   if (FGL_Context = 0) Then
   begin
-    LogOut('Cannot create OpenGL context.', lmError);
+    Engine.Error('Cannot create OpenGL context.');
     Exit;
   end;
 
-  LogOut('Make current OpenGL context.', lmNotify);
+  Engine.Log('Make current OpenGL context.');
   if not wglMakeCurrent(Display.DC, FGL_Context) Then
   begin
-    LogOut('Cannot set current OpenGL context.', lmError);
+    Engine.Error('Cannot set current OpenGL context.');
     Exit;
   end;
 
@@ -230,13 +273,13 @@ begin
   SBuffer[rsWGLEXTswapcontrol] := glIsSupported('WGL_EXT_swap_control');
   if not LoadGLLibraly Then
   begin
-    LogOut('Error when load extensions.', lmError);
+    Engine.Error('Error when load extensions.');
     Exit;
   end;
 
-  LogOut('OpenGL version : ' + glGetString(GL_VERSION) + ' (' + glGetString(GL_VENDOR) + ')', lmInfo);
-  LogOut('Video device   : ' + glGetString(GL_RENDERER), lmInfo);
-  LogOut('Texture units  : ' + Utils.IntToStr(Par), lmInfo);
+  Engine.Log('OpenGL version : ' + glGetString(GL_VERSION) + ' (' + glGetString(GL_VENDOR) + ')');
+  Engine.Log('Video device   : ' + glGetString(GL_RENDERER));
+  Engine.Log('Texture units  : ' + IntToStr(Par));
 
   FMatrix[mt2DMat].Ortho(0, Display.Width, Display.Height, 0, -1, 1);
   FMatrix[mtViewProj].Identity;
@@ -245,7 +288,7 @@ begin
   FMatrix[mtView].Identity;
 
   SetColorMask(True, True, True, True);
-  SetBlendType(btNormal);
+  SetBlend(btNormal);
   SetAlphaTest(0);
   SetDepthTest(False);
   SetDepthWrite(False);
@@ -255,6 +298,7 @@ begin
   glClearDepth(1);
   SetClearColor(Vec4f(0, 0, 0, 0));
   SetVSync(false);
+  SetViewport(Recti(0, 0, Display.Width, Display.Height));
    // Display.Restore;
   // glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
   // glShadeModel(GL_SMOOTH);
@@ -299,7 +343,10 @@ begin
     end;
     glDrawBuffers(Value.ColChanCount, @ChannelList[0]);
   end else
+  begin
+    SetViewport(Recti(0, 0, Display.Width, Display.Height));
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  end;
 end;
 
 function TRender.GetValid: Boolean;
@@ -321,8 +368,12 @@ end;
 
 procedure TRender.SetViewport(const Value: TRecti);
 begin
-  FViewport := Value;
-  glViewport(Value.Left, Value.Top, Value.Width, Value.Height);
+  if not (FViewport = Value) then
+  begin
+    FViewport := Value;
+    glViewport(Value.Left, Value.Top, Value.Width, Value.Height);
+    Engine.DispatchEvent(evDisplayRestore);
+  end;
 end;
              {
 procedure TRender.SetArrayState(Vertex, TextureCoord, Normal, Color : Boolean);
@@ -417,28 +468,45 @@ begin
   end;
 end;
 
-function TRender.GetBlendType: TBlendType;
+function TRender.GetBlendRGB: TBlendType;
 begin
-  Result := FBlendType;
+  Result := FBlendRGB;
 end;
 
-procedure TRender.SetBlendType(Value: TBlendType);
+function TRender.GetBlendA: TBlendType;
 begin
-  if FBlendType <> Value then
+  Result := FBlendA;
+end;
+
+procedure TRender.SetBlend(Value: TBlendType);
+begin
+  if (FBlendRGB <> Value) or (FBlendA <> Value) then
   begin
-    FBlendType := Value;
-    if FBlendType <> btNone then
+    FBlendRGB := Value;
+    FBlendA   := Value;
+
+    if Value <> btNone then
+    begin
       glEnable(GL_BLEND);
-    case Value of
-      btNormal:
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-      btAdd:
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-      btMult:
-        glBlendFunc(GL_ZERO, GL_SRC_COLOR);
-    else
+      glBlendFunc(BlendParams[Value].Scr, BlendParams[Value].Dest);
+    end else
       glDisable(GL_BLEND);
-    end;
+  end;
+end;
+
+procedure TRender.SetBlend(ValueRGB, ValueA: TBlendType);
+begin
+  if (FBlendRGB <> ValueRGB) or (FBlendA <> ValueA) then
+  begin
+    FBlendRGB := ValueRGB;
+    FBlendA   := ValueA;
+
+    if ValueRGB <> btNone then
+    begin
+      glEnable(GL_BLEND);
+      glBlendFuncSeparate(BlendParams[ValueRGB].Scr, BlendParams[ValueRGB].Dest, BlendParams[ValueA].Scr, BlendParams[ValueA].Dest);
+    end else
+      glDisable(GL_BLEND);
   end;
 end;
 
@@ -479,6 +547,33 @@ begin
   end;
 end;
 
+function TRender.GetStencilTest: Boolean; stdcall;
+begin
+  Result := FStencilTest;
+end;
+
+procedure TRender.SetStencilTest(Value: Boolean); stdcall;
+begin
+  if FStencilTest <> Value then
+  begin
+    FStencilTest := Value;
+    if Value then
+      glEnable(GL_STENCIL_TEST)
+    else
+      glDisable(GL_STENCIL_TEST);
+  end;
+end;
+
+procedure TRender.SetStencilFunc(CompMode: TCompareMode; Value: LongInt; Mask: LongWord); stdcall;
+begin
+  glStencilFunc(CompareFunc[CompMode], Value, Mask);
+end;
+
+procedure TRender.SetStencilOp(Fail, ZFail, Pass: TScencilOp); stdcall;
+begin
+  glStencilOp(ScencilOp[Fail], ScencilOp[ZFail], ScencilOp[Pass]);
+end;
+
 function TRender.GetDepthWrite: Boolean;
 begin
   Result := FDepthWrite;
@@ -491,6 +586,15 @@ begin
     FDepthWrite := Value;
     glDepthMask(Value);
   end;
+end;
+
+procedure TRender.SetDepthOffset(Factor: Single; Units: Single); stdcall;
+begin
+  glPolygonOffset(Factor, Units);
+  if (Abs(Factor) <= EPS) and (Abs(Units) <= EPS) then
+    glDisable(GL_POLYGON_OFFSET_FILL)
+  else
+    glEnable(GL_POLYGON_OFFSET_FILL);
 end;
 
 function TRender.GetCullFace: TCullFace;
@@ -578,21 +682,21 @@ end;
 
 procedure TRender.Start;
 begin
-  FFrameStart := Utils.RealTime;
+  FFrameStart := Helpers.RealTime;
 end;
 
 procedure TRender.Finish;
 begin
-  Engine.CreateEvent(evRenderFlush);
+  Engine.DispatchEvent(evRenderFlush);
 
   Inc(FFPSCount);
-  if Utils.RealTime - FFPSTime >= 1000 then
+  if Helpers.RealTime - FFPSTime >= 1000 then
   begin
     FFPS      := FFPSCount;
     FFPSCount := 0;
     FFPSTime  := FFPSTime + 1000;
   end;
-  FFrameTime := Utils.RealTime - FFrameStart;
+  FFrameTime := Helpers.RealTime - FFrameStart;
 
   FLastDipCount := FDipCount;
   FDipCount := 0;
