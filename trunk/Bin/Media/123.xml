@@ -1,0 +1,70 @@
+<Shader>
+	<VertexShader>
+	<Code>
+			#version 110
+			attribute float IndxAttrib;
+
+			uniform vec4 TexCoordParams1;
+			uniform vec4 TexCoordParams2;
+			uniform vec4 TexCoordParams3;
+			uniform vec2 Position[64]; 
+			uniform vec4 QuadData[64]; 
+			
+			varying vec4 InterpolatedData;
+			varying vec4 Data1;
+			varying vec4 Data2;
+			varying vec4 Data3;
+			varying vec4 Data4;
+			varying vec2 Texcoord1;
+			varying vec2 Texcoord2;
+			varying vec2 Texcoord3;
+
+			//Shitty Intel 
+			const vec4 TexCoordArrayX = vec4(0.0, 1.0, 1.0, 0.0);
+			const vec4 TexCoordArrayY = vec4(0.0, 0.0, 1.0, 1.0);
+	
+			void main( void )
+			{
+				int VertexId = int(IndxAttrib);
+				int QuadId = ((VertexId)/4)*4;
+				InterpolatedData = QuadData[VertexId];
+
+				Data1 = QuadData[QuadId+0];
+				Data2 = QuadData[QuadId+1];
+				Data3 = QuadData[QuadId+2];
+				Data4 = QuadData[QuadId+3];
+
+				vec2 TC = vec2(TexCoordArrayX[VertexId-QuadId], TexCoordArrayY[VertexId-QuadId]);
+				Texcoord1 = TC * TexCoordParams1.zw + TexCoordParams1.xy;
+				Texcoord2 = TC * TexCoordParams2.zw + TexCoordParams2.xy;
+				Texcoord3 = TC * TexCoordParams3.zw + TexCoordParams3.xy;
+				
+				gl_Position = vec4(Position[VertexId], -1.0, 1.0);
+			}
+		</Code>
+	</VertexShader>
+	
+	<FragmentShader>
+		<Code>
+			#version 120
+			varying vec2 Texcoord1;
+			varying vec4 InterpolatedData;
+			varying vec4 Data1;
+			varying vec4 Data2;
+			varying vec4 Data3;
+			varying vec4 Data4;
+			
+			uniform sampler2D Map0;
+			
+			void main(void)
+			{
+				//gl_FragColor = texture2D(Map0, Texcoord1.xy)*InterpolatedData;
+				gl_FragColor =  Data1 * (Texcoord1.x) * (1.0-Texcoord1.y) +
+							    Data2 * (1.0-Texcoord1.x) * (1.0-Texcoord1.y) +
+							    Data3 * (1.0-Texcoord1.x) * (Texcoord1.y) +
+							    Data4 * (Texcoord1.x) * (Texcoord1.y);
+				
+			}
+		</Code> 
+	</FragmentShader>
+</Shader>
