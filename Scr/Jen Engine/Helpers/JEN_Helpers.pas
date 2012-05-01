@@ -106,10 +106,10 @@ type
     procedure Sleep(Value: longword); stdcall;
     procedure SetFreezeTime(Value: boolean);
     procedure Update;
-    function CreateList: IList; stdcall;
-    function CreateStream(FileName: PWideChar; RW: boolean): IStream; stdcall;
-    function CreateCamera3D: ICamera3d; stdcall;
-    function CreateCamera2D: ICamera2d; stdcall;
+    procedure CreateList(out List: IList); stdcall;
+    procedure CreateStream(out Stream: IStream; FileName: PWideChar; RW: Boolean = True); stdcall;
+    procedure CreateCamera3D(out Camera: ICamera3d); stdcall;
+    procedure CreateCamera2D(out Camera: ICamera2d); stdcall;
   end;
 
 function MemCmp(p1, p2: Pointer; Size: LongInt): LongInt;
@@ -702,24 +702,24 @@ begin
   Result := FSystemInfo;
 end;
 
-function THelpers.CreateList: IList; stdcall;
+procedure THelpers.CreateList(out List: IList); stdcall;
 begin
-  Result := TList.Create;
+  List := TList.Create;
 end;
 
-function THelpers.CreateStream(FileName: PWideChar; RW: boolean): IStream; stdcall;
+procedure THelpers.CreateStream(out Stream: IStream; FileName: PWideChar; RW: Boolean = True); stdcall;
 begin
-  Result := TStream.Create(FileName, RW);
+  Stream := TStream.Create(FileName, RW);
 end;
 
-function THelpers.CreateCamera3D: ICamera3d; stdcall;
+procedure THelpers.CreateCamera3D(out Camera: ICamera3d); stdcall;
 begin
-  Result := TCamera3D.Create;
+  Camera := TCamera3D.Create;
 end;
 
-function THelpers.CreateCamera2D: ICamera2d; stdcall;
+procedure THelpers.CreateCamera2D(out Camera: ICamera2d); stdcall;
 begin
-  Result := TCamera2D.Create;
+  Camera := TCamera2D.Create;
 end;
 
 

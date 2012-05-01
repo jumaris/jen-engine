@@ -176,6 +176,7 @@ end;
 procedure TJenEngine.Start(Game: IGame);
 var
   DeltaTime : LongInt;
+  s : String;
 begin
   if not Assigned(Game) then
   begin
@@ -219,9 +220,12 @@ begin
     Display.Update;
     Helpers.Update;
 
-    if (Helpers.RealTime - FLastUpdate)< 5 then
+    if (Helpers.RealTime - FLastUpdate) < 5 then
       Helpers.Sleep(5);
     DeltaTime := Max(Helpers.RealTime - FLastUpdate, 1);
+    if DeltaTime > 200 then
+      DeltaTime := 10;
+
     FLastUpdate := Helpers.RealTime;
   end;
 
@@ -270,7 +274,7 @@ procedure TJenEngine.InitLog;
 var
   lpThreadId : DWORD;
   i     : LongInt;
-  Str   : WideString;
+  Str   : UnicodeString;
   Major : LongInt;
   Minor : LongInt;
   Build : LongInt;
@@ -278,7 +282,7 @@ begin
   FQuitEvent    := CreateEvent(nil, True, False, '');
   FJobEvent     := CreateEvent(nil, True, False, '');
   FJobDoneEvent := CreateEvent(nil, True, False, '');
-  FDThread      := CreateThread(nil, 0, {$IFDEF FPC}Pointer(DThreadProc){$ELSE}@DThreadProc{$ENDIF}, nil, 0, lpThreadId);
+  FDThread      := BeginThread(nil, 0, {$IFDEF FPC}Pointer(DThreadProc){$ELSE}@DThreadProc{$ENDIF}, nil, 0, lpThreadId);
   WaitForSingleObject(FJobDoneEvent, INFINITE);
 
   Helpers.SystemInfo.WindowsVersion(Major, Minor, Build);
@@ -289,7 +293,6 @@ begin
   LogHeader('JenEngine');
   LogHeader('Windows version: '+IntToStr(Major)+'.'+IntToStr(Minor)+' (Build '+IntToStr(Build)+')');
   LogHeader('CPU            : '+Helpers.SystemInfo.CPUName+'(~'+IntToStr(Helpers.SystemInfo.CPUSpeed)+')x');
-  LogHeader('RAM Total      : '+IntToStr(Helpers.SystemInfo.RAMTotal)+'Mb');
   LogHeader('RAM Total      : '+IntToStr(Helpers.SystemInfo.RAMTotal)+'Mb');
   LogHeader('RAM Available  : '+IntToStr(Helpers.SystemInfo.RAMFree)+'Mb');
   with Helpers.SystemInfo do
@@ -325,7 +328,7 @@ var
   Msg     : TMsg;
   Str     : UnicodeString;
 begin
-  FLogStream := Helpers.CreateStream('Log.txt');
+  Helpers.CreateStream(FLogStream, 'Log.txt');
   Str := #65279;
   FLogStream.Write(Str[1], 2);
 
@@ -376,12 +379,18 @@ begin
     Sleep(2500);
     FConsole := nil;
   end;
+
+  Str := '';
+  EndThread(0);
 end;
 
 class procedure TJenEngine.AddMessage(MesType: TLogMsg; Text: PWideChar);
+var p : Pointer;
 begin
   WaitForSingleObject(FJobDoneEvent, INFINITE);
   ResetEvent(FJobDoneEvent);
+
+  FLogMessage := IntToStr(random(100));
   FLogMessage := UnicodeString(Text); //Copy?
   SetEvent(FJobEvent);
 

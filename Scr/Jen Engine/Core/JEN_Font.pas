@@ -91,7 +91,7 @@ begin
   FColor2       := clWhite;
   FOutlineColor := clWhite;
   FOutlineSize  := 0;
-  FEdgeSmooth   := 1;
+  FEdgeSmooth   := 0.5;
   if not Assigned(Shader) then
   begin
     ResMan.Load('|TextShader.xml', Res);
@@ -190,7 +190,7 @@ begin
   SetLength(FPages, FPagesCount);
   for I := 0 to FPagesCount - 1 do
   begin
-    FileName := FFilePath + ExtractFileName(FName) + '_' + IntToStr(I) + '.dds';
+    FileName := FFilePath + '\' + ChangeFileExt(FName,'') + '_' + IntToStr(I) + '.dds';
     ResMan.Load(PWideChar(FileName), FPages[i]);
   end;
 end;
@@ -224,6 +224,8 @@ begin
   EdgeSmooth   := FEdgeSmooth/(FMaxDist)/FScale*Scale*0.5;
   OutlineSize  := FOutlineSize/(FMaxDist)*0.5;
 
+  Render2d.Flush;
+
   Shader.Bind;
   Params[0] := Vec4f(EdgeSmooth, OutlineSize, 10/1024, 1);
   Params[1] := FColor1;
@@ -231,7 +233,7 @@ begin
   Params[3] := FOutLineColor;
   ParamsUniform.Value(Params,4);
 
-  Render2d.BatchBegin;
+  Render2d.BeginDraw(Shader, FPages[0]);
   for i := 0 to Length(Text)-1 do
   begin
     CharInfo := FChars[Text[i]];
@@ -241,18 +243,14 @@ begin
     begin
       Pos1 := Vec2f(PosX, Y) + Vec2f(OriginX, OriginY) * FScale - Vec2f(FMaxDist, FMaxDist) * FScale;
       Pos2 := Pos1 + Vec2f(BlackBoxX, BlackBoxY) * FScale + Vec2f(FMaxDist, FMaxDist) * FScale * 2;
-              {
-      Render2D.DrawSprite(Shader, FPages[0], nil, nil, Vec2f(Pos1.X, Pos2.Y), Pos2, Vec2f(Pos2.X, Pos1.Y), Vec2f(Pos1.X, Pos1.Y),
-          Vec4f(EdgeSmooth, OutlineSize, (128)/8192, 1), FColor1, FColor2, FOutLineColor, 0, Vec2f(0,0),0);
-                    }
 
-      Render2D.DrawSprite(Shader, FPages[0], nil, nil, Vec2f(Pos1.X, Pos2.Y), Pos2, Vec2f(Pos2.X, Pos1.Y), Pos1,
-          TexCoords, clWhite, clWhite, clWhite, 0, Vec2f(0,0),0);
+      Render2d.SetData(TexCoords, clWhite, clWhite, clWhite);
+      Render2d.DrawQuad(Vec2f(Pos1.X, Pos2.Y), Pos2, Vec2f(Pos2.X, Pos1.Y), Pos1, 0.0, Vec2f(0,0));
 
       PosX := PosX + (CharInfo^.CellWidht) * FScale + FEdgeSmooth + FOutlineSize * FScale;
     end;
   end;
-  Render2d.BatchEnd;
+  Render2d.EndDraw;
 end;
 
 function TFont.GetTextWidth(Text: PWideChar): Single; stdcall;

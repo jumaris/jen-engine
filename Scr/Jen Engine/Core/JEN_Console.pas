@@ -122,6 +122,7 @@ var
   h,m,s,start,i,j : LongInt;
   TextLength      : LongInt;
   WndTextLength   : LongInt;
+  d : PWideChar;
 begin
   if Pointer(Text) = nil then
     Exit;
@@ -141,7 +142,6 @@ begin
   SendMessageW(FMemoWnd, EM_SETSEL, WndTextLength, WndTextLength);
   SendMessageW(FMemoWnd, EM_REPLACESEL, 0, LPARAM(PWideChar(str)));
   SendMessageW(FMemoWnd, EM_SCROLL, SB_BOTTOM, 0);
-
 
 
      {
