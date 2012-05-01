@@ -245,7 +245,7 @@ begin
     for j := 0 to FUniformList.Count -1 do
       if(FUniformList[j] as IShaderUniform).Name = Name then
         u := FUniformList[j] as IShaderUniform;
-
+           //COMPARE
     if not (Assigned(u) and (u.Name = Name) and (u.UType = UniformType)) then
     begin
       u := TShaderUniform.Create;
@@ -289,7 +289,7 @@ var
   u : IShaderUniform;
 begin
   for i := 0 to FUniformList.Count - 1 do
-    if ((FUniformList[i] as IShaderUniform).Name = UName) then
+    if WideSameStr((FUniformList[i] as IShaderUniform).Name, UName) then
       Exit(IShaderUniform(FUniformList[i]));
 
   u := TShaderUniform.Create;
@@ -303,9 +303,8 @@ var
   i : LongInt;
   a : IShaderAttrib;
 begin
-
   for i := 0 to FAttribList.Count - 1 do
-    if ((FAttribList[i] as IShaderAttrib).Name = AName) then
+    if WideSameStr((FAttribList[i] as IShaderAttrib).Name, AName) then
       Exit(IShaderAttrib(FAttribList[i]));
 
   a := TShaderAttrib.Create;

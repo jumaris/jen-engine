@@ -96,9 +96,13 @@ end;
 procedure TResourceManager.Free;
 var
   i : LongInt;
+  res : TResourceType;
 begin
   for I := 0 to FLoaderList.Count - 1 do
     TResLoader(FLoaderList[i]).Free;
+
+  for res := Low(TResourceType) to High(TResourceType) do
+    FActiveRes[res] := nil;
 
   for I := 0 to FResList.Count - 1 do
     if FResList[i]._AddRef > 4 then
@@ -129,7 +133,7 @@ end;
 
 function TResourceManager.GetActiveResID(RT: TResourceType): LongWord;
 begin
-  Result := FActiveResID[RT];
+ Result := FActiveResID[RT];
 end;
 
 procedure TResourceManager.SetActiveResID(RT: TResourceType; Value: LongWord);
@@ -174,7 +178,7 @@ begin
   end;    }
 
   Loader := nil;
-  for I := 0 to FLoaderList.Count - 1 do
+  for I := 0 to FLoaderList.Count - 1 do      //COMPARE
     if(TResLoader(FLoaderList[i]).ExtString = FileExt) and (TResLoader(FLoaderList[i]).ResType = Resource.ResType) then
        Loader := TResLoader(FLoaderList[i]);
 
@@ -184,7 +188,7 @@ begin
     Exit;
   end;
 
-  Stream := Helpers.CreateStream(PWideChar(FilePath), False);
+  Helpers.CreateStream(Stream, PWideChar(FilePath), False);
   if not (Assigned(Stream) and Stream.Valid) then
   begin
     Engine.Warning('Can''t open file ' + FileName);
@@ -193,7 +197,7 @@ begin
 
   if not Loader.Load(Stream, Resource) then
   begin
-   { Resource := nil;
+    Resource := nil;
    { if ResType = ResType then
     begin
 

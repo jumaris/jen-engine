@@ -49,27 +49,29 @@ procedure TGame.LoadContent;
 var
 sp  : IShaderResource;
 begin
-//  ResMan.Load('Media\ArialFont.jfi', Font); //OOOOO◊≈Õ‹ Œœ¿—Õ¿!
+  ResMan.Load('Media\ArialFont.jfi', Font); //OOOOO◊≈Õ‹ Œœ¿—Õ¿!
   ResMan.Load('Media\123.dds', r);
  ResMan.Load('media\123.xml', sp);
  sp.Compile(s);
   //tsss := TTSBoard.Create;
   //tsss.Init('Test', '1.0');
   //tsss.Sumbit('ÈˆÛ',5123);
- { Cam := Helpers.CreateCamera2D;
-  Cam.Enable := True;   }
+  Helpers.CreateCamera2D(Cam);
+  Cam.Enable := True;
 end;
 
 procedure TGame.OnUpdate(dt: LongInt);
 var
   i   : Integer;
+  st  : string;
 begin
- // Display.Caption := '321';//PWideChar(IntToStr(Render.FPS)+'['+IntToStr(Render.FrameTime)+']'+IntToStr(Render.LastDipCount));
-{  for I := 1 to Input.Mouse.WheelDelta do
+  st := IntToStr(Render.FPS)+'['+IntToStr(Render.FrameTime)+']'+IntToStr(Render.LastDipCount);
+ Display.Caption := PWideChar(st);//PWideChar(IntToStr(Render.FPS)+'['+IntToStr(Render.FrameTime)+']'+IntToStr(Render.LastDipCount));
+  for I := 1 to Input.Mouse.WheelDelta do
     Cam.Scale := Cam.Scale*2;
 
   for I := -1 downto Input.Mouse.WheelDelta do
-    Cam.Scale := Cam.Scale/2;    }
+    Cam.Scale := Cam.Scale/2;
 //  Engine.log(IntToStr(Render.FPS)+'['+IntToStr(Render.FrameTime)+']'+IntToStr(Render.LastDipCount));
 
 end;
@@ -77,11 +79,28 @@ end;
 procedure TGame.OnRender;
 var i : integer;
 begin
-  //Cam.SetCam;
+  Cam.SetCam;
   Render.Clear(True,False,False);
 
 //  Render2d.DrawSprite(r,300,100,512,512,clwhite);
-  Render2d.DrawSprite(s,r,nil,nil,300,200,512,512,clBlack,clWhite,clBlack,clWhite,45,0);
+//  Render2d.DrawSprite(s,r,nil,nil,300,200,512,512,clBlack,clWhite,clBlack,clWhite,45,0);
+  Render2d.BatchBegin;
+  Render2d.DrawSprite(r,300,100,512,512,clBlack,clWhite,clBlack,clWhite,45,0);
+  Render2d.DrawSprite(r,300,200,512,512,clBlack,clWhite,clBlack,clWhite,45,0);
+  Render2d.DrawSprite(r,300,300,512,512,clBlack,clWhite,clBlack,clWhite,45,0);
+
+  Render2d.BeginDraw(s,r,nil,nil);
+  Render2d.SetData(clBlack,clWhite,clBlack,clWhite);
+  Render2d.DrawQuad(-000,100,512,512,45);
+
+  Render2d.SetData(clBlack,clWhite,clBlack,clWhite);
+  Render2d.DrawQuad(600,100,512,512,45);
+  Render2d.EndDraw;
+
+  Font.Scale := 0.1;
+  Font.Print('qwewqe',0,0);
+  Render2d.BatchEnd;
+
      {
   Font.OutlineSize := 1;
  // Font.Scale := Cam.Scale;
@@ -112,7 +131,7 @@ procedure p;
 var
 sp  : IShaderResource;
 begin
-//  ReportMemoryLeaksOnShutdown := True;
+  ReportMemoryLeaksOnShutdown := True;
   Engine := GetJenEngine(False);
 
   Engine.GetSubSystem(ssDisplay, IJenSubSystem(Display));

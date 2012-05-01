@@ -33,9 +33,9 @@ exports
   GetEngine name 'GetJenEngine';
 
 {$R ..\Resources\Resources.RES}
-{$R *.res}
 
 begin
+  ReportMemoryLeaksOnShutdown := True;
   Engine := nil;
 end.
 

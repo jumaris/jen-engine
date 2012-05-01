@@ -468,10 +468,14 @@ type
     function  GetRotCenter: TVec2f; stdcall;
     procedure SetRotCenter(const Value: TVec2f); stdcall;
 
-    procedure DrawSprite(Shader: IShaderProgram; Tex1, Tex2, Tex3: ITexture; const v1, v2, v3, v4: TVec2f; const Data1, Data2, Data3, Data4: TVec4f; Angle: Single; const Center: TVec2f; Effects: Cardinal); overload; stdcall;
-    procedure DrawSprite(Shader: IShaderProgram; Tex1, Tex2, Tex3: ITexture; x, y, w, h: Single; const Data1, Data2, Data3, Data4: TVec4f; Angle: Single = 0.0; Effects: Cardinal = 0); overload; stdcall;
     procedure DrawSprite(Tex: ITexture; x, y, w, h: Single; const Color1, Color2, Color3, Color4: TVec4f; Angle: Single = 0.0; Effects: Cardinal = 0); overload; stdcall;
     procedure DrawSprite(Tex: ITexture; x, y, w, h: Single; const Color: TVec4f; Angle: Single = 0.0; Effects: Cardinal = 0); overload; stdcall;
+
+    procedure BeginDraw(Shader: IShaderProgram; Tex1: ITexture = nil; Tex2: ITexture = nil; Tex3: ITexture = nil); stdcall;
+    procedure SetData(const Data1, Data2, Data3, Data4: TVec4f); stdcall;
+    procedure DrawQuad(x, y, w, h, Angle: Single); overload; stdcall;
+    procedure DrawQuad(const v1, v2, v3, v4: TVec2f; Angle: Single; const Center: TVec2f); overload; stdcall;
+    procedure EndDraw; stdcall;
 
     property EnableRCt: Boolean read GetEnableRC write SetEnableRC;
     property RCRect: TRecti read GetRCRect;
@@ -564,10 +568,10 @@ type
     function GetTime : LongInt; stdcall;
     procedure Sleep(Value: LongWord); stdcall;
 
-    function CreateList(): IList; stdcall;
-    function CreateStream(FileName: PWideChar; RW: Boolean = True): IStream; stdcall;
-    function CreateCamera3D: ICamera3d; stdcall;
-    function CreateCamera2D: ICamera2d; stdcall;
+    procedure CreateList(out List: IList); stdcall;
+    procedure CreateStream(out Stream: IStream; FileName: PWideChar; RW: Boolean = True); stdcall;
+    procedure CreateCamera3D(out Camera: ICamera3d); stdcall;
+    procedure CreateCamera2D(out Camera: ICamera2d); stdcall;
 
     property Time : LongInt read GetTime;
     function GetSystemInfo: ISystemInfo; stdcall;
