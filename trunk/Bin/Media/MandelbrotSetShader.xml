@@ -1,0 +1,77 @@
+<Shader>
+        <VertexShader>
+        <Code>
+		<![CDATA[
+                        #version 120
+                        attribute float IndxAttrib;
+
+                        uniform mat2 Matrix2D; 
+                        uniform vec4 TexCoordParams1;
+                        uniform vec4 TexCoordParams2;
+                        uniform vec4 TexCoordParams3;
+                        uniform vec4 PosTexCoord[64]; 
+                        uniform vec4 QuadData[64]; 
+                        
+                        varying vec4 InterpolatedData;
+                        varying vec4 Data1;
+                        varying vec4 Data2;
+                        varying vec4 Data3;
+                        varying vec4 Data4;
+                        varying vec2 Texcoord1;
+                        varying vec2 Texcoord2;
+                        varying vec2 Texcoord3;
+                
+                        void main( void )
+                        {
+                                int VertexId = int(IndxAttrib);
+                                int QuadId = ((VertexId)/4)*4;
+                                vec4 PosTex = PosTexCoord[VertexId];
+                                InterpolatedData = QuadData[VertexId];
+
+                                Data1 = QuadData[QuadId+0];
+                                Data2 = QuadData[QuadId+1];
+                                Data3 = QuadData[QuadId+2];
+                                Data4 = QuadData[QuadId+3];
+
+                                PosTex.xy = PosTex.xy * Matrix2D + vec2(-1.0, 1.0);
+                                Texcoord1 = PosTex.zw * TexCoordParams1.zw + TexCoordParams1.xy;
+                                Texcoord2 = PosTex.zw * TexCoordParams2.zw + TexCoordParams2.xy;
+                                Texcoord3 = PosTex.zw * TexCoordParams3.zw + TexCoordParams3.xy;
+
+                                gl_Position = vec4(PosTex.xy, -1.0, 1.0);
+                        }
+				]]>
+                </Code>
+        </VertexShader>
+        
+        <FragmentShader>
+                <Code>
+				<![CDATA[
+                        #version 120
+                        varying vec2 Texcoord1;
+                        
+                        uniform int count;
+                        
+                        // mandel.frag: Fragment shader for drawing the Mandelbrot set
+                        void main(void)
+                        {
+                                vec2 Coff= (Texcoord1 - 0.5) * 2.5 - vec2(0.8, 0.0);
+                                vec2 cCoff=Coff, tmp;
+                                
+                                // perform procedural mandelbrot
+                                for (int iter = 0; iter < count; ++iter)
+                                {       
+                                tmp      = Coff*Coff;
+                                Coff.y  *= 2.0 * Coff.x;
+                                Coff.x   = tmp.x - tmp.y;
+                                Coff    += cCoff;
+                                tmp.x    = tmp.x + tmp.y;
+                                }
+
+                                //gl_FragColor = vec4(clamp(vec3(mix(1.0,0.0,(r2 - 4.0)*0.001)), 0.0, 1.0), 1.0);
+                                gl_FragColor = sin(13./18.+log(tmp.x)/28+vec4(5, 3.5, 5, 5))/2.0+0.5;
+                        }
+				]]>
+                </Code> 
+        </FragmentShader>
+</Shader>

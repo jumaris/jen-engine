@@ -48,11 +48,17 @@ end;
 procedure TGame.LoadContent;
 var
 sp  : IShaderResource;
+u : IShaderUniform;
+i : Integer;
 begin
   ResMan.Load('Media\ArialFont.jfi', Font); //OOOOO×ÅÍÜ ÎÏÀÑÍÀ!
   ResMan.Load('Media\123.dds', r);
- ResMan.Load('media\123.xml', sp);
+ ResMan.Load('media\MandelbrotSetShader.xml', sp);
  sp.Compile(s);
+ s.Bind;
+ i := 15;
+ u := s.Uniform('count', utInt);
+ u.Value(i);
   //tsss := TTSBoard.Create;
   //tsss.Init('Test', '1.0');
   //tsss.Sumbit('éöó',5123);
