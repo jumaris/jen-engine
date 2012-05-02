@@ -157,6 +157,7 @@ var
   Flag : (F_BEGIN, F_TAG, F_PARAMS, F_CONTENT, F_END);
   BeginIndex : LongInt;
   TextFlag   : Boolean;
+  d : string;
 
   function TrimCode(const Text: UnicodeString): UnicodeString;
   var
@@ -203,6 +204,7 @@ begin
   while i <= Length(Text) do
   begin
     Inc(i);
+d := Text[i];
     case Flag of
     // waiting for new tag '<...'
       F_BEGIN :
@@ -250,29 +252,39 @@ begin
       F_CONTENT :
         begin
           case Text[i] of
-            '"' : TextFlag := not TextFlag;
             '<' :
-              if not TextFlag then
+            begin
+              if (Copy(Text, i, 9) = '<![CDATA[') then
               begin
-                FContent := TrimCode(Copy(Text, BeginIndex, i - BeginIndex));
+                j := Pos(']]>', Copy(Text, i+9, Length(Text)));
+                FContent := TrimCode(Copy(Text, i+9, j));
+                i := i + j + 12;
+                Continue;
+              end;
 
-              // is new tag or my tag closing?
-                for j := i to Length(Text) do
-                  if Text[j] = '>' then
+              if  FContent = '' then
+                FContent := Trim(Copy(Text, BeginIndex, i - BeginIndex));
+
+            // is new tag or tag closing?
+              for j := i + 1 to Length(Text) do
+                if Text[j] = '>' then
+                begin
+                  if Trim(Copy(Text, i + 1, j - i - 1)) <> '/' + FTag then
                   begin
-                    if Trim(Copy(Text, i + 1, j - i - 1)) = '/' + FTag then
-                      Flag := F_END
-                    else if Length(FContent) = 0 then
-                    begin
-                      SetLength(FNode, Length(FNode) + 1);
-                      FNode[Length(FNode) - 1] := TXML.Create(Text, i - 1);
-                      i := i + FNode[Length(FNode) - 1].DataLen;
-                      BeginIndex := i + 1;
-                    end;
-
-                    break;
+                    SetLength(FNode, Length(FNode) + 1);
+                    FNode[Length(FNode) - 1] := TXML.Create(Text, i);
+                    if FNode[Length(FNode) - 1].DataLen = 0 then
+                      break;
+                    i := i + FNode[Length(FNode) - 1].DataLen - 1;
+                    BeginIndex := i + 1;
+                  end else
+                  begin
+                    i := j - 1;
+                    Flag := F_END;
                   end;
-              end
+                  break;
+                end;
+            end;
           end;
         end;
     // waiting for close tag
