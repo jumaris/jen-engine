@@ -4,7 +4,8 @@ interface
 
 uses
   Windows,
-  JEN_Header;
+  JEN_Header,
+  JEN_Math;
 
 type
   IInput = interface(JEN_Header.IInput)
@@ -154,10 +155,12 @@ begin
   if not FCapture then
   begin
     ScreenToClient(Display.Handle, Pos);
+    Pos.X := Round(Pos.X * Render2d.RCScale);
+    Pos.Y := Round(Pos.Y * Render2d.RCScale);
     FMouse.Delta.X := Pos.X - FMouse.Pos.X;
     FMouse.Delta.Y := Pos.Y - FMouse.Pos.Y;
-    FMouse.Pos.X := Pos.X;
-    FMouse.Pos.Y := Pos.Y;
+    FMouse.Pos.X := Min(Max(Pos.X, 0), Round(Render2d.RCWidth));
+    FMouse.Pos.Y := Min(Max(Pos.Y, 0), Round(Render2d.RCHeight));
   end else
     if Display.Active then
     begin

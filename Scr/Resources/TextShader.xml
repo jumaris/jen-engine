@@ -2,10 +2,10 @@
 	<VertexShader>
 		<Code>
 		<![CDATA[
-			#version 110
+			#version 120
 			attribute float IndxAttrib;
 
-			uniform vec2 Position[64]; 
+			uniform vec4 PosTC[64]; 
 			uniform vec4 QuadData[64]; 
 			uniform vec4 Params[4];
 			
@@ -14,20 +14,15 @@
 			varying vec2 Texcoord;
 			varying float Grade;
 
-			//Shitty Intel 
-			const vec4 TexCoordArrayX = vec4(0.0, 1.0, 1.0, 0.0);
-			const vec4 TexCoordArrayY = vec4(0.0, 0.0, 1.0, 1.0);
-
 			void main( void )
 			{
 				int VertexId = int(IndxAttrib);
 				int QuadId = ((VertexId)/4)*4;
-				
 				Data1 = QuadData[QuadId+0];
 
-				gl_Position = vec4(Position[VertexId], -1.0, 1.0);
-				vec2 TC = vec2(TexCoordArrayX[VertexId-QuadId], TexCoordArrayY[VertexId-QuadId]);
-				Texcoord =  TC*Data1.zw+Data1.xy;
+				
+				vec2 TC = vec2(PosTC[VertexId].z,1.0-PosTC[VertexId].w);
+				Texcoord = TC*Data1.zw+Data1.xy;
 			////		Grade = (PosTex.w-PosTexCoord[QuadId+2].w-Data1.z)/(PosTexCoord[QuadId+0].w-PosTexCoord[QuadId+2].w-Data1.z*2); 
 
 				//Grade = TexCoordArray[VertexId-QuadId].y  * (1.0+Params[0].z*2.0*Data1.w)-Params[0].z*Data1.w;				
@@ -36,7 +31,7 @@
 			//Grade = (1.0-TexCoordArray[VertexId-QuadId].y)/(1.0+2.0*Params[0].z/Data1.w)+1.0/(Data1.w/Params[0].z+2.0);
 				//	Grade = (-TexCoordArray[VertexId-QuadId].y+1.0-Params[0].z/(-Data1.w))/(1.0-Params[0].z/(-Data1.w)*2.0);
 				Grade = (Params[0].z + Data1.w - Data1.w * TC.y) / (2.0 * Params[0].z + Data1.w);
-
+				gl_Position = vec4(PosTC[VertexId].xy, -1.0, 1.0);
 			}
 		]]>
 		</Code>
@@ -59,7 +54,7 @@
 				float dist = texture2D(Map0, Texcoord.xy).r;
 				float k = min(Params[0].y,Params[0].x);
 				vec3 Color = mix(Params[1].xyz, Params[2].xyz, Grade); 
-				Color = mix(Color, Params[3].xyz, smoothstep(0.5 - k - Params[0].y,0.5 - k - Params[0].y, dist)*(1-smoothstep(0.5 - k,0.5 + k, dist)));
+				Color = mix(Color, Params[3].xyz, smoothstep(0.5 - k - Params[0].y,0.5 - k - Params[0].y, dist)*(1.0-smoothstep(0.5 - k,0.5 + k, dist)));
 				gl_FragColor = vec4(Color,Params[1].w*smoothstep(0.5 - Params[0].x - Params[0].y,0.5 + Params[0].x - Params[0].y, dist));
 			}
 		]]>

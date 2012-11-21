@@ -104,13 +104,19 @@ begin
   for res := Low(TResourceType) to High(TResourceType) do
     FActiveRes[res] := nil;
 
+  TFont.Shader := nil;
+  TFont.ParamsUniform := nil;
+                   {
   for I := 0 to FResList.Count - 1 do
     if FResList[i]._AddRef > 4 then
     begin
       Engine.Error('Do not all reference to resource' + IResource(FResList[i]).Name + ' released');
       while FResList[i]._Release > 4 do;
     end else
+    begin
       FResList[i]._Release;
+      FResList.Del(I);
+    end;             }
 
   FResList.Free;
   FLoaderList.Free;

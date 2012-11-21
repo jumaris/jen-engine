@@ -32,8 +32,6 @@ type
     constructor Create(const FilePath: UnicodeString);
     destructor Destroy; override;
   private
-    class var Shader : IShaderProgram;
-    class var ParamsUniform : IShaderUniform;
     FHeight     : LongInt;
     FMaxDist    : Word;
     FMaxDistTC  : Single;
@@ -59,6 +57,9 @@ type
     procedure SetEdgeSmooth(Value: Single); stdcall;
 
   public
+    class var Shader : IShaderProgram;
+    class var ParamsUniform : IShaderUniform;
+
     procedure Reload; stdcall;
     procedure Init(PagesCount: Word; Height: LongInt; MaxDist: Word; MaxDistTC: Single);
     procedure AddChar(Char: WideChar;const Info: TCharInfo);
@@ -110,6 +111,7 @@ begin
    if Assigned(FChars[i]) then
       FreeMem(FChars[i]);
 
+  Engine.Log('Font ' + FName + ' destroyed');
   inherited;
 end;
 
@@ -260,7 +262,7 @@ var
 begin
   Result := 0;
 
-  for i := 1 to Length(Text) do
+  for i := 0 to Length(Text)-1 do
   begin
     CharInfo := FChars[Text[i]];
     if not Assigned(CharInfo) then Continue;

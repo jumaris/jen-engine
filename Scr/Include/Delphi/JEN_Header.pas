@@ -8,6 +8,10 @@ uses
   Windows,
   JEN_Math;
 
+const
+  FX_FLIPX = $000001;
+  FX_FLIPY = $000002;
+
 type
   TJenSubSystemType = (ssHelpers, ssInput, ssDisplay, ssResMan, ssRender, ssRender2d);
   TEvent = (evLogMsg, evActivate, evKeyUp, evKeyDown, evMouseWhell, evDisplayRestore, evRenderFlush);
@@ -109,18 +113,18 @@ type
   IStream = interface
     function Valid: Boolean; stdcall;
     function GetName: PWideChar; stdcall;
-    function GetSize: LongInt; stdcall;
-    function GetPos: LongInt; stdcall;
-    procedure SetPos(Value: LongInt); stdcall;
-    function Read(out Buf; BufSize: LongInt): LongWord; stdcall;
-    function Write(const Buf; BufSize: LongInt): LongWord; stdcall;
+    function GetSize: LongWord; stdcall;
+    function GetPos: LongWord; stdcall;
+    procedure SetPos(Value: LongWord); stdcall;
+    function Read(out Buf; BufSize: LongWord): LongWord; stdcall;
+    function Write(const Buf; BufSize: LongWord): LongWord; stdcall;
   //  function ReadAnsi: PAnsiChar; stdcall;
     procedure WriteAnsi(Value: PAnsiChar); stdcall;
   //  function ReadUnicode: PWideChar; stdcall;
     procedure WriteUnicode(Value: PWideChar); stdcall;
 
-    property Size: LongInt read GetSize;
-    property Pos: LongInt read GetPos write SetPos;
+    property Size: LongWord read GetSize;
+    property Pos: LongWord read GetPos write SetPos;
     property Name: PWideChar read GetName;
   end;
 
@@ -209,8 +213,8 @@ type
     function GetCursorState: Boolean; stdcall;
     function GetWndDC: HDC; stdcall;
     function GetWndHandle: HWND; stdcall;
-    function GetWidth: LongWord; stdcall;
-    function GetHeight: LongWord; stdcall;
+    function GetWidth: LongInt; stdcall;
+    function GetHeight: LongInt; stdcall;
 
     procedure Swap; stdcall;
     procedure ShowCursor(Value: Boolean); stdcall;
@@ -224,8 +228,8 @@ type
 
     property Handle: HWND  read GetWndHandle;
     property DC: HDC read GetWndDC;
-    property Width: LongWord read GetWidth;
-    property Height: LongWord read GetHeight;
+    property Width: LongInt read GetWidth;
+    property Height: LongInt read GetHeight;
     property Caption: PWideChar write SetCaption;
   end;
 

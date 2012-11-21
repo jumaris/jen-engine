@@ -26,34 +26,34 @@ type
   protected
     FCount: longint;
     FItems: TItemArray;
-    function GetCount: longint; stdcall;
-    function GetItem(idx: longint): Pointer; inline; stdcall;
-    procedure SetItem(idx: longint; Value: Pointer); inline; stdcall;
+    function GetCount: LongInt; stdcall;
+    function GetItem(idx: LongInt): Pointer; inline; stdcall;
+    procedure SetItem(idx: LongInt; Value: Pointer); inline; stdcall;
   public
     function Add(p: Pointer): Pointer; stdcall;
-    procedure Del(idx: longint); stdcall;
+    procedure Del(idx: LongInt); stdcall;
     procedure Clear; virtual; stdcall;
     procedure Sort(CompareFunc: TCompareFunc); stdcall;
-    function IndexOf(p: Pointer): longint; stdcall;
-    property Count: longint read FCount;
-    property Items[Idx: longint]: Pointer read GetItem write SetItem; default;
+    function IndexOf(p: Pointer): LongInt; stdcall;
+    property Count: LongInt read FCount;
+    property Items[Idx: LongInt]: Pointer read GetItem write SetItem; default;
   end;
 
   TInterfaceList = class
     constructor Create;
     destructor Destroy; override;
   protected
-    FCount: longint;
+    FCount: LongInt;
     FItems: array of IUnknown;
-    function GetItem(idx: longint): IUnknown; inline;
-    procedure SetItem(idx: longint; Value: IUnknown); inline;
+    function GetItem(idx: LongInt): IUnknown; inline;
+    procedure SetItem(idx: LongInt; Value: IUnknown); inline;
   public
     function Add(p: IUnknown): IUnknown;
-    procedure Del(idx: longint);
+    procedure Del(idx: LongInt);
     procedure Clear; virtual;
-    function IndexOf(p: IUnknown): longint;
-    property Count: longint read FCount;
-    property Items[Idx: longint]: IUnknown read GetItem write SetItem; default;
+    function IndexOf(p: IUnknown): LongInt;
+    property Count: LongInt read FCount;
+    property Items[Idx: LongInt]: IUnknown read GetItem write SetItem; default;
   end;
 
   TStream = class(TInterfacedObject, IStream)
@@ -63,17 +63,17 @@ type
     FType: (stNone, stMemory, stFile);
     FName: UnicodeString;
     F: THandle;
-    FPos: longint;
-    FBPos: longint;
-    FSize: longint;
+    FPos: LongWord;
+    FBPos: LongWord;
+    FSize: LongWord;
     FMem: Pointer;
-    function Valid: boolean; stdcall;
+    function Valid: Boolean; stdcall;
     function GetName: PWideChar; stdcall;
-    function GetSize: longint; stdcall;
-    function GetPos: longint; stdcall;
-    procedure SetPos(Value: longint); stdcall;
-    function Read(out Buf; BufSize: longint): longword; stdcall;
-    function Write(const Buf; BufSize: longint): longword; stdcall;
+    function GetSize: LongWord; stdcall;
+    function GetPos: LongWord; stdcall;
+    procedure SetPos(Value: LongWord); stdcall;
+    function Read(out Buf; BufSize: LongWord): LongWord; stdcall;
+    function Write(const Buf; BufSize: LongWord): LongWord; stdcall;
     //  function ReadAnsi: PAnsiChar; stdcall;
     procedure WriteAnsi(Value: PAnsiChar); stdcall;
     // function ReadUnicode: PWideChar; stdcall;
@@ -82,10 +82,10 @@ type
 
   IHelpers = interface(JEN_Header.IHelpers)
     procedure Update;
-    function GetRealTime: longint;
+    function GetRealTime: LongInt;
     procedure SetFreezeTime(Value: boolean);
     property FreezeTime: boolean write SetFreezeTime;
-    property RealTime: longint read GetRealTime;
+    property RealTime: LongInt read GetRealTime;
   end;
 
   THelpers = class(TInterfacedObject, IHelpers)
@@ -93,14 +93,14 @@ type
     procedure Free; stdcall;
   private
     FTimeFreq: int64;
-    FTimeStart: longint;
+    FTimeStart: LongInt;
     HWaitObj: THandle;
-    FFreezeTime: longint;
-    FCorrect: longint;
-    FTime: longint;
+    FFreezeTime: LongInt;
+    FCorrect: LongInt;
+    FTime: LongInt;
     FSystemInfo: ISystemInfo;
-    function GetRealTime: longint;
-    function GetTime: longint; stdcall;
+    function GetRealTime: LongInt;
+    function GetTime: LongInt; stdcall;
     function GetSystemInfo: ISystemInfo; stdcall;
   public
     procedure Sleep(Value: longword); stdcall;
@@ -164,7 +164,7 @@ end;
 
 function LowerCase(const Str: UnicodeString): UnicodeString;
 var
-  i: longint;
+  i: LongInt;
 begin
   Result := Str;
   for i := 1 to Length(Str) do
@@ -174,7 +174,7 @@ end;
 
 function TrimChars(const Str: UnicodeString; Chars: TCharSet): UnicodeString;
 var
-  i, j: longint;
+  i, j: LongInt;
 begin
   j := Length(Str);
   i := 1;
@@ -197,7 +197,7 @@ end;
 
 function DeleteChars(const Str: UnicodeString; Chars: TCharSet): UnicodeString;
 var
-  i, j: longint;
+  i, j: LongInt;
 begin
   j := 0;
   SetLength(Result, Length(Str));
@@ -271,7 +271,7 @@ end;     }
               {
 function ExtractFileDir(const FileName: UnicodeString): UnicodeString;
 var
-  i: longint;
+  i: LongInt;
 begin
   for i := Length(FileName) downto 1 do
     if (FileName[i] in ['\', '/', '|']) then
@@ -281,7 +281,7 @@ end;
 
 function ExtractFileName(const FileName: UnicodeString; NoExt: boolean): UnicodeString;
 var
-  i: longint;
+  i: LongInt;
 begin
   Result := Copy(FileName, Length(ExtractFileDir(FileName)) + 1, Length(FileName));
   if NoExt then
@@ -295,7 +295,7 @@ end;
 
 function ExtractFileExt(const FileName: UnicodeString): UnicodeString;
 var
-  i: longint;
+  i: LongInt;
 begin
   Result := '';
   for i := Length(FileName) downto 1 do
@@ -335,7 +335,7 @@ begin
   Inc(FCount);
 end;
 
-procedure TInterfaceList.Del(Idx: longint);
+procedure TInterfaceList.Del(Idx: LongInt);
 begin
   if idx < 0 then
     Exit;
@@ -348,7 +348,7 @@ end;
 
 procedure TInterfaceList.Clear;
 var
-  i: longint;
+  i: LongInt;
 begin
   for i := 0 to FCount - 1 do
     FItems[i] := nil;
@@ -356,9 +356,9 @@ begin
   FCount := 0;
 end;
 
-function TInterfaceList.IndexOf(p: IUnknown): longint;
+function TInterfaceList.IndexOf(p: IUnknown): LongInt;
 var
-  i: longint;
+  i: LongInt;
 begin
   Result := -1;
   for i := 0 to FCount - 1 do
@@ -366,12 +366,12 @@ begin
       Exit(i);
 end;
 
-function TInterfaceList.GetItem(Idx: longint): IUnknown;
+function TInterfaceList.GetItem(Idx: LongInt): IUnknown;
 begin
   Result := FItems[Idx];
 end;
 
-procedure TInterfaceList.SetItem(Idx: longint; Value: IUnknown);
+procedure TInterfaceList.SetItem(Idx: LongInt; Value: IUnknown);
 begin
   FItems[Idx] := IUnknown(Value);
 end;
@@ -401,9 +401,9 @@ begin
   Inc(FCount);
 end;
 
-procedure TList.Del(Idx: longint); stdcall;
+procedure TList.Del(Idx: LongInt); stdcall;
 var
-  i: longint;
+  i: LongInt;
 begin
   for i := Idx to FCount - 2 do
     FItems[i] := FItems[i + 1];
@@ -421,9 +421,9 @@ end;
 
 procedure TList.Sort(CompareFunc: TCompareFunc); stdcall;
 
-  procedure SortFragment(L, R: longint);
+  procedure SortFragment(L, R: LongInt);
   var
-    i, j: longint;
+    i, j: LongInt;
     P, T: Pointer;
   begin
     repeat
@@ -455,9 +455,9 @@ begin
     SortFragment(0, FCount - 1);
 end;
 
-function TList.IndexOf(p: Pointer): longint; stdcall;
+function TList.IndexOf(p: Pointer): LongInt; stdcall;
 var
-  i: longint;
+  i: LongInt;
 begin
   for i := 0 to FCount - 1 do
     if FItems[i] = p then
@@ -468,17 +468,17 @@ begin
   Result := -1;
 end;
 
-function TList.GetCount: longint; stdcall;
+function TList.GetCount: LongInt; stdcall;
 begin
   Result := FCount;
 end;
 
-function TList.GetItem(Idx: longint): Pointer; stdcall;
+function TList.GetItem(Idx: LongInt): Pointer; stdcall;
 begin
   Result := FItems[Idx];
 end;
 
-procedure TList.SetItem(Idx: longint; Value: Pointer); stdcall;
+procedure TList.SetItem(Idx: LongInt; Value: Pointer); stdcall;
 begin
   FItems[Idx] := Value;
 end;
@@ -545,24 +545,24 @@ begin
   Result := PWideChar(FName);
 end;
 
-function TStream.GetSize: longint; stdcall;
+function TStream.GetSize: LongWord; stdcall;
 begin
   Result := FSize;
 end;
 
-function TStream.GetPos: longint; stdcall;
+function TStream.GetPos: LongWord; stdcall;
 begin
   Result := FPos;
 end;
 
-procedure TStream.SetPos(Value: longint); stdcall;
+procedure TStream.SetPos(Value: LongWord); stdcall;
 begin
   FPos := Value;
   if FType = stFile then
     SetFilePointer(F, FBPos + FPos, nil, FILE_BEGIN);
 end;
 
-function TStream.Read(out Buf; BufSize: longint): longword; stdcall;
+function TStream.Read(out Buf; BufSize: LongWord): LongWord; stdcall;
 begin
   case FType of
     stMemory:
@@ -578,7 +578,7 @@ begin
   Inc(FPos, Result);
 end;
 
-function TStream.Write(const Buf; BufSize: longint): longword; stdcall;
+function TStream.Write(const Buf; BufSize: LongWord): LongWord; stdcall;
 begin
   case FType of
     stMemory:
@@ -665,13 +665,13 @@ begin
   CloseHandle(HWaitObj);
 end;
 
-procedure THelpers.Sleep(Value: longword); stdcall;
+procedure THelpers.Sleep(Value: LongWord); stdcall;
 begin
   if Value > 0 then
     WaitForSingleObject(HWaitObj, Value);
 end;
 
-function THelpers.GetRealTime: longint;
+function THelpers.GetRealTime: LongInt;
 var
   Count: int64;
 begin
@@ -679,12 +679,12 @@ begin
   Result := Trunc(1000 * (Count / FTimeFreq)) - FTimeStart + FCorrect;
 end;
 
-function THelpers.GetTime: longint; stdcall;
+function THelpers.GetTime: LongInt; stdcall;
 begin
   Result := FTime;
 end;
 
-procedure THelpers.SetFreezeTime(Value: boolean);
+procedure THelpers.SetFreezeTime(Value: Boolean);
 begin
   if Value then
     FFreezeTime := GetRealTime

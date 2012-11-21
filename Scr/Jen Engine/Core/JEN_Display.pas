@@ -35,8 +35,8 @@ type
     FCaption      : UnicodeString;
     FHandle       : HWND;
     FDC           : HDC;
-    FWidth        : LongWord;
-    FHeight       : LongWord;
+    FWidth        : LongInt;
+    FHeight       : LongInt;
     FRefresh      : Byte;
     FFullScreen   : Boolean;
     FActive       : Boolean;
@@ -53,8 +53,8 @@ type
     function GetCursorState: Boolean; stdcall;
     function GetWndDC: HDC; stdcall;
     function GetWndHandle: HWND; stdcall;
-    function GetWidth: LongWord; stdcall;
-    function GetHeight: LongWord; stdcall;
+    function GetWidth: LongInt; stdcall;
+    function GetHeight: LongInt; stdcall;
 
     class function WndProc(hWnd: HWND; Msg: LongWord; wParam: LongInt; lParam: LongInt): LongInt; stdcall; static;
    public
@@ -329,7 +329,7 @@ begin
     if FFullScreen then
     begin
       Rect.Location := ZeroPoint;
-      Style := WS_POPUP
+      Style := WS_POPUP;
     end else
     begin
       Style := WS_CAPTION or WS_MINIMIZEBOX;
@@ -338,7 +338,7 @@ begin
 
     SetWindowPos(FHandle, 0, Rect.x, Rect.y, Rect.Width, Rect.Height, $220);
     ShowWindow(FHandle, SW_SHOWNORMAL);
-    SetWindowLongW(FHandle, GWL_STYLE, Style or WS_SYSMENU or WS_VISIBLE);
+    SetWindowLongW(FHandle, GWL_STYLE, Longint(Style or WS_SYSMENU or WS_VISIBLE));
   end;
 
   Update;
@@ -405,12 +405,12 @@ begin
   Result := FHandle;
 end;
 
-function TDisplay.GetWidth: LongWord;
+function TDisplay.GetWidth: LongInt;
 begin
   Result := FWidth;
 end;
 
-function TDisplay.GetHeight: LongWord;
+function TDisplay.GetHeight: LongInt;
 begin
   Result := FHeight;
 end;

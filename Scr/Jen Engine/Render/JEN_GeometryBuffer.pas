@@ -55,7 +55,7 @@ type
 //var
 //  p : ^TByteArray;
 begin
- // Bind;
+  Bind;
   //glBufferData(FType, size, nil, GL_STREAM_DRAW );
   {
   P := glMapBuffer(FType, GL_WRITE_ONLY);
