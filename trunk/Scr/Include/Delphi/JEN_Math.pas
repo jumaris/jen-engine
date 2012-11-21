@@ -215,7 +215,12 @@ function Max(x, y: Single): Single; overload; inline;
 function Min(x, y: Single): Single; overload; inline;
 function Max(x, y: LongInt): LongInt; overload; inline;
 function Min(x, y: LongInt): LongInt; overload; inline;
+function Max(x, y: LongWord): LongWord; overload; inline;
+function Min(x, y: LongWord): LongWord; overload; inline;
+function Lerp(x, y, t: Single): Single; inline;
 function Sign(x: Single): LongInt; inline;
+function Ceil(const x: Single): LongInt;
+function Floor(const x: Single): LongInt;
 function Clamp(x, Min, Max: LongInt): LongInt; overload; inline;
 function Clamp(x, Min, Max: Single): Single; overload; inline;
 function Tan(x: Single): Single; assembler;
@@ -233,7 +238,7 @@ function Vec2f(x, y: Single): TVec2f; inline;
 function Vec3f(x, y, z: Single): TVec3f; inline;
 function Vec4f(x, y, z, w: Single): TVec4f; inline;
 function Quat(x, y, z, w: Single): TQuat; overload; inline;
-function Quat(Angle: Single; const Axis: TVec3f): TQuat; overload;
+function Quat(Angle: Single; const Axis: TVec3f): TQuat; overload; inline;
 function Mat4f(Angle: Single; const Axis: TVec3f): TMat4f; inline;
 
 implementation
@@ -271,6 +276,27 @@ begin
     Result := y;
 end;
 
+function Max(x, y: LongWord): LongWord;
+begin
+  if x > y then
+    Result := x
+  else
+    Result := y;
+end;
+
+function Min(x, y: LongWord): LongWord;
+begin
+  if x < y then
+    Result := x
+  else
+    Result := y;
+end;
+
+function Lerp(x, y, t: Single): Single;
+begin
+  Result := x + (y - x) * t;
+end;
+
 function Sign(x: Single): LongInt;
 begin
   if x > 0 then
@@ -280,6 +306,20 @@ begin
       Result := -1
     else
       Result := 0;
+end;
+
+function Ceil(const x: Single): LongInt;
+begin
+  Result := LongInt(Trunc(x));
+  if Frac(x) > 0 then
+    Inc(Result);
+end;
+
+function Floor(const x: Single): LongInt;
+begin
+  Result := LongInt(Trunc(x));
+  if Frac(x) < 0 then
+    Dec(Result);
 end;
 
 function Clamp(x, Min, Max: LongInt): LongInt;

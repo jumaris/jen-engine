@@ -7,7 +7,8 @@ uses
   JEN_Math,
   JEN_GeometryBuffer;
 
-const Batch_Size = 15;
+const
+  Batch_Size = 15;
 
 type
   IRender2D = interface(JEN_Header.IRender2D)
@@ -16,16 +17,18 @@ type
     procedure UpdateRC;
   end;
 
-  TQuad = array[1..4] of TVec2f;
+  TVertex = record
+    Pos : TVec2f;
+    Tc  : TVec2f;
+  end;
+
+  TQuad = array[1..4] of TVertex;
   TTehniqueType = (ttNone, ttNormal, ttText, ttAdvanced, ttAdvanced1, ttAdvanced2, ttAdvanced3, ttAdvanced4);
 
   TTehnique = record
     IndxAttrib    : IShaderAttrib;
     VBUniform     : IShaderUniform;
     DBUniform     : IShaderUniform;
-    TCParUniform1 : IShaderUniform;
-		TCParUniform2 : IShaderUniform;
-		TCParUniform3 : IShaderUniform;
     ShaderProgram : IShaderProgram;
     LastUsed      : LongInt;
   end;
@@ -53,7 +56,7 @@ type
     BatchTexture   : array[1..3] of ITexture;
 
     FDataBuff : array[1..Batch_Size*4] of TVec4f;
-    FVertexBuff : array[1..Batch_Size*4] of TVec2f;
+    FVertexBuff : array[1..Batch_Size*4] of TVertex;
   public
     procedure Init;
 
@@ -89,6 +92,12 @@ type
     procedure EndDraw; stdcall;
   end;
 
+const
+  TexCoord: array[0..3] of array[1..4] of TVec2f = (((x:0;y:0),(x:1;y:0),(x:1;y:1),(x:0;y:1)),
+                                                    ((x:1;y:0),(x:0;y:0),(x:0;y:1),(x:1;y:1)),
+                                                    ((x:0;y:1),(x:1;y:1),(x:1;y:0),(x:0;y:0)),
+                                                    ((x:1;y:1),(x:0;y:1),(x:0;y:0),(x:1;y:0)));
+
 implementation
 
 uses
@@ -106,11 +115,8 @@ begin
       ShaderProgram := Shader;
       ShaderProgram.Bind;
 
-      VBUniform := ShaderProgram.Uniform('Position', utVec2, False);
+      VBUniform := ShaderProgram.Uniform('PosTC', utVec4, False);
       DBUniform := ShaderProgram.Uniform('QuadData', utVec4, False);
-      TCParUniform1 := ShaderProgram.Uniform('TexCoordParams1', utVec4, False);
-		  TCParUniform2 := ShaderProgram.Uniform('TexCoordParams2', utVec4, False);
-		  TCParUniform3 := ShaderProgram.Uniform('TexCoordParams3', utVec4, False);
 
       i := 0;
       Uniform := ShaderProgram.Uniform('Map0', utInt, False);
@@ -180,7 +186,10 @@ begin
   FBatchParams.BatchTexture2   := nil;
   FBatchParams.BatchTexture3   := nil;
        }
+  Engine.RemoveEventListener(evRenderFlush, {$IFDEF FPC}Pointer(FlushProc){$ELSE}@FlushProc{$ENDIF});
+  Engine.RemoveEventListener(evDisplayRestore, {$IFDEF FPC}Pointer(DisplayRestore){$ELSE}@DisplayRestore{$ENDIF});
 end;
+
 
 procedure TRender2D.ResolutionCorrect(Width, Height: LongWord); stdcall;
 begin
@@ -201,8 +210,8 @@ begin
     BorderV  := Round((Render.Viewport.Width - FRCWidth/FRCScale)/2);
     BorderH  := Round((Render.Viewport.Height - FRCHeight/FRCScale)/2);
     FRCRect  := Recti(BorderV, BorderH, Render.Viewport.Width - BorderV*2, Render.Viewport.Height - BorderH*2);
-    FRCMatrix.Ortho(0, FRCWidth, FRCHeight, 0, -1, 1);
-    Render.Viewport := FRCRect;
+    FRCMatrix.Ortho(0, FRCWidth + BorderV * 2, FRCHeight + BorderH * 2, 0, -1, 1);
+   // Render.Viewport := FRCRect;
   end else
   begin
     FRCScale  := 1;
@@ -321,30 +330,30 @@ begin
     v[4] := Render.Matrix[mt2DMat]*(Mat*v4); }
 
     sincos(Deg2Rad*Angle, tsin, tcos);
-    v[1] := v[1] - Center;
-    v[2] := v[2] - Center;
-    v[3] := v[3] - Center;
-    v[4] := v[4] - Center;
-	  v[1] := Vec2f(v[1].x*tcos - v[1].y*tsin, v[1].x*tsin + v[1].y*tcos);
-    v[2] := Vec2f(v[2].x*tcos - v[2].y*tsin, v[2].x*tsin + v[2].y*tcos);
-    v[3] := Vec2f(v[3].x*tcos - v[3].y*tsin, v[3].x*tsin + v[3].y*tcos);
-    v[4] := Vec2f(v[4].x*tcos - v[4].y*tsin, v[4].x*tsin + v[4].y*tcos);
-    v[1] := Render.Matrix[mt2DMat]*(v[1] + Center);
-    v[2] := Render.Matrix[mt2DMat]*(v[2] + Center);
-    v[3] := Render.Matrix[mt2DMat]*(v[3] + Center);
-    v[4] := Render.Matrix[mt2DMat]*(v[4] + Center);
+    v[1].Pos := v[1].Pos - Center;
+    v[2].Pos := v[2].Pos - Center;
+    v[3].Pos := v[3].Pos - Center;
+    v[4].Pos := v[4].Pos - Center;
+	  v[1].Pos := Vec2f(v[1].Pos.x*tcos - v[1].Pos.y*tsin, v[1].Pos.x*tsin + v[1].Pos.y*tcos);
+    v[2].Pos := Vec2f(v[2].Pos.x*tcos - v[2].Pos.y*tsin, v[2].Pos.x*tsin + v[2].Pos.y*tcos);
+    v[3].Pos := Vec2f(v[3].Pos.x*tcos - v[3].Pos.y*tsin, v[3].Pos.x*tsin + v[3].Pos.y*tcos);
+    v[4].Pos := Vec2f(v[4].Pos.x*tcos - v[4].Pos.y*tsin, v[4].Pos.x*tsin + v[4].Pos.y*tcos);
+    v[1].Pos := Render.Matrix[mt2DMat]*(v[1].Pos + Center);
+    v[2].Pos := Render.Matrix[mt2DMat]*(v[2].Pos + Center);
+    v[3].Pos := Render.Matrix[mt2DMat]*(v[3].Pos + Center);
+    v[4].Pos := Render.Matrix[mt2DMat]*(v[4].Pos + Center);
   end else
   begin
-    v[1] := Render.Matrix[mt2DMat]*v[1];
-    v[2] := Render.Matrix[mt2DMat]*v[2];
-    v[3] := Render.Matrix[mt2DMat]*v[3];
-    v[4] := Render.Matrix[mt2DMat]*v[4];
+    v[1].Pos := Render.Matrix[mt2DMat]*v[1].Pos;
+    v[2].Pos := Render.Matrix[mt2DMat]*v[2].Pos;
+    v[3].Pos := Render.Matrix[mt2DMat]*v[3].Pos;
+    v[4].Pos := Render.Matrix[mt2DMat]*v[4].Pos;
   end;
 
-  MinX := Min(Min(Min(v[1].x, v[2].x), v[3].x), v[4].x);
-  MinY := Min(Min(Min(v[1].y, v[2].y), v[3].y), v[4].y);
-  MaxX := Max(Max(Max(v[1].x, v[2].x), v[3].x), v[4].x);
-  MaxY := Max(Max(Max(v[1].y, v[2].y), v[3].y), v[4].y);
+  MinX := Min(Min(Min(v[1].Pos.x, v[2].Pos.x), v[3].Pos.x), v[4].Pos.x);
+  MinY := Min(Min(Min(v[1].Pos.y, v[2].Pos.y), v[3].Pos.y), v[4].Pos.y);
+  MaxX := Max(Max(Max(v[1].Pos.x, v[2].Pos.x), v[3].Pos.x), v[4].Pos.x);
+  MaxY := Max(Max(Max(v[1].Pos.y, v[2].Pos.y), v[3].Pos.y), v[4].Pos.y);
   Result := ((((MaxX >= -1) and (MinX <= 1)) and (MaxY >= -1)) and (MinY <= 1));
 end;
 
@@ -352,7 +361,7 @@ procedure TRender2D.RealDrawSprite(Tex: ITexture; const v: TQuad; const Data1, D
 var
   TCParams    : TVec4f;
 begin
-  if( (FIdx = 0) or (FBatch = False) or (BatchTexture[1] <> Tex) or (Tehnique <> ttNormal)) then
+  if( (FIdx = 0) or (FBatch = False) or (not Assigned(BatchTexture[1])) or (BatchTexture[1].ID <> Tex.ID) or (Tehnique <> ttNormal)) then
   begin
     if FIdx > 0 then
       Flush;
@@ -361,12 +370,10 @@ begin
     RenderTechnique[ttNormal].ShaderProgram.Bind;
 
     Tex.Bind(0);
-    TCParams := Tex.CoordParams;
-    RenderTechnique[Tehnique].TCParUniform1.Value(TCParams);
-    BatchTexture[1] := Tex;
   end;
+  BatchTexture[1] := Tex;
 
-  Move(v[1], FVertexBuff[FIdx*4+1], sizeof(TVec2f)*4);
+  Move(v[1], FVertexBuff[FIdx*4+1], sizeof(TVertex)*4);
   FDataBuff[FIdx*4+1] := Data1;
   FDataBuff[FIdx*4+2] := Data2;
   FDataBuff[FIdx*4+3] := Data3;
@@ -379,13 +386,26 @@ end;
 
 procedure TRender2D.DrawSprite(Tex: ITexture; x, y, w, h: Single; const Color1, Color2, Color3, Color4: TVec4f; Angle: Single; Effects: Cardinal);
 var
-  v : TQuad;
+  v   : TQuad;
+  par : TVec4f;
+  par1: TVec2f;
+  par2: TVec2f;
+  TcId: LongInt;
 begin
   if not (Assigned(Tex)) then Exit;
-  v[1] := Vec2f(x, y+h);
-  v[2] := Vec2f(x+w, y+h);
-  v[3] := Vec2f(x+w, y);
-  v[4] := Vec2f(x, y);
+  v[1].Pos := Vec2f(x  , y+h);
+  v[2].Pos := Vec2f(x+w, y+h);
+  v[3].Pos := Vec2f(x+w, y  );
+  v[4].Pos := Vec2f(x  , y  );
+
+  par  := Tex.CoordParams;
+  par1 := Vec2f(par.x, par.y); par2 := Vec2f(par.z, par.w);
+  TcId := (Effects and FX_FLIPX + Effects and FX_FLIPY);
+  v[1].TC := TexCoord[TcId][1] * par2 + par1;
+  v[2].TC := TexCoord[TcId][2] * par2 + par1;
+  v[3].TC := TexCoord[TcId][3] * par2 + par1;
+  v[4].TC := TexCoord[TcId][4] * par2 + par1;
+
   if not ComputeVertex(v, Angle, Vec2f(x, y) + Vec2f(w, h) * FRotCenter) then
     exit;
   RealDrawSprite(Tex, v, Color1, Color2, Color3, Color4, Effects);
@@ -394,12 +414,25 @@ end;
 procedure TRender2D.DrawSprite(Tex: ITexture; x, y, w, h: Single; const Color: TVec4f; Angle: Single; Effects: Cardinal);
 var
   v : TQuad;
+  par : TVec4f;
+  par1: TVec2f;
+  par2: TVec2f;
+  TcId: LongInt;
 begin
   if not (Assigned(Tex)) then Exit;
-  v[1] := Vec2f(x, y+h);
-  v[2] := Vec2f(x+w, y+h);
-  v[3] := Vec2f(x+w, y);
-  v[4] := Vec2f(x, y);
+  v[1].Pos := Vec2f(x  , y+h);
+  v[2].Pos := Vec2f(x+w, y+h);
+  v[3].Pos := Vec2f(x+w, y  );
+  v[4].Pos := Vec2f(x  , y  );
+
+  par  := Tex.CoordParams;
+  par1 := Vec2f(par.x, par.y); par2 := Vec2f(par.z, par.w);
+  TcId := (Effects and FX_FLIPX + Effects and FX_FLIPY);
+  v[1].TC := TexCoord[TcId][1] * par2 + par1;
+  v[2].TC := TexCoord[TcId][2] * par2 + par1;
+  v[3].TC := TexCoord[TcId][3] * par2 + par1;
+  v[4].TC := TexCoord[TcId][4] * par2 + par1;
+
   if not ComputeVertex(v, Angle, Vec2f(x, y) + Vec2f(w, h) * FRotCenter) then
     exit;
   RealDrawSprite(Tex, v, Color, Color, Color, Color, Effects);
@@ -411,12 +444,16 @@ var
   OlderTime   : LongInt;
   OlderTeh    : TTehniqueType;
   TCParams    : TVec4f;
+  TexBath     : Boolean;
 begin
   if not Assigned(Shader) then
     Exit;
 
-  if( (FIdx = 0) or (FBatch = False) or (RenderTechnique[Tehnique].ShaderProgram <> Shader) or
-      (BatchTexture[1] <> Tex1) or (BatchTexture[2] <> Tex2) or (BatchTexture[3] <> Tex3) ) then
+  TexBath := ((BatchTexture[1] = Tex1) or (Assigned(Tex1) and Assigned(BatchTexture[1]) and (Tex1.ID = BatchTexture[1].ID))) and
+             ((BatchTexture[2] = Tex2) or (Assigned(Tex2) and Assigned(BatchTexture[2]) and (Tex2.ID = BatchTexture[2].ID))) and
+             ((BatchTexture[3] = Tex3) or (Assigned(Tex3) and Assigned(BatchTexture[3]) and (Tex3.ID = BatchTexture[3].ID)));
+
+  if( (FIdx = 0) or (FBatch = False) or (TexBath = False) or (RenderTechnique[Tehnique].ShaderProgram <> Shader)) then
   begin
     if FIdx > 0 then
       Flush;
@@ -448,40 +485,44 @@ begin
     RenderTechnique[Tehnique].ShaderProgram.Bind;
 
     if Assigned(Tex1) then
-    begin
       Tex1.Bind(0);
-      TCParams := Tex1.CoordParams;
-      RenderTechnique[Tehnique].TCParUniform1.Value(TCParams);
-    end;
 
     if Assigned(Tex2) then
-    begin
       Tex2.Bind(1);
-      TCParams := Tex2.CoordParams;
-      RenderTechnique[Tehnique].TCParUniform2.Value(TCParams);
-    end;
 
-   if Assigned(Tex3) then
-    begin
+    if Assigned(Tex3) then
       Tex3.Bind(2);
-      TCParams := Tex3.CoordParams;
-      RenderTechnique[Tehnique].TCParUniform3.Value(TCParams);
-    end;
   end;
+
+  BatchTexture[1] := Tex1;
+  BatchTexture[2] := Tex2;
+  BatchTexture[3] := Tex3;
 end;
 
 procedure TRender2D.DrawQuad(x, y, w, h, Angle: Single);
 var
-   v : TQuad;
+   v   : TQuad;
+   par : TVec4f;
 begin
-  v[1] := Vec2f(x, y+h);
-  v[2] := Vec2f(x+w, y+h);
-  v[3] := Vec2f(x+w, y);
-  v[4] := Vec2f(x, y);
+  v[1].Pos := Vec2f(x  , y+h);
+  v[2].Pos := Vec2f(x+w, y+h);
+  v[3].Pos := Vec2f(x+w, y  );
+  v[4].Pos := Vec2f(x  , y  );
+
+  if Assigned(BatchTexture[1]) then
+    par := BatchTexture[1].CoordParams
+  else
+    par := Vec4f(0,0,1,1);
+
+  v[1].TC := Vec2f(0 * par.z + par.x, 0 * par.w + par.y);
+  v[2].TC := Vec2f(1 * par.z + par.x, 0 * par.w + par.y);
+  v[3].TC := Vec2f(1 * par.z + par.x, 1 * par.w + par.y);
+  v[4].TC := Vec2f(0 * par.z + par.x, 1 * par.w + par.y);
+
   if not ComputeVertex(v, Angle, Vec2f(x, y) + Vec2f(w, h) * FRotCenter) then
     exit;
 
-  Move(v[1], FVertexBuff[FIdx*4+1], sizeof(TVec2f)*4);
+  Move(v[1], FVertexBuff[FIdx*4+1], sizeof(TVertex)*4);
 
   inc(FIdx);
   if (FIdx = Batch_Size) then
@@ -490,16 +531,27 @@ end;
 
 procedure TRender2D.DrawQuad(const v1, v2, v3, v4: TVec2f; Angle: Single; const Center: TVec2f);
 var
-   v : TQuad;
+   v   : TQuad;
+   par : TVec4f;
 begin
-  v[1] := v1;
-  v[2] := v2;
-  v[3] := v3;
-  v[4] := v4;
+  v[1].Pos := v1;
+  v[2].Pos := v2;
+  v[3].Pos := v3;
+  v[4].Pos := v4;
+
+  if Assigned(BatchTexture[1]) then
+    par := BatchTexture[1].CoordParams
+  else
+    par := Vec4f(0,0,1,1);
+
+  v[1].TC := Vec2f(0 * par.z + par.x, 0 * par.w + par.y);
+  v[2].TC := Vec2f(1 * par.z + par.x, 0 * par.w + par.y);
+  v[3].TC := Vec2f(1 * par.z + par.x, 1 * par.w + par.y);
+  v[4].TC := Vec2f(0 * par.z + par.x, 1 * par.w + par.y);
   if not ComputeVertex(v, Angle, Center) then
     exit;
 
-  Move(v[1], FVertexBuff[FIdx*4+1], sizeof(TVec2f)*4);
+  Move(v[1], FVertexBuff[FIdx*4+1], sizeof(TVertex)*4);
 
   inc(FIdx);
   if (FIdx = Batch_Size) then

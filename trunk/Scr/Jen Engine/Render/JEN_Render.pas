@@ -299,6 +299,8 @@ begin
   SetClearColor(Vec4f(0, 0, 0, 0));
   SetVSync(false);
   SetViewport(Recti(0, 0, Display.Width, Display.Height));
+
+  //glTexEnvf(GL_TEXTURE_FILTER_CONTROL, GL_TEXTURE_LOD_BIAS,-2.0);
    // Display.Restore;
   // glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
   // glShadeModel(GL_SMOOTH);
@@ -328,6 +330,10 @@ procedure TRender.SetTarget(Value: IRenderTarget);
 const
   ChannelList  : array [0..Ord(High(TRenderChannel)) - 1] of GLenum = (GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT0 + 1, GL_COLOR_ATTACHMENT0 + 2, GL_COLOR_ATTACHMENT0 + 3, GL_COLOR_ATTACHMENT0 + 4, GL_COLOR_ATTACHMENT0 + 5, GL_COLOR_ATTACHMENT0 + 6, GL_COLOR_ATTACHMENT0 + 7);
 begin
+  if FTarget = Value then
+    Exit;
+  Engine.DispatchEvent(evRenderFlush);
+
   FTarget := Value;
   if Value <> nil then
   begin
@@ -372,7 +378,6 @@ begin
   begin
     FViewport := Value;
     glViewport(Value.Left, Value.Top, Value.Width, Value.Height);
-    Engine.DispatchEvent(evDisplayRestore);
   end;
 end;
              {

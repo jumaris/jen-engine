@@ -244,6 +244,8 @@ const
   GL_TEXTURE_MAX_ANISOTROPY           = $84FE;
   GL_MAX_TEXTURE_MAX_ANISOTROPY       = $84FF;
   GENERATE_MIPMAP_SGIS                = $8191;
+  GL_TEXTURE_FILTER_CONTROL           = $8500;
+  GL_TEXTURE_LOD_BIAS                 = $8501;
 
   GL_DEPTH_TEXTURE_MODE               = $884B;
   GL_TEXTURE_COMPARE_MODE             = $884C;
@@ -471,6 +473,7 @@ const
   procedure glGetTexImage(target: GLenum; level: GLint; format: GLenum; atype: GLenum; pixels: Pointer); stdcall; external opengl32;
   procedure glCopyTexSubImage2D(target: GLenum; level, xoffset, yoffset, x, y: GLint; width, height: GLsizei); stdcall; external opengl32;
   procedure glTexEnvi(target: GLenum; pname: GLenum; param: GLint); stdcall; external opengl32;
+  procedure glTexEnvf(target: GLenum; pname: GLenum; param:	GLfloat); stdcall; external opengl32;
   function  gluBuild2DMipmaps(target: GLenum; components, width, height: GLint; format, atype: GLenum; const data: Pointer): LongInt; stdcall; external opengl32;
 
   procedure glDrawArrays(mode: GLenum; first: GLint; count: GLsizei); stdcall; external opengl32;

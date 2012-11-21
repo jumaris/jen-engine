@@ -136,8 +136,10 @@ begin
     glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
 
   FMipMap := False;
-  FFilter := tfiBilinear;
-  SetFilter(tfiNone);
+  FFilter := tfiNone;
+  FClamp  := False;
+  SetClamp(True);
+  SetFilter(tfiBilinear);
 end;
 
 procedure TTexture.Init(Parent: ITexture; S, T, SW, TH: Single);
@@ -222,7 +224,7 @@ begin
       if FFilter = tfiAniso then
         glTexParameteri(FSampler, GL_TEXTURE_MAX_ANISOTROPY, FMaxAniso)
       else
-        glTexParameteri(FSampler, GL_TEXTURE_MAX_ANISOTROPY, FMaxAniso);
+        glTexParameteri(FSampler, GL_TEXTURE_MAX_ANISOTROPY, 1);
   end;
 end;
 
@@ -308,6 +310,8 @@ begin
 end;
 
 procedure TTexture.DataSet(Width, Height, Size: LongInt; Data: Pointer; Level: LongInt); stdcall;
+var
+  filter : TTextureFilter;
 begin
   if (FFormat = tfoNone) or FIsSubTex then Exit;
 
@@ -316,6 +320,16 @@ begin
     glCompressedTexImage2D(FSampler, Level, InternalFormat, Width, Height, 0, Size, Data)
   else
     glTexImage2D(FSampler, Level, InternalFormat, Width, Height, 0, ExternalFormat, DataType, Data);
+
+    // TODO FIX
+  if (Level > 0) and not FMipMap then
+  begin
+    FMipMap := true;
+
+    filter := FFilter;
+    SetFilter(tfiNone);
+    SetFilter(filter);
+  end;
 
   FMipMapLevels := Max(FMipMapLevels, Level);
   FWidth := Max(FWidth, Width);

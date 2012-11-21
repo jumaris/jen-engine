@@ -28,7 +28,6 @@ type
       FisRunnig     : Boolean;
       FQuit         : Boolean;
 
-      FCloseConsole : Boolean;
       FLogStream    : IStream;
       FDThread      : THandle;
       FConsole      : IConsole;
@@ -103,7 +102,7 @@ begin
   for Event := Low(TEvent) to High(TEvent) do
     FEventsList[Event] := TList.Create;
 
-  InitLog;
+  //InitLog;
 
   try
     Input     := JEN_Input.TInput.Create;
@@ -176,7 +175,6 @@ end;
 procedure TJenEngine.Start(Game: IGame);
 var
   DeltaTime : LongInt;
-  s : String;
 begin
   if not Assigned(Game) then
   begin
@@ -358,7 +356,7 @@ begin
       DispatchMessage(Msg);
     end;
 
-    case WaitForMultipleObjects(2, @Events[0], False, Ord(not Assigned(FConsole))*INFINITE) of
+    case WaitForMultipleObjects(2, @Events[0], False, LongWord(ord(not Assigned(FConsole))*INFINITE) ) of
       WAIT_OBJECT_0+1:
         begin
           if(Assigned(FConsole)) then
@@ -385,7 +383,6 @@ begin
 end;
 
 class procedure TJenEngine.AddMessage(MesType: TLogMsg; Text: PWideChar);
-var p : Pointer;
 begin
   WaitForSingleObject(FJobDoneEvent, INFINITE);
   ResetEvent(FJobDoneEvent);

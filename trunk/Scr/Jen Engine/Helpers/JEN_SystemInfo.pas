@@ -65,9 +65,28 @@ uses
 constructor TScreen.Create;
 var
   DevMode : TDeviceMode;
-  i,j,k   : LongInt;
+  i,j     : LongInt;
+  Add     : Boolean;
   PMode   : PDisplayMode;
   PRefresh : PByte;
+
+  procedure AddRefresh(mode : PDisplayMode; refresh: Byte);
+  var
+    k : LongInt;
+  begin
+    with(PDisplayMode(mode)^) do
+    begin
+      Add := True;
+      for K := 0 to RefreshRates.Count - 1 do
+        if(PByte(RefreshRates[K])^ = refresh) then
+          Exit;
+
+      GetMem(PRefresh, 1);
+      PRefresh^ := refresh;
+      RefreshRates.Add(PRefresh);
+    end;
+  end;
+
 begin
   i := 0;
   FModes := TList.Create;
@@ -88,36 +107,27 @@ begin
     if dmBitsPerPel <> 32 then
       Continue;
 
+    Add := True;
     for J := 0 to FModes.Count - 1 do
       with(PDisplayMode(FModes[j])^) do
       if (Width = dmPelsWidth) and (Height = dmPelsHeight) then
       begin
-
-        for K := 0 to RefreshRates.Count - 1 do
-          if(PByte(RefreshRates[K])^ = dmDisplayFrequency) then
-            Break;
-
-        if K < RefreshRates.Count then
-        begin
-          GetMem(PRefresh, 1);
-          PRefresh^ := dmDisplayFrequency;
-          RefreshRates.Add(PRefresh);
-        end;
+        Add := False;
+        AddRefresh(FModes[j], dmDisplayFrequency);
+        Break;
       end;
 
-    if K < FModes.Count then
+    if Add then
     begin
-      GetMem(PRefresh, 1);
       GetMem(PMode, SizeOf(TDisplayMode));
 
       PMode^.Width := dmPelsWidth;
       PMode^.Height := dmPelsHeight;
-      PRefresh^ := dmDisplayFrequency;
-
-      FModes.Add(PMode);
       PMode^.RefreshRates := TList.Create;
-      PMode^.RefreshRates.Add(PRefresh);
+      FModes.Add(PMode);
+      AddRefresh(PMode, dmDisplayFrequency);
     end;
+
   end;
 
 end;
@@ -509,20 +519,20 @@ end;
 
 function TSystem.GetRAMTotal: LongWord;
 var
-  MemStatus : TMemoryStatus;
+  MemStatus : TMemoryStatusEx;
 begin
-  MemStatus.dwLength := SizeOf(TMemoryStatus);
-  GlobalMemoryStatus(MemStatus);
-  Result := Trunc(MemStatus.dwTotalPhys/(1024*1024)+1);
+  MemStatus.dwLength := SizeOf(TMemoryStatusEx);
+  GlobalMemoryStatusEx(MemStatus);
+  Result := Trunc(MemStatus.ullTotalPhys/(1024*1024)+1);
 end;
 
 function TSystem.GetRAMFree: LongWord;
 var
-  MemStatus : TMemoryStatus;
+  MemStatus : TMemoryStatusEx;
 begin
-  MemStatus.dwLength := SizeOf(TMemoryStatus);
-  GlobalMemoryStatus(MemStatus);
-  Result := Trunc(MemStatus.dwAvailPhys/(1024*1024)+1);
+  MemStatus.dwLength := SizeOf(TMemoryStatusEx);
+  GlobalMemoryStatusEx(MemStatus);
+  Result := Trunc(MemStatus.ullAvailPhys/(1024*1024)+1);
 end;
 
 end.

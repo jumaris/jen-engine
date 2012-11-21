@@ -262,7 +262,6 @@ begin
     FreeMemory(Data);
   end;
 
-  Texture.Filter := tfiAniso;
   Texture.Flip(True, False);
   Result := True;
 end;
