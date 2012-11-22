@@ -275,8 +275,8 @@ var
   DR: TRect;
 begin
   SystemParametersInfo(SPI_GETWORKAREA, 0, @DR, 0);
-  Result.X := Dr.Left;
-  Result.Y := Dr.Top;
+  Result.Location.X := Dr.Left;
+  Result.Location.Y := Dr.Top;
   Result.Width := Dr.Right - Dr.Left;
   Result.Height := Dr.Bottom - Dr.Top;
 end;

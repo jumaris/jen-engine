@@ -313,6 +313,25 @@ begin
   Render.IncDip;
 end;
 
+procedure PrepareVertex(var v: TQuad; const Pos, Size: TVec2f; Rect: TRectf; TcId: Integer); overload; inline;
+begin
+  v[1].Pos := Pos + Vec2f(0, Size.y);
+  v[2].Pos := Pos + Size;
+  v[3].Pos := Pos + Vec2f(Size.x, 0);
+  v[4].Pos := Pos;
+
+  v[1].TC := TexCoord[TcId][1] * Rect.Size + Rect.Location;
+  v[2].TC := TexCoord[TcId][2] * Rect.Size + Rect.Location;
+  v[3].TC := TexCoord[TcId][3] * Rect.Size + Rect.Location;
+  v[4].TC := TexCoord[TcId][4] * Rect.Size + Rect.Location;
+end;
+
+procedure PrepareVertex(var v: TQuad; const v1, v2, v3, v4, Rect: TVec2f); overload; inline;
+begin
+
+end;
+
+
 function ComputeVertex(var v: TQuad; Angle: Single; const Center: TVec2f): Boolean; inline;
 var
   tsin, tcos  : Single;
@@ -386,25 +405,12 @@ end;
 
 procedure TRender2D.DrawSprite(Tex: ITexture; x, y, w, h: Single; const Color1, Color2, Color3, Color4: TVec4f; Angle: Single; Effects: Cardinal);
 var
-  v   : TQuad;
-  par : TVec4f;
-  par1: TVec2f;
-  par2: TVec2f;
-  TcId: LongInt;
+  v     : TQuad;
+  maxTC : TVec2f;
+  TcId  : LongInt;
 begin
   if not (Assigned(Tex)) then Exit;
-  v[1].Pos := Vec2f(x  , y+h);
-  v[2].Pos := Vec2f(x+w, y+h);
-  v[3].Pos := Vec2f(x+w, y  );
-  v[4].Pos := Vec2f(x  , y  );
 
-  par  := Tex.CoordParams;
-  par1 := Vec2f(par.x, par.y); par2 := Vec2f(par.z, par.w);
-  TcId := (Effects and FX_FLIPX + Effects and FX_FLIPY);
-  v[1].TC := TexCoord[TcId][1] * par2 + par1;
-  v[2].TC := TexCoord[TcId][2] * par2 + par1;
-  v[3].TC := TexCoord[TcId][3] * par2 + par1;
-  v[4].TC := TexCoord[TcId][4] * par2 + par1;
 
   if not ComputeVertex(v, Angle, Vec2f(x, y) + Vec2f(w, h) * FRotCenter) then
     exit;
@@ -414,9 +420,7 @@ end;
 procedure TRender2D.DrawSprite(Tex: ITexture; x, y, w, h: Single; const Color: TVec4f; Angle: Single; Effects: Cardinal);
 var
   v : TQuad;
-  par : TVec4f;
-  par1: TVec2f;
-  par2: TVec2f;
+  maxTC : TVec2f;
   TcId: LongInt;
 begin
   if not (Assigned(Tex)) then Exit;
@@ -425,13 +429,12 @@ begin
   v[3].Pos := Vec2f(x+w, y  );
   v[4].Pos := Vec2f(x  , y  );
 
-  par  := Tex.CoordParams;
-  par1 := Vec2f(par.x, par.y); par2 := Vec2f(par.z, par.w);
+  maxTC := Tex.maxTC;
   TcId := (Effects and FX_FLIPX + Effects and FX_FLIPY);
-  v[1].TC := TexCoord[TcId][1] * par2 + par1;
-  v[2].TC := TexCoord[TcId][2] * par2 + par1;
-  v[3].TC := TexCoord[TcId][3] * par2 + par1;
-  v[4].TC := TexCoord[TcId][4] * par2 + par1;
+  v[1].TC := TexCoord[TcId][1] * maxTC;
+  v[2].TC := TexCoord[TcId][2] * maxTC;
+  v[3].TC := TexCoord[TcId][3] * maxTC;
+  v[4].TC := TexCoord[TcId][4] * maxTC;
 
   if not ComputeVertex(v, Angle, Vec2f(x, y) + Vec2f(w, h) * FRotCenter) then
     exit;
@@ -501,8 +504,8 @@ end;
 
 procedure TRender2D.DrawQuad(x, y, w, h, Angle: Single);
 var
-   v   : TQuad;
-   par : TVec4f;
+   v     : TQuad;
+   maxTC : TVec2f;
 begin
   v[1].Pos := Vec2f(x  , y+h);
   v[2].Pos := Vec2f(x+w, y+h);
@@ -510,14 +513,14 @@ begin
   v[4].Pos := Vec2f(x  , y  );
 
   if Assigned(BatchTexture[1]) then
-    par := BatchTexture[1].CoordParams
+    maxTC := BatchTexture[1].MaxTC
   else
-    par := Vec4f(0,0,1,1);
+    maxTC := Vec2f(1, 1);
 
-  v[1].TC := Vec2f(0 * par.z + par.x, 0 * par.w + par.y);
-  v[2].TC := Vec2f(1 * par.z + par.x, 0 * par.w + par.y);
-  v[3].TC := Vec2f(1 * par.z + par.x, 1 * par.w + par.y);
-  v[4].TC := Vec2f(0 * par.z + par.x, 1 * par.w + par.y);
+  v[1].TC := Vec2f(0,       0);
+  v[2].TC := Vec2f(maxTC.x, 0);
+  v[3].TC :=          maxTC;
+  v[4].TC := Vec2f(0, maxTC.y);
 
   if not ComputeVertex(v, Angle, Vec2f(x, y) + Vec2f(w, h) * FRotCenter) then
     exit;
@@ -532,7 +535,7 @@ end;
 procedure TRender2D.DrawQuad(const v1, v2, v3, v4: TVec2f; Angle: Single; const Center: TVec2f);
 var
    v   : TQuad;
-   par : TVec4f;
+   maxTC : TVec2f;
 begin
   v[1].Pos := v1;
   v[2].Pos := v2;
@@ -540,14 +543,15 @@ begin
   v[4].Pos := v4;
 
   if Assigned(BatchTexture[1]) then
-    par := BatchTexture[1].CoordParams
+    maxTC := BatchTexture[1].MaxTC
   else
-    par := Vec4f(0,0,1,1);
+    maxTC := Vec2f(1, 1);
 
-  v[1].TC := Vec2f(0 * par.z + par.x, 0 * par.w + par.y);
-  v[2].TC := Vec2f(1 * par.z + par.x, 0 * par.w + par.y);
-  v[3].TC := Vec2f(1 * par.z + par.x, 1 * par.w + par.y);
-  v[4].TC := Vec2f(0 * par.z + par.x, 1 * par.w + par.y);
+  v[1].TC := Vec2f(0,       0);
+  v[2].TC := Vec2f(maxTC.x, 0);
+  v[3].TC :=          maxTC;
+  v[4].TC := Vec2f(0, maxTC.y);
+
   if not ComputeVertex(v, Angle, Center) then
     exit;
 

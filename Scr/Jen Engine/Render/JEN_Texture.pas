@@ -15,45 +15,41 @@ type
   ITexture = interface(JEN_Header.ITexture)
   ['{5EC7ADB4-2241-46EE-B5BE-4959B06EA364}']
     procedure Init(TWidth, THeight: LongWord; TFormat: TTextureFormat); overload;
-    procedure Init(Parent: ITexture; S, T, SW, TH: Single); overload;
+  //  procedure Init(Parent: ITexture; S, T, SW, TH: Single); overload;
   end;
 
   TTexture = class(TResource, IResource, ITexture)
     constructor Create(const FilePath: UnicodeString);
     procedure Init(Width, Height: LongWord; Format: TTextureFormat); overload;
-    procedure Init(Parent: ITexture; S, T, SW, TH: Single); overload;
+    //procedure Init(Parent: ITexture; S, T, SW, TH: Single); overload;
     destructor Destroy; override;
   private
-    FIsSubTex : Boolean;
-    FID       : GLhandle;
-    FFormat   : TTextureFormat;
-    FSampler  : GLEnum;
-    FWidth    : LongInt;
-    FHeight   : LongInt;
-    FS, FT    : Single;
-    FSW, FTH  : Single;
-    FFilter   : TTextureFilter;
-    FClamp    : Boolean;
-    FMipMap   : Boolean;
+    FID           : GLhandle;
+    FFormat       : TTextureFormat;
+    FSampler      : GLEnum;
+    FWidth        : LongInt;
+    FHeight       : LongInt;
+    FMaxS, FMaxT  : Single;
+    FFilter       : TTextureFilter;
+    FClamp        : Boolean;
+    FMipMap       : Boolean;
     FMipMapLevels : LongInt;
-    FSubTexList : TInterfaceList;
+    FSubTexList   : TInterfaceList;
     function GetID: LongWord; stdcall;
-    function GetCoordParams: TVec4f; stdcall;
     function GetFormat: TTextureFormat; stdcall;
     function GetWidth: LongWord; stdcall;
     function GetHeight: LongWord; stdcall;
+    function GetMaxTC: TVec2f; stdcall;
     function GetSampler: LongWord; stdcall;
     function GetFilter: TTextureFilter; stdcall;
     procedure SetFilter(Value: TTextureFilter); stdcall;
     function GetClamp: Boolean; stdcall;
     procedure SetClamp(Value: Boolean); stdcall;
     procedure SetCompare(Value: TCompareMode); stdcall;
-    function GettSubTexCount: LongInt; stdcall;
-    function GetSubTex(idx: LongInt): JEN_Header.ITexture; stdcall;
   public
     procedure Reload; stdcall;
-    procedure Flip(Vertical, Horizontal: Boolean); stdcall;
-    procedure Split(Vertical, Horizontal: LongWord); stdcall;
+   // procedure Flip(Vertical, Horizontal: Boolean); stdcall;
+  //  procedure Split(Vertical, Horizontal: LongWord); stdcall;
     procedure DataSet(Width, Height, Size: LongInt; Data: Pointer; Level: LongInt); stdcall;
   {
     procedure GenLevels;
@@ -106,18 +102,16 @@ uses
 constructor TTexture.Create(const FilePath:  UnicodeString);
 begin
   inherited Create(FilePath, rtTexture);
-  FS      := 0;
-  FT      := 0;
-  FSW     := 1;
-  FTH     := 1;
 end;
 
 procedure TTexture.Init(Width, Height: LongWord; Format: TTextureFormat);
 begin
-  FWidth  := Width;
-  FHeight := Height;
+  FMaxS    := 1;
+  FMaxT    := 1;
+  FWidth   := Width;
+  FHeight  := Height;
   FSampler := GL_TEXTURE_2D;
-  FFormat := Format;
+  FFormat  := Format;
 
   if glIsTexture(FID) then
     glDeleteTextures(1, @FID);
@@ -141,7 +135,7 @@ begin
   SetClamp(True);
   SetFilter(tfiBilinear);
 end;
-
+                  {
 procedure TTexture.Init(Parent: ITexture; S, T, SW, TH: Single);
 begin
   FIsSubTex := True;
@@ -156,14 +150,12 @@ begin
   FFormat   := Parent.Format;
   FSampler  := Parent.Sampler;
 end;
-
+                    }
 destructor TTexture.Destroy;
 begin
   if Assigned(FSubTexList) then
     FSubTexList.Free;
 
-  if FIsSubTex <> True then
-    glDeleteTextures(1, @FID);
   Engine.Log('Texture ' + FName + ' destroyed');
   inherited;
 end;
@@ -171,11 +163,6 @@ end;
 function TTexture.GetID: LongWord; stdcall;
 begin
   Result := FID;
-end;
-
-function TTexture.GetCoordParams: TVec4f; stdcall;
-begin
-  Result := Vec4f(FS, FT, FSW, FTH);
 end;
 
 function TTexture.GetFormat: TTextureFormat; stdcall;
@@ -191,6 +178,11 @@ end;
 function TTexture.GetHeight: LongWord; stdcall;
 begin
   Result := FHeight;
+end;
+
+function TTexture.GetMaxTC: TVec2f; stdcall;
+begin
+  Result := Vec2f(FMaxS, FMaxT);
 end;
 
 function TTexture.GetSampler: LongWord; stdcall;
@@ -211,7 +203,7 @@ const
 var
   FMaxAniso : LongInt;
 begin
-  if (FFilter <> Value) and (FISSubTex <> True) then
+  if (FFilter <> Value) then
   begin
     FFilter := Value;
     Bind;
@@ -237,7 +229,7 @@ procedure TTexture.SetClamp(Value: Boolean); stdcall;
 const
   ClampMode : array[Boolean] of GLEnum = (GL_REPEAT, GL_CLAMP_TO_EDGE);
 begin
-  if (FClamp <> Value) and (FISSubTex <> True) then
+  if (FClamp <> Value) then
   begin
     FClamp := Value;
     Bind;
@@ -249,14 +241,14 @@ end;
 
 procedure TTexture.SetCompare(Value: TCompareMode); stdcall;
 begin
-  if (Value <> cmNone) and (FISSubTex <> True) then
+  if (Value <> cmNone) then
   begin
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, CompareFunc[Value]);
   end else
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
 end;
-
+               {
 function TTexture.GettSubTexCount: LongInt; stdcall;
 begin
   if not Assigned(FSubTexList) then
@@ -269,27 +261,13 @@ begin
   if not Assigned(FSubTexList) then
     Exit(nil);
   Result := FSubTexList[idx] as ITexture;
-end;
+end;                    }
 
 procedure TTexture.Reload; stdcall;
 begin
 
 end;
-
-procedure TTexture.Flip(Vertical, Horizontal: Boolean); stdcall;
-begin
-  if Vertical then
-  begin
-    FT  := 1 - FT;
-    FTH := - FTH;
-  end;
-  if Horizontal then
-  begin
-    FS  := 1 - FS;
-    FSW := - FSW;
-  end;
-end;
-
+                           {
 procedure TTexture.Split(Vertical, Horizontal: LongWord); stdcall;
 var
   i, j : Integer;
@@ -307,13 +285,13 @@ begin
       Tex.Init(Self, (I/Horizontal)*FSW + FS,(J/Vertical)*FTH + FT, FSW/Horizontal, FTH/Vertical);
       FSubTexList.Add(Tex);
     end;
-end;
+end;                 }
 
 procedure TTexture.DataSet(Width, Height, Size: LongInt; Data: Pointer; Level: LongInt); stdcall;
 var
   filter : TTextureFilter;
 begin
-  if (FFormat = tfoNone) or FIsSubTex then Exit;
+  if (FFormat = tfoNone) then Exit;
 
   with TextureFormatInfo[FFormat] do
   if Compressed then
