@@ -262,7 +262,6 @@ begin
     FreeMemory(Data);
   end;
 
-  Texture.Flip(True, False);
   Result := True;
 end;
 

@@ -70,7 +70,7 @@ begin
   Rect := Helpers.SystemInfo.Screen.DesktopRect;
   FConsoleWnd := CreateWindowEx(WS_EX_APPWINDOW{or WS_EX_TOPMOST}, CONSOLE_WINDOW_CLASS_NAME, 'JEN Console',
                             WS_OVERLAPPED or WS_CAPTION or WS_SYSMENU or WS_SIZEBOX,
-                            Rect.x, Rect.y + Rect.Height - 300 - GetSystemMetrics(SM_CYDLGFRAME), 500, 300, 0, 0, 0, nil);
+                            Rect.Location.x, Rect.Location.y + Rect.Height - 300 - GetSystemMetrics(SM_CYDLGFRAME), 500, 300, 0, 0, 0, nil);
 
   FMemoWnd := CreateWindow('EDIT','',
                          WS_VISIBLE or WS_CHILD or WS_BORDER or WS_VSCROLL or WS_HSCROLL or

@@ -3,47 +3,13 @@ unit JEN_Math;
 interface
 
 Type
-  TPoint2i = record
+  TVec2i = record
     x, y : LongInt;
-    class operator Equal(const a, b: TPoint2i): Boolean;
-  end;
-
-  TRecti = record
-    x, y          : LongInt;
-    Width, Height : LongInt;
-    private
-      function  GetLocation: TPoint2i;
-      procedure SetLocation(Location: TPoint2i);
-      function  GetCenter: TPoint2i;
-    public
-      function Left     : LongInt;
-      function Right    : LongInt;
-      function Top      : LongInt;
-      function Bottom   : LongInt;
-
-      property Location : TPoint2i read GetLocation write SetLocation;
-      property Center   : TPoint2i read GetCenter;
-
-      function IsEmpty  : Boolean;
-
-      procedure Offset(const Point: TPoint2i); overload;
-      procedure Offset(offsetX, offsetY: LongInt); overload;
-
-      procedure Inflate(HAmount, VAmount: LongInt); overload;
-
-      function Contains(const Point: TPoint2i): Boolean; overload;
-//    function Contains(const Point: TPoint2f): Boolean; overload;
-      function Contains(const Rect: TRecti): Boolean; overload;
-//    function Contains(const Rect : TRectf)  : Boolean; overload;
-
-      function Intersects(const Rect: TRecti): Boolean; overload;
-//    function Intersects(const Rect : TRectf)  : Boolean; overload;
-      function Intersect(const Rect1, Rect2: TRecti): TRecti ; overload;
-
-//    function Intersect(const Rect : TRectf)  : TRectf ;
-      function Union(const Rect1, Rect2 : TRecti): TRecti ; overload;
-//    function Union(const Rect1, Rect2 : TRectf): TRectf ; overload;
-      class operator Equal(const Rect1, Rect2: TRecti): Boolean;
+    class operator Equal(const a, b: TVec2i): Boolean;
+    class operator Add(const a, b: TVec2i): TVec2i;
+    class operator Subtract(const a, b: TVec2i): TVec2i;
+    class operator Multiply(const a, b: TVec2i): TVec2i;
+    class operator Multiply(const v: TVec2i; x: LongInt): TVec2i;
   end;
 
   TVec2f = record
@@ -67,6 +33,72 @@ Type
     function Clamp(const MinClamp, MaxClamp: TVec2f): TVec2f;
     function Rotate(Angle: Single): TVec2f;
     function Angle(const v: TVec2f): Single;
+  end;
+
+  TRecti = record
+      Location      : TVec2i;
+      Width, Height : LongInt;
+      function Left     : LongInt;
+      function Right    : LongInt;
+      function Top      : LongInt;
+      function Bottom   : LongInt;
+      function Center   : TVec2i;
+      function Size     : TVec2i;
+
+      function IsEmpty  : Boolean;
+
+      procedure Offset(const Point: TVec2i); overload;
+      procedure Offset(offsetX, offsetY: LongInt); overload;
+
+      procedure Inflate(HAmount, VAmount: LongInt); overload;
+
+      function Contains(const Point: TVec2i): Boolean; overload;
+//    function Contains(const Point: TPoint2f): Boolean; overload;
+      function Contains(const Rect: TRecti): Boolean; overload;
+//    function Contains(const Rect : TRectf)  : Boolean; overload;
+
+      function Intersects(const Rect: TRecti): Boolean; overload;
+//    function Intersects(const Rect : TRectf)  : Boolean; overload;
+      function Intersect(const Rect1, Rect2: TRecti): TRecti ; overload;
+
+//    function Intersect(const Rect : TRectf)  : TRectf ;
+      function Union(const Rect1, Rect2 : TRecti): TRecti ; overload;
+//    function Union(const Rect1, Rect2 : TRectf): TRectf ; overload;
+      class operator Equal(const Rect1, Rect2: TRecti): Boolean;
+  end;
+
+  TRectf = record
+      Location      : TVec2f;
+      Width, Height : Single;
+
+      function Left     : Single;
+      function Right    : Single;
+      function Top      : Single;
+      function Bottom   : Single;
+      function Center   : TVec2f;
+      function Size     : TVec2f;
+
+      function IsEmpty  : Boolean;
+
+      procedure Offset(const Point: TVec2i); overload;
+      procedure Offset(const Point: TVec2f); overload;
+      procedure Offset(offsetX, offsetY: Single); overload;
+
+      procedure Inflate(HAmount, VAmount: LongInt); overload;
+
+      function Contains(const Point: TVec2i): Boolean; overload;
+      function Contains(const Point: TVec2f): Boolean; overload;
+      function Contains(const Rect: TRecti): Boolean; overload;
+      function Contains(const Rect: TRectf): Boolean; overload;
+
+      function Intersects(const Rect: TRecti): Boolean; overload;
+      function Intersects(const Rect: TRectf): Boolean; overload;
+      function Intersect(const Rect1, Rect2: TRectf): TRectf; overload;
+
+     // function Intersect(const Rect: TRectf): TRectf;
+   //   function Union(const Rect1, Rect2: TRecti): TRectf; overload;
+      function Union(const Rect1, Rect2: TRectf): TRectf; overload;
+      class operator Equal(const Rect1, Rect2: TRectf): Boolean;
   end;
 
   PVec3f = ^TVec3f;
@@ -163,8 +195,9 @@ const
   EPS     = 1.E-05;
   deg2rad = pi / 180;
   rad2deg = 180 / pi;
-  ZeroPoint : TPoint2i = (x: 0; y: 0;);
-  EmptyRect: TRecti = (x: 0; y: 0; Width: 0; Height: 0);
+  ZeroPoint : TVec2i = (x: 0; y: 0;);
+  EmptyRecti: TRecti = (Location: (x:0; y:0); Width: 0; Height: 0);
+  EmptyRectf: TRectf = (Location: (x:0; y:0); Width: 0; Height: 0);
   NullVec3f : TVec3f = (x: 0; y: 0; z: 0);
   clWhite : TVec4f = (x: 1; y: 1; z: 1; w: 1);
   clBlack : TVec4f = (x: 0; y: 0; z: 0; w: 1);
@@ -232,11 +265,19 @@ function Log2(const X: Single): Single;
 function Pow(x, y: Single): Single;
 function ToPow2(x: LongInt): LongInt;
 
-function Point2i(x, y : LongInt) : TPoint2i; inline;
-function Recti(x, y, Width, Height : LongInt): TRecti; overload; inline;
+function Vec2i(x, y: LongInt): TVec2i; inline;
 function Vec2f(x, y: Single): TVec2f; inline;
-function Vec3f(x, y, z: Single): TVec3f; inline;
-function Vec4f(x, y, z, w: Single): TVec4f; inline;
+
+function Recti(x, y, Width, Height: LongInt): TRecti; overload; inline;
+function Recti(v: TVec2i; Width, Height: LongInt): TRecti; overload; inline;
+function Rectf(x, y, Width, Height: LongInt): TRectf; overload; inline;
+function Rectf(pos: TVec2f; Width, Height: LongInt): TRectf; overload; inline;
+
+function Vec3f(x, y, z: Single): TVec3f; overload; inline;
+function Vec3f(v: TVec2f; z: Single): TVec3f; overload; inline;
+function Vec4f(x, y, z, w: Single): TVec4f; overload; inline;
+function Vec4f(v: TVec3f; w: Single): TVec4f; overload; inline;
+function Vec4f(v: TVec2f; z, w: Single): TVec4f; overload; inline;
 function Quat(x, y, z, w: Single): TQuat; overload; inline;
 function Quat(Angle: Single; const Axis: TVec3f): TQuat; overload; inline;
 function Mat4f(Angle: Single; const Axis: TVec3f): TMat4f; inline;
@@ -445,7 +486,13 @@ end;
 {$ENDREGION}
 
 {$REGION 'Creation'}
-function Point2i(x, y: LongInt): TPoint2i;
+function Vec2i(x, y: LongInt): TVec2i;
+begin
+  Result.x := x;
+  Result.y := y;
+end;
+
+function Vec2f(x, y: Single): TVec2f;
 begin
   Result.x := x;
   Result.y := y;
@@ -453,16 +500,32 @@ end;
 
 function Recti(x, y, Width, Height: LongInt): TRecti;
 begin
-  Result.x := x;
-  Result.y := y;
+  Result.Location.x := x;
+  Result.Location.y := y;
   Result.Height := Height;
   Result.Width := Width;
 end;
 
-function Vec2f(x, y: Single): TVec2f;
+function Recti(v: TVec2i; Width, Height: LongInt): TRecti;
 begin
-  Result.x := x;
-  Result.y := y;
+  Result.Location := v;
+  Result.Height := Height;
+  Result.Width := Width;
+end;
+
+function Rectf(x, y, Width, Height: LongInt): TRectf;
+begin
+  Result.Location.x := x;
+  Result.Location.y := y;
+  Result.Height := Height;
+  Result.Width := Width;
+end;
+
+function Rectf(pos: TVec2f; Width, Height: LongInt): TRectf;
+begin
+  Result.Location := pos;
+  Result.Height := Height;
+  Result.Width := Width;
 end;
 
 function Vec3f(x, y, z: Single): TVec3f;
@@ -472,10 +535,33 @@ begin
   Result.z := z;
 end;
 
+function Vec3f(v: TVec2f; z: Single): TVec3f;
+begin
+  Result.x := v.x;
+  Result.y := v.y;
+  Result.z := z;
+end;
+
 function Vec4f(x, y, z, w: Single): TVec4f;
 begin
   Result.x := x;
   Result.y := y;
+  Result.z := z;
+  Result.w := w;
+end;
+
+function Vec4f(v: TVec3f; w: Single): TVec4f;
+begin
+  Result.x := v.x;
+  Result.y := v.y;
+  Result.z := v.z;
+  Result.w := w;
+end;
+
+function Vec4f(v: TVec2f; z, w: Single): TVec4f;
+begin
+  Result.x := v.x;
+  Result.y := v.y;
   Result.z := z;
   Result.w := w;
 end;
@@ -521,78 +607,96 @@ begin
 end;
 {$ENDREGION}
 
-{$REGION 'TPoint2i'}
-class operator TPoint2i.Equal(const a, b: TPoint2i): Boolean;
+{$REGION 'TVec2i'}
+class operator TVec2i.Equal(const a, b: TVec2i): Boolean;
 begin
   Result := (a.x = b.x) and (a.y = b.y);
 end;
+
+class operator TVec2i.Add(const a, b: TVec2i): TVec2i;
+begin
+  Result.x := a.x + b.x;
+  Result.y := a.y + b.y;
+end;
+
+class operator TVec2i.Subtract(const a, b: TVec2i): TVec2i;
+begin
+  Result.x := a.x - b.x;
+  Result.y := a.y - b.y;
+end;
+
+class operator TVec2i.Multiply(const a, b: TVec2i): TVec2i;
+begin
+  Result.x := a.x * b.x;
+  Result.y := a.y * b.y;
+end;
+
+class operator TVec2i.Multiply(const v: TVec2i; x: LongInt): TVec2i;
+begin
+  Result.x := v.x * x;
+  Result.y := v.y * x;
+end;
+
 {$ENDREGION}
 
 {$REGION 'TRecti'}
 function TRecti.Left: LongInt;
 begin
-  Result := x;
+  Result := Location.x;
 end;
 
 function TRecti.Right: LongInt;
 begin
-  Result := x + Width;
+  Result := Location.x + Width;
 end;
 
 function TRecti.Top: LongInt;
 begin
-  Result := y;
+  Result := Location.y;
 end;
 
 function TRecti.Bottom: LongInt;
 begin
-  Result := y + Height;
+  Result := Location.y + Height;
 end;
 
-function TRecti.GetLocation: TPoint2i;
+function TRecti.Center: TVec2i;
 begin
-  Result := Point2i(x, y);
+  Result := Vec2i(Location.x + Width shr 1, Location.y + Height shr 1);
 end;
 
-procedure TRecti.SetLocation(Location: TPoint2i);
+function TRecti.Size: TVec2i;
 begin
-  x := Location.x;
-  y := Location.y;
-end;
-
-function TRecti.GetCenter: TPoint2i;
-begin
-  Result := Point2i(x+ Width shr 1, y + Height shr 1);
+  Result := Vec2i(Width, Height);
 end;
 
 function TRecti.IsEmpty: Boolean;
 begin
-  Result := ((((Width = 0) and (Height = 0)) and (x = 0)) and (y = 0));
+  Result := ((((Width = 0) and (Height = 0)) and (Location.x = 0)) and (Location.y = 0));
 end;
 
-procedure TRecti.Offset(const Point: TPoint2i);
+procedure TRecti.Offset(const Point: TVec2i);
 begin
-  inc(x, Point.x);
-  inc(y, Point.y);
+  Location := Location + Point;
 end;
 
 procedure TRecti.Offset(offsetX, offsetY: LongInt);
 begin
-  inc(x, offsetX);
-  inc(y, offsetY);
+  inc(Location.x, offsetX);
+  inc(Location.y, offsetY);
 end;
 
 procedure TRecti.Inflate(HAmount, VAmount: LongInt);
 begin
-  dec(x, HAmount);
-  dec(y, VAmount);
-  inc(Width, HAmount*2);
-  inc(Height, VAmount*2);
+  dec(Location.x, HAmount);
+  dec(Location.y, VAmount);
+  inc(Width, HAmount * 2);
+  inc(Height, VAmount * 2);
 end;
 
-function TRecti.Contains(const Point: TPoint2i): Boolean;
+function TRecti.Contains(const Point: TVec2i): Boolean;
 begin
-  Result := ((((x <= Point.x) and (Point.x < (x + Width))) and (y <= Point.y)) and (Point.y < (y + Height)));
+  Result := ((((Location.x <= Point.x) and (Point.x < (Location.x + Width))) and (Location.y <= Point.y)) and (Point.y < (Location.y + Height)));
 end;
              {
 function TRecti.Contains(const Point: TPoint2f): Boolean;
@@ -602,27 +706,27 @@ end;           }
 
 function TRecti.Contains(const Rect: TRecti): Boolean;
 begin
-  Result := ((((x <= Rect.x) and ((Rect.x + Rect.Width) <= (x + Width))) and (x <= Rect.y)) and ((Rect.y + Rect.Height) <= (y + Height)));
+  Result := ((((Location.x <= Rect.Location.x) and ((Rect.Location.x + Rect.Width) <= (Location.x + Width))) and (Location.x <= Rect.Location.y)) and ((Rect.Location.y + Rect.Height) <= (Location.y + Height)));
 end;
 
 function TRecti.Intersects(const Rect: TRecti): Boolean;
 begin
-  Result := ((((Rect.X < (X + Width)) and (X < (Rect.X + Rect.Width))) and (Rect.Y < (Y + Height))) and (Y < (Rect.Y + Rect.Height)));
+  Result := ((((Rect.Location.X < (Location.X + Width)) and (Location.X < (Rect.Location.X + Rect.Width))) and (Rect.Location.Y < (Location.Y + Height))) and (Location.Y < (Rect.Location.Y + Rect.Height)));
 end;
 
 function TRecti.Intersect(const Rect1,Rect2: TRecti): TRecti;
 var
   X1, Y1, X2, Y2 : Integer;
 begin
-  Result := EmptyRect;
-  X1 := Max(Rect1.x, Rect2.x);
-  Y1 := Max(Rect1.y, Rect2.y);
-  X2 := Min(Rect1.x + Rect1.Width, Rect2.x + Rect2.Width);
-  Y2 := Min(Rect1.y + Rect1.Height, Rect2.y + Rect2.Height);
+  Result := EmptyRecti;
+  X1 := Max(Rect1.Location.x, Rect2.Location.x);
+  Y1 := Max(Rect1.Location.y, Rect2.Location.y);
+  X2 := Min(Rect1.Location.x + Rect1.Width, Rect2.Location.x + Rect2.Width);
+  Y2 := Min(Rect1.Location.y + Rect1.Height, Rect2.Location.y + Rect2.Height);
   if ((X2 > X1) and (Y2 > Y1)) then
   begin
-    Result.X := X1;
-    Result.Y := Y1;
+    Result.Location.X := X1;
+    Result.Location.Y := Y1;
     Result.Width := X2 - X1;
     Result.Height := Y2 - Y1;
   end;
@@ -632,17 +736,153 @@ function TRecti.Union(const Rect1, Rect2: TRecti): TRecti;
 var
   X1, Y1 : LongInt;
 begin
-  X1 := Min(Rect1.X,Rect2.X);
-  Y1 := Min(Rect1.Y,Rect2.Y);
-  Result.X := X1;
-  Result.Y := Y1;
-  Result.Width := Max(Rect1.X + Rect1.Width, Rect2.X + Rect2.Width) - X1;
-  Result.Height := Max(Rect1.Y + Rect1.Height, Rect2.Y + Rect2.Height) - Y1;
+  X1 := Min(Rect1.Location.X, Rect2.Location.X);
+  Y1 := Min(Rect1.Location.Y, Rect2.Location.Y);
+  Result.Location.X := X1;
+  Result.Location.Y := Y1;
+  Result.Width := Max(Rect1.Location.X + Rect1.Width, Rect2.Location.X + Rect2.Width) - X1;
+  Result.Height := Max(Rect1.Location.Y + Rect1.Height, Rect2.Location.Y + Rect2.Height) - Y1;
 end;
 
 class operator TRecti.Equal(const Rect1, Rect2: TRecti): Boolean;
 begin
-  Result := ((((Rect1.X = Rect2.X) and (Rect1.Y = Rect2.Y)) and (Rect1.Width = Rect2.Width)) and (Rect1.Height = Rect2.Height));
+  Result := ((((Rect1.Location.X = Rect2.Location.X) and (Rect1.Location.Y = Rect2.Location.Y)) and (Rect1.Width = Rect2.Width)) and (Rect1.Height = Rect2.Height));
+end;
+{$ENDREGION}
+
+{$REGION 'TRectf'}
+function TRectf.Left: Single;
+begin
+  Result := Location.x;
+end;
+
+function TRectf.Right: Single;
+begin
+  Result := Location.x + Width;
+end;
+
+function TRectf.Top: Single;
+begin
+  Result := Location.y;
+end;
+
+function TRectf.Bottom: Single;
+begin
+  Result := Location.y + Height;
+end;
+
+function TRectf.Center: TVec2f;
+begin
+  Result := Location + Vec2f(Width, Height) * 0.5;
+end;
+
+function TRectf.Size: TVec2f;
+begin
+  Result := Vec2f(Width, Height);
+end;
+
+function TRectf.IsEmpty: Boolean;
+begin
+  Result := ((((Width = 0) and (Height = 0)) and (Location.x = 0)) and (Location.y = 0));
+end;
+
+procedure TRectf.Offset(const Point: TVec2i);
+begin
+  Location := Location + Vec2f(Point.x, Point.y);
+end;
+
+procedure TRectf.Offset(const Point: TVec2f);
+begin
+  Location := Location + Point;
+end;
+
+procedure TRectf.Offset(offsetX, offsetY: Single);
+begin
+  Location := Location + Vec2f(offsetX, offsetY);
+end;
+
+procedure TRectf.Inflate(HAmount, VAmount: LongInt);
+begin
+  Location := Location - Vec2f(HAmount, VAmount);
+  Width    := Width + HAmount * 2;
+  Height   := Width + VAmount * 2;
+end;
+
+function TRectf.Contains(const Point: TVec2i): Boolean;
+begin
+  Result := ((((Location.x <= Point.x) and (Point.x < (Location.x + Width))) and (Location.y <= Point.y)) and (Point.y < (Location.y + Height)));
+end;
+
+function TRectf.Contains(const Point: TVec2f): Boolean;
+begin
+  Result := ((((Location.x <= Point.x) and (Point.x < (Location.x + Width))) and (Location.y <= Point.y)) and (Point.y < (Location.y + Height)));
+end;
+
+function TRectf.Contains(const Rect: TRecti): Boolean;
+begin
+  Result := ((((Location.x <= Rect.Location.x) and ((Rect.Location.x + Rect.Width) <= (Location.x + Width))) and (Location.x <= Rect.Location.y)) and ((Rect.Location.y + Rect.Height) <= (Location.y + Height)));
+end;
+
+function TRectf.Contains(const Rect: TRectf): Boolean;
+begin
+  Result := ((((Location.x <= Rect.Location.x) and ((Rect.Location.x + Rect.Width) <= (Location.x + Width))) and (Location.x <= Rect.Location.y)) and ((Rect.Location.y + Rect.Height) <= (Location.y + Height)));
+end;
+
+function TRectf.Intersects(const Rect: TRecti): Boolean;
+begin
+  Result := ((((Rect.Location.X < (Location.X + Width)) and (Location.X < (Rect.Location.X + Rect.Width))) and (Rect.Location.Y < (Location.Y + Height))) and (Location.Y < (Rect.Location.Y + Rect.Height)));
+end;
+
+function TRectf.Intersects(const Rect: TRectf): Boolean;
+begin
+  Result := ((((Rect.Location.X < (Location.X + Width)) and (Location.X < (Rect.Location.X + Rect.Width))) and (Rect.Location.Y < (Location.Y + Height))) and (Location.Y < (Rect.Location.Y + Rect.Height)));
+end;
+
+function TRectf.Intersect(const Rect1, Rect2: TRectf): TRectf;
+var
+  X1, Y1, X2, Y2: Single;
+begin
+  Result := EmptyRectf;
+  X1 := Max(Rect1.Location.x, Rect2.Location.x);
+  Y1 := Max(Rect1.Location.y, Rect2.Location.y);
+  X2 := Min(Rect1.Location.x + Rect1.Width, Rect2.Location.x + Rect2.Width);
+  Y2 := Min(Rect1.Location.y + Rect1.Height, Rect2.Location.y + Rect2.Height);
+  if ((X2 > X1) and (Y2 > Y1)) then
+  begin
+    Result.Location.X := X1;
+    Result.Location.Y := Y1;
+    Result.Width := X2 - X1;
+    Result.Height := Y2 - Y1;
+  end;
+end;
+
+function Union(const Rect1, Rect2: TRecti): TRectf;
+var
+  X1, Y1 : Single;
+begin
+  X1 := Min(Rect1.Location.X, Rect2.Location.X);
+  Y1 := Min(Rect1.Location.Y, Rect2.Location.Y);
+  Result.Location.X := X1;
+  Result.Location.Y := Y1;
+  Result.Width := Max(Rect1.Location.X + Rect1.Width, Rect2.Location.X + Rect2.Width) - X1;
+  Result.Height := Max(Rect1.Location.Y + Rect1.Height, Rect2.Location.Y + Rect2.Height) - Y1;
+end;
+
+function TRectf.Union(const Rect1, Rect2: TRectf): TRectf;
+var
+  X1, Y1 : Single;
+begin
+  X1 := Min(Rect1.Location.X, Rect2.Location.X);
+  Y1 := Min(Rect1.Location.Y, Rect2.Location.Y);
+  Result.Location.X := X1;
+  Result.Location.Y := Y1;
+  Result.Width := Max(Rect1.Location.X + Rect1.Width, Rect2.Location.X + Rect2.Width) - X1;
+  Result.Height := Max(Rect1.Location.Y + Rect1.Height, Rect2.Location.Y + Rect2.Height) - Y1;
+end;
+
+class operator TRectf.Equal(const Rect1, Rect2: TRectf): Boolean;
+begin
+  Result := ((((Rect1.Location.X = Rect2.Location.X) and (Rect1.Location.Y = Rect2.Location.Y)) and (Rect1.Width = Rect2.Width)) and (Rect1.Height = Rect2.Height));
 end;
 {$ENDREGION}
 

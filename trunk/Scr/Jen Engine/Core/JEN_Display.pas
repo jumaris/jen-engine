@@ -324,7 +324,7 @@ begin
   if not FCustomHandle then
   begin
     with Helpers.SystemInfo do
-      Rect := Recti(Max((Screen.Width - FWidth) div 2, Screen.DesktopRect.x), Max((Helpers.SystemInfo.Screen.Height - FHeight) div 2, Screen.DesktopRect.y), FWidth, FHeight);
+      Rect := Recti(Max((Screen.Width - FWidth) div 2, Screen.DesktopRect.Location.x), Max((Helpers.SystemInfo.Screen.Height - FHeight) div 2, Screen.DesktopRect.Location.y), FWidth, FHeight);
 
     if FFullScreen then
     begin
@@ -336,7 +336,7 @@ begin
       Rect.Inflate(GetSystemMetrics(SM_CXDLGFRAME), GetSystemMetrics(SM_CYDLGFRAME) + GetSystemMetrics(SM_CYCAPTION) div 2);
     end;
 
-    SetWindowPos(FHandle, 0, Rect.x, Rect.y, Rect.Width, Rect.Height, $220);
+    SetWindowPos(FHandle, 0, Rect.Location.x, Rect.Location.y, Rect.Width, Rect.Height, $220);
     ShowWindow(FHandle, SW_SHOWNORMAL);
     SetWindowLongW(FHandle, GWL_STYLE, Longint(Style or WS_SYSMENU or WS_VISIBLE));
   end;

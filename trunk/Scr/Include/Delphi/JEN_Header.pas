@@ -179,8 +179,8 @@ type
   end;
 
   TMouse = object
-    Pos         : TPoint2i;
-    Delta       : TPoint2i;
+    Pos         : TVec2i;
+    Delta       : TVec2i;
     WheelDelta  : LongInt;
   end;
 
@@ -298,10 +298,10 @@ type
     procedure Bind(Channel: Byte = 0); stdcall;
 
     function GetID: LongWord; stdcall;
-    function GetCoordParams: TVec4f; stdcall;
     function GetFormat: TTextureFormat; stdcall;
     function GetWidth: LongWord; stdcall;
     function GetHeight: LongWord; stdcall;
+    function GetMaxTC: TVec2f; stdcall;
     function GetSampler: LongWord; stdcall;
     function GetFilter: TTextureFilter; stdcall;
     procedure SetFilter(Value: TTextureFilter); stdcall;
@@ -309,23 +309,16 @@ type
     procedure SetClamp(Value: Boolean); stdcall;
     procedure SetCompare(Value: TCompareMode); stdcall;
 
-    function GettSubTexCount: LongInt; stdcall;
-    function GetSubTex(idx: LongInt): ITexture; stdcall;
-
     procedure DataSet(Width, Height, Size: LongInt; Data: Pointer; Level: LongInt); stdcall;
-    procedure Flip(Vertical, Horizontal: Boolean); stdcall;
-    procedure Split(Vertical, Horizontal: LongWord); stdcall;
 
     property ID: LongWord read GetID;
     property Width: LongWord read GetWidth;
     property Height: LongWord read GetHeight;
-    property CoordParams: TVec4f read GetCoordParams;
+    property MaxTC: TVec2f read GetMaxTC;
     property Format: TTextureFormat read GetFormat;
     property Sampler: LongWord read GetSampler;
     property Filter: TTextureFilter read GetFilter write SetFilter;
     property Clamp: Boolean read GetClamp write SetClamp;
-    property SubTexCount: LongInt read GettSubTexCount;
-    property SubTex[Idx: LongInt]: ITexture read GetSubTex; default;
   end;
 
   IGeomBuffer = Interface
