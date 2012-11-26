@@ -1,72 +1,84 @@
-﻿	<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-		<PropertyGroup>
-			<ProjectGuid>{34B7A525-BAEE-4544-9366-409598452F85}</ProjectGuid>
-		</PropertyGroup>
-		<ItemGroup>
-			<Projects Include="DLL\JEN.dproj">
-				<Dependencies/>
-			</Projects>
-			<Projects Include="Samples\Delphi\02 Attach Engine from DLL\_02_Attach_Engine_from_DDL.dproj">
-				<Dependencies/>
-			</Projects>
-			<Projects Include="Samples\Delphi\03 Engine on Form\Engine_on_Form.dproj">
-				<Dependencies/>
-			</Projects>
-			<Projects Include="Run and kill\Run_and_kill.dproj">
-				<Dependencies/>
-			</Projects>
-		</ItemGroup>
-		<ProjectExtensions>
-			<Borland.Personality>Default.Personality.12</Borland.Personality>
-			<Borland.ProjectType/>
-			<BorlandProject>
-				<Default.Personality/>
-			</BorlandProject>
-		</ProjectExtensions>
-		<Target Name="JEN">
-			<MSBuild Projects="DLL\JEN.dproj"/>
-		</Target>
-		<Target Name="JEN:Clean">
-			<MSBuild Targets="Clean" Projects="DLL\JEN.dproj"/>
-		</Target>
-		<Target Name="JEN:Make">
-			<MSBuild Targets="Make" Projects="DLL\JEN.dproj"/>
-		</Target>
-		<Target Name="_02_Attach_Engine_from_DDL">
-			<MSBuild Projects="Samples\Delphi\02 Attach Engine from DLL\_02_Attach_Engine_from_DDL.dproj"/>
-		</Target>
-		<Target Name="_02_Attach_Engine_from_DDL:Clean">
-			<MSBuild Targets="Clean" Projects="Samples\Delphi\02 Attach Engine from DLL\_02_Attach_Engine_from_DDL.dproj"/>
-		</Target>
-		<Target Name="_02_Attach_Engine_from_DDL:Make">
-			<MSBuild Targets="Make" Projects="Samples\Delphi\02 Attach Engine from DLL\_02_Attach_Engine_from_DDL.dproj"/>
-		</Target>
-		<Target Name="Engine_on_Form">
-			<MSBuild Projects="Samples\Delphi\03 Engine on Form\Engine_on_Form.dproj"/>
-		</Target>
-		<Target Name="Engine_on_Form:Clean">
-			<MSBuild Targets="Clean" Projects="Samples\Delphi\03 Engine on Form\Engine_on_Form.dproj"/>
-		</Target>
-		<Target Name="Engine_on_Form:Make">
-			<MSBuild Targets="Make" Projects="Samples\Delphi\03 Engine on Form\Engine_on_Form.dproj"/>
-		</Target>
-		<Target Name="Run_and_kill">
-			<MSBuild Projects="Run and kill\Run_and_kill.dproj"/>
-		</Target>
-		<Target Name="Run_and_kill:Clean">
-			<MSBuild Targets="Clean" Projects="Run and kill\Run_and_kill.dproj"/>
-		</Target>
-		<Target Name="Run_and_kill:Make">
-			<MSBuild Targets="Make" Projects="Run and kill\Run_and_kill.dproj"/>
-		</Target>
-		<Target Name="Build">
-			<CallTarget Targets="JEN;_02_Attach_Engine_from_DDL;Engine_on_Form;Run_and_kill"/>
-		</Target>
-		<Target Name="Clean">
-			<CallTarget Targets="JEN:Clean;_02_Attach_Engine_from_DDL:Clean;Engine_on_Form:Clean;Run_and_kill:Clean"/>
-		</Target>
-		<Target Name="Make">
-			<CallTarget Targets="JEN:Make;_02_Attach_Engine_from_DDL:Make;Engine_on_Form:Make;Run_and_kill:Make"/>
-		</Target>
-		<Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
-	</Project>
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{34B7A525-BAEE-4544-9366-409598452F85}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="DLL\JEN.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Samples\Delphi\02 Attach Engine from DLL\_02_Attach_Engine_from_DDL.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Samples\Delphi\03 Engine on Form\Engine_on_Form.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Run and kill\Run_and_kill.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="digdig\digdig.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="JEN">
+        <MSBuild Projects="DLL\JEN.dproj"/>
+    </Target>
+    <Target Name="JEN:Clean">
+        <MSBuild Projects="DLL\JEN.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="JEN:Make">
+        <MSBuild Projects="DLL\JEN.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="_02_Attach_Engine_from_DDL">
+        <MSBuild Projects="Samples\Delphi\02 Attach Engine from DLL\_02_Attach_Engine_from_DDL.dproj"/>
+    </Target>
+    <Target Name="_02_Attach_Engine_from_DDL:Clean">
+        <MSBuild Projects="Samples\Delphi\02 Attach Engine from DLL\_02_Attach_Engine_from_DDL.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="_02_Attach_Engine_from_DDL:Make">
+        <MSBuild Projects="Samples\Delphi\02 Attach Engine from DLL\_02_Attach_Engine_from_DDL.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Engine_on_Form">
+        <MSBuild Projects="Samples\Delphi\03 Engine on Form\Engine_on_Form.dproj"/>
+    </Target>
+    <Target Name="Engine_on_Form:Clean">
+        <MSBuild Projects="Samples\Delphi\03 Engine on Form\Engine_on_Form.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="Engine_on_Form:Make">
+        <MSBuild Projects="Samples\Delphi\03 Engine on Form\Engine_on_Form.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Run_and_kill">
+        <MSBuild Projects="Run and kill\Run_and_kill.dproj"/>
+    </Target>
+    <Target Name="Run_and_kill:Clean">
+        <MSBuild Projects="Run and kill\Run_and_kill.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="Run_and_kill:Make">
+        <MSBuild Projects="Run and kill\Run_and_kill.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="digdig">
+        <MSBuild Projects="digdig\digdig.dproj"/>
+    </Target>
+    <Target Name="digdig:Clean">
+        <MSBuild Projects="digdig\digdig.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="digdig:Make">
+        <MSBuild Projects="digdig\digdig.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="JEN;_02_Attach_Engine_from_DDL;Engine_on_Form;Run_and_kill;digdig"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="JEN:Clean;_02_Attach_Engine_from_DDL:Clean;Engine_on_Form:Clean;Run_and_kill:Clean;digdig:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="JEN:Make;_02_Attach_Engine_from_DDL:Make;Engine_on_Form:Make;Run_and_kill:Make;digdig:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>

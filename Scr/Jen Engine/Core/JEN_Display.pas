@@ -151,9 +151,9 @@ begin
 
   else
     if Display.Custom then
-      Result := TWndProc(GetWindowLongW(Hwnd, GWL_USERDATA))(Hwnd, Msg, WParam, LParam)
+      Result := TWndProc(GetWindowLongW(Hwnd, GWL_USERDATA))(Hwnd, Msg, LongWord(wParam), LParam)
     else
-      Result := DefWindowProc(hWnd, Msg, wParam, lParam);
+      Result := DefWindowProc(hWnd, Msg, LongWord(wParam), lParam);
   end;
 
 end;
