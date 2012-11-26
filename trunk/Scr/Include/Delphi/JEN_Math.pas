@@ -192,7 +192,7 @@ Type
 const
   INF     = 1 / 0;
   NAN     = 0 / 0;
-  EPS     = 1.E-05;
+  EPS     = 1.4012984643248170709e-45;
   deg2rad = pi / 180;
   rad2deg = 180 / pi;
   ZeroPoint : TVec2i = (x: 0; y: 0;);
