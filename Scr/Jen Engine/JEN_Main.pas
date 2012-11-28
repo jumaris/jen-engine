@@ -102,7 +102,7 @@ begin
   for Event := Low(TEvent) to High(TEvent) do
     FEventsList[Event] := TList.Create;
 
-  //InitLog;
+  InitLog;
 
   try
     Input     := JEN_Input.TInput.Create;

@@ -30,9 +30,7 @@ type
     ikMouseL = $01, ikMouseR, ikMouseM = $04, ikMouseWheelUp, ikMouseWheelDown
   );
 
-  TResourceType = (rtShader, rtFont, rtTexture, rtTexture1, rtTexture2, rtTexture3, rtTexture4, rtTexture5, rtTexture6,
-                  rtTexture7, rtTexture8, rtTexture9, rtTexture10, rtTexture11, rtTexture12,
-	                rtTexture13, rtTexture14, rtTexture15);
+  TResourceType = (rtShader, rtFont, rtTexture);
 
   // TVertexAttrib = (vaPosition, vaNormal, vaColor, vaTexCoord);
   TCompareMode  = (cmNone, cmLEqual, cmGEqual, cmLess, cmGreater, cmEqual, cmNotEqual, cmAlways, cmNewer);
@@ -293,9 +291,10 @@ type
     property Define[DName: PWideChar]: LongInt read GetDefine write SetDefine; default;
   end;
 
+  TTextureChanel = (TC_Texture0, TC_Texture1, TC_Texture2, TC_Texture3);
   ITexture = interface(IResource)
   ['{E9EEFA65-F004-4668-9BAD-2FE92D19F050}']
-    procedure Bind(Channel: Byte = 0); stdcall;
+    procedure Bind(Channel: TTextureChanel = TC_Texture0); stdcall;
 
     function GetID: LongWord; stdcall;
     function GetFormat: TTextureFormat; stdcall;

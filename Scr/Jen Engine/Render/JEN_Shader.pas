@@ -60,6 +60,9 @@ type
     FValid        : Boolean;
     FUniformList  : TInterfaceList;
     FAttribList   : TInterfaceList;
+  class var
+    ActiveShaderId: GLhandle;
+    ActiveShader  : IShaderProgram;
   public
     function Valid: Boolean; stdcall;
     function GetID: LongWord; stdcall;
@@ -315,11 +318,11 @@ end;
 
 procedure TShaderProgram.Bind;
 begin
-  if (ResMan.ActiveID[rtShader] <> FID) then
+  if (ActiveShaderId <> FID) then
   begin
     glUseProgram(FID);
-    ResMan.ActiveID[rtShader] := FID;
-    ResMan.Active[rtShader] := Self;
+    ActiveShaderId := FID;
+    ActiveShader := Self;
   end;
 end;
 {$ENDREGION}
@@ -372,8 +375,11 @@ procedure TShaderUniform.Value(const Data; Count: LongInt);
 const
   USize : array [TShaderUniformType] of LongInt = (0, 4, 4, 8, 12, 16, 16, 36, 64);
 begin
-  if (FID = -1) or ((ResMan.Active[rtShader] as IShaderProgram).GetID <> FShaderId) then
+  if (FID = -1) or (TShaderProgram.ActiveShaderId <> FShaderId) then
+  begin
+    Engine.Warning('Before set uniform value bind the shader');
     Exit;
+  end;
 
   if Count * USize[FType] <= SizeOf(FValue) then
   begin

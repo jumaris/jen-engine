@@ -12,7 +12,7 @@ uses
   JEN_Helpers;
 
 const
-  TResourceStringName : array[TResourceType] of UnicodeString = ('shader', 'font', 'texture', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '');
+  TResourceStringName : array[TResourceType] of UnicodeString = ('shader', 'font', 'texture');
 
 type
   TResLoader = class
@@ -40,7 +40,7 @@ uses
 
 constructor TResource.Create(const FilePath: UnicodeString; ResType: TResourceType);
 begin
-  FFilePath := ExtractFileDir(FilePath);
+  FFilePath := FilePath;
   if FilePath <> '' then
     FName := ExtractFileName(FilePath)
   else
