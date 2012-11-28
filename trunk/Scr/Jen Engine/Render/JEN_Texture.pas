@@ -11,7 +11,6 @@ uses
   JEN_Math;
 
 type
-
   ITexture = interface(JEN_Header.ITexture)
   ['{5EC7ADB4-2241-46EE-B5BE-4959B06EA364}']
     procedure Init(TWidth, THeight: LongWord; TFormat: TTextureFormat); overload;
@@ -35,6 +34,9 @@ type
     FMipMap       : Boolean;
     FMipMapLevels : LongInt;
     FSubTexList   : TInterfaceList;
+  class var
+    ActiveTex     : array[TTextureChanel] of ITexture;
+    ActiveTexId   : array[TTextureChanel] of GLhandle;
     function GetID: LongWord; stdcall;
     function GetFormat: TTextureFormat; stdcall;
     function GetWidth: LongWord; stdcall;
@@ -55,7 +57,7 @@ type
     procedure GenLevels;
     procedure DataGet(Data: Pointer; Level: LongInt = 0; CFormat: TGLConst = GL_RGBA; DFormat: TGLConst = GL_UNSIGNED_BYTE);
        procedure DataCopy(XOffset, YOffset, X, Y, Width, Height: LongInt; Level: LongInt = 0);   }
-    procedure Bind(Channel: Byte = 0); stdcall;
+    procedure Bind(Channel: TTextureChanel = TC_Texture0); stdcall;
   end;
 
 const
@@ -321,14 +323,14 @@ begin
   glTexSubImage2D(FSampler, Level, X, Y, Width, Height, CFormat, DFormat, Data);
 end;                 }
 
-procedure TTexture.Bind(Channel: Byte); stdcall;
+procedure TTexture.Bind(Channel: TTextureChanel); stdcall;
 begin
-  if (ResMan.ActiveID[TResourceType(Channel + Ord(rtTexture))] <> FID) then
+  if (ActiveTexID[Channel] <> FID) then
   begin
-    glActiveTexture(GL_TEXTURE0 + Channel);
+    glActiveTexture(GL_TEXTURE0 + ord(Channel));
     glBindTexture(FSampler, FID);
-    ResMan.ActiveID[TResourceType(Channel + Ord(rtTexture))] := FID;
-    ResMan.Active[TResourceType(Channel + Ord(rtTexture))] := ITexture(Self);
+    ActiveTexID[Channel] := FID;
+    ActiveTex[Channel] := ITexture(Self);
   end;
 end;
 

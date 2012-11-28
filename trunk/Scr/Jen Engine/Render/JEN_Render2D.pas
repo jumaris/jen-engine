@@ -388,7 +388,7 @@ begin
     Tehnique := ttNormal;
     RenderTechnique[ttNormal].ShaderProgram.Bind;
 
-    Tex.Bind(0);
+    Tex.Bind;
   end;
   BatchTexture[1] := Tex;
 
@@ -488,13 +488,13 @@ begin
     RenderTechnique[Tehnique].ShaderProgram.Bind;
 
     if Assigned(Tex1) then
-      Tex1.Bind(0);
+      Tex1.Bind(TC_Texture0);
 
     if Assigned(Tex2) then
-      Tex2.Bind(1);
+      Tex2.Bind(TC_Texture1);
 
     if Assigned(Tex3) then
-      Tex3.Bind(2);
+      Tex3.Bind(TC_Texture2);
   end;
 
   BatchTexture[1] := Tex1;
