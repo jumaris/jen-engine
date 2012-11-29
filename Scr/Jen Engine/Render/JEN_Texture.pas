@@ -121,13 +121,6 @@ begin
 
   Bind;
 
-  if Format <> tfoNone then
-    with TextureFormatInfo[Format] do
-    if Compressed then
-      glCompressedTexImage2D(GL_TEXTURE_2D, 0, InternalFormat,  Width, Height, 0, 0, nil)
-    else
-      glTexImage2D(GL_TEXTURE_2D, 0, InternalFormat, Width, Height, 0, ExternalFormat, DataType, nil);
-
   if (Format = tfoDepth8) or (Format = tfoDepth16) or (Format = tfoDepth24) or (Format = tfoDepth32) then
     glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
 
@@ -136,6 +129,14 @@ begin
   FClamp  := False;
   SetClamp(True);
   SetFilter(tfiBilinear);
+  {
+  if Format <> tfoNone then
+  with TextureFormatInfo[Format] do
+  if Compressed then
+    glCompressedTexImage2D(GL_TEXTURE_2D, 0, InternalFormat,  Width, Height, 0, 0, nil)
+  else
+    glTexImage2D(GL_TEXTURE_2D, 0, InternalFormat, Width, Height, 0, ExternalFormat, DataType, nil);
+   }
 end;
                   {
 procedure TTexture.Init(Parent: ITexture; S, T, SW, TH: Single);
@@ -332,6 +333,23 @@ begin
     ActiveTexID[Channel] := FID;
     ActiveTex[Channel] := ITexture(Self);
   end;
+end;
+
+procedure ClearResources(Param: LongInt; Data: Pointer); stdcall;
+var
+  tc: TTextureChanel;
+begin
+  for tc := Low(TTextureChanel) to High(TTextureChanel) do
+  begin
+    TTexture.ActiveTexId[tc] := 0;
+    TTexture.ActiveTex[tc] := nil;
+  end;
+end;
+
+initialization
+begin
+  CreateEngine;
+  Engine.AddEventListener(evFinish, @ClearResources);
 end;
 
 end.

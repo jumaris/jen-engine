@@ -69,9 +69,9 @@
         <DelphiCompile Include="$(MainSource)">
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
+        <DCCReference Include="..\Jen Engine\JEN_Main.pas"/>
         <DCCReference Include="..\Include\Delphi\JEN_Header.pas"/>
         <DCCReference Include="..\Include\Delphi\JEN_Math.pas"/>
-        <DCCReference Include="..\Jen Engine\JEN_Main.pas"/>
         <DCCReference Include="..\Jen Engine\Core\JEN_Console.pas"/>
         <DCCReference Include="..\Jen Engine\Core\JEN_DDSTexture.pas"/>
         <DCCReference Include="..\Jen Engine\Core\JEN_Debugger.pas"/>

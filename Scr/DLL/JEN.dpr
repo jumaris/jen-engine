@@ -6,9 +6,9 @@ library JEN;
 uses
   SysUtils,
   Classes,
+  JEN_Main in '..\Jen Engine\JEN_Main.pas',
   JEN_Header in '..\Include\Delphi\JEN_Header.pas',
   JEN_Math in '..\Include\Delphi\JEN_Math.pas',
-  JEN_Main in '..\Jen Engine\JEN_Main.pas',
   JEN_Console in '..\Jen Engine\Core\JEN_Console.pas',
   JEN_DDSTexture in '..\Jen Engine\Core\JEN_DDSTexture.pas',
   JEN_Debugger in '..\Jen Engine\Core\JEN_Debugger.pas',
@@ -38,5 +38,8 @@ exports
 
 begin
   ReportMemoryLeaksOnShutdown := True;
-  Engine := nil;
 end.
+
+
+
+
