@@ -1,5 +1,3 @@
-{%RunWorkingDir F:\Kot\Programming\Engines\MY\jen-engine\Bin\}
-{%BuildWorkingDir F:\Kot\Programming\Engines\MY\jen-engine\Bin\}
 unit JEN_Main;
 
 interface
@@ -20,12 +18,13 @@ uses
 
 type
   TJenEngine = class(TInterfacedObject, IJenEngine)
-    constructor Create(DebugMode : Boolean);
+    constructor Create;
     destructor Destroy; override;
   private
-    class var
+  class var
       FDebugMode    : Boolean;
       FisRunnig     : Boolean;
+      FisInit       : Boolean;
       FQuit         : Boolean;
 
       FLogStream    : IStream;
@@ -35,17 +34,17 @@ type
       FJobEvent     : THandle;
       FJobDoneEvent : THandle;
       FLogMessage   : UnicodeString;
-    var
-      FEventsList : array[TEvent] of TList;
-      FLastUpdate : LongInt;
+      FEventsList   : array[TEvent] of TList;
+      FLastUpdate   : LongInt;
   public
+    procedure Init(DebugMode: Boolean);
     procedure Start(Game: IGame); stdcall;
     procedure Finish; stdcall;
 
     procedure GetSubSystem(SubSystemType: TJenSubSystemType; out SubSystem: IJenSubSystem); stdcall;
 
-    procedure AddEventListener(Event: TEvent; Proc: TEventListener); stdcall;
-    procedure RemoveEventListener(Event: TEvent; Proc: TEventListener); stdcall;
+    procedure AddEventListener(Event: TEvent; Proc: TEventProc); stdcall;
+    procedure RemoveEventListener(Event: TEvent; Proc: TEventProc); stdcall;
     procedure DispatchEvent(Event: TEvent; Param: LongInt = 0; Data: Pointer = nil); stdcall;
 
     procedure InitLog;
@@ -66,7 +65,7 @@ type
     procedure CodeBlock(Text: WideString); overload; stdcall;
 
     class property Quit: Boolean read FQuit write FQuit;
-    class property DebugMode: Boolean read FDebugMode;
+ //  class property DebugMode: Boolean read FDebugMode;
   end;
 
 var
@@ -79,47 +78,27 @@ var
   ResMan     : IResourceManager;
   Game       : IGame;
 
-function GetEngine(Debug: Boolean): JEN_Header.IJenEngine; stdcall;
+procedure GetEngine(Debug: Boolean; out Return: JEN_Header.IJenEngine); stdcall;
+procedure CreateEngine;
 
 implementation
 
-function GetEngine(Debug: Boolean): JEN_Header.IJenEngine;
- begin
-  if not Assigned(Engine) then
-    TJenEngine.Create(Debug);
-  Result := IJenEngine(Engine);
+procedure GetEngine(Debug: Boolean; out Return: JEN_Header.IJenEngine);
+begin
+  Engine.Init(Debug);
+  Return := Engine;
 end;
 
 constructor TJenEngine.Create;
 var
   Event : TEvent;
 begin
-  Engine := Self;
+  FisInit   := False;
   FisRunnig := False;
-  FDebugMode := DebugMode;
-  Helpers := THelpers.Create;
+  Helpers   := THelpers.Create;
 
   for Event := Low(TEvent) to High(TEvent) do
     FEventsList[Event] := TList.Create;
-
-  InitLog;
-
-  try
-    Input     := JEN_Input.TInput.Create;
-    Render    := TRender.Create;
-    Render2d  := TRender2D.Create;
-    Display   := TDisplay.Create;
-    ResMan    := TResourceManager.Create;
-  except
-    on E : Exception do
-    begin
-
-      Error('Exception in TJenEngine.Create unit ' + E.UnitName);
-      Error(E.ClassName + ': ' + E.Message);
-
-      Halt(0);
-    end;
-  end;
 end;
 
 destructor TJenEngine.Destroy;
@@ -170,6 +149,34 @@ begin
   DestroyLog;
 
   inherited;
+end;
+
+procedure TJenEngine.Init(DebugMode: Boolean);
+begin
+  if FisInit then
+  begin
+    Warning('Engine already init');
+    Exit;
+  end;
+
+  try
+    InitLog;
+    Input     := JEN_Input.TInput.Create;
+    Render    := TRender.Create;
+    Render2d  := TRender2D.Create;
+    Display   := TDisplay.Create;
+    ResMan    := TResourceManager.Create;
+  except
+    on E : Exception do
+    begin
+
+      Error('Exception in TJenEngine.Create unit ' + E.UnitName);
+      Error(E.ClassName + ': ' + E.Message);
+
+      Halt(0);
+    end;
+  end;
+  FisInit := True;
 end;
 
 procedure TJenEngine.Start(Game: IGame);
@@ -229,6 +236,7 @@ begin
 
   Game.Close;
   Game := nil;
+  DispatchEvent(evFinish);
 end;
 
 procedure TJenEngine.Finish;
@@ -255,15 +263,15 @@ var
   i : LongInt;
 begin
   for i:=0 to FEventsList[Event].Count-1 do
-    TEventListener(FEventsList[Event][i])(Param, Data);
+    TEventProc(FEventsList[Event][i])(Param, Data);
 end;
 
-procedure TJenEngine.AddEventListener(Event : TEvent; Proc: TEventListener);
+procedure TJenEngine.AddEventListener(Event : TEvent; Proc: TEventProc);
 begin
   FEventsList[Event].Add(@Proc);
 end;
 
-procedure TJenEngine.RemoveEventListener(Event: TEvent; Proc: TEventListener);
+procedure TJenEngine.RemoveEventListener(Event: TEvent; Proc: TEventProc);
 begin
   FEventsList[Event].Del(FEventsList[Event].IndexOf(@Proc));
 end;
@@ -330,7 +338,7 @@ begin
   Str := #65279;
   FLogStream.Write(Str[1], 2);
 
-  Console := Debugmode;
+  Console := FDebugmode;
   {$IFDEF Debug}Console := true;{$ENDIF}
 
   if Console then
@@ -440,7 +448,15 @@ begin
   AddMessage(lmCode, PWideChar(Text));
 end;
 
+procedure CreateEngine;
+begin
+  if not Assigned(Engine) then
+    Engine := TJenEngine.Create;
+end;
+
 initialization
+  CreateEngine;
+
 
 finalization
 begin

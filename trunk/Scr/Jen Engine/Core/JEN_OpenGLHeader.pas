@@ -417,6 +417,7 @@ const
 
   procedure glFinish; stdcall; external opengl32;
   procedure glFlush; stdcall; external opengl32;
+  function  glGetError: GLuint; stdcall; external opengl32;
 
   // Viewport
   procedure glViewport(x, y: GLint; width, height: GLsizei); stdcall; external opengl32;

@@ -375,7 +375,10 @@ procedure TShaderUniform.Value(const Data; Count: LongInt);
 const
   USize : array [TShaderUniformType] of LongInt = (0, 4, 4, 8, 12, 16, 16, 36, 64);
 begin
-  if (FID = -1) or (TShaderProgram.ActiveShaderId <> FShaderId) then
+  if (FID = -1) then
+    Exit;
+
+  if (TShaderProgram.ActiveShaderId <> FShaderId) then
   begin
     Engine.Warning('Before set uniform value bind the shader');
     Exit;
@@ -673,6 +676,18 @@ begin
   Shader := Resource as IShaderResource;
   Shader.Init(TXML.Load(Stream));
   Result := True;
+end;
+
+procedure ClearResources(Param: LongInt; Data: Pointer); stdcall;
+begin
+  TShaderProgram.ActiveShaderId := 0;
+  TShaderProgram.ActiveShader := nil;
+end;
+
+initialization
+begin
+  CreateEngine;
+  Engine.AddEventListener(evFinish, @ClearResources);
 end;
 
 end.

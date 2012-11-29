@@ -14,7 +14,7 @@ const
 
 type
   TJenSubSystemType = (ssHelpers, ssInput, ssDisplay, ssResMan, ssRender, ssRender2d);
-  TEvent = (evLogMsg, evActivate, evKeyUp, evKeyDown, evMouseWhell, evDisplayRestore, evRenderFlush);
+  TEvent = (evLogMsg, evActivate, evKeyUp, evKeyDown, evMouseWhell, evDisplayRestore, evRenderFlush, evFinish);
   TLogMsg = (lmHeaderMsg, lmNotify, lmCode, lmWarning, lmError);
 
   TInputKey = (
@@ -52,7 +52,7 @@ type
   TTextureFormat = (tfoNone, tfoDXT1c, tfoDXT1a, tfoDXT3, tfoDXT5, tfoDepth8, tfoDepth16, tfoDepth24, tfoDepth32, tfoA8, tfoL8, tfoAL8, tfoBGRA8, tfoBGR8, tfoBGR5A1, tfoBGR565, tfoBGRA4, tfoR16F, tfoR32F, tfoGR16F, tfoGR32F, tfoBGRA16F, tfoBGRA32F);
   TTextureFilter = (tfiNone, tfiBilinear, tfiTrilinear, tfiAniso);
 
-  TEventListener = procedure(Param: LongInt; Data: Pointer); stdcall;
+  TEventProc = procedure(Param: LongInt; Data: Pointer); stdcall;
 
   TCompareFunc = function (Item1, Item2: Pointer): LongInt;
   IList = interface
@@ -94,8 +94,8 @@ type
 
     procedure GetSubSystem(SubSustemType: TJenSubSystemType; out SubSystem: IJenSubSystem); stdcall;
 
-    procedure AddEventListener(Event: TEvent; Proc: TEventListener); stdcall;
-    procedure RemoveEventListener(Event: TEvent; Proc: TEventListener); stdcall;
+    procedure AddEventListener(Event: TEvent; Proc: TEventProc); stdcall;
+    procedure RemoveEventListener(Event: TEvent; Proc: TEventProc); stdcall;
     procedure DispatchEvent(Event: TEvent; Param: LongInt = 0; Data: Pointer = nil); stdcall;
 
     procedure Log(Text: PWideChar); overload; stdcall;
@@ -423,7 +423,7 @@ type
 
     function GetFPS: LongWord; stdcall;
     function GetFrameTime: LongWord; stdcall;
-    function GetLastDipCount: LongWord; stdcall;
+    function GetFrameDipCount: LongWord; stdcall;
     function GetDIPCount: LongWord; stdcall;
     procedure SetDIPCount(Value: LongWord); stdcall;
     procedure IncDIP; stdcall;
@@ -445,7 +445,7 @@ type
     property FPS: LongWord read GetFPS;
     property FrameTime: LongWord read GetFrameTime;
     property DipCount: LongWord read GetDipCount write SetDipCount;
-    property LastDipCount: LongWord read GetLastDipCount;
+    property FrameDipCount: LongWord read GetFrameDipCount;
   end;
 
   IRender2D = interface(IJenSubSystem)
@@ -574,7 +574,7 @@ type
     property SystemInfo: ISystemInfo read GetSystemInfo;
   end;
 
-function GetJenEngine(Debug: Boolean): JEN_Header.IJenEngine; stdcall; external 'JEN.dll';
+procedure GetJenEngine(Debug: Boolean; out Return: JEN_Header.IJenEngine); stdcall; external 'JEN.dll';
 
 implementation
 

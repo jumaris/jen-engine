@@ -47,7 +47,7 @@ type
     function GetValid : Boolean;
     procedure Start;
     procedure Finish;
-
+    procedure CheckGAPIErrors;
     property Valid : Boolean read GetValid;
   end;
 
@@ -122,7 +122,7 @@ type
 
     function GetFPS: LongWord; stdcall;
     function GetFrameTime: LongWord; stdcall;
-    function GetLastDipCount: LongWord; stdcall;
+    function GetFrameDipCount: LongWord; stdcall;
     function GetDipCount: LongWord; stdcall;
     procedure SetDipCount(Value : LongWord); stdcall;
     procedure IncDip; stdcall;
@@ -133,6 +133,8 @@ type
     procedure SetCameraPos(Value: TVec3f); stdcall;
     function  GetCameraDir: TVec3f; stdcall;
     procedure SetCameraDir(Value: TVec3f); stdcall;
+
+    procedure CheckGAPIErrors;
 
     procedure Start;
     procedure Finish;
@@ -311,8 +313,10 @@ begin
   // glEnable(GL_TEXTURE_2D);
   // glEnable(GL_NORMALIZE);
   // glEnable(GL_COLOR_MATERIAL);
+  CheckGAPIErrors;
   Render2d.Init;
   Render2d.UpdateRC;
+  CheckGAPIErrors;
   FValid := True;
 end;
 
@@ -675,7 +679,7 @@ begin
   FDipCount := Value;
 end;
 
-function TRender.GetLastDipCount: LongWord;
+function TRender.GetFrameDipCount: LongWord;
 begin
   Result := FLastDipCount;
 end;
@@ -685,6 +689,15 @@ begin
   Inc(FDipCount);
 end;
 
+procedure TRender.CheckGAPIErrors;
+var
+  error: GLenum;
+begin
+  error := glGetError;
+  if(error <> 0) then
+    Engine.Warning('OpenGL error 0x' + IntToHex(error, 4));
+end;
+
 procedure TRender.Start;
 begin
   FFrameStart := Helpers.RealTime;
@@ -692,6 +705,7 @@ end;
 
 procedure TRender.Finish;
 begin
+  CheckGAPIErrors;
   Engine.DispatchEvent(evRenderFlush);
 
   Inc(FFPSCount);

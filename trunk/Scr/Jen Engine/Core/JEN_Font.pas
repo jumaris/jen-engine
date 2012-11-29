@@ -316,4 +316,17 @@ begin
   Result := True;
 end;
 
+
+procedure ClearResources(Param: LongInt; Data: Pointer); stdcall;
+begin
+  TFont.Shader := nil;
+  TFont.ParamsUniform := nil;
+end;
+
+initialization
+begin
+  CreateEngine;
+  Engine.AddEventListener(evFinish, @ClearResources);
+end;
+
 end.
