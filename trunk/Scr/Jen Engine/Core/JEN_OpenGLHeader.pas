@@ -41,6 +41,17 @@ const
 // Boolean
   GL_FALSE                            = 0;
   GL_TRUE                             = 1;
+  GL_NONE                             = 0;
+
+// ErrorCode
+  GL_NO_ERROR = 0;
+  GL_INVALID_ENUM = $0500;
+  GL_INVALID_VALUE = $0501;
+  GL_INVALID_OPERATION = $0502;
+  GL_OUT_OF_MEMORY = $0505;
+
+// OpenGl 3.0 ExtRead
+  GL_NUM_EXTENSIONS = $821D;
 
 // Pixel Format
   WGL_DRAW_TO_WINDOW_ARB              = $2001;
@@ -61,7 +72,6 @@ const
   WGL_SAMPLES_ARB                     = $2042;
 
 // Pixel Format
-  GL_COLOR_INDEX                      = $1900;
   GL_STENCIL_INDEX                    = $1901;
   GL_DEPTH_COMPONENT                  = $1902;
   GL_RED                              = $1903;
@@ -70,8 +80,6 @@ const
   GL_ALPHA                            = $1906;
   GL_RGB                              = $1907;
   GL_RGBA                             = $1908;
-  GL_LUMINANCE                        = $1909;
-  GL_LUMINANCE_ALPHA                  = $190A;
 
 // AttribMask
   GL_DEPTH_BUFFER_BIT                 = $00000100;
@@ -86,9 +94,6 @@ const
   GL_TRIANGLES                        = $0004;
   GL_TRIANGLE_STRIP                   = $0005;
   GL_TRIANGLE_FAN                     = $0006;
-  GL_QUADS                            = $0007;
-  GL_QUAD_STRIP                       = $0008;
-  GL_POLYGON                          = $0009;
 
 // Alpha Function
   GL_NEVER                            = $0200;
@@ -123,16 +128,10 @@ const
 // Tests
   GL_DEPTH_TEST                       = $0B71;
   GL_STENCIL_TEST                     = $0B90;
-  GL_ALPHA_TEST                       = $0BC0;
   GL_SCISSOR_TEST                     = $0C11;
 
 // GetTarget
-  GL_POLYGON_MODE                     = $0B40;
   GL_CULL_FACE                        = $0B44;
-  GL_LIGHTING                         = $0B50;
-  GL_LIGHT0                           = $4000;
-  GL_COLOR_MATERIAL                   = $0B57;
-  GL_NORMALIZE                        = $0BA1;
   GL_VIEWPORT                         = $0BA2;
   GL_BLEND                            = $0BE2;
 
@@ -166,19 +165,13 @@ const
   GL_SAMPLER_1D_SHADOW                = $8B61;
   GL_SAMPLER_2D_SHADOW                = $8B62;
 
-  // Matrix Mode
-  GL_MODELVIEW                        = $1700;
-  GL_PROJECTION                       = $1701;
+// Matrix Mode
   GL_TEXTURE                          = $1702;
 
 // PolygonMode
   GL_POINT                            = $1B00;
   GL_LINE                             = $1B01;
   GL_FILL                             = $1B02;
-
-// List mode
-  GL_COMPILE                          = $1300;
-  GL_COMPILE_AND_EXECUTE              = $1301;
 
 // StencilOp
   GL_KEEP                             = $1E00;
@@ -189,19 +182,6 @@ const
   GL_DECR_WRAP                        = $8508;
   GL_INVERT                           = $150A;
 
-                {
- // LightParameter
-  GL_AMBIENT                          = $1200;
-  GL_DIFFUSE                          = $1201;
-  GL_SPECULAR                         = $1202;
-  GL_POSITION                         = $1203;
-  GL_SPOT_DIRECTION                   = $1204;
-  GL_SPOT_EXPONENT                    = $1205;
-  GL_SPOT_CUTOFF                      = $1206;
-  GL_CONSTANT_ATTENUATION             = $1207;
-  GL_LINEAR_ATTENUATION               = $1208;
-  GL_QUADRATIC_ATTENUATION            = $1209;
-                           }
 // GetString Parameter
   GL_VENDOR                           = $1F00;
   GL_RENDERER                         = $1F01;
@@ -211,13 +191,6 @@ const
   GL_MAX_TEXTURE_SIZE                 = $0D33;
   GL_MAX_TEXTURE_IMAGE_UNITS          = $8872;
   GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS = $8B4D;
-
-// TextureEnvParameter
-  GL_TEXTURE_ENV_MODE                 = $2200;
-  GL_TEXTURE_ENV_COLOR                = $2201;
-
-// TextureEnvTarget
-  GL_TEXTURE_ENV                      = $2300;
 
 // Texture Filter
   GL_NEAREST                          = $2600;
@@ -241,37 +214,14 @@ const
 // Textures
   GL_TEXTURE_2D                       = $0DE1;
   GL_TEXTURE0                         = $84C0;
-  GL_TEXTURE_MAX_ANISOTROPY           = $84FE;
-  GL_MAX_TEXTURE_MAX_ANISOTROPY       = $84FF;
+  GL_TEXTURE_MAX_ANISOTROPY_EXT       = $84FE;
+  GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT   = $84FF;
   GENERATE_MIPMAP_SGIS                = $8191;
-  GL_TEXTURE_FILTER_CONTROL           = $8500;
   GL_TEXTURE_LOD_BIAS                 = $8501;
-
-  GL_DEPTH_TEXTURE_MODE               = $884B;
   GL_TEXTURE_COMPARE_MODE             = $884C;
   GL_TEXTURE_COMPARE_FUNC             = $884D;
-  GL_COMPARE_R_TO_TEXTURE             = $884E;
 
  // GL_EXT_texture
-  GL_ALPHA4                           = $803B;
-  GL_ALPHA8                           = $803C;
-  GL_ALPHA12                          = $803D;
-  GL_ALPHA16                          = $803E;
-  GL_LUMINANCE4                       = $803F;
-  GL_LUMINANCE8                       = $8040;
-  GL_LUMINANCE12                      = $8041;
-  GL_LUMINANCE16                      = $8042;
-  GL_LUMINANCE4_ALPHA4                = $8043;
-  GL_LUMINANCE6_ALPHA2                = $8044;
-  GL_LUMINANCE8_ALPHA8                = $8045;
-  GL_LUMINANCE12_ALPHA4               = $8046;
-  GL_LUMINANCE12_ALPHA12              = $8047;
-  GL_LUMINANCE16_ALPHA16              = $8048;
-  GL_INTENSITY                        = $8049;
-  GL_INTENSITY4                       = $804A;
-  GL_INTENSITY8                       = $804B;
-  GL_INTENSITY12                      = $804C;
-  GL_INTENSITY16                      = $804D;
   GL_RGB2                             = $804E;
   GL_RGB4                             = $804F;
   GL_RGB5                             = $8050;
@@ -327,7 +277,7 @@ const
   GL_PROXY_TEXTURE_2D                 = $8064;
   GL_TEXTURE_TOO_LARGE                = $8065;
  }
-  // GL_EXT_texture3D
+// GL_EXT_texture3D
   GL_PACK_SKIP_IMAGES                 = $806B;
   GL_PACK_IMAGE_HEIGHT                = $806C;
   GL_UNPACK_SKIP_IMAGES               = $806D;
@@ -338,11 +288,11 @@ const
   GL_TEXTURE_WRAP_R                   = $8072;
   GL_MAX_3D_TEXTURE_SIZE              = $8073;
 
-  // GL_EXT_texture_compression_s3tc
-  GL_COMPRESSED_RGB_S3TC_DXT1         = $83F0;
-  GL_COMPRESSED_RGBA_S3TC_DXT1        = $83F1;
-  GL_COMPRESSED_RGBA_S3TC_DXT3        = $83F2;
-  GL_COMPRESSED_RGBA_S3TC_DXT5        = $83F3;
+// GL_EXT_texture_compression_s3tc
+  GL_COMPRESSED_RGB_S3TC_DXT1_EXT     = $83F0;
+  GL_COMPRESSED_RGBA_S3TC_DXT1_EXT    = $83F1;
+  GL_COMPRESSED_RGBA_S3TC_DXT3_EXT    = $83F2;
+  GL_COMPRESSED_RGBA_S3TC_DXT5_EXT    = $83F3;
 
   GL_UNSIGNED_BYTE_2_3_3_REV          = $8362;
   GL_UNSIGNED_SHORT_5_6_5             = $8363;
@@ -352,9 +302,7 @@ const
   GL_UNSIGNED_INT_8_8_8_8_REV         = $8367;
   GL_UNSIGNED_INT_2_10_10_10_REV      = $8368;
 
-  // GL_EXT_texture_cube_map
-  GL_NORMAL_MAP                       = $8511;
-  GL_REFLECTION_MAP                   = $8512;
+// GL_EXT_texture_cube_map
   GL_TEXTURE_CUBE_MAP                 = $8513;
   GL_TEXTURE_BINDING_CUBE_MAP         = $8514;
   GL_TEXTURE_CUBE_MAP_POSITIVE_X      = $8515;
@@ -366,10 +314,8 @@ const
   GL_PROXY_TEXTURE_CUBE_MAP           = $851B;
   GL_MAX_CUBE_MAP_TEXTURE_SIZE        = $851C;
 
-   // buffers
-  GL_NONE                             = 0;
-
 // FBO
+  GL_INVALID_FRAMEBUFFER_OPERATION    = $0506;
   GL_FRAMEBUFFER                      = $8D40;
   GL_RENDERBUFFER                     = $8D41;
   GL_COLOR_ATTACHMENT0                = $8CE0;
@@ -394,11 +340,6 @@ const
   GL_STREAM_DRAW                      = $88E0;
   GL_STATIC_DRAW                      = $88E4;
 
-  GL_TEXTURE_COORD_ARRAY              = $8078;
-  GL_NORMAL_ARRAY                     = $8075;
-  GL_COLOR_ARRAY                      = $8076;
-  GL_VERTEX_ARRAY                     = $8074;
-
 // Queries
   GL_SAMPLES_PASSED                   = $8914;
   GL_QUERY_COUNTER_BITS               = $8864;
@@ -406,9 +347,7 @@ const
   GL_QUERY_RESULT                     = $8866;
   GL_QUERY_RESULT_AVAILABLE           = $8867;
 
-  GL_CLIENT_PIXEL_STORE_BIT           = $00000001;
-  GL_CLIENT_VERTEX_ARRAY_BIT          = $00000002;
-  GL_CLIENT_ALL_ATTRIB_BITS           = $FFFFFFFF;
+//Poligon Fill
   GL_POLYGON_OFFSET_FACTOR            = $8038;
   GL_POLYGON_OFFSET_UNITS             = $2A00;
   GL_POLYGON_OFFSET_POINT             = $2A01;
@@ -421,16 +360,14 @@ const
 
   // Viewport
   procedure glViewport(x, y: GLint; width, height: GLsizei); stdcall; external opengl32;
-  procedure glOrtho(left, right, bottom, top, zNear, zFar: GLdouble); stdcall; external opengl32;
   procedure glScissor(x, y: GLint; width, height: GLsizei); stdcall; external opengl32;
 
-    // Get
+  // Get
   function  glGetString(name: GLenum): PAnsiChar; stdcall; external opengl32;
   procedure glGetFloatv(pname: GLenum; params: PGLfloat); stdcall; external opengl32;
   procedure glGetIntegerv(pname: GLenum; params: PGLint); stdcall; external opengl32;
 
   procedure glHint(target, mode: GLenum); stdcall; external opengl32;
-  procedure glShadeModel(mode: GLenum); stdcall; external opengl32;
 
   // Clear
   procedure glClear(mask: GLbitfield); stdcall; external opengl32;
@@ -455,7 +392,6 @@ const
   procedure glColorMask(red, green, blue, alpha: GLboolean); stdcall; external opengl32;
 
   // Alpha
-  procedure glAlphaFunc(func: GLenum; ref: GLfloat); stdcall; external opengl32;
   procedure glBlendFunc(sfactor, dfactor: GLenum); stdcall; external opengl32;
 
   // CullFace
@@ -473,8 +409,6 @@ const
   procedure glTexSubImage2D(target: GLenum; level, xoffset, yoffset: GLint; width, height: GLsizei; format, atype: GLenum; const pixels: Pointer); stdcall; external opengl32;
   procedure glGetTexImage(target: GLenum; level: GLint; format: GLenum; atype: GLenum; pixels: Pointer); stdcall; external opengl32;
   procedure glCopyTexSubImage2D(target: GLenum; level, xoffset, yoffset, x, y: GLint; width, height: GLsizei); stdcall; external opengl32;
-  procedure glTexEnvi(target: GLenum; pname: GLenum; param: GLint); stdcall; external opengl32;
-  procedure glTexEnvf(target: GLenum; pname: GLenum; param:	GLfloat); stdcall; external opengl32;
   function  gluBuild2DMipmaps(target: GLenum; components, width, height: GLint; format, atype: GLenum; const data: Pointer): LongInt; stdcall; external opengl32;
 
   procedure glDrawArrays(mode: GLenum; first: GLint; count: GLsizei); stdcall; external opengl32;
@@ -491,6 +425,7 @@ const
 var
   wglGetExtensionsStringEXT: function(): PAnsiChar; stdcall;
   wglGetExtensionsStringARB: function(hdc: HDC): PAnsiChar; stdcall;
+  glGetStringi: function(name: GLenum; index: GLuint): PGLubyte; stdcall;
 
   wglChoosePixelFormatARB: function(hdc: HDC; const piAttribIList: PGLint; const pfAttribFList: PGLfloat; nMaxFormats: GLuint; piFormats: PGLint; nNumFormats: PGLuint): LongBool; stdcall;
   wglSwapIntervalEXT: function(interval: GLint): LongBool; stdcall;
@@ -510,7 +445,6 @@ var
   glDrawBuffers             : procedure(n: GLsizei; const bufs: PGLenum); stdcall;
 
   glActiveTexture   : procedure(texture: GLenum); stdcall;
-  glMultiTexCoord4f : procedure(target: GLenum; s: GLfloat; t: GLfloat; r: GLfloat; q: GLfloat); stdcall;
 
   glBindBuffer      : procedure(target: GLenum; buffer: GLuint); stdcall;
   glDeleteBuffers   : procedure(n: GLsizei; buffers : PGLuint); stdcall;
@@ -640,20 +574,20 @@ var
   GlModuleH : HMODULE;
 
 function glIsSupported(Extension: AnsiString): Boolean;
-var
-  ExtPos: Integer;
+//var
+//  ExtPos: Integer;
 begin
+  Result := Pos(' ' + Extension + ' ', ExtString) > 0;
+   {
   ExtPos := Pos(Extension, ExtString);
   Result := ExtPos > 0;
   if Result Then
     Result := ((ExtPos + Length(Extension) - 1) = Length(ExtString)) or
-                (ExtString[ExtPos + Length(Extension)] = ' ');
+                (ExtString[ExtPos + Length(Extension)] = ' ');}
 end;
 
 
 function glGetProc(const ProcName: PAnsiChar; var OldResult: Boolean; Required: Boolean): Pointer;
-//var
- // S : AnsiString;
 begin
   if not OldResult then Exit(nil);
 
@@ -661,22 +595,9 @@ begin
 
  // if not Assigned(Result) then
   Result := wglGetProcAddress(ProcName);
-                       {
-  if not Assigned(Result) then
-  begin
-    S := ProcName + AnsiString('ARB');
-    Result := wglGetProcAddress(@S[1]);
-  end;
-
-  if not Assigned(Result) then
-  begin
-    S := ProcName + AnsiString('EXT');
-    Result := wglGetProcAddress(@S[1]);
-  end;             }
 
   if (not Assigned(Result)) then
   begin
-
     Engine.Error('Cannot load procedure ' + ProcName);
     if (Required) then
       OldResult := False;
@@ -684,21 +605,30 @@ begin
 end;
 
 procedure ReadGlExt;
-type
-    TwglGetExtensionsStringEXT = function(): PAnsiChar; stdcall;
-    TwglGetExtensionsStringARB = function(hdc: HDC): PAnsiChar; stdcall;
+var
+  i: Integer;
+  NumExtension: GLint;
 begin
-  ExtString := glGetString(GL_EXTENSIONS);
+  ExtString := '';
 
-  wglGetExtensionsStringEXT := TwglGetExtensionsStringEXT(wglGetProcAddress('wglGetExtensionsStringEXT'));
-  if Assigned(@wglGetExtensionsStringEXT) then
-    ExtString := ExtString + ' ' + wglGetExtensionsStringEXT()
-  else
+  if Assigned(glGetStringi) then
   begin
-    wglGetExtensionsStringARB := TwglGetExtensionsStringARB(wglGetProcAddress('wglGetExtensionsStringARB'));
-    if Assigned(@wglGetExtensionsStringARB) then
+    NumExtension := 0;
+    glGetIntegerv(GL_NUM_EXTENSIONS, @NumExtension);
+    for I := 0 to NumExtension - 1 do
+      ExtString := ExtString + PAnsiChar(glGetStringi(GL_EXTENSIONS, i)); //FIX
+  end else
+    ExtString := glGetString(GL_EXTENSIONS);
+
+  wglGetExtensionsStringEXT := wglGetProcAddress('wglGetExtensionsStringEXT');
+  if Assigned(@wglGetExtensionsStringEXT) then
+    ExtString := ExtString + ' ' + wglGetExtensionsStringEXT;
+
+  wglGetExtensionsStringARB := wglGetProcAddress('wglGetExtensionsStringARB');
+  if Assigned(@wglGetExtensionsStringARB) then
     ExtString := ExtString + ' ' + wglGetExtensionsStringARB(wglGetCurrentDC);
-  end;
+
+  ExtString := ' ' + ExtString + ' ';
 end;
 
 function LoadGLLibraly : Boolean;
@@ -707,7 +637,6 @@ begin
 
   wglSwapIntervalEXT := glGetProc('wglSwapIntervalEXT', Result, False);
   glActiveTexture := glGetProc('glActiveTexture', Result);
-  glMultiTexCoord4f := glGetProc('glMultiTexCoord4f', Result);
 
   glBlendFuncSeparate       := glGetProc('glBlendFuncSeparate', Result);
 
@@ -774,6 +703,9 @@ begin
   glGetActiveUniform  := glGetProc('glGetActiveUniform', Result);
   glGetActiveAttrib   := glGetProc('glGetActiveAttrib', Result);
 
+  //OPENGL 3.0
+  glGetStringi  := wglGetProcAddress('glGetStringi');
+
   {glGetHandle := glGetProc('glGetHandle', Result);
   glDetachShader := glGetProc('glDetachShader', Result);
 
@@ -799,8 +731,8 @@ begin
    // GL_ARB_vertex_shader
   glBindAttribLocation := glGetProc('glBindAttribLocation', Result);}
 end;
-
+              {
 initialization
 //  GlModuleH := GetModuleHandle(Opengl32);
-
+                 }
 end.

@@ -11,7 +11,6 @@ uses
   SysUtils,
   JEN_Header,
   JEN_OpenGLHeader,
-  JEN_Helpers,
   JEN_Math;
 
 const
@@ -172,7 +171,9 @@ var
 begin
   FValid := False;
   Result := False;
+  {$IFDEF CPU386}
   Set8087CW($133F);
+  {$ENDIF}
 
   if not (Assigned(Display) and Display.Valid) then
   begin
@@ -384,36 +385,7 @@ begin
     glViewport(Value.Left, Value.Top, Value.Width, Value.Height);
   end;
 end;
-             {
-procedure TRender.SetArrayState(Vertex, TextureCoord, Normal, Color : Boolean);
-
-  procedure SetState(State : GLenum; Value : Boolean);
-  begin
-    if Value then
-      glEnableClientState(State)
-    else
-      glDisableClientState(State);
-  end;
-
-begin
-  if(FArrayState.Vertex <> Vertex) then
-    SetState(GL_VERTEX_ARRAY, Vertex);
-
-  if(FArrayState.TextureCoord <> TextureCoord) then
-    SetState(GL_TEXTURE_COORD_ARRAY, TextureCoord);
-
-  if(FArrayState.Normal <> Normal) then
-    SetState(GL_NORMAL_ARRAY, Normal);
-
-  if(FArrayState.Color <> Color) then
-    SetState(GL_COLOR_ARRAY, Color);
-
-  FArrayState.Vertex := Vertex;
-  FArrayState.TextureCoord := TextureCoord;
-  FArrayState.Normal := Normal;
-  FArrayState.Color := Color;
-end;        }
-
+       
 function TRender.Support(RenderSupport: TRenderSupport): Boolean;
 begin
   Result := SBuffer[RenderSupport];
@@ -531,11 +503,11 @@ begin
     FAlphaTest := Value;
     if Value > 0 then
     begin
-      glEnable(GL_ALPHA_TEST);
-      glAlphaFunc(GL_GREATER, Value / 255);
+  //   glEnable(GL_ALPHA_TEST);
+   //   glAlphaFunc(GL_GREATER, Value / 255);
     end
     else
-      glDisable(GL_ALPHA_TEST);
+   //   glDisable(GL_ALPHA_TEST);
   end;
 end;
 
@@ -693,9 +665,20 @@ procedure TRender.CheckGAPIErrors;
 var
   error: GLenum;
 begin
-  error := glGetError;
-  if(error <> 0) then
-    Engine.Warning('OpenGL error 0x' + IntToHex(error, 4));
+  repeat
+    error := glGetError;
+
+    case error of
+      GL_INVALID_ENUM: Engine.Warning('OpenGL error GL_INVALID_ENUM');
+      GL_INVALID_VALUE: Engine.Warning('OpenGL error GL_INVALID_VALUE');
+      GL_INVALID_OPERATION: Engine.Warning('OpenGL error GL_INVALID_OPERATION');
+      GL_INVALID_FRAMEBUFFER_OPERATION: Engine.Warning('OpenGL error GL_INVALID_FRAMEBUFFER_OPERATION');
+      GL_OUT_OF_MEMORY: Engine.Warning('OpenGL error GL_OUT_OF_MEMORY');
+      GL_NO_ERROR:;
+      else Engine.Warning('OpenGL error 0x' + IntToHex(error, 4));
+    end;
+
+  until (error = GL_NO_ERROR);
 end;
 
 procedure TRender.Start;

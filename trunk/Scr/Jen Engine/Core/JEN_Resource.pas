@@ -35,8 +35,7 @@ type
 
 implementation
 
-uses
-  JEN_Main;
+
 
 constructor TResource.Create(const FilePath: UnicodeString; ResType: TResourceType);
 begin

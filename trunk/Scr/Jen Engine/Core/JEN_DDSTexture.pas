@@ -7,9 +7,8 @@ unit JEN_DDSTexture;
 interface
 
 uses
-  JEN_Header,
   JEN_OpenGLHeader,
-  JEN_Helpers,
+  JEN_Header,
   JEN_Math,
   JEN_Resource,
   JEN_Texture;
@@ -145,18 +144,18 @@ var
         end
       end else
         case pfRGBbpp of
-           8 :
+      {     8 :
             if (pfFlags and DDPF_LUMINANCE > 0) and (pfRBitMask xor $FF = 0) then
               Result := tfoL8
             else
               if (pfFlags and DDPF_ALPHA > 0) and (pfABitMask xor $FF = 0) then
-                Result := tfoA8;
+                Result := tfoA8;     }
           16 :
               if pfFlags and DDPF_ALPHAPIXELS > 0 then
               begin
-                if (pfFlags and DDPF_LUMINANCE > 0) and (pfRBitMask xor $FF + pfABitMask xor $FF00 = 0) then
-                  Result := tfoAL8
-                else
+                if not ((pfFlags and DDPF_LUMINANCE > 0) and (pfRBitMask xor $FF + pfABitMask xor $FF00 = 0)) then
+               {   Result := tfoAL8
+                else     }
                   if pfFlags and DDPF_RGB > 0 then
                     if pfRBitMask xor $0F00 + pfGBitMask xor $00F0 + pfBBitMask xor $0F + pfABitMask xor $F000 = 0 then
                       Result := tfoBGRA4

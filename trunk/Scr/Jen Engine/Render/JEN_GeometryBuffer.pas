@@ -7,8 +7,8 @@ unit JEN_GeometryBuffer;
 interface
 
 uses
-  JEN_Header,
-  JEN_OpenGLHeader;
+  JEN_OpenGLHeader,
+  JEN_Header;
 
 type
   TGeomBuffer = class(TInterfacedObject, IGeomBuffer)

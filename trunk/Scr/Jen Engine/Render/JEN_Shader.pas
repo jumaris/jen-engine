@@ -8,10 +8,10 @@ interface
 
 uses
   SysUtils,
+  JEN_OpenGLHeader,
   JEN_Header,
   JEN_Math,
   JEN_Resource,
-  JEN_OpenGlHeader,
   JEN_Helpers,
   CoreX_XML;
 

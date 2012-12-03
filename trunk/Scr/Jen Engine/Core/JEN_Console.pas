@@ -6,7 +6,6 @@ uses
   Windows,
   Messages,
   JEN_Math,
-  JEN_Helpers,
   JEN_Header;
 
 const

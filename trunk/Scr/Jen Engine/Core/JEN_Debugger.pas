@@ -9,8 +9,6 @@ interface
 uses
   Windows,
   Messages,
-  JEN_Math,
-  JEN_Header,
   JEN_Helpers;
 
 const
@@ -40,8 +38,7 @@ type
          }
 implementation
 
-uses
-  JEN_MAIN;
+
               {
 constructor TDebugger.Create(FileName : String);
 var

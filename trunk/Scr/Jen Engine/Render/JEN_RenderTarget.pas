@@ -3,8 +3,8 @@ unit JEN_RenderTarget;
 interface
 
 uses
-  JEN_Header,
-  JEN_OpenGLHeader;
+  JEN_OpenGLHeader,
+  JEN_Header;
 
 type
   TRenderTarget = class(TInterfacedObject, IRenderTarget)
