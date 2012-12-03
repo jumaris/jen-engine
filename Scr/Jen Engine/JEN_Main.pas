@@ -457,7 +457,6 @@ end;
 initialization
   CreateEngine;
 
-
 finalization
 begin
   Engine       := nil;

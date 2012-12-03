@@ -6,7 +6,6 @@ uses
   SysUtils,
   JEN_Header,
   JEN_Math,
-  JEN_Helpers,
   JEN_Resource;
 
 type

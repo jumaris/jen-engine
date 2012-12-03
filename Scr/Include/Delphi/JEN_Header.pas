@@ -48,14 +48,15 @@ type
   TShaderAttribType  = (atNone, atVec1b, atVec2b, atVec3b, atVec4b,
                         atVec1s, atVec2s, atVec3s, atVec4s,
                         atVec1f, atVec2f, atVec3f, atVec4f);
-
-  TTextureFormat = (tfoNone, tfoDXT1c, tfoDXT1a, tfoDXT3, tfoDXT5, tfoDepth8, tfoDepth16, tfoDepth24, tfoDepth32, tfoA8, tfoL8, tfoAL8, tfoBGRA8, tfoBGR8, tfoBGR5A1, tfoBGR565, tfoBGRA4, tfoR16F, tfoR32F, tfoGR16F, tfoGR32F, tfoBGRA16F, tfoBGRA32F);
+                                                                                                                   //Deprecated
+  TTextureFormat = (tfoNone, tfoDXT1c, tfoDXT1a, tfoDXT3, tfoDXT5, tfoDepth8, tfoDepth16, tfoDepth24, tfoDepth32, {tfoA8, tfoL8, tfoAL8,} tfoBGRA8, tfoBGR8, tfoBGR5A1, tfoBGR565, tfoBGRA4, tfoR16F, tfoR32F, tfoGR16F, tfoGR32F, tfoBGRA16F, tfoBGRA32F);
   TTextureFilter = (tfiNone, tfiBilinear, tfiTrilinear, tfiAniso);
 
   TEventProc = procedure(Param: LongInt; Data: Pointer); stdcall;
 
   TCompareFunc = function (Item1, Item2: Pointer): LongInt;
   IList = interface
+  ['{49E45C55-0FF1-4C4C-9E67-A350692DB144}']
     function GetCount: LongInt; stdcall;
     function GetItem(idx: LongInt): Pointer; stdcall;
     procedure SetItem(idx: LongInt; Value: Pointer); stdcall;

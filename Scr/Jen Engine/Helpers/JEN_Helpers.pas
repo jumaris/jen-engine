@@ -126,8 +126,7 @@ function ExtractFileName(const FileName: UnicodeString; NoExt: boolean = False):
 function ExtractFileExt(const FileName: UnicodeString): UnicodeString;   }
 
 implementation
-uses
-  JEN_Main;
+
 
         {
 function InterlockedIncrement(var Addend: LongInt): LongInt;

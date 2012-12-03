@@ -4,9 +4,9 @@ interface
 
 uses
   SysUtils,
+  JEN_OpenGLHeader,
   JEN_Header,
   JEN_Resource,
-  JEN_OpenglHeader,
   JEN_Helpers,
   JEN_Math;
 
@@ -14,13 +14,11 @@ type
   ITexture = interface(JEN_Header.ITexture)
   ['{5EC7ADB4-2241-46EE-B5BE-4959B06EA364}']
     procedure Init(TWidth, THeight: LongWord; TFormat: TTextureFormat); overload;
-  //  procedure Init(Parent: ITexture; S, T, SW, TH: Single); overload;
   end;
 
   TTexture = class(TResource, IResource, ITexture)
     constructor Create(const FilePath: UnicodeString);
     procedure Init(Width, Height: LongWord; Format: TTextureFormat); overload;
-    //procedure Init(Parent: ITexture; S, T, SW, TH: Single); overload;
     destructor Destroy; override;
   private
     FID           : GLhandle;
@@ -71,17 +69,17 @@ const
     DataType : GLenum;
   end = (
     (Compressed: False; Swap : False; DivSize: 1; BlockBytes:  1; InternalFormat: GL_FALSE; ExternalFormat: GL_FALSE; DataType: GL_FALSE),
-    (Compressed: True;  Swap : False; DivSize: 4; BlockBytes:  8; InternalFormat: GL_COMPRESSED_RGB_S3TC_DXT1; ExternalFormat: GL_FALSE; DataType: GL_FALSE),
-    (Compressed: True;  Swap : False; DivSize: 4; BlockBytes:  8; InternalFormat: GL_COMPRESSED_RGBA_S3TC_DXT1; ExternalFormat: GL_FALSE; DataType: GL_FALSE),
-    (Compressed: True;  Swap : False; DivSize: 4; BlockBytes: 16; InternalFormat: GL_COMPRESSED_RGBA_S3TC_DXT3; ExternalFormat: GL_FALSE; DataType: GL_FALSE),
-    (Compressed: True;  Swap : False; DivSize: 4; BlockBytes: 16; InternalFormat: GL_COMPRESSED_RGBA_S3TC_DXT5; ExternalFormat: GL_FALSE; DataType: GL_FALSE),
+    (Compressed: True;  Swap : False; DivSize: 4; BlockBytes:  8; InternalFormat: GL_COMPRESSED_RGB_S3TC_DXT1_EXT; ExternalFormat: GL_FALSE; DataType: GL_FALSE),
+    (Compressed: True;  Swap : False; DivSize: 4; BlockBytes:  8; InternalFormat: GL_COMPRESSED_RGBA_S3TC_DXT1_EXT; ExternalFormat: GL_FALSE; DataType: GL_FALSE),
+    (Compressed: True;  Swap : False; DivSize: 4; BlockBytes: 16; InternalFormat: GL_COMPRESSED_RGBA_S3TC_DXT3_EXT; ExternalFormat: GL_FALSE; DataType: GL_FALSE),
+    (Compressed: True;  Swap : False; DivSize: 4; BlockBytes: 16; InternalFormat: GL_COMPRESSED_RGBA_S3TC_DXT5_EXT; ExternalFormat: GL_FALSE; DataType: GL_FALSE),
     (Compressed: False; Swap : False; DivSize: 1; BlockBytes:  1; InternalFormat: GL_DEPTH_COMPONENT; ExternalFormat: GL_DEPTH_COMPONENT; DataType: GL_UNSIGNED_BYTE),
     (Compressed: False; Swap : False; DivSize: 1; BlockBytes:  1; InternalFormat: GL_DEPTH_COMPONENT; ExternalFormat: GL_DEPTH_COMPONENT16; DataType: GL_UNSIGNED_BYTE),
     (Compressed: False; Swap : False; DivSize: 1; BlockBytes:  1; InternalFormat: GL_DEPTH_COMPONENT; ExternalFormat: GL_DEPTH_COMPONENT24; DataType: GL_UNSIGNED_BYTE),
     (Compressed: False; Swap : False; DivSize: 1; BlockBytes:  1; InternalFormat: GL_DEPTH_COMPONENT; ExternalFormat: GL_DEPTH_COMPONENT32; DataType: GL_UNSIGNED_BYTE),
-    (Compressed: False; Swap : False; DivSize: 1; BlockBytes:  1; InternalFormat: GL_ALPHA8; ExternalFormat: GL_ALPHA; DataType: GL_UNSIGNED_BYTE),
-    (Compressed: False; Swap : False; DivSize: 1; BlockBytes:  1; InternalFormat: GL_LUMINANCE8; ExternalFormat: GL_LUMINANCE; DataType: GL_UNSIGNED_BYTE),
-    (Compressed: False; Swap : False; DivSize: 1; BlockBytes:  2; InternalFormat: GL_LUMINANCE8_ALPHA8; ExternalFormat: GL_LUMINANCE_ALPHA; DataType: GL_UNSIGNED_BYTE),
+//  (Compressed: False; Swap : False; DivSize: 1; BlockBytes:  1; InternalFormat: GL_ALPHA8; ExternalFormat: GL_ALPHA; DataType: GL_UNSIGNED_BYTE),
+//  (Compressed: False; Swap : False; DivSize: 1; BlockBytes:  1; InternalFormat: GL_LUMINANCE8; ExternalFormat: GL_LUMINANCE; DataType: GL_UNSIGNED_BYTE),
+//  (Compressed: False; Swap : False; DivSize: 1; BlockBytes:  2; InternalFormat: GL_LUMINANCE8_ALPHA8; ExternalFormat: GL_LUMINANCE_ALPHA; DataType: GL_UNSIGNED_BYTE),
     (Compressed: False; Swap : False; DivSize: 1; BlockBytes:  4; InternalFormat: GL_RGBA8; ExternalFormat: GL_BGRA; DataType: GL_UNSIGNED_BYTE),
     (Compressed: False; Swap : False; DivSize: 1; BlockBytes:  3; InternalFormat: GL_RGB8; ExternalFormat: GL_BGR; DataType: GL_UNSIGNED_BYTE),
     (Compressed: False; Swap : True;  DivSize: 1; BlockBytes:  2; InternalFormat: GL_RGB5_A1; ExternalFormat: GL_BGRA; DataType: GL_UNSIGNED_SHORT_1_5_5_5_REV),
@@ -120,10 +118,10 @@ begin
   glGenTextures(1, @FID);
 
   Bind;
-
+             {
   if (Format = tfoDepth8) or (Format = tfoDepth16) or (Format = tfoDepth24) or (Format = tfoDepth32) then
     glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
-
+              } //FIIIIX!!!
   FMipMap := False;
   FFilter := tfiNone;
   FClamp  := False;
@@ -136,24 +134,9 @@ begin
     glCompressedTexImage2D(GL_TEXTURE_2D, 0, InternalFormat,  Width, Height, 0, 0, nil)
   else
     glTexImage2D(GL_TEXTURE_2D, 0, InternalFormat, Width, Height, 0, ExternalFormat, DataType, nil);
-   }
+  }
 end;
-                  {
-procedure TTexture.Init(Parent: ITexture; S, T, SW, TH: Single);
-begin
-  FIsSubTex := True;
-  FName     := Parent.Name + '|' + IntToStr(LongInt(Self));
-  FID       := Parent.ID;
-  FWidth    := Round(Parent.Width * Abs(SW));
-  FHeight   := Round(Parent.Height * Abs(TH));
-  FS        := S;
-  FT        := T;
-  FSW       := SW;
-  FTH       := TH;
-  FFormat   := Parent.Format;
-  FSampler  := Parent.Sampler;
-end;
-                    }
+
 destructor TTexture.Destroy;
 begin
   if Assigned(FSubTexList) then
@@ -214,12 +197,12 @@ begin
     glTexParameteri(FSampler, GL_TEXTURE_MAG_FILTER, FilterMode[FMipMap, FFilter, 1]);
    // if Render.MaxAniso > 0 then
 
-    glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY, @FMaxAniso);
+    glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, @FMaxAniso);
     FMaxAniso := Min(FMaxAniso, 8);
       if FFilter = tfiAniso then
-        glTexParameteri(FSampler, GL_TEXTURE_MAX_ANISOTROPY, FMaxAniso)
+        glTexParameteri(FSampler, GL_TEXTURE_MAX_ANISOTROPY_EXT, FMaxAniso)
       else
-        glTexParameteri(FSampler, GL_TEXTURE_MAX_ANISOTROPY, 1);
+        glTexParameteri(FSampler, GL_TEXTURE_MAX_ANISOTROPY_EXT, 1);
   end;
 end;
 
@@ -246,25 +229,12 @@ procedure TTexture.SetCompare(Value: TCompareMode); stdcall;
 begin
   if (Value <> cmNone) then
   begin
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
+   //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE); FIIIX!!!
+
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, CompareFunc[Value]);
   end else
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
 end;
-               {
-function TTexture.GettSubTexCount: LongInt; stdcall;
-begin
-  if not Assigned(FSubTexList) then
-    Exit(0);
-  Result := FSubTexList.Count;
-end;
-
-function TTexture.GetSubTex(idx: LongInt): JEN_Header.ITexture; stdcall;
-begin
-  if not Assigned(FSubTexList) then
-    Exit(nil);
-  Result := FSubTexList[idx] as ITexture;
-end;                    }
 
 procedure TTexture.Reload; stdcall;
 begin
