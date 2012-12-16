@@ -60,7 +60,6 @@ type
     procedure AddResource(Resource: IResource);
 
     function CreateTexture(Width, Height: LongWord; Format: TTextureFormat): JEN_Header.ITexture; stdcall;
-    function CreateGeomBuffer(GBufferType: TGBufferType; Count, Stride: LongInt; Data: Pointer): IGeomBuffer; stdcall;
 
     procedure RegisterLoader(Loader: TResLoader);
     function GetRef(const FilePath: UnicodeString; ResType: TResourceType): IResource;
@@ -251,11 +250,6 @@ begin
   Tex.Init(Width, Height, Format);
   AddResource(Tex);
   Result := Tex;
-end;
-
-function TResourceManager.CreateGeomBuffer(GBufferType: TGBufferType; Count, Stride: LongInt; Data: Pointer): IGeomBuffer;
-begin
-  Result := TGeomBuffer.Create(GBufferType, Count, Stride, Data);
 end;
 
 procedure TResourceManager.RegisterLoader(Loader : TResLoader);

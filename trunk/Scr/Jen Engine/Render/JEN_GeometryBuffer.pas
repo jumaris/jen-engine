@@ -16,31 +16,36 @@ type
    // class function Load(BufferType: TBufferType; Stream: TStream): TMeshBuffer;
     destructor Destroy; override;
   private
-    FType  : GLenum;
-    FID    : LongWord;
+    FType   : TGBufferType;
+    FID     : GLhandle;
+    FCount  : LongInt;
+    FStride : LongInt;
+    FPRIdx  : Int64;
+    function GetType: TGBufferType; stdcall;
+    function GetStride: LongInt; stdcall;
+    function GetPrimitiveRestartIndex: Int64; stdcall;
   public
-    Count  : LongInt;
-    Stride : LongInt;
     procedure SetData(Offset, Size: LongInt; Data: Pointer); stdcall;
     procedure Bind; stdcall;
-    procedure Draw(mode: TGeomMode; count: LongInt; Indexed: Boolean; first: LongInt = 0); stdcall;
+    procedure EnablePrimitiveRestart(Index: Int64); stdcall;
   end;
 
 implementation
 
+uses
+  JEN_Main;
+
 constructor TGeomBuffer.Create(GBufferType: TGBufferType; Count, Stride: LongInt; Data: Pointer);
 begin
   inherited Create;
-  Self.Count  := Count;
-  Self.Stride := Stride;
-  if GBufferType = gbIndex then
-    FType := GL_ELEMENT_ARRAY_BUFFER
-  else
-    FType := GL_ARRAY_BUFFER;
+  FCount  := Count;
+  FStride := Stride;
+  FType   := GBufferType;
+  FPRIdx  := -1;
 
   glGenBuffers(1, @FID);
-  glBindBuffer(FType, FID);
-  glBufferData(FType, Count * Stride, Data, GL_STREAM_DRAW );
+  glBindBuffer(ord(FType), FID);
+  SetData(0, Count * Stride, Data);
 end;
 
 destructor TGeomBuffer.Destroy;
@@ -49,33 +54,51 @@ begin
   inherited;
 end;
 
+function TGeomBuffer.GetType: TGBufferType;
+begin
+  Result := FType;
+end;
+
+function TGeomBuffer.GetStride: LongInt;
+begin
+  Result := FStride;
+end;
+
+function TGeomBuffer.GetPrimitiveRestartIndex: Int64;
+begin
+  Result := FPRIdx;
+end;
+
 procedure TGeomBuffer.SetData(Offset, Size: LongInt; Data: Pointer);
 type
   TByteArray = array[0..0] of Byte;
-//var
-//  p : ^TByteArray;
+var
+  p : ^TByteArray;
 begin
   Bind;
-  //glBufferData(FType, size, nil, GL_STREAM_DRAW );
-  {
-  P := glMapBuffer(FType, GL_WRITE_ONLY);
-  Move(Data^, P[Offset], Size);
-  glUnmapBuffer(FType);
-   }
-  glBufferSubData(FType, offset, size, data);
+
+  if (Offset = 0) and (FCount * FStride = Size)  then
+  begin
+    glBufferData(ord(FType), size, nil, GL_STREAM_DRAW );
+    P := glMapBuffer(ord(FType), GL_WRITE_ONLY);
+    Move(Data^, P[Offset], Size);
+    glUnmapBuffer(ord(FType));
+  end else
+    glBufferSubData(ord(FType), offset, size, data);
 end;
 
 procedure TGeomBuffer.Bind;
 begin
-  glBindBuffer(FType, FID);
+  glBindBuffer(ord(FType), FID);
 end;
 
-procedure TGeomBuffer.Draw(mode: TGeomMode; count: LongInt; Indexed: Boolean; first: LongInt = 0); stdcall;
+procedure TGeomBuffer.EnablePrimitiveRestart(Index: Int64);
 begin
-  if Indexed then
-
-  else
-    glDrawArrays(GLenum(mode), first, count);
+  if (FType = gbIndex) and (not Render.Support(rsGLNVprimitiveRestart)) and (Render.GAPI <= gaOpenGl3_1) and (FPRIdx <> -1)  then
+  begin
+    FPRIdx := Index;
+  end else
+    Engine.Warning('Primitive restart is not supported!');
 end;
 
 end.

@@ -26,7 +26,7 @@ type
   TTehniqueType = (ttNone, ttNormal, ttText, ttAdvanced, ttAdvanced1, ttAdvanced2, ttAdvanced3, ttAdvanced4);
 
   TTehnique = record
-    IndxAttrib    : IShaderAttrib;
+    RenderEntity  : IRenderEntity;
     VBUniform     : IShaderUniform;
     DBUniform     : IShaderUniform;
     ShaderProgram : IShaderProgram;
@@ -50,6 +50,7 @@ type
     FTextShader   : IShaderResource;
     FIdx          : LongWord;
     FVrtBuff      : IGeomBuffer;
+    FIdxBuff      : IGeomBuffer;
     RenderTechnique : array[TTehniqueType] of TTehnique;
 
     Tehnique       : TTehniqueType;
@@ -81,6 +82,8 @@ type
     procedure BatchEnd; stdcall;
     procedure Flush;
 
+    procedure TehniqueInit(var Tehnique: TTehnique; Shader: IShaderProgram);
+
     procedure RealDrawSprite(Tex: ITexture; const v: TQuad; const Data1, Data2, Data3, Data4: TVec4f; Effects: Cardinal);
     procedure DrawSprite(Tex: ITexture; x, y, w, h: Single; const Color1, Color2, Color3, Color4: TVec4f; Angle: Single; Effects: Cardinal); overload; stdcall;
     procedure DrawSprite(Tex: ITexture; x, y, w, h: Single; const Color: TVec4f; Angle: Single; Effects: Cardinal); overload; stdcall;
@@ -93,17 +96,23 @@ type
   end;
 
 const
-  TexCoord: array[0..3] of array[1..4] of TVec2f = (((x:0;y:0),(x:1;y:0),(x:1;y:1),(x:0;y:1)),
+  TexCoord: array[0..3] of array[1..4] of TVec2f = (((x:1;y:1),(x:1;y:0),(x:0;y:1),(x:0;y:0)),
                                                     ((x:1;y:0),(x:0;y:0),(x:0;y:1),(x:1;y:1)),
                                                     ((x:0;y:1),(x:1;y:1),(x:1;y:0),(x:0;y:0)),
                                                     ((x:1;y:1),(x:0;y:1),(x:0;y:0),(x:1;y:0)));
 
+  {
+  TexCoord: array[0..3] of array[1..4] of TVec2f = (((x:0;y:0),(x:1;y:0),(x:1;y:1),(x:0;y:1)),
+                                                    ((x:1;y:0),(x:0;y:0),(x:0;y:1),(x:1;y:1)),
+                                                    ((x:0;y:1),(x:1;y:1),(x:1;y:0),(x:0;y:0)),
+                                                    ((x:1;y:1),(x:0;y:1),(x:0;y:0),(x:1;y:0)));
+                 }
 implementation
 
 uses
   JEN_Main;
 
-procedure TehniqueInit(var Tehnique: TTehnique; Shader: IShaderProgram);
+procedure TRender2D.TehniqueInit(var Tehnique: TTehnique; Shader: IShaderProgram);
 var
   i: LongInt;
   Uniform : IShaderUniform;
@@ -115,8 +124,11 @@ begin
       ShaderProgram := Shader;
       ShaderProgram.Bind;
 
+      RenderEntity := Render.CreateRenderEntity(ShaderProgram);
       VBUniform := ShaderProgram.Uniform('PosTC', utVec4, False);
       DBUniform := ShaderProgram.Uniform('QuadData', utVec4, False);
+      RenderEntity.AttachAndBind(FIdxBuff);
+      RenderEntity.AttachAndBind(FVrtBuff);
 
       i := 0;
       Uniform := ShaderProgram.Uniform('Map0', utInt, False);
@@ -128,25 +140,46 @@ begin
       if Assigned(Uniform) then
         Uniform.Value(i);
 
-      IndxAttrib := ShaderProgram.Attrib('IndxAttrib', atVec1f);
-      IndxAttrib.Value(4, 0);
+      RenderEntity.Attrib('IndxAttrib', atVec1f, 4, 0);
     end;
 end;
 
 procedure TRender2D.Init;
 var
-  i : Integer;
-  IdxBuff : array[1..Batch_Size*4] of Single;
+  i, k : Integer;
+  SIdxBuff : array[0..Batch_Size * 4 - 1] of Single;
+  IIdxBuff : array[0..Batch_Size * 6 - 3] of Byte;
   Shader : IShaderProgram;
 begin
   FRCWidth := Render.Viewport.Width;
   FRCHeight := Render.Viewport.Height;
-  for I := 1 to Batch_Size*4 do
-    IdxBuff[i] := i-1;
+  for I := 0 to Batch_Size * 4 - 1 do
+    SIdxBuff[i] := i;
+  FVrtBuff := TGeomBuffer.Create(gbVertex, Batch_Size * 4, 4, @SIdxBuff[0]);
+
+  i := 0; k := 0;
+  while i < (Batch_Size * 6) - 3 do
+  begin
+
+    if (I > 3) then
+    begin
+      IIdxBuff[i] := k-1;
+      IIdxBuff[i+1] := k;
+
+      inc(i, 2);
+    end;
+
+    for i := i to i + 3 do
+    begin
+      IIdxBuff[i] := k;
+      inc(k);
+    end;
+
+  end;
+  FIdxBuff := TGeomBuffer.Create(gbIndex, (Batch_Size * 6) - 2, 1, @IIdxBuff[0]);
 
   FRotCenter := Vec2f(0.5, 0.5);
 
-  FVrtBuff := TGeomBuffer.Create(gbVertex, Batch_Size*4, 4, @IdxBuff[1]);
 
   ResMan.Load('|SpriteShader.xml', FNormalShader);
   FNormalShader.Compile(Shader);
@@ -297,17 +330,14 @@ procedure TRender2D.Flush;
 begin
   if FIdx = 0 then Exit;
 
-  FVrtBuff.Bind;
   with RenderTechnique[Tehnique] do
   begin
-    IndxAttrib.Value(4, 0);
-    IndxAttrib.Enable;
-
     VBUniform.Value(FVertexBuff[1], FIdx*4);
     if Assigned(DBUniform) then
       DBUniform.Value(FDataBuff[1], FIdx*4);
+    RenderEntity.Draw(gmTriangleStrip, FIdx*6, False);
   end;
-  FVrtBuff.Draw(gmQuads, FIdx*4, False);
+  //FVrtBuff.Draw(gmQuads, FIdx*4, False);
 
   FIdx := 0;
   Render.IncDip;
@@ -411,6 +441,23 @@ var
 begin
   if not (Assigned(Tex)) then Exit;
 
+  v[1].Pos := Vec2f(x+w, y+h);
+  v[2].Pos := Vec2f(x+w, y  );
+  v[3].Pos := Vec2f(x,   y+h);
+  v[4].Pos := Vec2f(x,   y  );
+                 {
+  v[1].Pos := Vec2f(x  , y+h);
+  v[2].Pos := Vec2f(x+w, y+h);
+  v[3].Pos := Vec2f(x+w, y  );
+  v[4].Pos := Vec2f(x  , y  ); }
+
+  maxTC := Tex.maxTC;
+  TcId := (Effects and FX_FLIPX + Effects and FX_FLIPY);
+  v[1].TC := TexCoord[TcId][1] * maxTC;
+  v[2].TC := TexCoord[TcId][2] * maxTC;
+  v[3].TC := TexCoord[TcId][3] * maxTC;
+  v[4].TC := TexCoord[TcId][4] * maxTC;
+
 
   if not ComputeVertex(v, Angle, Vec2f(x, y) + Vec2f(w, h) * FRotCenter) then
     exit;
@@ -424,10 +471,16 @@ var
   TcId: LongInt;
 begin
   if not (Assigned(Tex)) then Exit;
+
+  v[1].Pos := Vec2f(x+w, y+h);
+  v[2].Pos := Vec2f(x+w, y  );
+  v[3].Pos := Vec2f(x,   y+h);
+  v[4].Pos := Vec2f(x,   y  );
+                 {
   v[1].Pos := Vec2f(x  , y+h);
   v[2].Pos := Vec2f(x+w, y+h);
   v[3].Pos := Vec2f(x+w, y  );
-  v[4].Pos := Vec2f(x  , y  );
+  v[4].Pos := Vec2f(x  , y  ); }
 
   maxTC := Tex.maxTC;
   TcId := (Effects and FX_FLIPX + Effects and FX_FLIPY);

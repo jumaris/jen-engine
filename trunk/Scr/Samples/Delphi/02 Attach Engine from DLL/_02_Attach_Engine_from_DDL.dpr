@@ -12,7 +12,6 @@ uses
   TopScores in 'TopScores.pas';
 
 {$R ..\..\..\Resources\Icon.res}
-{$R *.res}
 
 begin
  p;

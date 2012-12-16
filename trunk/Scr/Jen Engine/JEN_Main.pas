@@ -95,7 +95,6 @@ var
 begin
   FisInit   := False;
   FisRunnig := False;
-  Helpers   := THelpers.Create;
 
   for Event := Low(TEvent) to High(TEvent) do
     FEventsList[Event] := TList.Create;
@@ -160,7 +159,10 @@ begin
   end;
 
   try
+    Helpers   := THelpers.Create;
+
     InitLog;
+
     Input     := JEN_Input.TInput.Create;
     Render    := TRender.Create;
     Render2d  := TRender2D.Create;

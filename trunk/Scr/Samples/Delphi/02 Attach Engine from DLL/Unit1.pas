@@ -53,6 +53,8 @@ i : Integer;
 begin
   ResMan.Load('Media\ArialFont.jfi', Font); //OOOOO◊≈Õ‹ Œœ¿—Õ¿!
   ResMan.Load('Media\123.dds', r);
+  ResMan.Load('Media\123.dds', r);
+  ResMan.Load('Media\123.dds', r);
  ResMan.Load('media\MandelbrotSetShader.xml', sp);
  sp.Compile(s);
  s.Bind;
@@ -71,7 +73,7 @@ var
   i   : Integer;
   st  : string;
 begin
-  st := IntToStr(Render.FPS)+'['+IntToStr(Render.FrameTime)+']'+IntToStr(Render.LastDipCount);
+  st := IntToStr(Render.FPS)+'['+IntToStr(Render.FrameTime)+']'+IntToStr(Render.FrameDipCount);
  Display.Caption := PWideChar(st);//PWideChar(IntToStr(Render.FPS)+'['+IntToStr(Render.FrameTime)+']'+IntToStr(Render.LastDipCount));
   for I := 1 to Input.Mouse.WheelDelta do
     Cam.Scale := Cam.Scale*2;
@@ -88,25 +90,29 @@ begin
   Cam.SetCam;
   Render.Clear(True,False,False);
 
-//  Render2d.DrawSprite(r,300,100,512,512,clwhite);
-//  Render2d.DrawSprite(s,r,nil,nil,300,200,512,512,clBlack,clWhite,clBlack,clWhite,45,0);
   Render2d.BatchBegin;
-  Render2d.DrawSprite(r,300,100,512,512,clBlack,clWhite,clBlack,clWhite,45,0);
-  Render2d.DrawSprite(r,300,200,512,512,clBlack,clWhite,clBlack,clWhite,45,0);
-  Render2d.DrawSprite(r,300,300,512,512,clBlack,clWhite,clBlack,clWhite,45,0);
+ // Render2d.DrawSprite(r,000,000,512,512,clwhite);
+ //  Render2d.DrawSprite(r,-512,-512,512,512,clwhite);
+  Render2d.BatchEnd;
 
+// Render2d.DrawSprite(s,r,nil,nil,300,200,512,512,clBlack,clWhite,clBlack,clWhite,45,0);
+  Render2d.BatchBegin;
+  Render2d.DrawSprite(r,000,000,512,512,clBlack,clWhite,clBlack,clWhite,0,0);
+  Render2d.DrawSprite(r,-100,-100,512,512,clBlack,clWhite,clBlack,clWhite,0,0);
+  Render2d.DrawSprite(r,-200,-200,512,512,clBlack,clWhite,clBlack,clWhite,0,0);
+                 {
   Render2d.BeginDraw(s,r,nil,nil);
   Render2d.SetData(clBlack,clWhite,clBlack,clWhite);
   Render2d.DrawQuad(-000,100,512,512,45);
 
   Render2d.SetData(clBlack,clWhite,clBlack,clWhite);
   Render2d.DrawQuad(600,100,512,512,45);
-  Render2d.EndDraw;
-
+  Render2d.EndDraw;   }
+              {
   Font.Scale := 0.1;
-  Font.Print('qwewqe',0,0);
+  Font.Print('qwewqe',0,0);   }
   Render2d.BatchEnd;
-
+    //  Font.Print('asdasd',0,0);
      {
   Font.OutlineSize := 1;
  // Font.Scale := Cam.Scale;
@@ -138,7 +144,7 @@ var
 sp  : IShaderResource;
 begin
   ReportMemoryLeaksOnShutdown := True;
-  Engine := GetJenEngine(False);
+  GetJenEngine(False, Engine);
 
   Engine.GetSubSystem(ssDisplay, IJenSubSystem(Display));
   Engine.GetSubSystem(ssRender, IJenSubSystem(Render));
@@ -147,7 +153,7 @@ begin
   Engine.GetSubSystem(ssRender2d, IJenSubSystem(Render2d));
   Engine.GetSubSystem(ssResMan, IJenSubSystem(ResMan));
   Display.Init(1024,768,9,false);
-  Render.Init();
+  Render.Init(gaOpenGL2_x);
  // Render2d.ResolutionCorrect(800,600);
 
   Render.SetVSync(False);

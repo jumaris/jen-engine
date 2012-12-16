@@ -17,6 +17,7 @@ type
   TEvent = (evLogMsg, evActivate, evKeyUp, evKeyDown, evMouseWhell, evDisplayRestore, evRenderFlush, evFinish);
   TLogMsg = (lmHeaderMsg, lmNotify, lmCode, lmWarning, lmError);
 
+  TGAPI = (gaOpenGL2_x, gaOpenGL3_0, gaOpenGL3_1, gaOpenGL3_2, gaOpenGL3_3, gaOpenGL4_0);
   TInputKey = (
   // Keyboard
     ikNone = $00, ikPlus = $BB, ikMinus = $BD, ikTilde = $C0,
@@ -30,25 +31,22 @@ type
     ikMouseL = $01, ikMouseR, ikMouseM = $04, ikMouseWheelUp, ikMouseWheelDown
   );
 
-  TResourceType = (rtShader, rtFont, rtTexture);
 
-  // TVertexAttrib = (vaPosition, vaNormal, vaColor, vaTexCoord);
+  TResourceType = (rtShader, rtFont, rtTexture);
   TCompareMode  = (cmNone, cmLEqual, cmGEqual, cmLess, cmGreater, cmEqual, cmNotEqual, cmAlways, cmNewer);
   TScencilOp = (soKeep, soZero, soReplace, soInc, soDec, soIncWrap, soDecWrap, soInvert);
-
-  TGBufferType = (gbIndex, gbVertex);
-  TGeomMode = (gmTrianles = $0004, gmTriangleStrip, gmTriangleFan, gmQuads, gmQuadStrip, gmPolygon);
+  TGBufferType = (gbVertex = $8892, gbIndex);
+  TGeomMode = (gmPoints, gmLines, gmLineLoop, gmLineStrip, gmTrianles, gmTriangleStrip, gmTriangleFan);
   TBlendType = (btNone, btNormal, btAdd, btMult, btOne, btPreMulAlpha );
   TCullFace = (cfNone, cfFront, cfBack);
   TColorChannel = (ccRed, ccGreen, ccBlue, ccAlpha);
   TRenderChannel = (rcDepth, rcColor0, rcColor1, rcColor2, rcColor3, rcColor4, rcColor5, rcColor6, rcColor7);
   TMatrixType = (mt2DMat, mtViewProj, mtModel, mtProj, mtView);
-
   TShaderUniformType = (utNone, utInt, utVec1, utVec2, utVec3, utVec4, utMat2, utMat3, utMat4);
   TShaderAttribType  = (atNone, atVec1b, atVec2b, atVec3b, atVec4b,
                         atVec1s, atVec2s, atVec3s, atVec4s,
                         atVec1f, atVec2f, atVec3f, atVec4f);
-                                                                                                                   //Deprecated
+                                                                                                                  //Deprecated
   TTextureFormat = (tfoNone, tfoDXT1c, tfoDXT1a, tfoDXT3, tfoDXT5, tfoDepth8, tfoDepth16, tfoDepth24, tfoDepth32, {tfoA8, tfoL8, tfoAL8,} tfoBGRA8, tfoBGR8, tfoBGR5A1, tfoBGR565, tfoBGRA4, tfoR16F, tfoR32F, tfoGR16F, tfoGR32F, tfoBGRA16F, tfoBGRA32F);
   TTextureFilter = (tfiNone, tfiBilinear, tfiTrilinear, tfiAniso);
 
@@ -321,9 +319,25 @@ type
     property Clamp: Boolean read GetClamp write SetClamp;
   end;
 
-  IGeomBuffer = Interface
+  IGeomBuffer = interface
+    function GetType: TGBufferType; stdcall;
+    function GetStride: LongInt; stdcall;
+    function GetPrimitiveRestartIndex: Int64; stdcall;
+    procedure EnablePrimitiveRestart(Index: Int64); stdcall;
+
     procedure SetData(Offset, Size: LongInt; Data: Pointer); stdcall;
     procedure Bind; stdcall;
+
+    property Stride: LongInt read GetStride;
+    property GType: TGBufferType read GetType;
+    property PrimitiveRestartIndex:Int64 read GetPrimitiveRestartIndex; 
+  end;
+
+  IRenderEntity = interface
+    function Valid: Boolean; stdcall;
+    function GetID: LongWord; stdcall;
+    procedure AttachAndBind(Buffer: IGeomBuffer); stdcall;
+    procedure Attrib(AName: PWideChar; AttribType: TShaderAttribType; Stride, Offset: LongInt; Norm: Boolean = False; Necessary: Boolean = True) stdcall;
     procedure Draw(mode: TGeomMode; count: LongInt; Indexed: Boolean; first: LongInt = 0); stdcall;
   end;
 
@@ -358,10 +372,9 @@ type
     procedure Load(FilePath: PWideChar; out Resource: JEN_Header.IFont); overload; stdcall;
 
     function CreateTexture(Width, Height: LongWord; Format: TTextureFormat): ITexture; stdcall;
-    function CreateGeomBuffer(GBufferType: TGBufferType; Count, Stride: LongInt; Data: Pointer): IGeomBuffer; stdcall;
   end;
 
-  TRenderSupport = (rsWGLEXTswapcontrol);
+  TRenderSupport = (rsWGLEXTswapcontrol, rsGLNVprimitiveRestart);
 
   IRenderTarget = interface
     function GetID: LongWord; stdcall;
@@ -378,13 +391,17 @@ type
   end;
 
   IRender = interface(IJenSubSystem)
-    procedure Init(DepthBits: Byte = 24; StencilBits: Byte = 8; FSAA: Byte = 0); stdcall;
+    procedure Init(GAPI: TGAPI; DepthBits: Byte = 24; StencilBits: Byte = 8; FSAA: Byte = 0); stdcall;
     function Support(RenderSupport: TRenderSupport): Boolean;
 
     function CreateRenderTarget(Width, Height: LongWord; CFormat: TTextureFormat; Count: LongWord; Samples: LongWord = 0; DepthBuffer: Boolean = False; DFormat: TTextureFormat = tfoDepth24): JEN_Header.IRenderTarget; stdcall;
+    function CreateGeomBuffer(GBufferType: TGBufferType; Count, Stride: LongInt; Data: Pointer): IGeomBuffer; stdcall;
+    function CreateRenderEntity(Shader: IShaderProgram): IRenderEntity; stdcall;
+
     function GetTarget: IRenderTarget; stdcall;
     procedure SetTarget(Value: IRenderTarget); stdcall;
 
+    function GetGAPI: TGAPI; stdcall;
     function GetViewport: TRecti; stdcall;
     procedure SetViewport(const Value: TRecti); stdcall;
     function GetVSync: Boolean; stdcall;
@@ -429,6 +446,7 @@ type
     procedure SetDIPCount(Value: LongWord); stdcall;
     procedure IncDIP; stdcall;
 
+    property GAPI: TGAPI read GetGAPI;
     property Target: IRenderTarget read GetTarget write SetTarget;
     property Viewport: TRecti read GetViewport write SetViewPort;
     property VSync: Boolean read GetVSync write SetVSync;
@@ -539,6 +557,21 @@ type
     DriverDate    : PWideChar;
   end;
   PGPUInfo = ^TGPUInfo;
+
+             {
+  IGPUInfo = interface
+    function GetDescription: PWideChar; stdcall;
+    function GetChipType: PWideChar; stdcall;
+    function GetMemorySize: LongWord; stdcall;
+    function GetDriverVersion: PWideChar; stdcall;
+    function GetDriverDate: PWideChar; stdcall;
+    property Description: PWideChar read GetDescription;
+    property ChipType: PWideChar read GetChipType;
+    property MemorySize: LongWord read GetMemorySize;
+    property DriverVersion: PWideChar read GetDriverVersion;
+    property DriverDate: PWideChar read GetDriverDate;
+  end;
+  PGPUInfo = ^IGPUInfo;}
 
   ISystemInfo = interface
     function GetScreen: IScreen; stdcall;

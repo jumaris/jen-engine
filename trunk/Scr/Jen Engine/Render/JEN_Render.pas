@@ -51,11 +51,12 @@ type
   end;
 
   TRender = class(TInterfacedObject, IRender)
-    procedure Init(DepthBits: Byte; StencilBits: Byte; FSAA: Byte); stdcall;
+    procedure Init(GAPI: TGAPI; DepthBits: Byte; StencilBits: Byte; FSAA: Byte); stdcall;
     procedure Free; stdcall;
   private
     FValid      : Boolean;
     FGL_Context : HGLRC;
+    FGAPI       : TGAPI;
     FViewport   : TRecti;
     FVSync      : Boolean;
 
@@ -85,6 +86,10 @@ type
     function GetValid: Boolean;
   public
     function CreateRenderTarget(Width, Height: LongWord; CFormat: TTextureFormat; Count: LongWord; Samples: LongWord; DepthBuffer: Boolean; DFormat: TTextureFormat): JEN_Header.IRenderTarget; stdcall;
+    function CreateGeomBuffer(GBufferType: TGBufferType; Count, Stride: LongInt; Data: Pointer): IGeomBuffer; stdcall;
+    function CreateRenderEntity(Shader: IShaderProgram): IRenderEntity; stdcall;
+
+    function GetGAPI: TGAPI; stdcall;
     function GetTarget: IRenderTarget; stdcall;
     procedure SetTarget(Value: IRenderTarget); stdcall;
 
@@ -143,6 +148,8 @@ implementation
 
 uses
   JEN_Main,
+  JEN_RenderEntity,
+  JEN_GeometryBuffer,
   JEN_RenderTarget;
 
 procedure TRender.Free;
@@ -152,25 +159,34 @@ begin
     Engine.Error('Cannot delete OpenGL context.')
 end;
 
-procedure TRender.Init(DepthBits: Byte; StencilBits: Byte; FSAA: Byte);
+procedure TRender.Init(GAPI: TGAPI; DepthBits: Byte; StencilBits: Byte; FSAA: Byte);
 var
-  PFD     : TPixelFormatDescriptor;
-  PFAttrf : array [0 .. 1] of Single;
-  PFAttri : array [0 .. 21] of LongInt;
+  PFD       : TPixelFormatDescriptor;
+  PFAttrf   : array [0..1] of Single;
+  PFAttri   : array [0..21] of LongInt;
 
-  PFIdx   : LongInt;
-  PFCount : LongWord;
+  PFIdx     : LongInt;
+  PFCount   : LongWord;
 
-  Par     : Integer;
-  PHandle : HWND;
-  TDC     : HDC;
-  RC      : HGLRC;
-  Result  : Boolean;
+  Par       :  Integer;
+  PHandle   : HWND;
+  TDC       : HDC;
+  RC        : HGLRC;
+  Result    : Boolean;
+  NewContext: HGLRC;
 
-//  FID     : LongWord;
+  Attribs   : array[0..6] of Integer;
+const
+  VersionInfo: array[TGAPI] of
+    record
+      Major: Integer;
+      Minor: Integer;
+    end = ((Major:0; Minor:0), (Major:3; Minor:0), (Major:3;  Minor:1), (Major:3; Minor:2), (Major:3; Minor:3), (Major:4; Minor:0));
 begin
   FValid := False;
   Result := False;
+  FGAPI  := GAPI;
+
   {$IFDEF CPU386}
   Set8087CW($133F);
   {$ENDIF}
@@ -186,7 +202,7 @@ begin
   begin
     nSize := SizeOf(TPixelFormatDescriptor);
     nVersion := 1;
-    dwFlags := PFD_DRAW_TO_WINDOW or PFD_SUPPORT_OPENGL or PFD_DOUBLEBUFFER;
+    dwFlags := PFD_SUPPORT_OPENGL or PFD_DOUBLEBUFFER or PFD_DRAW_TO_WINDOW;
     cColorBits := 24;
     cAlphaBits := 8;
     cDepthBits := DepthBits;
@@ -270,15 +286,55 @@ begin
     Exit;
   end;
 
-  ReadGlExt;
-  glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS ,@Par);
-
-  SBuffer[rsWGLEXTswapcontrol] := glIsSupported('WGL_EXT_swap_control');
-  if not LoadGLLibraly Then
+  ReadExtensionString;
+  if not LoadGLExtensions Then
   begin
     Engine.Error('Error when load extensions.');
     Exit;
   end;
+
+  if GAPI <> gaOpenGL2_x then
+  begin
+    Attribs[0] := WGL_CONTEXT_MAJOR_VERSION_ARB;
+    Attribs[1] := VersionInfo[GAPI].Major;
+    Attribs[2] := WGL_CONTEXT_MINOR_VERSION_ARB;
+    Attribs[3] := VersionInfo[GAPI].Minor;
+    Attribs[4] := WGL_CONTEXT_FLAGS_ARB;
+    Attribs[5] := WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB;
+    Attribs[6] := 0;
+
+    if not Assigned(wglCreateContextAttribsARB) then
+    begin
+      Engine.Error('Could not get function pointer adress for wglCreateContextAttribsARB - OpenGL 3.x and above not supported!');
+      exit;
+    end;
+    Engine.Log('Create new OpenGL context.');
+    NewContext := wglCreateContextAttribsARB(Display.DC, 0, @Attribs[0]);
+
+    if NewContext = 0 then
+    begin
+      Engine.Error('Could not create the desired OpenGL rendering context!');
+      Exit;
+    end;
+
+    wglDeleteContext(FGL_Context);
+    FGL_Context := NewContext;
+
+    //TODO REUSE
+    Engine.Log('Make current OpenGL context.');
+    if not wglMakeCurrent(Display.DC, FGL_Context) Then
+    begin
+      Engine.Error('Cannot set current OpenGL context.');
+      Exit;
+    end;
+
+    LoadGLCore(GAPI);
+  end;
+
+  SBuffer[rsWGLEXTswapcontrol]    := glIsSupported('WGL_EXT_swap_control');
+  SBuffer[rsGLNVprimitiveRestart] := glIsSupported('GL_NV_primitive_restart');
+
+  glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS ,@Par);
 
   Engine.Log('OpenGL version : ' + glGetString(GL_VERSION) + ' (' + glGetString(GL_VENDOR) + ')');
   Engine.Log('Video device   : ' + glGetString(GL_RENDERER));
@@ -324,6 +380,21 @@ end;
 function TRender.CreateRenderTarget(Width, Height: LongWord; CFormat: TTextureFormat; Count: LongWord; Samples: LongWord; DepthBuffer: Boolean; DFormat: TTextureFormat): JEN_Header.IRenderTarget;
 begin
   Result := TRenderTarget.Create(Width, Height, CFormat, Count, Samples, DepthBuffer, DFormat);
+end;
+
+function TRender.CreateGeomBuffer(GBufferType: TGBufferType; Count, Stride: LongInt; Data: Pointer): IGeomBuffer;
+begin
+  Result := TGeomBuffer.Create(GBufferType, Count, Stride, Data);
+end;
+
+function TRender.CreateRenderEntity(Shader: IShaderProgram): IRenderEntity;
+begin
+  Result := TRenderEntity.Create(Shader);
+end;
+
+function TRender.GetGAPI: TGAPI;
+begin
+  Result := FGAPI;
 end;
 
 function TRender.GetTarget: IRenderTarget;
