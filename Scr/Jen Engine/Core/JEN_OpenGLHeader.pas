@@ -323,7 +323,7 @@ const
   GL_FRAMEBUFFER_BINDING              = $8CA6;
   GL_FRAMEBUFFER_COMPLETE             = $8CD5;
 
-// Shaders
+// Shaders                           0
   GL_FRAGMENT_SHADER                  = $8B30;
   GL_VERTEX_SHADER                    = $8B31;
   GL_COMPILE_STATUS                   = $8B81;
@@ -353,6 +353,20 @@ const
   GL_POLYGON_OFFSET_POINT             = $2A01;
   GL_POLYGON_OFFSET_LINE              = $2A02;
   GL_POLYGON_OFFSET_FILL              = $8037;
+
+//GL_NV_primitive_restart
+  GL_PRIMITIVE_RESTART_NV             = $8558;
+
+//OPENGL 3+
+// WGL_ARB_create_context
+  WGL_CONTEXT_DEBUG_BIT_ARB              = $00000001;
+  WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB = $00000002;
+  WGL_CONTEXT_MAJOR_VERSION_ARB          = $2091;
+  WGL_CONTEXT_MINOR_VERSION_ARB          = $2092;
+  WGL_CONTEXT_LAYER_PLANE_ARB            = $2093;
+  WGL_CONTEXT_FLAGS_ARB                  = $2094;
+  ERROR_INVALID_VERSION_ARB              = $2095;
+  GL_PRIMITIVE_RESTART                   = $8F9D;
 
   procedure glFinish; stdcall; external opengl32;
   procedure glFlush; stdcall; external opengl32;
@@ -425,7 +439,6 @@ const
 var
   wglGetExtensionsStringEXT: function(): PAnsiChar; stdcall;
   wglGetExtensionsStringARB: function(hdc: HDC): PAnsiChar; stdcall;
-  glGetStringi: function(name: GLenum; index: GLuint): PGLubyte; stdcall;
 
   wglChoosePixelFormatARB: function(hdc: HDC; const piAttribIList: PGLint; const pfAttribFList: PGLfloat; nMaxFormats: GLuint; piFormats: PGLint; nNumFormats: PGLuint): LongBool; stdcall;
   wglSwapIntervalEXT: function(interval: GLint): LongBool; stdcall;
@@ -456,6 +469,7 @@ var
   glMapBuffer       : function(target: GLenum; access: GLenum): PGLvoid; stdcall;
   glUnmapBuffer     : function(target: GLenum) :GLboolean; stdcall;
   glGetBufferParameteriv: procedure(target: GLenum; pname: GLenum; params: PGLint); stdcall;
+  glPrimitiveRestartIndex: procedure(index_: GLuint); stdcall;
 
   // GL_shader_objects
   glGetProgramiv    : procedure(programObj: GLhandle; pname: GLenum; params: PGLInt); stdcall;
@@ -503,9 +517,15 @@ var
   glUniformMatrix4fv: procedure(location: GLint; count: GLsizei; transpose: GLboolean; value: PGLfloat); stdcall;
 
   glGetAttribLocation: function(programObj: GLhandle; const name: PAnsiChar): GLint; stdcall;
+  glBindAttribLocation: procedure(programObj: GLhandle; index: GLuint; name: PAnsiChar); stdcall;
   glEnableVertexAttribArray: procedure(index: GLuint); stdcall;
   glDisableVertexAttribArray: procedure(index: GLuint); stdcall;
   glVertexAttribPointer: procedure(index: GLuint; size: GLint; _type: GLenum; normalized: GLboolean; stride: GLsizei; const _pointer: PGLvoid); stdcall;
+
+  glBindVertexArray: procedure(array_: GLuint); stdcall;
+  glDeleteVertexArrays: procedure(n: GLsizei; const arrays: PGLuint); stdcall;
+  glGenVertexArrays: procedure(n: GLsizei; arrays: PGLuint); stdcall;
+  glIsVertexArray: function(array_: GLuint): GLboolean; stdcall;
               {
   glGetHandle: function(pname: GLenum): GLhandle; stdcall;
   glDetachObject: procedure(containerObj: GLhandle; attachedObj: GLhandle); stdcall;
@@ -558,11 +578,16 @@ var
   glCompressedTexImage3D: procedure(target: GLenum; level: GLint; internalformat: GLenum; width: GLsizei; height: GLsizei; depth: GLsizei; border: GLint; imageSize: GLsizei; const data: PGLvoid); stdcall;
   glCompressedTexImage2D: procedure(target: GLenum; level: GLint; internalformat: GLenum; width: GLsizei; height: GLsizei; border: GLint; imageSize: GLsizei; const data: PGLvoid); stdcall;
   glCompressedTexImage1D: procedure(target: GLenum; level: GLint; internalformat: GLenum; width: GLsizei; border: GLint; imageSize: GLsizei; const data: PGLvoid); stdcall;
+//OPENGL 3+
+  wglCreateContextAttribsARB: function(hDC: HDC; hShareContext: HGLRC; const attribList: PGLint): HGLRC; stdcall;
+
+  JEN_PRIMITIVE_RESTART : GLenum;
 
 function glIsSupported(Extension: AnsiString): Boolean;
 function glGetProc(const ProcName: PAnsiChar; var OldResult: Boolean; Required: Boolean = True): Pointer;
-function LoadGLLibraly: Boolean;
-procedure ReadGlExt;
+function LoadGLExtensions: Boolean;
+function LoadGLCore(GAPI: TGAPI): Boolean;
+procedure ReadExtensionString;
 
 implementation
 
@@ -604,21 +629,9 @@ begin
   end;
 end;
 
-procedure ReadGlExt;
-var
-  i: Integer;
-  NumExtension: GLint;
+procedure ReadExtensionString;
 begin
-  ExtString := '';
-
-  if Assigned(glGetStringi) then
-  begin
-    NumExtension := 0;
-    glGetIntegerv(GL_NUM_EXTENSIONS, @NumExtension);
-    for I := 0 to NumExtension - 1 do
-      ExtString := ExtString + PAnsiChar(glGetStringi(GL_EXTENSIONS, i)); //FIX
-  end else
-    ExtString := glGetString(GL_EXTENSIONS);
+  ExtString := glGetString(GL_EXTENSIONS);
 
   wglGetExtensionsStringEXT := wglGetProcAddress('wglGetExtensionsStringEXT');
   if Assigned(@wglGetExtensionsStringEXT) then
@@ -631,81 +644,88 @@ begin
   ExtString := ' ' + ExtString + ' ';
 end;
 
-function LoadGLLibraly : Boolean;
+function LoadGLExtensions: Boolean;
 begin
   Result := True;
 
-  wglSwapIntervalEXT := glGetProc('wglSwapIntervalEXT', Result, False);
-  glActiveTexture := glGetProc('glActiveTexture', Result);
+  wglSwapIntervalEXT          := glGetProc('wglSwapIntervalEXT', Result, False);
+  glActiveTexture             := glGetProc('glActiveTexture', Result);
 
-  glBlendFuncSeparate       := glGetProc('glBlendFuncSeparate', Result);
+  glBlendFuncSeparate         := glGetProc('glBlendFuncSeparate', Result);
 
-  glGenRenderbuffers        := glGetProc('glGenRenderbuffersEXT', Result);
-  glDeleteRenderbuffers     := glGetProc('glDeleteRenderbuffersEXT', Result);
-  glBindRenderbuffer        := glGetProc('glBindRenderbufferEXT', Result);
-  glRenderbufferStorage     := glGetProc('glRenderbufferStorageEXT', Result);
-  glGenFramebuffers         := glGetProc('glGenFramebuffersEXT', Result);
-  glDeleteFramebuffers      := glGetProc('glDeleteFramebuffersEXT', Result);
-  glBindFramebuffer         := glGetProc('glBindFramebufferEXT', Result);
-  glFramebufferTexture2D    := glGetProc('glFramebufferTexture2DEXT', Result);
-  glFramebufferRenderbuffer := glGetProc('glFramebufferRenderbufferEXT', Result);
-  glCheckFramebufferStatus  := glGetProc('glCheckFramebufferStatusEXT', Result);
-  glDrawBuffers             := glGetProc('glDrawBuffers', Result);
+  glGenRenderbuffers          := glGetProc('glGenRenderbuffersEXT', Result);
+  glDeleteRenderbuffers       := glGetProc('glDeleteRenderbuffersEXT', Result);
+  glBindRenderbuffer          := glGetProc('glBindRenderbufferEXT', Result);
+  glRenderbufferStorage       := glGetProc('glRenderbufferStorageEXT', Result);
+  glGenFramebuffers           := glGetProc('glGenFramebuffersEXT', Result);
+  glDeleteFramebuffers        := glGetProc('glDeleteFramebuffersEXT', Result);
+  glBindFramebuffer           := glGetProc('glBindFramebufferEXT', Result);
+  glFramebufferTexture2D      := glGetProc('glFramebufferTexture2DEXT', Result);
+  glFramebufferRenderbuffer   := glGetProc('glFramebufferRenderbufferEXT', Result);
+  glCheckFramebufferStatus    := glGetProc('glCheckFramebufferStatusEXT', Result);
+  glDrawBuffers               := glGetProc('glDrawBuffers', Result);
 
-  glBindBuffer    := glGetProc('glBindBuffer', Result);
-  glDeleteBuffers := glGetProc('glDeleteBuffers', Result);
-  glGenBuffers    := glGetProc('glGenBuffers', Result);
-  glIsBuffer      := glGetProc('glIsBuffer', Result);
-  glBufferData    := glGetProc('glBufferData', Result);
-  glBufferSubData := glGetProc('glBufferSubData', Result);
-  glMapBuffer     := glGetProc('glMapBuffer', Result);
-  glUnmapBuffer   := glGetProc('glUnmapBuffer', Result);
+  glBindBuffer                := glGetProc('glBindBuffer', Result);
+  glDeleteBuffers             := glGetProc('glDeleteBuffers', Result);
+  glGenBuffers                := glGetProc('glGenBuffers', Result);
+  glIsBuffer                  := glGetProc('glIsBuffer', Result);
+  glBufferData                := glGetProc('glBufferData', Result);
+  glBufferSubData             := glGetProc('glBufferSubData', Result);
+  glMapBuffer                 := glGetProc('glMapBuffer', Result);
+  glUnmapBuffer               := glGetProc('glUnmapBuffer', Result);
+  glGetBufferParameteriv      := glGetProc('glGetBufferParameteriv', Result);
+  glPrimitiveRestartIndex     := glGetProc('glPrimitiveRestartIndexNV', Result, False);
+  if Assigned(glPrimitiveRestartIndex) then
+    JEN_PRIMITIVE_RESTART       := GL_PRIMITIVE_RESTART_NV;
 
-  glGetBufferParameteriv := glGetProc('glGetBufferParameteriv', Result);
+  glCompressedTexImage3D      := glGetProc('glCompressedTexImage3D', Result);
+  glCompressedTexImage2D      := glGetProc('glCompressedTexImage2D', Result);
+  glCompressedTexImage1D      := glGetProc('glCompressedTexImage1D', Result);
 
-  glCompressedTexImage3D := glGetProc('glCompressedTexImage3D', Result);
-  glCompressedTexImage2D := glGetProc('glCompressedTexImage2D', Result);
-  glCompressedTexImage1D := glGetProc('glCompressedTexImage1D', Result);
+  glGetProgramiv              := glGetProc('glGetProgramiv', Result);
+  glCreateProgram             := glGetProc('glCreateProgram', Result);
+  glDeleteProgram             := glGetProc('glDeleteProgram', Result);
+  glIsProgram                 := glGetProc('glIsProgram', Result);
 
-  glGetProgramiv          := glGetProc('glGetProgramiv', Result);
-  glCreateProgram         := glGetProc('glCreateProgram', Result);
-  glDeleteProgram         := glGetProc('glDeleteProgram', Result);
-  glIsProgram             := glGetProc('glIsProgram', Result);
+  glLinkProgram               := glGetProc('glLinkProgram', Result);
+  glUseProgram                := glGetProc('glUseProgram', Result);
+  glValidateProgram           := glGetProc('glValidateProgram', Result);
 
-  glLinkProgram           := glGetProc('glLinkProgram', Result);
-  glUseProgram            := glGetProc('glUseProgram', Result);
-  glValidateProgram       := glGetProc('glValidateProgram', Result);
+  glGetProgramInfoLog         := glGetProc('glGetProgramInfoLog', Result);
+  glGetShaderiv               := glGetProc('glGetShaderiv', Result);
+  glCreateShader              := glGetProc('glCreateShader', Result);
+  glDeleteShader              := glGetProc('glDeleteShader', Result);
+  glShaderSource              := glGetProc('glShaderSource', Result);
+  glAttachShader              := glGetProc('glAttachShader', Result);
+  glCompileShader             := glGetProc('glCompileShader', Result);
+  glGetShaderInfoLog          := glGetProc('glGetShaderInfoLog', Result);
+  glGetUniformLocation        := glGetProc('glGetUniformLocation', Result);
 
-  glGetProgramInfoLog     := glGetProc('glGetProgramInfoLog', Result);
-  glGetShaderiv           := glGetProc('glGetShaderiv', Result);
-  glCreateShader          := glGetProc('glCreateShader', Result);
-  glDeleteShader          := glGetProc('glDeleteShader', Result);
-  glShaderSource          := glGetProc('glShaderSource', Result);
-  glAttachShader          := glGetProc('glAttachShader', Result);
-  glCompileShader         := glGetProc('glCompileShader', Result);
-  glGetShaderInfoLog      := glGetProc('glGetShaderInfoLog', Result);
-  glGetUniformLocation    := glGetProc('glGetUniformLocation', Result);
-
-  glUniform1iv            := glGetProc('glUniform1iv', Result);
-  glUniform1fv            := glGetProc('glUniform1fv', Result);
-  glUniform2fv            := glGetProc('glUniform2fv', Result);
-  glUniform3fv            := glGetProc('glUniform3fv', Result);
-  glUniform4fv            := glGetProc('glUniform4fv', Result);
-  glUniformMatrix2fv      := glGetProc('glUniformMatrix2fv', Result);
-  glUniformMatrix3fv      := glGetProc('glUniformMatrix3fv', Result);
-  glUniformMatrix4fv      := glGetProc('glUniformMatrix4fv', Result);
+  glUniform1iv                := glGetProc('glUniform1iv', Result);
+  glUniform1fv                := glGetProc('glUniform1fv', Result);
+  glUniform2fv                := glGetProc('glUniform2fv', Result);
+  glUniform3fv                := glGetProc('glUniform3fv', Result);
+  glUniform4fv                := glGetProc('glUniform4fv', Result);
+  glUniformMatrix2fv          := glGetProc('glUniformMatrix2fv', Result);
+  glUniformMatrix3fv          := glGetProc('glUniformMatrix3fv', Result);
+  glUniformMatrix4fv          := glGetProc('glUniformMatrix4fv', Result);
 
   glGetAttribLocation         := glGetProc('glGetAttribLocation', Result);
+  glBindAttribLocation        := glGetProc('glBindAttribLocation', Result);
   glEnableVertexAttribArray   := glGetProc('glEnableVertexAttribArray', Result);
   glDisableVertexAttribArray  := glGetProc('glDisableVertexAttribArray', Result);
   glVertexAttribPointer       := glGetProc('glVertexAttribPointer', Result);
 
-  glGetActiveUniform  := glGetProc('glGetActiveUniform', Result);
-  glGetActiveAttrib   := glGetProc('glGetActiveAttrib', Result);
+  glBindVertexArray           := glGetProc('glBindVertexArray', Result);
+  glDeleteVertexArrays        := glGetProc('glDeleteVertexArrays', Result);
+  glGenVertexArrays           := glGetProc('glGenVertexArrays', Result);
+  glIsVertexArray             := glGetProc('glIsVertexArray', Result);
+
+  glGetActiveUniform          := glGetProc('glGetActiveUniform', Result);
+  glGetActiveAttrib           := glGetProc('glGetActiveAttrib', Result);
 
   //OPENGL 3.0
-  glGetStringi  := wglGetProcAddress('glGetStringi');
-
+  wglCreateContextAttribsARB  := wglGetProcAddress('wglCreateContextAttribsARB');
   {glGetHandle := glGetProc('glGetHandle', Result);
   glDetachShader := glGetProc('glDetachShader', Result);
 
@@ -731,6 +751,17 @@ begin
    // GL_ARB_vertex_shader
   glBindAttribLocation := glGetProc('glBindAttribLocation', Result);}
 end;
+
+function LoadGLCore(GAPI: TGAPI): Boolean;
+begin
+  if GAPI >= gaOpenGL3_1 then
+  begin
+    glPrimitiveRestartIndex := wglGetProcAddress('glPrimitiveRestartIndex');
+    JEN_PRIMITIVE_RESTART := GL_PRIMITIVE_RESTART;
+  end;
+end;
+
+
               {
 initialization
 //  GlModuleH := GetModuleHandle(Opengl32);

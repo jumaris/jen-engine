@@ -12,12 +12,6 @@
         <Projects Include="Samples\Delphi\03 Engine on Form\Engine_on_Form.dproj">
             <Dependencies/>
         </Projects>
-        <Projects Include="Run and kill\Run_and_kill.dproj">
-            <Dependencies/>
-        </Projects>
-        <Projects Include="digdig\digdig.dproj">
-            <Dependencies/>
-        </Projects>
     </ItemGroup>
     <ProjectExtensions>
         <Borland.Personality>Default.Personality.12</Borland.Personality>
@@ -53,32 +47,14 @@
     <Target Name="Engine_on_Form:Make">
         <MSBuild Projects="Samples\Delphi\03 Engine on Form\Engine_on_Form.dproj" Targets="Make"/>
     </Target>
-    <Target Name="Run_and_kill">
-        <MSBuild Projects="Run and kill\Run_and_kill.dproj"/>
-    </Target>
-    <Target Name="Run_and_kill:Clean">
-        <MSBuild Projects="Run and kill\Run_and_kill.dproj" Targets="Clean"/>
-    </Target>
-    <Target Name="Run_and_kill:Make">
-        <MSBuild Projects="Run and kill\Run_and_kill.dproj" Targets="Make"/>
-    </Target>
-    <Target Name="digdig">
-        <MSBuild Projects="digdig\digdig.dproj"/>
-    </Target>
-    <Target Name="digdig:Clean">
-        <MSBuild Projects="digdig\digdig.dproj" Targets="Clean"/>
-    </Target>
-    <Target Name="digdig:Make">
-        <MSBuild Projects="digdig\digdig.dproj" Targets="Make"/>
-    </Target>
     <Target Name="Build">
-        <CallTarget Targets="JEN;_02_Attach_Engine_from_DDL;Engine_on_Form;Run_and_kill;digdig"/>
+        <CallTarget Targets="JEN;_02_Attach_Engine_from_DDL;Engine_on_Form"/>
     </Target>
     <Target Name="Clean">
-        <CallTarget Targets="JEN:Clean;_02_Attach_Engine_from_DDL:Clean;Engine_on_Form:Clean;Run_and_kill:Clean;digdig:Clean"/>
+        <CallTarget Targets="JEN:Clean;_02_Attach_Engine_from_DDL:Clean;Engine_on_Form:Clean"/>
     </Target>
     <Target Name="Make">
-        <CallTarget Targets="JEN:Make;_02_Attach_Engine_from_DDL:Make;Engine_on_Form:Make;Run_and_kill:Make;digdig:Make"/>
+        <CallTarget Targets="JEN:Make;_02_Attach_Engine_from_DDL:Make;Engine_on_Form:Make"/>
     </Target>
     <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
 </Project>

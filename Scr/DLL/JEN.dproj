@@ -24,16 +24,27 @@
         <CfgParent>Base</CfgParent>
         <Base>true</Base>
     </PropertyGroup>
+    <PropertyGroup Condition="('$(Platform)'=='Win32' and '$(Cfg_1)'=='true') or '$(Cfg_1_Win32)'!=''">
+        <Cfg_1_Win32>true</Cfg_1_Win32>
+        <CfgParent>Cfg_1</CfgParent>
+        <Cfg_1>true</Cfg_1>
+        <Base>true</Base>
+    </PropertyGroup>
     <PropertyGroup Condition="'$(Config)'=='Release' or '$(Cfg_2)'!=''">
         <Cfg_2>true</Cfg_2>
         <CfgParent>Base</CfgParent>
+        <Base>true</Base>
+    </PropertyGroup>
+    <PropertyGroup Condition="('$(Platform)'=='Win32' and '$(Cfg_2)'=='true') or '$(Cfg_2_Win32)'!=''">
+        <Cfg_2_Win32>true</Cfg_2_Win32>
+        <CfgParent>Cfg_2</CfgParent>
+        <Cfg_2>true</Cfg_2>
         <Base>true</Base>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base)'!=''">
         <VerInfo_Keys>CompanyName=;FileDescription=;FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
         <VerInfo_Locale>1049</VerInfo_Locale>
         <Manifest_File>None</Manifest_File>
-        <DCC_UsePackage>vcl;rtl;vclx;vclimg;vclactnband;dbrtl;vcldb;vcldbx;bdertl;vcltouch;xmlrtl;dsnap;dsnapcon;TeeUI;TeeDB;Tee;adortl;IndyCore;IndySystem;IndyProtocols;dbexpress;DbxCommonDriver;DataSnapIndy10ServerTransport;DataSnapProviderClient;DbxClientDriver;DBXInterBaseDriver;DBXMySQLDriver;dbxcds;DBXFirebirdDriver;DBXSybaseASEDriver;DBXSybaseASADriver;DBXOracleDriver;DBXMSSQLDriver;DBXInformixDriver;DBXDb2Driver;$(DCC_UsePackage)</DCC_UsePackage>
         <DCC_DependencyCheckOutputName>..\..\Bin\JEN.dll</DCC_DependencyCheckOutputName>
         <DCC_Namespace>System;WinApi;$(DCC_Namespace)</DCC_Namespace>
         <GenDll>true</GenDll>
@@ -49,6 +60,8 @@
         <Debugger_HostApplication>..\..\Bin\_02_Attach_Engine_from_DDL.exe</Debugger_HostApplication>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_1)'!=''">
+        <DCC_IntegerOverflowCheck>true</DCC_IntegerOverflowCheck>
+        <DCC_RangeChecking>true</DCC_RangeChecking>
         <DCC_Define>DEBUG;$(DCC_Define)</DCC_Define>
         <DCC_DebugDCUs>true</DCC_DebugDCUs>
         <DCC_Optimize>false</DCC_Optimize>
@@ -56,14 +69,19 @@
         <DCC_DebugInfoInExe>true</DCC_DebugInfoInExe>
         <DCC_RemoteDebug>true</DCC_RemoteDebug>
     </PropertyGroup>
+    <PropertyGroup Condition="'$(Cfg_1_Win32)'!=''">
+        <DCC_IntegerOverflowCheck>true</DCC_IntegerOverflowCheck>
+        <DCC_RangeChecking>true</DCC_RangeChecking>
+    </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2)'!=''">
-        <VerInfo_Locale>1049</VerInfo_Locale>
-        <Manifest_File>None</Manifest_File>
-        <VerInfo_Keys>CompanyName=;FileDescription=;FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
+        <DCC_UsePackage>RTL;$(DCC_UsePackage)</DCC_UsePackage>
         <DCC_LocalDebugSymbols>false</DCC_LocalDebugSymbols>
         <DCC_Define>RELEASE;$(DCC_Define)</DCC_Define>
         <DCC_SymbolReferenceInfo>0</DCC_SymbolReferenceInfo>
         <DCC_DebugInformation>false</DCC_DebugInformation>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Cfg_2_Win32)'!=''">
+        <UsePackages>false</UsePackages>
     </PropertyGroup>
     <ItemGroup>
         <DelphiCompile Include="$(MainSource)">
@@ -79,7 +97,6 @@
         <DCCReference Include="..\Jen Engine\Core\JEN_Font.pas"/>
         <DCCReference Include="..\Jen Engine\Core\JEN_Game.pas"/>
         <DCCReference Include="..\Jen Engine\Core\JEN_Input.pas"/>
-        <DCCReference Include="..\Jen Engine\Core\JEN_OpenGLHeader.pas"/>
         <DCCReference Include="..\Jen Engine\Core\JEN_Resource.pas"/>
         <DCCReference Include="..\Jen Engine\Core\JEN_ResourceManager.pas"/>
         <DCCReference Include="..\Jen Engine\Render\JEN_GeometryBuffer.pas"/>
@@ -91,8 +108,10 @@
         <DCCReference Include="..\Jen Engine\Helpers\CoreX_XML.pas"/>
         <DCCReference Include="..\Jen Engine\Helpers\JEN_Camera2D.pas"/>
         <DCCReference Include="..\Jen Engine\Helpers\JEN_Camera3D.pas"/>
-        <DCCReference Include="..\Jen Engine\Helpers\JEN_Helpers.pas"/>
         <DCCReference Include="..\Jen Engine\Helpers\JEN_SystemInfo.pas"/>
+        <DCCReference Include="..\Jen Engine\Helpers\JEN_Helpers.pas"/>
+        <DCCReference Include="..\Jen Engine\Core\JEN_OpenGLHeader.pas"/>
+        <DCCReference Include="..\Jen Engine\Render\JEN_RenderEntity.pas"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>

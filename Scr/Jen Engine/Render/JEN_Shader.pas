@@ -34,6 +34,8 @@ type
   IShaderAttrib = interface(JEN_Header.IShaderAttrib)
   ['{CB9EEB22-8256-46BB-B7B1-372E0D4CD624}']
     procedure Init(ShaderID: GLEnum; const AName: AnsiString; AttribType: TShaderAttribType; Necessary: Boolean);
+    function GetLocation: GLhandle;
+    property Location: GLhandle read GetLocation;
   end;
 
   TShaderResource = class(TResource, IResource, IShaderResource)
@@ -98,6 +100,7 @@ type
     FName  : UnicodeString;
     function GetName: PWideChar; stdcall;
     function GetType: TShaderAttribType; stdcall;
+    function GetLocation: GLhandle; 
     procedure Init(ShaderID: GLEnum; const AName: AnsiString; AttribType: TShaderAttribType; Necessary: Boolean);
   public
     function Valid: Boolean; stdcall;
@@ -154,6 +157,7 @@ var
   Status      : LongInt;
   LogBuf      : AnsiString;
   LogLen      : LongInt;
+  Str         : string;
  // Count       : LongInt;
  // Info        : LongInt;
  // GLType      : LongInt;
@@ -205,6 +209,16 @@ begin
 
   Attach(GL_VERTEX_SHADER, VertexShader);
   Attach(GL_FRAGMENT_SHADER, FragmentShader);
+
+  //TODO
+  //хак, но не спасёт при глобальных изменнениях шейдеров и особенно типов аттрибутов
+  //надо писать свою систему выделения локейшина для аттрибута
+
+  for i := 0 to FAttribList.Count - 1 do
+  begin
+    Str := (FAttribList[i] as IShaderAttrib).Name;
+    glBindAttribLocation(FID, (FAttribList[i] as IShaderAttrib).Location, PAnsiChar(Str)); 
+  end;
 
   glLinkProgram(FID);
   glGetProgramiv(FID, GL_LINK_STATUS, @Status);
@@ -421,6 +435,11 @@ end;
 function TShaderAttrib.GetType: TShaderAttribType;
 begin
   Result := FType;
+end;
+
+function TShaderAttrib.GetLocation: GLhandle; 
+begin
+  Result := FID;
 end;
 
 procedure TShaderAttrib.Init(ShaderID: LongWord; const AName: AnsiString; AttribType: TShaderAttribType; Necessary: Boolean);
