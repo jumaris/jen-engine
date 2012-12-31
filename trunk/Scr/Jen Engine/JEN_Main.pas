@@ -158,6 +158,7 @@ begin
     Exit;
   end;
 
+  FDebugmode := DebugMode;
   try
     Helpers   := THelpers.Create;
 

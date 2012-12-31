@@ -16,12 +16,13 @@ type
     procedure Init(TWidth, THeight: LongWord; TFormat: TTextureFormat); overload;
   end;
 
-  TTexture = class(TResource, IResource, ITexture)
+  TTexture = class(TResource, IResource, JEN_Header.ITexture, ITexture, ITextureFrame)
     constructor Create(const FilePath: UnicodeString);
     procedure Init(Width, Height: LongWord; Format: TTextureFormat); overload;
     destructor Destroy; override;
   private
     FID           : GLhandle;
+    FValid        : Boolean;
     FFormat       : TTextureFormat;
     FSampler      : GLEnum;
     FWidth        : LongInt;
@@ -46,6 +47,9 @@ type
     function GetClamp: Boolean; stdcall;
     procedure SetClamp(Value: Boolean); stdcall;
     procedure SetCompare(Value: TCompareMode); stdcall;
+    function GetTextureRect: TRectf; stdcall;
+    function GetFrame: ITextureFrame; stdcall;
+    function GetTexture: JEN_Header.ITexture; stdcall;
   public
     procedure Reload; stdcall;
    // procedure Flip(Vertical, Horizontal: Boolean); stdcall;
@@ -102,6 +106,7 @@ uses
 constructor TTexture.Create(const FilePath:  UnicodeString);
 begin
   inherited Create(FilePath, rtTexture);
+  FValid := False;
 end;
 
 procedure TTexture.Init(Width, Height: LongWord; Format: TTextureFormat);
@@ -112,6 +117,7 @@ begin
   FHeight  := Height;
   FSampler := GL_TEXTURE_2D;
   FFormat  := Format;
+  FValid   := True;
 
   if glIsTexture(FID) then
     glDeleteTextures(1, @FID);
@@ -166,11 +172,6 @@ begin
   Result := FHeight;
 end;
 
-function TTexture.GetMaxTC: TVec2f; stdcall;
-begin
-  Result := Vec2f(FMaxS, FMaxT);
-end;
-
 function TTexture.GetSampler: LongWord; stdcall;
 begin
   Result := FSampler;
@@ -189,9 +190,9 @@ const
 var
   FMaxAniso : LongInt;
 begin
-  if (FFilter <> Value) then
+  FFilter := Value;
+  if (FFilter <> Value) and (FValid) then
   begin
-    FFilter := Value;
     Bind;
     glTexParameteri(FSampler, GL_TEXTURE_MIN_FILTER, FilterMode[FMipMap, FFilter, 0]);
     glTexParameteri(FSampler, GL_TEXTURE_MAG_FILTER, FilterMode[FMipMap, FFilter, 1]);
@@ -215,9 +216,9 @@ procedure TTexture.SetClamp(Value: Boolean); stdcall;
 const
   ClampMode : array[Boolean] of GLEnum = (GL_REPEAT, GL_CLAMP_TO_EDGE);
 begin
-  if (FClamp <> Value) then
+  FClamp := Value;
+  if (FClamp <> Value) and (FValid) then
   begin
-    FClamp := Value;
     Bind;
     glTexParameteri(FSampler, GL_TEXTURE_WRAP_S, ClampMode[FClamp]);
     glTexParameteri(FSampler, GL_TEXTURE_WRAP_T, ClampMode[FClamp]);
@@ -227,6 +228,7 @@ end;
 
 procedure TTexture.SetCompare(Value: TCompareMode); stdcall;
 begin
+  //TODO!!!
   if (Value <> cmNone) then
   begin
    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE); FIIIX!!!
@@ -234,6 +236,26 @@ begin
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, CompareFunc[Value]);
   end else
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
+end;
+
+function TTexture.GetMaxTC: TVec2f; stdcall;
+begin
+  Result := Vec2f(FMaxS, FMaxT);
+end;
+
+function TTexture.GetTextureRect: TRectf; stdcall;
+begin
+  Result := Rectf(0, 0, FMaxS, FMaxT);
+end;
+
+function TTexture.GetTexture: JEN_Header.ITexture; stdcall;
+begin
+  Result := Self;
+end;
+
+function TTexture.GetFrame: JEN_Header.ITextureFrame stdcall;
+begin
+  Result := Self;
 end;
 
 procedure TTexture.Reload; stdcall;
@@ -264,7 +286,7 @@ procedure TTexture.DataSet(Width, Height, Size: LongInt; Data: Pointer; Level: L
 var
   filter : TTextureFilter;
 begin
-  if (FFormat = tfoNone) then Exit;
+  if (FFormat = tfoNone) or not (FValid)then Exit;
 
   with TextureFormatInfo[FFormat] do
   if Compressed then
@@ -296,7 +318,7 @@ end;                 }
 
 procedure TTexture.Bind(Channel: TTextureChanel); stdcall;
 begin
-  if (ActiveTexID[Channel] <> FID) then
+  if (ActiveTexID[Channel] <> FID) and FValid then
   begin
     glActiveTexture(GL_TEXTURE0 + ord(Channel));
     glBindTexture(FSampler, FID);

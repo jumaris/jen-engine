@@ -54,7 +54,7 @@ type
     RenderTechnique : array[TTehniqueType] of TTehnique;
 
     Tehnique       : TTehniqueType;
-    BatchTexture   : array[1..3] of ITexture;
+    BatchTexture   : array[1..3] of ITextureFrame;
 
     FDataBuff : array[1..Batch_Size*4] of TVec4f;
     FVertexBuff : array[1..Batch_Size*4] of TVertex;
@@ -84,11 +84,11 @@ type
 
     procedure TehniqueInit(var Tehnique: TTehnique; Shader: IShaderProgram);
 
-    procedure RealDrawSprite(Tex: ITexture; const v: TQuad; const Data1, Data2, Data3, Data4: TVec4f; Effects: Cardinal);
-    procedure DrawSprite(Tex: ITexture; x, y, w, h: Single; const Color1, Color2, Color3, Color4: TVec4f; Angle: Single; Effects: Cardinal); overload; stdcall;
-    procedure DrawSprite(Tex: ITexture; x, y, w, h: Single; const Color: TVec4f; Angle: Single; Effects: Cardinal); overload; stdcall;
+    procedure RealDrawSprite(Tex: ITextureFrame; const v: TQuad; const Data1, Data2, Data3, Data4: TVec4f; Effects: Cardinal);
+    procedure DrawSprite(Tex: ITextureFrame; x, y, w, h: Single; const Color1, Color2, Color3, Color4: TVec4f; Angle: Single; Effects: Cardinal); overload; stdcall;
+    procedure DrawSprite(Tex: ITextureFrame; x, y, w, h: Single; const Color: TVec4f; Angle: Single; Effects: Cardinal); overload; stdcall;
 
-    procedure BeginDraw(Shader: IShaderProgram; Tex1, Tex2, Tex3: ITexture); stdcall;
+    procedure BeginDraw(Shader: IShaderProgram; Tex1, Tex2, Tex3: ITextureFrame); stdcall;
     procedure SetData(const Data1, Data2, Data3, Data4: TVec4f); stdcall;
     procedure DrawQuad(x, y, w, h, Angle: Single); overload; stdcall;
     procedure DrawQuad(const v1, v2, v3, v4: TVec2f; Angle: Single; const Center: TVec2f); overload; stdcall;
@@ -335,7 +335,8 @@ begin
     VBUniform.Value(FVertexBuff[1], FIdx*4);
     if Assigned(DBUniform) then
       DBUniform.Value(FDataBuff[1], FIdx*4);
-    RenderEntity.Draw(gmTriangleStrip, FIdx*6, False);
+      //TODO
+    RenderEntity.Draw(gmTriangleStrip, Min(FIdx*6, Batch_Size*6 - 2), False);
   end;
   //FVrtBuff.Draw(gmQuads, FIdx*4, False);
 
@@ -406,11 +407,11 @@ begin
   Result := ((((MaxX >= -1) and (MinX <= 1)) and (MaxY >= -1)) and (MinY <= 1));
 end;
 
-procedure TRender2D.RealDrawSprite(Tex: ITexture; const v: TQuad; const Data1, Data2, Data3, Data4: TVec4f; Effects: Cardinal);
+procedure TRender2D.RealDrawSprite(Tex: ITextureFrame; const v: TQuad; const Data1, Data2, Data3, Data4: TVec4f; Effects: Cardinal);
 var
   TCParams    : TVec4f;
 begin
-  if( (FIdx = 0) or (FBatch = False) or (not Assigned(BatchTexture[1])) or (BatchTexture[1].ID <> Tex.ID) or (Tehnique <> ttNormal)) then
+  if( (FIdx = 0) or (FBatch = False) or (not Assigned(BatchTexture[1])) or (BatchTexture[1].Texture.ID <> Tex.Texture.ID) or (Tehnique <> ttNormal)) then
   begin
     if FIdx > 0 then
       Flush;
@@ -418,7 +419,7 @@ begin
     Tehnique := ttNormal;
     RenderTechnique[ttNormal].ShaderProgram.Bind;
 
-    Tex.Bind;
+    Tex.Texture.Bind;
   end;
   BatchTexture[1] := Tex;
 
@@ -433,10 +434,11 @@ begin
     Flush;
 end;
 
-procedure TRender2D.DrawSprite(Tex: ITexture; x, y, w, h: Single; const Color1, Color2, Color3, Color4: TVec4f; Angle: Single; Effects: Cardinal);
+procedure TRender2D.DrawSprite(Tex: ITextureFrame; x, y, w, h: Single; const Color1, Color2, Color3, Color4: TVec4f; Angle: Single; Effects: Cardinal);
 var
   v     : TQuad;
   maxTC : TVec2f;
+  TexRect: TRectf;
   TcId  : LongInt;
 begin
   if not (Assigned(Tex)) then Exit;
@@ -451,12 +453,13 @@ begin
   v[3].Pos := Vec2f(x+w, y  );
   v[4].Pos := Vec2f(x  , y  ); }
 
-  maxTC := Tex.maxTC;
+  TexRect := Tex.TextureRect;
+  maxTC := Vec2f(TexRect.Width, TexRect.Height);
   TcId := (Effects and FX_FLIPX + Effects and FX_FLIPY);
-  v[1].TC := TexCoord[TcId][1] * maxTC;
-  v[2].TC := TexCoord[TcId][2] * maxTC;
-  v[3].TC := TexCoord[TcId][3] * maxTC;
-  v[4].TC := TexCoord[TcId][4] * maxTC;
+  v[1].TC := TexCoord[TcId][1] * maxTC + TexRect.Location;
+  v[2].TC := TexCoord[TcId][2] * maxTC + TexRect.Location;
+  v[3].TC := TexCoord[TcId][3] * maxTC + TexRect.Location;
+  v[4].TC := TexCoord[TcId][4] * maxTC + TexRect.Location;
 
 
   if not ComputeVertex(v, Angle, Vec2f(x, y) + Vec2f(w, h) * FRotCenter) then
@@ -464,10 +467,11 @@ begin
   RealDrawSprite(Tex, v, Color1, Color2, Color3, Color4, Effects);
 end;
 
-procedure TRender2D.DrawSprite(Tex: ITexture; x, y, w, h: Single; const Color: TVec4f; Angle: Single; Effects: Cardinal);
+procedure TRender2D.DrawSprite(Tex: ITextureFrame; x, y, w, h: Single; const Color: TVec4f; Angle: Single; Effects: Cardinal);
 var
   v : TQuad;
   maxTC : TVec2f;
+  TexRect: TRectf;
   TcId: LongInt;
 begin
   if not (Assigned(Tex)) then Exit;
@@ -482,19 +486,20 @@ begin
   v[3].Pos := Vec2f(x+w, y  );
   v[4].Pos := Vec2f(x  , y  ); }
 
-  maxTC := Tex.maxTC;
+  TexRect := Tex.TextureRect;
+  maxTC := Vec2f(TexRect.Width, TexRect.Height);
   TcId := (Effects and FX_FLIPX + Effects and FX_FLIPY);
-  v[1].TC := TexCoord[TcId][1] * maxTC;
-  v[2].TC := TexCoord[TcId][2] * maxTC;
-  v[3].TC := TexCoord[TcId][3] * maxTC;
-  v[4].TC := TexCoord[TcId][4] * maxTC;
+  v[1].TC := TexCoord[TcId][1] * maxTC + TexRect.Location;
+  v[2].TC := TexCoord[TcId][2] * maxTC + TexRect.Location;
+  v[3].TC := TexCoord[TcId][3] * maxTC + TexRect.Location;
+  v[4].TC := TexCoord[TcId][4] * maxTC + TexRect.Location;
 
   if not ComputeVertex(v, Angle, Vec2f(x, y) + Vec2f(w, h) * FRotCenter) then
     exit;
   RealDrawSprite(Tex, v, Color, Color, Color, Color, Effects);
 end;
 
-procedure TRender2D.BeginDraw(Shader: IShaderProgram; Tex1, Tex2, Tex3: ITexture);
+procedure TRender2D.BeginDraw(Shader: IShaderProgram; Tex1, Tex2, Tex3: ITextureFrame);
 var
   Teh         : TTehniqueType;
   OlderTime   : LongInt;
@@ -505,9 +510,9 @@ begin
   if not Assigned(Shader) then
     Exit;
 
-  TexBath := ((BatchTexture[1] = Tex1) or (Assigned(Tex1) and Assigned(BatchTexture[1]) and (Tex1.ID = BatchTexture[1].ID))) and
-             ((BatchTexture[2] = Tex2) or (Assigned(Tex2) and Assigned(BatchTexture[2]) and (Tex2.ID = BatchTexture[2].ID))) and
-             ((BatchTexture[3] = Tex3) or (Assigned(Tex3) and Assigned(BatchTexture[3]) and (Tex3.ID = BatchTexture[3].ID)));
+  TexBath := ((BatchTexture[1] = Tex1) or (Assigned(Tex1) and Assigned(BatchTexture[1]) and (Tex1.Texture.ID = BatchTexture[1].Texture.ID))) and
+             ((BatchTexture[2] = Tex2) or (Assigned(Tex2) and Assigned(BatchTexture[2]) and (Tex2.Texture.ID = BatchTexture[2].Texture.ID))) and
+             ((BatchTexture[3] = Tex3) or (Assigned(Tex3) and Assigned(BatchTexture[3]) and (Tex3.Texture.ID = BatchTexture[3].Texture.ID)));
 
   if( (FIdx = 0) or (FBatch = False) or (TexBath = False) or (RenderTechnique[Tehnique].ShaderProgram <> Shader)) then
   begin
@@ -541,13 +546,13 @@ begin
     RenderTechnique[Tehnique].ShaderProgram.Bind;
 
     if Assigned(Tex1) then
-      Tex1.Bind(TC_Texture0);
+      Tex1.Texture.Bind(TC_Texture0);
 
     if Assigned(Tex2) then
-      Tex2.Bind(TC_Texture1);
+      Tex2.Texture.Bind(TC_Texture1);
 
     if Assigned(Tex3) then
-      Tex3.Bind(TC_Texture2);
+      Tex3.Texture.Bind(TC_Texture2);
   end;
 
   BatchTexture[1] := Tex1;
@@ -557,23 +562,26 @@ end;
 
 procedure TRender2D.DrawQuad(x, y, w, h, Angle: Single);
 var
-   v     : TQuad;
-   maxTC : TVec2f;
+   v      : TQuad;
+   maxTC  : TVec2f;
+   TexRect: TRectf;
 begin
-  v[1].Pos := Vec2f(x  , y+h);
-  v[2].Pos := Vec2f(x+w, y+h);
-  v[3].Pos := Vec2f(x+w, y  );
-  v[4].Pos := Vec2f(x  , y  );
+  v[1].Pos := Vec2f(x+w, y+h);
+  v[2].Pos := Vec2f(x+w, y  );
+  v[3].Pos := Vec2f(x,   y+h);
+  v[4].Pos := Vec2f(x,   y  );
 
   if Assigned(BatchTexture[1]) then
-    maxTC := BatchTexture[1].MaxTC
+    TexRect := BatchTexture[1].TextureRect
   else
-    maxTC := Vec2f(1, 1);
+    TexRect := Rectf(0, 0, 1, 1);
 
-  v[1].TC := Vec2f(0,       0);
-  v[2].TC := Vec2f(maxTC.x, 0);
-  v[3].TC :=          maxTC;
-  v[4].TC := Vec2f(0, maxTC.y);
+
+  maxTC := Vec2f(TexRect.Width, TexRect.Height);
+  v[1].TC := TexCoord[0][1] * maxTC + TexRect.Location;
+  v[2].TC := TexCoord[0][2] * maxTC + TexRect.Location;
+  v[3].TC := TexCoord[0][3] * maxTC + TexRect.Location;
+  v[4].TC := TexCoord[0][4] * maxTC + TexRect.Location;
 
   if not ComputeVertex(v, Angle, Vec2f(x, y) + Vec2f(w, h) * FRotCenter) then
     exit;
@@ -588,7 +596,8 @@ end;
 procedure TRender2D.DrawQuad(const v1, v2, v3, v4: TVec2f; Angle: Single; const Center: TVec2f);
 var
    v   : TQuad;
-   maxTC : TVec2f;
+   maxTC  : TVec2f;
+   TexRect: TRectf;
 begin
   v[1].Pos := v1;
   v[2].Pos := v2;
@@ -596,14 +605,20 @@ begin
   v[4].Pos := v4;
 
   if Assigned(BatchTexture[1]) then
-    maxTC := BatchTexture[1].MaxTC
+    maxTC := BatchTexture[1].Texture.MaxTC
   else
     maxTC := Vec2f(1, 1);
 
-  v[1].TC := Vec2f(0,       0);
-  v[2].TC := Vec2f(maxTC.x, 0);
-  v[3].TC :=          maxTC;
-  v[4].TC := Vec2f(0, maxTC.y);
+  if Assigned(BatchTexture[1]) then
+    TexRect := BatchTexture[1].TextureRect
+  else
+    TexRect := Rectf(0, 0, 1, 1);
+
+  maxTC := Vec2f(TexRect.Width, TexRect.Height);
+  v[1].TC := TexCoord[0][1] * maxTC + TexRect.Location;
+  v[2].TC := TexCoord[0][2] * maxTC + TexRect.Location;
+  v[3].TC := TexCoord[0][3] * maxTC + TexRect.Location;
+  v[4].TC := TexCoord[0][4] * maxTC + TexRect.Location;
 
   if not ComputeVertex(v, Angle, Center) then
     exit;

@@ -108,6 +108,8 @@ type
     procedure Update;
     procedure CreateList(out List: IList); stdcall;
     procedure CreateStream(out Stream: IStream; FileName: PWideChar; RW: Boolean = True); stdcall;
+    procedure CreateXMLReader(out Xml: IXML; FileName: PWideChar); overload; stdcall;
+    procedure CreateXMLReader(out Xml: IXML; Stream: IStream); overload; stdcall;
     procedure CreateCamera3D(out Camera: ICamera3d); stdcall;
     procedure CreateCamera2D(out Camera: ICamera2d); stdcall;
   end;
@@ -127,7 +129,8 @@ function ExtractFileExt(const FileName: UnicodeString): UnicodeString;   }
 
 implementation
 
-
+uses
+  CoreX_XML;
         {
 function InterlockedIncrement(var Addend: LongInt): LongInt;
 asm
@@ -709,6 +712,16 @@ end;
 procedure THelpers.CreateStream(out Stream: IStream; FileName: PWideChar; RW: Boolean = True); stdcall;
 begin
   Stream := TStream.Create(FileName, RW);
+end;
+
+procedure THelpers.CreateXMLReader(out Xml: IXML; FileName: PWideChar); stdcall;
+begin
+  Xml := TXML.Load(TStream.Create(FileName, False));
+end;
+
+procedure THelpers.CreateXMLReader(out Xml: IXML; Stream: IStream); stdcall;
+begin
+  Xml := TXML.Load(Stream);
 end;
 
 procedure THelpers.CreateCamera3D(out Camera: ICamera3d); stdcall;

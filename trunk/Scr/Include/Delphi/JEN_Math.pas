@@ -270,8 +270,8 @@ function Vec2f(x, y: Single): TVec2f; inline;
 
 function Recti(x, y, Width, Height: LongInt): TRecti; overload; inline;
 function Recti(v: TVec2i; Width, Height: LongInt): TRecti; overload; inline;
-function Rectf(x, y, Width, Height: LongInt): TRectf; overload; inline;
-function Rectf(pos: TVec2f; Width, Height: LongInt): TRectf; overload; inline;
+function Rectf(x, y, Width, Height: Single): TRectf; overload; inline;
+function Rectf(pos: TVec2f; Width, Height: Single): TRectf; overload; inline;
 
 function Vec3f(x, y, z: Single): TVec3f; overload; inline;
 function Vec3f(v: TVec2f; z: Single): TVec3f; overload; inline;
@@ -513,7 +513,7 @@ begin
   Result.Width := Width;
 end;
 
-function Rectf(x, y, Width, Height: LongInt): TRectf;
+function Rectf(x, y, Width, Height: Single): TRectf;
 begin
   Result.Location.x := x;
   Result.Location.y := y;
@@ -521,7 +521,7 @@ begin
   Result.Width := Width;
 end;
 
-function Rectf(pos: TVec2f; Width, Height: LongInt): TRectf;
+function Rectf(pos: TVec2f; Width, Height: Single): TRectf;
 begin
   Result.Location := pos;
   Result.Height := Height;

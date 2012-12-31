@@ -1,6 +1,4 @@
-{%RunWorkingDir F:\Kot\Programming\Engines\MY\jen_engine\Bin\}
 unit JEN_Header;
-
 
 interface
 
@@ -158,23 +156,6 @@ type
     property NodeI[Idx: LongInt]: IXML read GetNodeI;
   end;
 
-  IScreen = interface
-    function GetWidth  : LongInt; stdcall;
-    function GetHeight : LongInt; stdcall;
-    function GetBPS    : Byte; stdcall;
-    function GetRefresh: Byte; stdcall;
-    function GetDesktopRect : TRecti; stdcall;
-
-    function SetMode(W, H, R: LongInt): Boolean; stdcall;
-    procedure ResetMode; stdcall; //do not use!!!
-
-    property DesktopRect : TRecti read GetDesktopRect;
-    property Width  : LongInt read GetWidth;
-    property Height : LongInt read GetHeight;
-    property BPS    : Byte read GetBPS;
-    property Refresh: Byte read GetRefresh;
-  end;
-
   TMouse = object
     Pos         : TVec2i;
     Delta       : TVec2i;
@@ -289,8 +270,20 @@ type
 
     property Define[DName: PWideChar]: LongInt read GetDefine write SetDefine; default;
   end;
+    TTextureChanel = (TC_Texture0, TC_Texture1, TC_Texture2, TC_Texture3);
 
-  TTextureChanel = (TC_Texture0, TC_Texture1, TC_Texture2, TC_Texture3);
+  ITexture = interface;
+  ITextureFrame = interface(IUnknown)
+  ['{21C28375-2764-4FDD-AA80-17785447E847}']
+    function GetName: PWideChar; stdcall;
+    function GetTexture: ITexture; stdcall;
+    function GetTextureRect: TRectf; stdcall;
+
+    property Name: PWideChar read GetName;
+    property Texture: ITexture read GetTexture;
+    property TextureRect: TRectf read GetTextureRect;
+  end;
+
   ITexture = interface(IResource)
   ['{E9EEFA65-F004-4668-9BAD-2FE92D19F050}']
     procedure Bind(Channel: TTextureChanel = TC_Texture0); stdcall;
@@ -306,6 +299,7 @@ type
     function GetClamp: Boolean; stdcall;
     procedure SetClamp(Value: Boolean); stdcall;
     procedure SetCompare(Value: TCompareMode); stdcall;
+    function GetFrame: ITextureFrame; stdcall;
 
     procedure DataSet(Width, Height, Size: LongInt; Data: Pointer; Level: LongInt); stdcall;
 
@@ -317,6 +311,7 @@ type
     property Sampler: LongWord read GetSampler;
     property Filter: TTextureFilter read GetFilter write SetFilter;
     property Clamp: Boolean read GetClamp write SetClamp;
+    property Frame: ITextureFrame read GetFrame;
   end;
 
   IGeomBuffer = interface
@@ -332,13 +327,14 @@ type
     property GType: TGBufferType read GetType;
     property PrimitiveRestartIndex:Int64 read GetPrimitiveRestartIndex; 
   end;
+  
 
   IRenderEntity = interface
     function Valid: Boolean; stdcall;
-    function GetID: LongWord; stdcall;
+    function GetId: LongWord; stdcall;
     procedure AttachAndBind(Buffer: IGeomBuffer); stdcall;
-    procedure Attrib(AName: PWideChar; AttribType: TShaderAttribType; Stride, Offset: LongInt; Norm: Boolean = False; Necessary: Boolean = True) stdcall;
-    procedure Draw(mode: TGeomMode; count: LongInt; Indexed: Boolean; first: LongInt = 0); stdcall;
+    procedure Attrib(AName: PWideChar; AttribType: TShaderAttribType; Stride, Offset: LongInt; Norm: Boolean = False; Necessary: Boolean = True); stdcall;
+    procedure Draw(Mode: TGeomMode; count: LongInt; Indexed: Boolean; First: LongInt = 0); stdcall;
   end;
 
   IFont = interface(IResource)
@@ -483,10 +479,10 @@ type
     function  GetRotCenter: TVec2f; stdcall;
     procedure SetRotCenter(const Value: TVec2f); stdcall;
 
-    procedure DrawSprite(Tex: ITexture; x, y, w, h: Single; const Color1, Color2, Color3, Color4: TVec4f; Angle: Single = 0.0; Effects: Cardinal = 0); overload; stdcall;
-    procedure DrawSprite(Tex: ITexture; x, y, w, h: Single; const Color: TVec4f; Angle: Single = 0.0; Effects: Cardinal = 0); overload; stdcall;
+    procedure DrawSprite(Tex: ITextureFrame; x, y, w, h: Single; const Color1, Color2, Color3, Color4: TVec4f; Angle: Single = 0.0; Effects: Cardinal = 0); overload; stdcall;
+    procedure DrawSprite(Tex: ITextureFrame; x, y, w, h: Single; const Color: TVec4f; Angle: Single = 0.0; Effects: Cardinal = 0); overload; stdcall;
 
-    procedure BeginDraw(Shader: IShaderProgram; Tex1: ITexture = nil; Tex2: ITexture = nil; Tex3: ITexture = nil); stdcall;
+    procedure BeginDraw(Shader: IShaderProgram; Tex1: ITextureFrame = nil; Tex2: ITextureFrame = nil; Tex3: ITextureFrame = nil); stdcall;
     procedure SetData(const Data1, Data2, Data3, Data4: TVec4f); stdcall;
     procedure DrawQuad(x, y, w, h, Angle: Single); overload; stdcall;
     procedure DrawQuad(const v1, v2, v3, v4: TVec2f; Angle: Single; const Center: TVec2f); overload; stdcall;
@@ -573,6 +569,32 @@ type
   end;
   PGPUInfo = ^IGPUInfo;}
 
+  PDisplayMode = ^TDisplayMode;
+  TDisplayMode = record
+    Width        : LongInt;
+    Height       : LongInt;
+    RefreshRates : IList;
+  end;
+
+  IScreen = interface
+    function GetWidth  : LongInt; stdcall;
+    function GetHeight : LongInt; stdcall;
+    function GetBPS    : Byte; stdcall;
+    function GetRefresh: Byte; stdcall;
+    function GetDesktopRect : TRecti; stdcall;
+    function GetResolutionList: IList; stdcall;
+
+    function SetMode(W, H, R: LongInt): Boolean; stdcall;
+    procedure ResetMode; stdcall; //do not use!!!
+
+    property ResolutionList : IList read GetResolutionList;
+    property DesktopRect : TRecti read GetDesktopRect;
+    property Width  : LongInt read GetWidth;
+    property Height : LongInt read GetHeight;
+    property BPS    : Byte read GetBPS;
+    property Refresh: Byte read GetRefresh;
+  end;
+
   ISystemInfo = interface
     function GetScreen: IScreen; stdcall;
     function GetGpuList: IList; stdcall;
@@ -600,6 +622,8 @@ type
 
     procedure CreateList(out List: IList); stdcall;
     procedure CreateStream(out Stream: IStream; FileName: PWideChar; RW: Boolean = True); stdcall;
+    procedure CreateXMLReader(out Xml: IXML; FileName: PWideChar); overload; stdcall;
+    procedure CreateXMLReader(out Xml: IXML; Stream: IStream); overload; stdcall;
     procedure CreateCamera3D(out Camera: ICamera3d); stdcall;
     procedure CreateCamera2D(out Camera: ICamera2d); stdcall;
 

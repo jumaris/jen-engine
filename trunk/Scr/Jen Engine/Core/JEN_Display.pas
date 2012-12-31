@@ -107,14 +107,17 @@ begin
       begin
         if (Display.Active) and (Word(lparam) = 1) and (not Display.Cursor) Then
           SetCursor(0)
-        else;
-        //  SetCursor(LoadCursor(0, PWideChar(32512)));
+        else
+          SetCursor(LoadCursor(0, PWideChar(32512)));
       end;
 
     WM_MOVE, WM_SIZE :
     begin
-      GetClientRect(Display.Handle, Rect);
-      Display.Resize(Rect.Right - Rect.Left, Rect.Bottom - Rect.Top);
+      if not Display.FullScreen then
+      begin
+        GetClientRect(Display.Handle, Rect);
+        Display.Resize(Rect.Right - Rect.Left, Rect.Bottom - Rect.Top);
+      end;
     end;
 
     WM_SYSKEYUP, WM_KEYUP:
@@ -323,16 +326,17 @@ var
 begin
   if not FCustomHandle then
   begin
-    with Helpers.SystemInfo do
-      Rect := Recti(Max((Screen.Width - FWidth) div 2, Screen.DesktopRect.Location.x), Max((Helpers.SystemInfo.Screen.Height - FHeight) div 2, Screen.DesktopRect.Location.y), FWidth, FHeight);
 
     if FFullScreen then
     begin
       Rect.Location := ZeroPoint;
       Style := WS_POPUP;
+      Rect := Recti(0, 0, FWidth, FHeight);
     end else
     begin
       Style := WS_CAPTION or WS_MINIMIZEBOX;
+      with Helpers.SystemInfo do
+        Rect := Recti(Max((Screen.Width - FWidth) div 2, Screen.DesktopRect.Location.x), Max((Helpers.SystemInfo.Screen.Height - FHeight) div 2, Screen.DesktopRect.Location.y), FWidth, FHeight);
       Rect.Inflate(GetSystemMetrics(SM_CXDLGFRAME), GetSystemMetrics(SM_CYDLGFRAME) + GetSystemMetrics(SM_CYCAPTION) div 2);
     end;
 

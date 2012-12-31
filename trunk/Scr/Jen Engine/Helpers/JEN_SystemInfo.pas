@@ -9,14 +9,7 @@ uses
   SysUtils;
 
 type
-  PDisplayMode = ^TDisplayMode;
-  TDisplayMode = record
-    Width        : LongInt;
-    Height       : LongInt;
-    RefreshRates : IList;
-  end;
-
-  type TScreen = class(TInterfacedObject, IScreen)
+   TScreen = class(TInterfacedObject, IScreen)
     constructor Create;
     destructor Destroy; override;
   private
@@ -30,6 +23,7 @@ type
     function GetBPS: Byte; stdcall;
     function GetRefresh: Byte; stdcall;
     function GetDesktopRect: TRecti; stdcall;
+    function GetResolutionList: IList; stdcall;
   public
     function SetMode(W, H, R: LongInt): Boolean; stdcall;
     procedure ResetMode; stdcall;
@@ -89,7 +83,6 @@ var
   begin
     with(PDisplayMode(mode)^) do
     begin
-      Add := True;
       for K := 0 to RefreshRates.Count - 1 do
         if(PByte(RefreshRates[K])^ = refresh) then
           Exit;
@@ -292,6 +285,11 @@ begin
   Result.Location.Y := Dr.Top;
   Result.Width := Dr.Right - Dr.Left;
   Result.Height := Dr.Bottom - Dr.Top;
+end;
+
+function TScreen.GetResolutionList: IList;
+begin
+  Result := FModes;
 end;
 {$ENDREGION}
 

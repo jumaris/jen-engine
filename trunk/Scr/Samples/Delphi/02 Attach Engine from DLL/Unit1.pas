@@ -97,9 +97,9 @@ begin
 
 // Render2d.DrawSprite(s,r,nil,nil,300,200,512,512,clBlack,clWhite,clBlack,clWhite,45,0);
   Render2d.BatchBegin;
-  Render2d.DrawSprite(r,000,000,512,512,clBlack,clWhite,clBlack,clWhite,0,0);
-  Render2d.DrawSprite(r,-100,-100,512,512,clBlack,clWhite,clBlack,clWhite,0,0);
-  Render2d.DrawSprite(r,-200,-200,512,512,clBlack,clWhite,clBlack,clWhite,0,0);
+  Render2d.DrawSprite(r.Frame,000,000,512,512,clBlack,clWhite,clBlack,clWhite,0,0);
+  Render2d.DrawSprite(r.Frame,-100,-100,512,512,clBlack,clWhite,clBlack,clWhite,0,0);
+  Render2d.DrawSprite(r.Frame,-200,-200,512,512,clBlack,clWhite,clBlack,clWhite,0,0);
                  {
   Render2d.BeginDraw(s,r,nil,nil);
   Render2d.SetData(clBlack,clWhite,clBlack,clWhite);
@@ -108,10 +108,12 @@ begin
   Render2d.SetData(clBlack,clWhite,clBlack,clWhite);
   Render2d.DrawQuad(600,100,512,512,45);
   Render2d.EndDraw;   }
-              {
-  Font.Scale := 0.1;
-  Font.Print('qwewqe',0,0);   }
+
+
   Render2d.BatchEnd;
+
+    Font.Scale := 0.1;
+  Font.Print('qwewqe',0,0);
     //  Font.Print('asdasd',0,0);
      {
   Font.OutlineSize := 1;
@@ -144,7 +146,7 @@ var
 sp  : IShaderResource;
 begin
   ReportMemoryLeaksOnShutdown := True;
-  GetJenEngine(False, Engine);
+  GetJenEngine(True, Engine);
 
   Engine.GetSubSystem(ssDisplay, IJenSubSystem(Display));
   Engine.GetSubSystem(ssRender, IJenSubSystem(Render));
@@ -152,7 +154,7 @@ begin
   Engine.GetSubSystem(ssInput, IJenSubSystem(Input));
   Engine.GetSubSystem(ssRender2d, IJenSubSystem(Render2d));
   Engine.GetSubSystem(ssResMan, IJenSubSystem(ResMan));
-  Display.Init(1024,768,9,false);
+  Display.Init(1440,900,9,false);
   Render.Init(gaOpenGL2_x);
  // Render2d.ResolutionCorrect(800,600);
 
