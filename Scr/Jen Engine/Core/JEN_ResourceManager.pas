@@ -199,8 +199,7 @@ begin
 
   if not Loader.Load(Stream, Resource) then
   begin
-    Resource := nil;
-   { if ResType = ResType then
+   {    if ResType = ResType then
     begin
 
      // Resource := DebuggerTexture;

@@ -109,7 +109,7 @@ begin
       MoveWindow(FMemoWnd, 0, 0, rect.right, rect.bottom, True);
     end;
   else
-    Result := DefWindowProc(hWnd, Msg, wParam, lParam);
+    Result := DefWindowProc(hWnd, Msg, Windows.WPARAM(wParam), Windows.LPARAM(lParam));
   end;
 end;
 

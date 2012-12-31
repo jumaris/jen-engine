@@ -191,7 +191,7 @@ begin
   SetLength(FPages, FPagesCount);
   for I := 0 to FPagesCount - 1 do
   begin
-    FileName := FFilePath + '\' + ChangeFileExt(FName,'') + '_' + IntToStr(I) + '.dds';
+    FileName := ExtractFileDir(FFilePath) + '\' + ChangeFileExt(FName,'') + '_' + IntToStr(I) + '.dds';
     ResMan.Load(PWideChar(FileName), FPages[i]);
   end;
 end;
@@ -234,7 +234,7 @@ begin
   Params[3] := FOutLineColor;
   ParamsUniform.Value(Params,4);
 
-  Render2d.BeginDraw(Shader, FPages[0]);
+  Render2d.BeginDraw(Shader, FPages[0].Frame);
   for i := 0 to Length(Text)-1 do
   begin
     CharInfo := FChars[Text[i]];
@@ -246,9 +246,9 @@ begin
       Pos2 := Pos1 + Vec2f(BlackBoxX, BlackBoxY) * FScale + Vec2f(FMaxDist, FMaxDist) * FScale * 2;
 
       Render2d.SetData(TexCoords, clWhite, clWhite, clWhite);
-      Render2d.DrawQuad(Vec2f(Pos1.X, Pos2.Y), Pos2, Vec2f(Pos2.X, Pos1.Y), Pos1, 0.0, Vec2f(0,0));
+      Render2d.DrawQuad(Pos2, Vec2f(Pos2.X, Pos1.Y), Vec2f(Pos1.X, Pos2.Y), Pos1, 0.0, Vec2f(0,0));
 
-      PosX := PosX + (CharInfo^.CellWidht) * FScale + FEdgeSmooth + FOutlineSize * FScale;
+      PosX := PosX + (CharInfo^.CellWidht) * FScale{ + FEdgeSmooth }+ FOutlineSize * FScale;
     end;
   end;
   Render2d.EndDraw;
@@ -267,7 +267,9 @@ begin
     if not Assigned(CharInfo) then Continue;
 
     with CharInfo^ do
-      Result := Result + (CharInfo^.CellWidht) * FScale + FEdgeSmooth + FOutlineSize * FScale;
+    begin
+      Result := Result + (CharInfo^.CellWidht) * FScale +{ FEdgeSmooth }+ FOutlineSize * FScale;
+    end;
   end;
 end;
 
