@@ -243,11 +243,6 @@ type
   //  procedure SetType(Value: TShaderAttribType); stdcall;
 
     function Valid: Boolean; stdcall;
-    procedure Value(Stride, Offset: LongInt; Norm: Boolean = False); stdcall;
-
-    procedure Enable; stdcall;
-    procedure Disable; stdcall;
-
     property Name: PWideChar read GetName;
     property AType: TShaderAttribType read GetType;
   end;
@@ -256,6 +251,7 @@ type
   ['{1F79BB95-C0B0-45AF-AA8D-AF9999CC85C8}']
     function Valid: Boolean; stdcall;
     function GetID: LongWord; stdcall;
+    procedure Link; stdcall;
     function Uniform(UName: PWideChar; UniformType: TShaderUniformType; Necessary: Boolean = True): IShaderUniform; overload; stdcall;
     function Attrib(AName: PWideChar; AttribType: TShaderAttribType; Necessary: Boolean = True): IShaderAttrib; stdcall;
     procedure Bind; stdcall;
@@ -266,7 +262,7 @@ type
     function GetDefine(DName: PWideChar): LongInt; stdcall;
     procedure SetDefine(DName: PWideChar; Value: LongInt); stdcall;
 
-    procedure Compile(var shader: IShaderProgram); stdcall;
+    procedure GetShader(var shader: IShaderProgram; Link: Boolean = True); stdcall;
 
     property Define[DName: PWideChar]: LongInt read GetDefine write SetDefine; default;
   end;
@@ -327,14 +323,14 @@ type
     property GType: TGBufferType read GetType;
     property PrimitiveRestartIndex:Int64 read GetPrimitiveRestartIndex; 
   end;
-  
 
   IRenderEntity = interface
     function Valid: Boolean; stdcall;
     function GetId: LongWord; stdcall;
     procedure AttachAndBind(Buffer: IGeomBuffer); stdcall;
-    procedure Attrib(AName: PWideChar; AttribType: TShaderAttribType; Stride, Offset: LongInt; Norm: Boolean = False; Necessary: Boolean = True); stdcall;
-    procedure Draw(Mode: TGeomMode; count: LongInt; Indexed: Boolean; First: LongInt = 0); stdcall;
+    procedure BindAttrib(Attrib: IShaderAttrib; Stride, Offset: LongInt; Norm: Boolean = False); overload; stdcall;
+    procedure BindAttrib(Location: LongInt; AType: TShaderAttribType; Stride, Offset: LongInt; Norm: Boolean = False); overload; stdcall;
+    procedure Draw(Mode: TGeomMode; count: LongInt; First: LongInt = 0); stdcall;
   end;
 
   IFont = interface(IResource)
@@ -392,7 +388,7 @@ type
 
     function CreateRenderTarget(Width, Height: LongWord; CFormat: TTextureFormat; Count: LongWord; Samples: LongWord = 0; DepthBuffer: Boolean = False; DFormat: TTextureFormat = tfoDepth24): JEN_Header.IRenderTarget; stdcall;
     function CreateGeomBuffer(GBufferType: TGBufferType; Count, Stride: LongInt; Data: Pointer): IGeomBuffer; stdcall;
-    function CreateRenderEntity(Shader: IShaderProgram): IRenderEntity; stdcall;
+    function CreateRenderEntity: IRenderEntity; stdcall;
 
     function GetTarget: IRenderTarget; stdcall;
     procedure SetTarget(Value: IRenderTarget); stdcall;

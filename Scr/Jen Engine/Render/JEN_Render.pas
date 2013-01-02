@@ -87,7 +87,7 @@ type
   public
     function CreateRenderTarget(Width, Height: LongWord; CFormat: TTextureFormat; Count: LongWord; Samples: LongWord; DepthBuffer: Boolean; DFormat: TTextureFormat): JEN_Header.IRenderTarget; stdcall;
     function CreateGeomBuffer(GBufferType: TGBufferType; Count, Stride: LongInt; Data: Pointer): IGeomBuffer; stdcall;
-    function CreateRenderEntity(Shader: IShaderProgram): IRenderEntity; stdcall;
+    function CreateRenderEntity: IRenderEntity; stdcall;
 
     function GetGAPI: TGAPI; stdcall;
     function GetTarget: IRenderTarget; stdcall;
@@ -387,9 +387,9 @@ begin
   Result := TGeomBuffer.Create(GBufferType, Count, Stride, Data);
 end;
 
-function TRender.CreateRenderEntity(Shader: IShaderProgram): IRenderEntity;
+function TRender.CreateRenderEntity: IRenderEntity;
 begin
-  Result := TRenderEntity.Create(Shader);
+  Result := TRenderEntity.Create;
 end;
 
 function TRender.GetGAPI: TGAPI;

@@ -51,13 +51,12 @@ sp  : IShaderResource;
 u : IShaderUniform;
 i : Integer;
 begin
+  Render.ClearColor := clWhite;
   ResMan.Load('Media\ArialFont.jfi', Font); //OOOOO◊≈Õ‹ Œœ¿—Õ¿!
-  ResMan.Load('Media\123.dds', r);
-  ResMan.Load('Media\123.dds', r);
-  ResMan.Load('Media\123.dds', r);
+  ResMan.Load('Media\Fake.dds', r);
+
  ResMan.Load('media\MandelbrotSetShader.xml', sp);
- sp.Compile(s);
- s.Bind;
+ sp.GetShader(s);
  i := 15;
  u := s.Uniform('count', utInt);
  u.Value(i);
@@ -87,7 +86,7 @@ end;
 procedure TGame.OnRender;
 var i : integer;
 begin
-  Cam.SetCam;
+  //Cam.SetCam;
   Render.Clear(True,False,False);
 
   Render2d.BatchBegin;
@@ -96,11 +95,17 @@ begin
   Render2d.BatchEnd;
 
 // Render2d.DrawSprite(s,r,nil,nil,300,200,512,512,clBlack,clWhite,clBlack,clWhite,45,0);
-  Render2d.BatchBegin;
+
+  //20000 - 97FPS - 10RT - 1025DIP
+  //20000 - 84FPS - 12RP - 15361DIP
+  for i := 0 to 20000 do
+    Render2d.DrawSprite(r.Frame,(i mod 100 * 1024/100),i div 40 * 2, 2, 2,clwhite);
+
+      {
   Render2d.DrawSprite(r.Frame,000,000,512,512,clBlack,clWhite,clBlack,clWhite,0,0);
   Render2d.DrawSprite(r.Frame,-100,-100,512,512,clBlack,clWhite,clBlack,clWhite,0,0);
   Render2d.DrawSprite(r.Frame,-200,-200,512,512,clBlack,clWhite,clBlack,clWhite,0,0);
-                 {
+
   Render2d.BeginDraw(s,r,nil,nil);
   Render2d.SetData(clBlack,clWhite,clBlack,clWhite);
   Render2d.DrawQuad(-000,100,512,512,45);
@@ -110,7 +115,6 @@ begin
   Render2d.EndDraw;   }
 
 
-  Render2d.BatchEnd;
 
     Font.Scale := 0.1;
   Font.Print('qwewqe',0,0);
@@ -154,7 +158,7 @@ begin
   Engine.GetSubSystem(ssInput, IJenSubSystem(Input));
   Engine.GetSubSystem(ssRender2d, IJenSubSystem(Render2d));
   Engine.GetSubSystem(ssResMan, IJenSubSystem(ResMan));
-  Display.Init(1440,900,9,false);
+  Display.Init(1024,768,9,false);
   Render.Init(gaOpenGL2_x);
  // Render2d.ResolutionCorrect(800,600);
 

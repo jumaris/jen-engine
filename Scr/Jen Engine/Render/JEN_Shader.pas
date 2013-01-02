@@ -1,9 +1,5 @@
 unit JEN_Shader;
 
-{$IFDEF FPC}
-  {$MODE Delphi}
-{$ENDIF}
-
 interface
 
 uses
@@ -23,7 +19,7 @@ type
 
   IShaderProgram = interface(JEN_Header.IShaderProgram)
   ['{6A27461E-FA18-4B20-86AC-6BE9A830E3F5}']
-    function Init(const VertexShader, FragmentShader: AnsiString): Boolean;
+    function Init(const VSCode, FSCode: AnsiString): Boolean;
   end;
 
   IShaderUniform = interface(JEN_Header.IShaderUniform)
@@ -33,9 +29,9 @@ type
 
   IShaderAttrib = interface(JEN_Header.IShaderAttrib)
   ['{CB9EEB22-8256-46BB-B7B1-372E0D4CD624}']
-    procedure Init(ShaderID: GLEnum; const AName: AnsiString; AttribType: TShaderAttribType; Necessary: Boolean);
-    function GetLocation: GLhandle;
-    property Location: GLhandle read GetLocation;
+    function Init(ShaderID: GLEnum; Location: LongInt; const AName: AnsiString; AttribType: TShaderAttribType; Necessary: Boolean): IShaderAttrib;
+    function GetLocation: LongInt;
+    property Location: LongInt read GetLocation;
   end;
 
   TShaderResource = class(TResource, IResource, IShaderResource)
@@ -51,7 +47,7 @@ type
   public
     procedure Init(XML: IXML);
     procedure Reload; stdcall;
-    procedure Compile(var Shader: JEN_Header.IShaderProgram); stdcall;
+    procedure GetShader(var Shader: JEN_Header.IShaderProgram; Link: Boolean) stdcall;
   end;
 
   TShaderProgram = class(TInterfacedObject, IShaderProgram)
@@ -59,7 +55,7 @@ type
     destructor Destroy; override;
   private
     FID           : GLhandle;
-    FValid        : Boolean;
+    FStatus       : (spsNone, spsCompiled, spsLinked);
     FUniformList  : TInterfaceList;
     FAttribList   : TInterfaceList;
   class var
@@ -68,8 +64,11 @@ type
   public
     function Valid: Boolean; stdcall;
     function GetID: LongWord; stdcall;
+    procedure Link; stdcall;
     function Init(const VertexShader, FragmentShader: AnsiString): Boolean;
     function Uniform(UName: PWideChar; UniformType: TShaderUniformType; Necessary: Boolean): JEN_Header.IShaderUniform; overload; stdcall;
+    function GetAttib(AName: PWideChar): IShaderAttrib;
+    function BindAttrib(Location: LongInt; AName: PWideChar; AttribType: TShaderAttribType): JEN_Header.IShaderAttrib; stdcall;
     function Attrib(AName: PWideChar; AttribType: TShaderAttribType; Necessary: Boolean): JEN_Header.IShaderAttrib; stdcall;
     procedure Bind; stdcall;
   end;
@@ -100,13 +99,10 @@ type
     FName  : UnicodeString;
     function GetName: PWideChar; stdcall;
     function GetType: TShaderAttribType; stdcall;
-    function GetLocation: GLhandle; 
-    procedure Init(ShaderID: GLEnum; const AName: AnsiString; AttribType: TShaderAttribType; Necessary: Boolean);
+    function GetLocation: LongInt;
+    function Init(ShaderID: GLEnum; Location: LongInt; const AName: AnsiString; AttribType: TShaderAttribType; Necessary: Boolean): IShaderAttrib;
   public
     function Valid: Boolean; stdcall;
-    procedure Value(Stride, Offset: LongInt; Norm: Boolean); stdcall;
-    procedure Enable; stdcall;
-    procedure Disable; stdcall;
   end;
 
   TShaderDefine = record
@@ -143,7 +139,7 @@ end;
 
 function TShaderProgram.Valid: Boolean;
 begin
-  Result := FValid;
+  Result := FStatus = spsLinked;
 end;
 
 function TShaderProgram.GetID: LongWord;
@@ -153,25 +149,17 @@ end;
 
 function TShaderProgram.Init(const VertexShader, FragmentShader: AnsiString): Boolean;
 var
-  i           : LongInt;
-  Status      : LongInt;
-  LogBuf      : AnsiString;
-  LogLen      : LongInt;
-  Str         : string;
- // Count       : LongInt;
- // Info        : LongInt;
- // GLType      : LongInt;
-//  NameBuff    : array[0..255] of AnsiChar;
-//  UniformType : TShaderUniformType;
-//  Name        : UnicodeString;
- // u           : IShaderUniform;
- // a           : IShaderAttrib;
+  i   : LongInt;
+  Str : string;
 
   procedure Attach(ShaderType: GLenum; const Source: AnsiString);
   var
     Obj         : GLEnum;
     SourcePtr   : PAnsiChar;
     SourceSize  : LongInt;
+    Status      : LongInt;
+    LogBuf      : AnsiString;
+    LogLen      : LongInt;
   begin
     Obj := glCreateShader(ShaderType);
 
@@ -197,12 +185,13 @@ var
   end;
 
 begin
+  FStatus := spsNone;
+  Result := False;
+
   if glIsProgram(FID) then
     glDeleteProgram(FID);
 
-  FValid := False;
   FID := glCreateProgram;
-  Result := False;
 
   if (VertexShader = '') or (FragmentShader = '') then
     Exit;
@@ -213,12 +202,37 @@ begin
   //TODO
   //хак, но не спасёт при глобальных изменнениях шейдеров и особенно типов аттрибутов
   //надо писать свою систему выделения локейшина для аттрибута
-
   for i := 0 to FAttribList.Count - 1 do
   begin
     Str := (FAttribList[i] as IShaderAttrib).Name;
-    glBindAttribLocation(FID, (FAttribList[i] as IShaderAttrib).Location, PAnsiChar(Str)); 
+    glBindAttribLocation(FID, (FAttribList[i] as IShaderAttrib).Location, PAnsiChar(Str));
   end;
+
+  glBindAttribLocation(FID, 0, 'JEN_VertexID');
+
+  Result := True;
+  FStatus := spsCompiled;
+end;
+
+procedure TShaderProgram.Link; stdcall;
+var
+  i       : LongInt;
+  Status  : LongInt;
+  LogBuf  : AnsiString;
+  LogLen  : LongInt;
+
+   // Count       : LongInt;
+ // Info        : LongInt;
+ // GLType      : LongInt;
+//  NameBuff    : array[0..255] of AnsiChar;
+//  UniformType : TShaderUniformType;
+//  Name        : UnicodeString;
+ // u           : IShaderUniform;
+ // a           : IShaderAttrib;
+
+begin
+  if FStatus <> spsCompiled then
+    Exit;
 
   glLinkProgram(FID);
   glGetProgramiv(FID, GL_LINK_STATUS, @Status);
@@ -238,7 +252,9 @@ begin
 
   for i := 0 to FAttribList.Count - 1 do
   with (FAttribList[i] as IShaderAttrib) do
-    Init(FID, Name, AType, Valid);
+    Init(FID, -1, Name, AType, Valid);
+
+  FStatus := spsLinked;
           {
   glGetProgramiv(FID, GL_ACTIVE_UNIFORMS, @Count);
   for i := 0 to Count-1 do
@@ -295,9 +311,6 @@ begin
   end;   }
 
   Bind();
-  glUseProgram(FID);
-  Result := True;
-  FValid := True;
 end;
 
 function TShaderProgram.Uniform(UName: PWideChar; UniformType: TShaderUniformType; Necessary: Boolean): JEN_Header.IShaderUniform;
@@ -315,19 +328,39 @@ begin
   Result := u;
 end;
 
-function TShaderProgram.Attrib(AName: PWideChar; AttribType: TShaderAttribType; Necessary: Boolean): JEN_Header.IShaderAttrib;
+function TShaderProgram.GetAttib(AName: PWideChar): IShaderAttrib;
 var
   i : LongInt;
-  a : IShaderAttrib;
+  Attrib : IShaderAttrib;
 begin
   for i := 0 to FAttribList.Count - 1 do
     if WideSameStr((FAttribList[i] as IShaderAttrib).Name, AName) then
       Exit(IShaderAttrib(FAttribList[i]));
+  Attrib := TShaderAttrib.Create;
+  FAttribList.Add(IShaderAttrib(Attrib));
+  Result := Attrib;
+end;
 
-  a := TShaderAttrib.Create;
-  a.Init(FID, AName, AttribType, Necessary);
-  FAttribList.Add(IShaderAttrib(a));
-  Result := a;
+function TShaderProgram.BindAttrib(Location: LongInt; AName: PWideChar; AttribType: TShaderAttribType): JEN_Header.IShaderAttrib; stdcall;
+begin
+  if FStatus <> spsCompiled then
+  begin
+    Engine.Warning('Shader attribute binding is possible only before shader linked');
+    Exit;
+  end;
+
+  Result := GetAttib(AName).Init(FID, Location, AName, AttribType, False);
+end;
+
+function TShaderProgram.Attrib(AName: PWideChar; AttribType: TShaderAttribType; Necessary: Boolean): JEN_Header.IShaderAttrib;
+begin
+  if FStatus <> spsLinked then
+  begin
+    Engine.Warning('Link shader program, before get shader attributes');
+    Exit;
+  end;
+
+  Result := GetAttib(AName).Init(FID, -1, AName, AttribType, Necessary);
 end;
 
 procedure TShaderProgram.Bind;
@@ -437,54 +470,31 @@ begin
   Result := FType;
 end;
 
-function TShaderAttrib.GetLocation: GLhandle; 
+function TShaderAttrib.GetLocation: LongInt;
 begin
   Result := FID;
 end;
 
-procedure TShaderAttrib.Init(ShaderID: LongWord; const AName: AnsiString; AttribType: TShaderAttribType; Necessary: Boolean);
+function TShaderAttrib.Init(ShaderID: GLEnum; Location: LongInt; const AName: AnsiString; AttribType: TShaderAttribType; Necessary: Boolean): IShaderAttrib;
 begin
-  FID   := glGetAttribLocation(ShaderID, PAnsiChar(AName));
+  if Location = -1 then
+  begin
+    glBindAttribLocation(ShaderID, Location, PAnsiChar(AName));
+  end else
+    FID := glGetAttribLocation(ShaderID, PAnsiChar(AName));
+
   FName := Copy(AName, 1, Length(AName));
   FType := AttribType;
 
   if (FID = -1) and Necessary then
     Engine.Warning('Uncorrect attrib name ' + AName);
+
+  Result := Self;
 end;
 
 function TShaderAttrib.Valid: Boolean;
 begin
   Result := FID <> -1;
-end;
-
-procedure TShaderAttrib.Value(Stride, Offset: LongInt; Norm: Boolean);
-var
-  DType : GLEnum;
-  Size  : LongInt;
-begin
-  if FID <> -1 then
-  begin
-    case FType of
-      atVec1b..atVec4b: DType := GL_UNSIGNED_BYTE;
-      atVec1s..atVec4s: DType := GL_SHORT;
-      atVec1f..atVec4f: DType := GL_FLOAT;
-      else Exit;
-    end;
-    Size := (Byte(FType) - 1) mod 4 + 1;
-    glVertexAttribPointer(FID, Size, DType, Norm, Stride, Pointer(Offset));
-  end;
-end;
-
-procedure TShaderAttrib.Enable;
-begin
-  if FID <> -1 then
-    glEnableVertexAttribArray(FID);
-end;
-
-procedure TShaderAttrib.Disable;
-begin
- if FID <> -1 then
-    glDisableVertexAttribArray(FID);
 end;
 {$ENDREGION}
 
@@ -556,27 +566,26 @@ begin
 end;
 
 procedure TShaderResource.Init(XML: IXML);
-var
-  I       : LongInt;
-  Shader  : JEN_Header.IShaderProgram;
+//var
+//  I       : LongInt;
+//  Shader  : JEN_Header.IShaderProgram;
 begin
   FXML := XML;
+  //
+   {
   for I := 0 to FShaderPrograms.Count - 1 do
   begin
     Shader := FShaderPrograms[i] as JEN_Header.IShaderProgram;
-    Compile(Shader);
-  end;
+    GetShader(Shader);
+  end;        }
 end;
 
 procedure TShaderResource.Reload; stdcall;
-var
-  i : IResource;
 begin
-  i := self;
-  ResMan.Load(FFilePath+FName, i);
+
 end;
 
-procedure TShaderResource.Compile(var Shader: JEN_Header.IShaderProgram);
+procedure TShaderResource.GetShader(var Shader: JEN_Header.IShaderProgram; Link: Boolean);
 var
   XN_VS   : IXML;
   XN_FS   : IXML;
@@ -676,6 +685,10 @@ begin
 
     Engine.Log(Str);
   end;
+
+  if Link then
+    Shader.Link;
+
   FShaderPrograms.Add(Shader);
 end;
 

@@ -95,7 +95,8 @@ begin
   if not Assigned(Shader) then
   begin
     ResMan.Load('|TextShader.xml', Res);
-    Res.Compile(Shader);
+    Res.GetShader(Shader);
+    //Shader
     ParamsUniform := Shader.Uniform('Params', utVec4);
   end;
 end;
