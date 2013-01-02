@@ -352,7 +352,6 @@ var
   i           : Integer;
   Handle      : TRegHandle;
   Driver      : UnicodeString;
-  Str         : UnicodeString;
   DeviceList  : IList;
   Path        : UnicodeString;
   GPUInfo     : PGPUInfo;

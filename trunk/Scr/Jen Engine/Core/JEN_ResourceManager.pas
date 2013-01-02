@@ -40,13 +40,10 @@ type
   private
     FLoaderList         : TList;
     FErrorTexture       : TTexture;
-    FResChangeCallBack  : Pointer;
     FResourceCache      : array [TResourceType] of TInterfaceList;
     FActiveRes          : array [TResourceType] of IUnknown;
     FActiveResID        : array [TResourceType] of LongWord;
   public
-    procedure SetResChangeCallBack(Proc: Pointer);
-
     function GetActiveRes(RT: TResourceType): IUnknown;
     procedure SetActiveRes(RT: TResourceType; Value: IUnknown);
     function GetActiveResID(RT: TResourceType): LongWord;
@@ -116,11 +113,6 @@ begin
   for res := Low(TResourceType) to High(TResourceType) do
     FResourceCache[res].Free;
   FLoaderList.Free;
-end;
-
-procedure TResourceManager.SetResChangeCallBack(Proc: Pointer);
-begin
-  FResChangeCallBack := Proc;
 end;
 
 function TResourceManager.GetActiveRes(RT: TResourceType): IUnknown;

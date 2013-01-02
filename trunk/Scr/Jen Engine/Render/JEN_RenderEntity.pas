@@ -14,45 +14,36 @@ type           {
   end;
                        }
   TRenderEntity = class(TInterfacedObject, IRenderEntity)
-    constructor Create(Shader: IShaderProgram);
+    constructor Create;
     destructor Destroy; override;
   class var
     CurrentVAO    : GLhandle;
   private
     FValid        : Boolean;
     FID           : GLhandle;
-    FShader       : IShaderProgram;
     FIdxBuffer    : IGeomBuffer;
     FBufferList   : TInterfaceList;
   public
     function Valid: Boolean; stdcall;
     function GetID: LongWord; stdcall;
- //   function Init(Shader: IShaderProgram); stdcall;
     procedure AttachAndBind(Buffer: IGeomBuffer); stdcall;
-    procedure Attrib(AName: PWideChar; AttribType: TShaderAttribType; Stride, Offset: LongInt; Norm, Necessary: Boolean); stdcall;
-    procedure Draw(mode: TGeomMode; count: LongInt; Indexed: Boolean; first: LongInt); stdcall;
+    procedure BindAttrib(Attrib: IShaderAttrib; Stride, Offset: LongInt; Norm: Boolean); overload; stdcall;
+    procedure BindAttrib(Location: LongInt; AType: TShaderAttribType; Stride, Offset: LongInt; Norm: Boolean); overload; stdcall;
+    procedure Draw(mode: TGeomMode; count: LongInt; first: LongInt); stdcall;
     procedure Bind;
   end;
 
 implementation
 
 uses
+  JEN_Shader,
   JEN_Main;
 
-constructor TRenderEntity.Create(Shader: IShaderProgram);
+constructor TRenderEntity.Create;
 begin
   glGenVertexArrays(1, @FID);
   FBufferList := TInterfaceList.Create;
-
-  if not Assigned(Shader) then
-  begin
-    Engine.Warning('Shader programm must be not null');
-    FValid := False;
-    Exit;
-  end;
-
   FValid  := True;
-  FShader := Shader;
 end;
 
 destructor TRenderEntity.Destroy;
@@ -86,8 +77,14 @@ end;
                   }
 procedure TRenderEntity.AttachAndBind(Buffer: IGeomBuffer);
 begin
-  if not (Assigned(Buffer) and FValid) then
+  if not FValid then
     Exit;
+
+  if not Assigned(Buffer) then
+  begin
+    Engine.Warning('Buffer must be assigned');
+    Exit;
+  end;
 
   Bind;
 
@@ -99,17 +96,38 @@ begin
   Buffer.Bind;
 end;
 
-procedure TRenderEntity.Attrib(AName: PWideChar; AttribType: TShaderAttribType; Stride, Offset: LongInt; Norm, Necessary: Boolean);
+procedure TRenderEntity.BindAttrib(Attrib: JEN_Header.IShaderAttrib; Stride, Offset: LongInt; Norm: Boolean);
+begin
+  if not Assigned(Attrib) then
+  begin
+    Engine.Warning('Attribute must be assigned');
+    Exit;
+  end;
+
+  BindAttrib(IShaderAttrib(Attrib).Location, Attrib.AType, Stride, Offset, Norm);
+end;
+
+procedure TRenderEntity.BindAttrib(Location: LongInt; AType: TShaderAttribType; Stride, Offset: LongInt; Norm: Boolean);
 var
-  Attrib: IShaderAttrib;
+  DType : GLEnum;
+  Size  : LongInt;
 begin
   if not FValid then
     Exit;
 
-  Bind;
-  Attrib := FShader.Attrib(AName, AttribType, Necessary);
-  Attrib.Enable;
-  Attrib.Value(Stride, Offset, Norm);
+  if Location <> -1 then
+  begin
+    Bind;
+    glEnableVertexAttribArray(Location);
+    case AType of
+      atVec1b..atVec4b: DType := GL_UNSIGNED_BYTE;
+      atVec1s..atVec4s: DType := GL_SHORT;
+      atVec1f..atVec4f: DType := GL_FLOAT;
+      else Exit;
+    end;
+    Size := (Byte(AType) - 1) mod 4 + 1;
+    glVertexAttribPointer(Location, Size, DType, Norm, Stride, Pointer(Offset));
+  end;
 end;
 
 procedure TRenderEntity.Bind;
@@ -121,7 +139,7 @@ begin
   CurrentVAO := FID;
 end;
 
-procedure TRenderEntity.Draw(mode: TGeomMode; count: LongInt; Indexed: Boolean; first: LongInt);
+procedure TRenderEntity.Draw(mode: TGeomMode; count: LongInt; first: LongInt);
 const
   IndexType  : array [1..4] of GLenum = (GL_UNSIGNED_BYTE, GL_UNSIGNED_SHORT, GL_FALSE, GL_UNSIGNED_INT);
 var

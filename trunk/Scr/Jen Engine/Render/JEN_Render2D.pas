@@ -26,7 +26,6 @@ type
   TTehniqueType = (ttNone, ttNormal, ttText, ttAdvanced, ttAdvanced1, ttAdvanced2, ttAdvanced3, ttAdvanced4);
 
   TTehnique = record
-    RenderEntity  : IRenderEntity;
     VBUniform     : IShaderUniform;
     DBUniform     : IShaderUniform;
     ShaderProgram : IShaderProgram;
@@ -51,6 +50,7 @@ type
     FIdx          : LongWord;
     FVrtBuff      : IGeomBuffer;
     FIdxBuff      : IGeomBuffer;
+    RenderEntity  : IRenderEntity;
     RenderTechnique : array[TTehniqueType] of TTehnique;
 
     Tehnique       : TTehniqueType;
@@ -124,11 +124,8 @@ begin
       ShaderProgram := Shader;
       ShaderProgram.Bind;
 
-      RenderEntity := Render.CreateRenderEntity(ShaderProgram);
       VBUniform := ShaderProgram.Uniform('PosTC', utVec4, False);
       DBUniform := ShaderProgram.Uniform('QuadData', utVec4, False);
-      RenderEntity.AttachAndBind(FIdxBuff);
-      RenderEntity.AttachAndBind(FVrtBuff);
 
       i := 0;
       Uniform := ShaderProgram.Uniform('Map0', utInt, False);
@@ -139,8 +136,6 @@ begin
       Uniform := ShaderProgram.Uniform('Map1', utInt, False);
       if Assigned(Uniform) then
         Uniform.Value(i);
-
-      RenderEntity.Attrib('IndxAttrib', atVec1f, 4, 0);
     end;
 end;
 
@@ -178,15 +173,20 @@ begin
   end;
   FIdxBuff := TGeomBuffer.Create(gbIndex, (Batch_Size * 6) - 2, 1, @IIdxBuff[0]);
 
+  RenderEntity := Render.CreateRenderEntity;
+  RenderEntity.AttachAndBind(FIdxBuff);
+  RenderEntity.AttachAndBind(FVrtBuff);
+  RenderEntity.BindAttrib(0, atVec1f, 4, 0);
+
   FRotCenter := Vec2f(0.5, 0.5);
 
 
   ResMan.Load('|SpriteShader.xml', FNormalShader);
-  FNormalShader.Compile(Shader);
+  FNormalShader.GetShader(Shader);
   TehniqueInit(RenderTechnique[ttNormal], Shader);
 
   ResMan.Load('|TextShader.xml', FTextShader);
-  FTextShader.Compile(Shader);
+  FTextShader.GetShader(Shader);
   TehniqueInit(RenderTechnique[ttText], Shader);
 
   Engine.AddEventListener(evRenderFlush, {$IFDEF FPC}Pointer(FlushProc){$ELSE}@FlushProc{$ENDIF});
@@ -335,8 +335,7 @@ begin
     VBUniform.Value(FVertexBuff[1], FIdx*4);
     if Assigned(DBUniform) then
       DBUniform.Value(FDataBuff[1], FIdx*4);
-      //TODO
-    RenderEntity.Draw(gmTriangleStrip, Min(FIdx*6, Batch_Size*6 - 2), False);
+    RenderEntity.Draw(gmTriangleStrip, FIdx * 6 - 2);
   end;
   //FVrtBuff.Draw(gmQuads, FIdx*4, False);
 
